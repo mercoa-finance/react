@@ -48,20 +48,20 @@ export function MercoaButton({
   }
 
   const classNameIsEmphasized = `
-    bg-primary
-    text-primary-text-invert
+    bg-mercoa-primary
+    text-mercoa-primary-text-invert
     border-transparent
-    hover:bg-primary-dark
-    focus:ring-primary-light 
+    hover:bg-mercoa-primary-dark
+    focus:ring-mercoa-primary-light 
   `
   const classNameIsNotEmphasized = `
     bg-white
-    text-primary-text
-    border-primary-light
-    hover:border-primary-dark
+    text-mercoa-primary-text
+    border-mercoa-primary-light
+    hover:border-mercoa-primary-dark
     hover:bg-white
-    hover:text-primary-text
-    focus:ring-primary-light 
+    hover:text-mercoa-primary-text
+    focus:ring-mercoa-primary-light 
   `
 
   let colorOverride = ''
@@ -191,7 +191,7 @@ export function TableOrderHeader({
       <span
         className={`${
           isSelected
-            ? 'bg-primary text-primary-text-invert group-hover:opacity-75'
+            ? 'bg-mercoa-primary text-mercoa-primary-text-invert group-hover:opacity-75'
             : 'bg-gray-100 text-gray-900 group-hover:bg-gray-200'
         } ml-2 flex-none rounded`}
       >
@@ -425,7 +425,7 @@ export function MercoaCombobox({
               <Combobox.Input
                 autoComplete="off"
                 className={
-                  'w-full rounded-md border-0 bg-white py-1.5 pl-3 pr-12 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6 ' +
+                  'w-full rounded-md border-0 bg-white py-1.5 pl-3 pr-12 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6 ' +
                   inputClassName
                 }
                 onChange={(event) => setQuery(event.target.value)}
@@ -451,7 +451,7 @@ export function MercoaCombobox({
                 className={({ active }) =>
                   classNames(
                     'relative cursor-default select-none py-2 pl-3 pr-9',
-                    active ? 'bg-primary text-primary-text-invert' : 'text-gray-900',
+                    active ? 'bg-mercoa-primary text-mercoa-primary-text-invert' : 'text-gray-900',
                     disabled ? 'bg-gray-200 text-gray-600' : '',
                   )
                 }
@@ -478,7 +478,7 @@ export function MercoaCombobox({
                           <span
                             className={classNames(
                               'ml-2 truncate',
-                              active ? 'text-primary-text-invert' : 'text-gray-500',
+                              active ? 'text-mercoa-primary-text-invert' : 'text-gray-500',
                               disabled ? 'text-gray-600' : '',
                             )}
                           >
@@ -491,7 +491,7 @@ export function MercoaCombobox({
                         <span
                           className={classNames(
                             'absolute inset-y-0 right-0 flex items-center pr-4',
-                            active ? 'text-primary-text-invert' : 'text-primary',
+                            active ? 'text-mercoa-primary-text-invert' : 'text-mercoa-primary',
                           )}
                         >
                           <CheckIcon className="h-5 w-5" aria-hidden="true" />

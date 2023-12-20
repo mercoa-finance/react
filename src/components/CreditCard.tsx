@@ -8,7 +8,7 @@ const moovCssVariables: any = {
   '--moov-color-background': '#FFFFFF',
   '--moov-color-background-secondary': '#F5F6F9',
   '--moov-color-background-tertiary': '#E7E7F1',
-  '--moov-color-primary': '#4A5CF5',
+  '--moov-color-mercoa-primary': '#4A5CF5',
   '--moov-color-secondary': '#3D50EC',
   '--moov-color-tertiary': '#B9BBC3',
   '--moov-color-info': '#94CBFF',

@@ -195,7 +195,7 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                               <th scope="col" className="relative px-7 sm:w-12 sm:px-6">
                                 <input
                                   type="checkbox"
-                                  className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-primary-text focus:ring-primary"
+                                  className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-mercoa-primary-text focus:ring-mercoa-primary"
                                   ref={checkbox}
                                   checked={checked}
                                   onChange={toggleAll}
@@ -272,11 +272,11 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                               >
                                 <td className="relative px-7 sm:w-12 sm:px-6">
                                   {selectedInvoices.includes(invoice) && (
-                                    <div className="absolute inset-y-0 left-0 w-0.5 bg-primary" />
+                                    <div className="absolute inset-y-0 left-0 w-0.5 bg-mercoa-primary" />
                                   )}
                                   <input
                                     type="checkbox"
-                                    className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-primary-text focus:ring-primary"
+                                    className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-mercoa-primary-text focus:ring-mercoa-primary"
                                     value={invoice.id}
                                     checked={selectedInvoices.includes(invoice)}
                                     onChange={(e) =>
@@ -291,7 +291,7 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                                 <td
                                   className={classNames(
                                     'whitespace-nowrap py-3 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-3',
-                                    selectedInvoices.includes(invoice) ? 'text-primary-text' : 'text-gray-900',
+                                    selectedInvoices.includes(invoice) ? 'text-mercoa-primary-text' : 'text-gray-900',
                                   )}
                                   onClick={() => {
                                     if (onClick) onClick(invoice)
@@ -631,7 +631,7 @@ function SchedulePaymentTable({
                             <th scope="col" className="relative px-7 sm:w-12 sm:px-6">
                               <input
                                 type="checkbox"
-                                className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-primary-text focus:ring-primary"
+                                className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-mercoa-primary-text focus:ring-mercoa-primary"
                                 ref={checkbox}
                                 checked={checked}
                                 onChange={toggleAll}
@@ -708,11 +708,11 @@ function SchedulePaymentTable({
                             >
                               <td className="relative px-7 sm:w-12 sm:px-6">
                                 {selectedInvoices.includes(invoice) && (
-                                  <div className="absolute inset-y-0 left-0 w-0.5 bg-primary" />
+                                  <div className="absolute inset-y-0 left-0 w-0.5 bg-mercoa-primary" />
                                 )}
                                 <input
                                   type="checkbox"
-                                  className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-primary-text focus:ring-primary"
+                                  className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-mercoa-primary-text focus:ring-mercoa-primary"
                                   value={invoice.id}
                                   checked={selectedInvoices.includes(invoice)}
                                   onChange={(e) =>
@@ -727,7 +727,7 @@ function SchedulePaymentTable({
                               <td
                                 className={classNames(
                                   'whitespace-nowrap py-3 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-3',
-                                  selectedInvoices.includes(invoice) ? 'text-primary-text' : 'text-gray-900',
+                                  selectedInvoices.includes(invoice) ? 'text-mercoa-primary-text' : 'text-gray-900',
                                 )}
                                 onClick={() => {
                                   if (onClick) onClick(invoice)
@@ -787,7 +787,7 @@ function SchedulePaymentTable({
                     <div className="flex items-center mb-2">
                       <Listbox.Label className="block text-xs text-gray-900">Results per Page</Listbox.Label>
                       <div className="relative mx-2">
-                        <Listbox.Button className="relative w-24 cursor-default rounded-md bg-white py-1 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6">
+                        <Listbox.Button className="relative w-24 cursor-default rounded-md bg-white py-1 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-mercoa-primary sm:text-sm sm:leading-6">
                           <span className="block truncate">{resultsPerPage}</span>
                           <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                             <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -807,7 +807,7 @@ function SchedulePaymentTable({
                                 key={num}
                                 className={({ active }) =>
                                   `${
-                                    active ? 'bg-primary text-white' : 'text-gray-900'
+                                    active ? 'bg-mercoa-primary text-white' : 'text-gray-900'
                                   } relative cursor-default select-none py-2 pl-3 pr-9`
                                 }
                                 value={num}
@@ -821,7 +821,7 @@ function SchedulePaymentTable({
                                     {selected ? (
                                       <span
                                         className={`${
-                                          active ? 'text-white' : 'text-primary-text'
+                                          active ? 'text-white' : 'text-mercoa-primary-text'
                                         } absolute inset-y-0 right-0 flex items-center pr-4`}
                                       >
                                         <CheckIcon className="h-5 w-5" aria-hidden="true" />
@@ -1085,7 +1085,7 @@ function InvoiceInboxTable({
                   <div className="flex items-center mb-2">
                     <Listbox.Label className="block text-xs text-gray-900">Results per Page</Listbox.Label>
                     <div className="relative mx-2">
-                      <Listbox.Button className="relative w-24 cursor-default rounded-md bg-white py-1 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6">
+                      <Listbox.Button className="relative w-24 cursor-default rounded-md bg-white py-1 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-mercoa-primary sm:text-sm sm:leading-6">
                         <span className="block truncate">{resultsPerPage}</span>
                         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                           <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -1105,7 +1105,7 @@ function InvoiceInboxTable({
                               key={num}
                               className={({ active }) =>
                                 `${
-                                  active ? 'bg-primary text-white' : 'text-gray-900'
+                                  active ? 'bg-mercoa-primary text-white' : 'text-gray-900'
                                 } relative cursor-default select-none py-2 pl-3 pr-9`
                               }
                               value={num}
@@ -1119,7 +1119,7 @@ function InvoiceInboxTable({
                                   {selected ? (
                                     <span
                                       className={`${
-                                        active ? 'text-white' : 'text-primary-text'
+                                        active ? 'text-white' : 'text-mercoa-primary-text'
                                       } absolute inset-y-0 right-0 flex items-center pr-4`}
                                     >
                                       <CheckIcon className="h-5 w-5" aria-hidden="true" />
@@ -1410,7 +1410,7 @@ export function InvoiceInbox({
         <select
           id="tabs"
           name="tabs"
-          className="block w-full rounded-md border-gray-300 py-1 pl-3 pr-10 text-base focus:border-primary focus:outline-none focus:ring-primary sm:text-sm"
+          className="block w-full rounded-md border-gray-300 py-1 pl-3 pr-10 text-base focus:border-mercoa-primary focus:outline-none focus:ring-mercoa-primary sm:text-sm"
           defaultValue={selectedTab}
           onChange={(e) => {
             setSelectedTab(e.target.value as Mercoa.InvoiceStatus)
@@ -1434,7 +1434,7 @@ export function InvoiceInbox({
               href="#"
               className={`${
                 status == selectedTab
-                  ? 'text-primary sm:border-primary'
+                  ? 'text-mercoa-primary sm:border-mercoa-primary'
                   : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
               } mr-2 whitespace-nowrap py-4 px-1 text-sm font-medium sm:mr-0 sm:border-b-2`}
               aria-current={tabToName[status] == selectedTab ? 'page' : undefined}
@@ -1442,7 +1442,9 @@ export function InvoiceInbox({
               {tabToName[status]}{' '}
               <span
                 className={`${
-                  status == selectedTab ? 'bg-primary text-primary-text-invert' : 'bg-gray-100 text-gray-800'
+                  status == selectedTab
+                    ? 'bg-mercoa-primary text-mercoa-primary-text-invert'
+                    : 'bg-gray-100 text-gray-800'
                 } inline-flex items-center rounded-full  px-2.5 py-0.5 text-xs font-medium`}
               >
                 {' '}

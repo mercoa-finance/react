@@ -8,6 +8,7 @@ import {
   UsersIcon,
 } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
+import { TokenGenerationOptions } from '@mercoa/javascript/api'
 import { jwtDecode } from 'jwt-decode'
 import { useEffect, useState } from 'react'
 import {
@@ -46,7 +47,13 @@ export function EntityPortal({ token }: { token: string }) {
   const user = mercoaSession.user
   const organization = mercoaSession.organization
 
-  const { options } = jwtDecode(token) as TokenOptions
+  let tokenOptions: TokenGenerationOptions | undefined = undefined
+  try {
+    const { options } = jwtDecode(token) as TokenOptions
+    tokenOptions = options
+  } catch (e) {
+    console.error(e)
+  }
 
   async function setScreen(screen: string) {
     await mercoaSession.getNewToken()
@@ -54,7 +61,7 @@ export function EntityPortal({ token }: { token: string }) {
   }
 
   useEffect(() => {
-    mercoaSession.setIframeOptions({ options })
+    mercoaSession.setIframeOptions({ options: tokenOptions })
   }, [token])
 
   useEffect(() => {
@@ -204,7 +211,7 @@ export function EntityPortal({ token }: { token: string }) {
           )}
         </div>
         <div className="my-4 flex-none sm:mt-0 sm:ml-16">
-          {user && options?.pages?.notifications && screen !== 'notifications' && screen !== 'invoice' && (
+          {user && tokenOptions?.pages?.notifications && screen !== 'notifications' && screen !== 'invoice' && (
             <MercoaButton
               onClick={() => setScreen('notifications')}
               type="button"
@@ -215,7 +222,7 @@ export function EntityPortal({ token }: { token: string }) {
               <span className="hidden md:inline-block">Notifications</span>
             </MercoaButton>
           )}
-          {options?.pages?.representatives && screen !== 'representatives' && screen !== 'invoice' && (
+          {tokenOptions?.pages?.representatives && screen !== 'representatives' && screen !== 'invoice' && (
             <MercoaButton
               onClick={() => setScreen('representatives')}
               type="button"
@@ -227,7 +234,7 @@ export function EntityPortal({ token }: { token: string }) {
             </MercoaButton>
           )}
           {mercoaSession.iframeOptions?.options?.entity?.enableMercoaPayments &&
-            options?.pages?.paymentMethods &&
+            tokenOptions?.pages?.paymentMethods &&
             screen !== 'payments' &&
             screen !== 'invoice' && (
               <MercoaButton
@@ -262,7 +269,7 @@ export function EntityPortal({ token }: { token: string }) {
         <InvoiceInbox
           onTabChange={(tab) => setSelectedInboxTab(tab)}
           selectedTab={selectedInboxTab}
-          statuses={options?.invoice?.status}
+          statuses={tokenOptions?.invoice?.status}
           onSelectInvoice={(invoice) => {
             setInvoice(invoice)
             setDocuments(undefined)

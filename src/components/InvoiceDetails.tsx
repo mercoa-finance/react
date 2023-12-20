@@ -69,7 +69,7 @@ export function InvoiceDetails({
   const [uploadedImage, setUploadedImage] = useState<string>()
   const [ocrProcessing, setOcrProcessing] = useState<boolean>(false)
   const [invoiceLocal, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>(invoice)
-  const [height, setHeight] = useState<number>(window.innerHeight - 120)
+  const [height, setHeight] = useState<number>(typeof window !== 'undefined' ? window.innerHeight - 120 : 0)
 
   function handleResize() {
     setHeight(window.innerHeight - 120)
@@ -261,7 +261,7 @@ function InvoiceDocumentsUpload({ onFileUpload }: { onFileUpload: (fileReaderObj
       {({ getRootProps, getInputProps, isDragActive }) => (
         <div
           className={`mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 ${
-            isDragActive ? 'border-primary' : 'border-gray-300'
+            isDragActive ? 'border-mercoa-primary' : 'border-gray-300'
           } px-6 py-10`}
           {...getRootProps()}
         >
@@ -270,7 +270,7 @@ function InvoiceDocumentsUpload({ onFileUpload }: { onFileUpload: (fileReaderObj
             <div className="mt-4 flex text-sm text-gray-600">
               <label
                 htmlFor="file-upload"
-                className="relative cursor-pointer rounded-md bg-white font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 hover:text-indigo-500"
+                className="relative cursor-pointer rounded-md bg-white font-semibold text-mercoa-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-mercoa-primary focus-within:ring-offset-2 hover:text-indigo-500"
               >
                 <span>Upload an invoice</span>
                 <input {...getInputProps()} id="file-upload" name="file-upload" type="file" className="sr-only" />
@@ -330,7 +330,7 @@ function InvoiceDocuments({
             className={
               pageNumber != index + 1
                 ? 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
-                : 'relative z-10 inline-flex items-center bg-primary px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
+                : 'relative z-10 inline-flex items-center bg-mercoa-primary px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mercoa-primary'
             }
           >
             {index + 1}
@@ -958,7 +958,7 @@ export function EditInvoiceForm({
             <input
               type="text"
               {...register('invoiceNumber')}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6"
               placeholder="#1024"
             />
           </div>
@@ -976,7 +976,7 @@ export function EditInvoiceForm({
             <input
               type="text"
               {...register('amount')}
-              className={`block w-full rounded-md border-0 py-1.5 pr-[4.4rem] text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6
+              className={`block w-full rounded-md border-0 py-1.5 pr-[4.4rem] text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6
                 ${currencyCodeToSymbol(currency).length > 1 ? 'pl-12' : 'pl-6'}`}
               placeholder="0.00"
             />
@@ -986,7 +986,7 @@ export function EditInvoiceForm({
               </label>
               <select
                 {...register('currency')}
-                className="h-full rounded-md border-0 bg-transparent py-0 pl-2 pr-7 text-gray-500 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm"
+                className="h-full rounded-md border-0 bg-transparent py-0 pl-2 pr-7 text-gray-500 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm"
               >
                 {supportedCurrencies.map((option: Mercoa.CurrencyCode, index: number) => (
                   <option key={index} value={option}>
@@ -1010,7 +1010,7 @@ export function EditInvoiceForm({
               name="invoiceDate"
               render={({ field }) => (
                 <DatePicker
-                  className="block w-full rounded-md border-gray-300 focus:border-primary focus:ring-primary sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
                   placeholderText="Select invoice date"
                   onChange={(date) => field.onChange(date)}
                   selected={field.value}
@@ -1034,7 +1034,7 @@ export function EditInvoiceForm({
               name="dueDate"
               render={({ field }) => (
                 <DatePicker
-                  className="block w-full rounded-md border-gray-300 focus:border-primary focus:ring-primary sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
                   placeholderText="Select due date"
                   onChange={(date) => field.onChange(date)}
                   selected={field.value}
@@ -1059,7 +1059,7 @@ export function EditInvoiceForm({
               name="deductionDate"
               render={({ field }) => (
                 <DatePicker
-                  className="block w-full rounded-md border-gray-300 focus:border-primary focus:ring-primary sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
                   placeholderText="Select Payment Date"
                   onChange={(date) => field.onChange(date)}
                   selected={field.value}
@@ -1081,7 +1081,7 @@ export function EditInvoiceForm({
               id="description"
               {...register('description')}
               rows={3}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
+              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6"
               defaultValue={''}
             />
           </div>
@@ -1692,7 +1692,7 @@ function SelectPaymentSource({
       {selectedType && selectedType != 'na' && (
         <select
           {...register(sourceOrDestination)}
-          className="block w-full rounded-md border-gray-300 focus:border-primary focus:ring-primary sm:text-sm mt-4"
+          className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm mt-4"
         >
           {paymentMethods
             ?.filter((paymentMethod) => {
@@ -1937,7 +1937,7 @@ function ApproverWell({
               <div className={classNames('text-sm font-medium', 'text-grey-900')}>{approver.name}</div>
               <div className="text-sm text-gray-500">{approver.email}</div>
             </div>
-            <div className="mx-4 flex-shrink-0 p-1 text-primary-text hover:opacity-75">{icon}</div>
+            <div className="mx-4 flex-shrink-0 p-1 text-mercoa-primary-text hover:opacity-75">{icon}</div>
           </div>
         </div>
       </div>
@@ -2093,7 +2093,7 @@ export function InvoiceComments({
       ))}
       <div className="mt-2">
         <form onSubmit={handleSubmit(addComment)} className="relative">
-          <div className="overflow-hidden rounded-lg shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-primary">
+          <div className="overflow-hidden rounded-lg shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-mercoa-primary">
             <label htmlFor="text" className="sr-only">
               Add your comment
             </label>
@@ -2318,7 +2318,7 @@ function MetadataBoolean({
           type="radio"
           name={`true-false-${schema.key}`}
           defaultChecked={value === 'true'}
-          className="h-4 w-4 border-gray-300 text-primary focus:ring-primary"
+          className="h-4 w-4 border-gray-300 text-mercoa-primary focus:ring-mercoa-primary"
           onChange={() => setValue('true')}
         />
         <label htmlFor={`true-false-${schema.key}`} className="ml-3 block text-sm font-medium leading-6 text-gray-900">
@@ -2331,7 +2331,7 @@ function MetadataBoolean({
           type="radio"
           name={`true-false-${schema.key}`}
           defaultChecked={value === 'false'}
-          className="h-4 w-4 border-gray-300 text-primary focus:ring-primary"
+          className="h-4 w-4 border-gray-300 text-mercoa-primary focus:ring-mercoa-primary"
           onChange={() => setValue('false')}
         />
         <label htmlFor={`true-false-${schema.key}`} className="ml-3 block text-sm font-medium leading-6 text-gray-900">
@@ -2391,7 +2391,7 @@ function MetadataWell({
             <button
               type="button"
               onClick={setEdit}
-              className="mx-4 flex-shrink-0 p-1 text-primary-text hover:opacity-75 cursor-pointer"
+              className="mx-4 flex-shrink-0 p-1 text-mercoa-primary-text hover:opacity-75 cursor-pointer"
             >
               <PencilSquareIcon className="w-5 h-5" />
             </button>
@@ -2581,7 +2581,7 @@ function LineItemRow({
         <input
           type="text"
           className="block w-full border-0 py-1.5 text-gray-900
-           placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6"
+           placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6"
           {...register(`lineItems.${index}.description`)}
         />
       </td>
@@ -2631,7 +2631,7 @@ function LineItemRow({
           type="text"
           className={`block w-full border-0 py-1.5 
             text-gray-900 
-            placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6`}
+            placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6`}
           placeholder="1"
           {...register(`lineItems.${index}.quantity`)}
         />
@@ -2645,7 +2645,7 @@ function LineItemRow({
             type="text"
             className={`block w-full border-0 py-1.5 
             text-gray-900 
-            placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6 pl-6
+            placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6 pl-6
             ${currencyCodeToSymbol(currency).length > 1 ? 'pl-12' : 'pl-6'}`}
             placeholder="0.00"
             {...register(`lineItems.${index}.unitPrice`)}
@@ -2661,7 +2661,7 @@ function LineItemRow({
             type="text"
             className={`block w-full rounded-md border-0 py-1.5 
             text-gray-900 
-            placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6 pl-6
+            placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6 pl-6
             ${currencyCodeToSymbol(currency).length > 1 ? 'pl-12' : 'pl-6'}`}
             placeholder="0.00"
             {...register(`lineItems.${index}.amount`)}

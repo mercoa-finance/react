@@ -135,7 +135,7 @@ export function CounterpartySearch({
                   setSelectedCounterparty(undefined)
                 }}
                 type="button"
-                className="ml-4 flex-shrink-0 p-1 text-primary-text hover:opacity-75"
+                className="ml-4 flex-shrink-0 p-1 text-mercoa-primary-text hover:opacity-75"
               >
                 <XCircleIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
                 <span className="sr-only">Clear</span>
@@ -146,7 +146,7 @@ export function CounterpartySearch({
                     setEdit(true)
                   }}
                   type="button"
-                  className="ml-4 flex-shrink-0 p-1 text-primary-text hover:opacity-75"
+                  className="ml-4 flex-shrink-0 p-1 text-mercoa-primary-text hover:opacity-75"
                 >
                   <PencilSquareIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
                   <span className="sr-only">Edit</span>

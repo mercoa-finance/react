@@ -185,7 +185,7 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
                   <div className="flex items-center mb-2">
                     <Listbox.Label className="block text-xs text-gray-900">Results per Page</Listbox.Label>
                     <div className="relative mx-2">
-                      <Listbox.Button className="relative w-24 cursor-default rounded-md bg-white py-1 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary sm:text-sm sm:leading-6">
+                      <Listbox.Button className="relative w-24 cursor-default rounded-md bg-white py-1 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-mercoa-primary sm:text-sm sm:leading-6">
                         <span className="block truncate">{resultsPerPage}</span>
                         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                           <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -205,7 +205,7 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
                               key={num}
                               className={({ active }) =>
                                 `${
-                                  active ? 'bg-primary text-white' : 'text-gray-900'
+                                  active ? 'bg-mercoa-primary text-white' : 'text-gray-900'
                                 } relative cursor-default select-none py-2 pl-3 pr-9`
                               }
                               value={num}
@@ -219,7 +219,7 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
                                   {selected ? (
                                     <span
                                       className={`${
-                                        active ? 'text-white' : 'text-primary-text'
+                                        active ? 'text-white' : 'text-mercoa-primary-text'
                                       } absolute inset-y-0 right-0 flex items-center pr-4`}
                                     >
                                       <CheckIcon className="h-5 w-5" aria-hidden="true" />

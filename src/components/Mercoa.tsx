@@ -111,10 +111,10 @@ function useProvideSession({
   let defaultEndpoint = 'https://api.mercoa.com'
 
   const client = useMemo(() => {
-    if (window && window.location && window.location.href && window.location.href.includes('staging.mercoa.com')) {
-      defaultEndpoint = 'https://api.staging.mercoa.com'
-    } else if (window && window.location && window.location.href && window.location.href.includes('localhost')) {
-      defaultEndpoint = 'http://localhost:8080'
+    if (typeof window !== 'undefined' && window && window.location && window.location.href) {
+      if (window.location.href.includes('staging.mercoa.com')) {
+        defaultEndpoint = 'https://api.staging.mercoa.com'
+      }
     }
     return new MercoaClient({
       environment: endpoint ?? defaultEndpoint,

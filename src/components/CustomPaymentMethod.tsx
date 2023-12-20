@@ -230,7 +230,7 @@ export function AddCustomPaymentMethodForm({
               type="text"
               required={schemaFields?.[index]?.optional ? false : true}
               placeholder={`${schemaFields?.[index]?.displayName || schemaFields?.[index]?.name}`}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
             />
           )}
           {schemaFields?.[index]?.type === Mercoa.PaymentMethodSchemaFieldType.Url && (
@@ -246,7 +246,7 @@ export function AddCustomPaymentMethodForm({
               type="text"
               required={schemaFields?.[index]?.optional ? false : true}
               placeholder={`https://example.com`}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
             />
           )}
           {schemaFields?.[index]?.type === Mercoa.PaymentMethodSchemaFieldType.Email && (
@@ -263,7 +263,7 @@ export function AddCustomPaymentMethodForm({
                 type="text"
                 required={schemaFields?.[index]?.optional ? false : true}
                 placeholder={`name@example.com`}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
               />
             </>
           )}
@@ -273,14 +273,14 @@ export function AddCustomPaymentMethodForm({
               type="number"
               required={schemaFields?.[index]?.optional ? false : true}
               placeholder={`${schemaFields?.[index]?.displayName || schemaFields?.[index]?.name}`}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
             />
           )}
           {schemaFields?.[index]?.type === Mercoa.PaymentMethodSchemaFieldType.Select && (
             <select
               {...register(`~cpm~~.${index}.value`)}
               required={schemaFields?.[index]?.optional ? false : true}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
             >
               {schemaFields?.[index]?.options?.map((option, index) => (
                 <option key={index} value={option}>
@@ -295,7 +295,7 @@ export function AddCustomPaymentMethodForm({
               name={`~cpm~~.${index}.value`}
               render={({ field }) => (
                 <ReactDatePicker
-                  className="block w-full rounded-md border-gray-300 focus:border-primary focus:ring-primary sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
                   onChange={(date) => field.onChange(date)}
                   selected={field.value}
                   required={schemaFields?.[index]?.optional ? false : true}
@@ -320,7 +320,7 @@ export function AddCustomPaymentMethodForm({
                       <input
                         {...inputProps}
                         type="text"
-                        className="block w-full rounded-md border-gray-300 focus:border-primary focus:ring-primary sm:text-sm"
+                        className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
                         placeholder="(777) 777-7777"
                       />
                     )) as any
