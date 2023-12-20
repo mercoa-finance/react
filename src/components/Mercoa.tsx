@@ -108,16 +108,9 @@ function useProvideSession({
   const [tokenLocal, setToken] = useState<string>(token)
   const [iframeOptions, setIframeOptions] = useState<TokenOptions>()
 
-  let defaultEndpoint = 'https://api.mercoa.com'
-
   const client = useMemo(() => {
-    if (typeof window !== 'undefined' && window && window.location && window.location.href) {
-      if (window.location.href.includes('staging.mercoa.com')) {
-        defaultEndpoint = 'https://api.staging.mercoa.com'
-      }
-    }
     return new MercoaClient({
-      environment: endpoint ?? defaultEndpoint,
+      environment: endpoint ?? 'https://api.mercoa.com',
       token: tokenLocal,
     })
   }, [tokenLocal])

@@ -664,6 +664,12 @@ export function EditInvoiceForm({
           amount: lineItem.amount ?? 0,
           quantity: lineItem.quantity ?? 0,
           unitPrice: lineItem.unitPrice ?? 0,
+          name: lineItem.name ?? '',
+          metadata: lineItem.metadata ?? {},
+          glAccountId: lineItem.glAccountId ?? '',
+          id: lineItem.id ?? '',
+          createdAt: lineItem.createdAt ?? new Date(),
+          updatedAt: lineItem.updatedAt ?? new Date(),
         })),
       )
 

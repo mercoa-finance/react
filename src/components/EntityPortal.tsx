@@ -8,7 +8,6 @@ import {
   UsersIcon,
 } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
-import { TokenGenerationOptions } from '@mercoa/javascript/api'
 import { jwtDecode } from 'jwt-decode'
 import { useEffect, useState } from 'react'
 import {
@@ -47,7 +46,7 @@ export function EntityPortal({ token }: { token: string }) {
   const user = mercoaSession.user
   const organization = mercoaSession.organization
 
-  let tokenOptions: TokenGenerationOptions | undefined = undefined
+  let tokenOptions: Mercoa.TokenGenerationOptions | undefined = undefined
   try {
     const { options } = jwtDecode(token) as TokenOptions
     tokenOptions = options

@@ -31,7 +31,30 @@ const config: Config = {
       'mercoa-primary-text-invert': 'var(--mercoa-primary-text-invert)',
     },
   },
+  plugins: [require('@tailwindcss/forms'), require('@tailwindcss/typography')],
 }
+```
+
+## Usage
+
+```javascript
+
+import { MercoaSession } from '@mercoa/react'
+
+export default function Index(){
+
+  const token = 'YOUR_ENTITY_TOKEN' // See https://docs.mercoa.com/api-reference/api-reference/entity/user/generate-jwt-token
+
+  return <>
+     {/* The Mercoa Session Context without any children will render the full entity portal */}
+     <MercoaSession
+     token={token}
+     googleMapsApiKey={''}
+     >
+  </>
+
+}
+
 ```
 
 ## Examples
