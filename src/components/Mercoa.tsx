@@ -136,7 +136,7 @@ function useProvideSession({
         payorOnboardingOptions: true,
         metadataSchema: true,
       })
-      .then((o) => {
+      .then((o: Mercoa.OrganizationResponse) => {
         setOrganization(o)
       })
     if (eid === 'all') return

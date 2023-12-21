@@ -588,7 +588,7 @@ export function EditInvoiceForm({
         setSourcePaymentMethods(resp)
       }
     })
-    mercoaSession.client?.paymentMethodSchema.getAll().then((resp) => {
+    mercoaSession.client?.paymentMethodSchema.getAll().then((resp: Mercoa.PaymentMethodSchemaResponse[]) => {
       if (resp) {
         setPaymentMethodSchemas(resp)
 
@@ -759,50 +759,47 @@ export function EditInvoiceForm({
       creatorEntityId: mercoaSession.entity?.id,
     }
     console.log({ data, invoiceData })
-    if (
-      data.paymentMethodDestinationType &&
-      data.paymentMethodDestinationType != 'na' &&
-      (!data.paymentDestinationId || data.paymentDestinationId === 'new')
-    ) {
+
+    // Create new vendor payment method if needed
+    if (data.paymentMethodDestinationType && (!data.paymentDestinationId || data.paymentDestinationId === 'new')) {
       const paymentMethodDestinationType = data.paymentMethodDestinationType
       const type = data.paymentMethodDestinationType.startsWith('cpms_')
         ? 'custom'
         : (data.paymentMethodDestinationType as Mercoa.PaymentMethodType)
 
       let pm: Mercoa.PaymentMethodRequest | undefined
-
-      function newDisbursement(data: Mercoa.BankAccountRequest | Mercoa.CheckRequest | Record<string, string>) {
-        if (type === 'bankAccount') {
-          pm = {
-            type: type,
-            accountNumber: (data as Mercoa.BankAccountRequest).accountNumber,
-            routingNumber: (data as Mercoa.BankAccountRequest).routingNumber,
-            accountType: (data as Mercoa.BankAccountRequest).accountType,
-            bankName: (data as Mercoa.BankAccountRequest).bankName,
-          }
-        } else if (type === 'check') {
-          pm = {
-            type: type,
-            ...(data as Mercoa.CheckRequest),
-          }
-        } else if (type === 'custom') {
-          const filtered: Record<string, string> = {}
-          Object.entries(data).forEach(([key, value]) => {
+      if (type === 'bankAccount') {
+        pm = {
+          type: type,
+          accountNumber: (data as Mercoa.BankAccountRequest).accountNumber,
+          routingNumber: (data as Mercoa.BankAccountRequest).routingNumber,
+          accountType: (data as Mercoa.BankAccountRequest).accountType,
+          bankName: (data as Mercoa.BankAccountRequest).bankName,
+        }
+      } else if (type === 'check') {
+        pm = {
+          type: type,
+          ...(data as Mercoa.CheckRequest),
+        }
+      } else if (type === 'custom') {
+        const filtered: Record<string, string> = {}
+        Object.entries(data as Mercoa.BankAccountRequest | Mercoa.CheckRequest | Record<string, string>).forEach(
+          ([key, value]) => {
             if (key.startsWith('~cpm~~')) {
               value.forEach((v: any) => {
                 filtered[v.name] = `${filtered[v.name] ?? v.value}`
               })
             }
-          })
-          pm = {
-            type: type,
-            foreignId: Math.random().toString(36).substring(7),
-            schemaId: paymentMethodDestinationType,
-            data: filtered,
-          }
+          },
+        )
+        pm = {
+          type: type,
+          foreignId: Math.random().toString(36).substring(7),
+          schemaId: paymentMethodDestinationType,
+          data: filtered,
         }
       }
-      newDisbursement(data)
+
       if (pm) {
         const resp = await mercoaSession.client?.entity.paymentMethod.create(data.vendorId, pm)
         if (resp) {
@@ -1273,12 +1270,12 @@ export function EditInvoiceForm({
                     )}
                   </>
                 )}
-                {invoice?.status != Mercoa.InvoiceStatus.Scheduled &&
-                  invoice?.status != Mercoa.InvoiceStatus.Pending &&
-                  mercoaSession.iframeOptions?.options?.invoice?.markPaid && (
+                {(invoice?.status === Mercoa.InvoiceStatus.Scheduled ||
+                  invoice?.status === Mercoa.InvoiceStatus.Pending) &&
+                  invoice?.paymentDestination?.type === Mercoa.PaymentMethodType.OffPlatform && (
                     <MercoaButton
                       disabled={isSaving}
-                      isEmphasized={false}
+                      isEmphasized={true}
                       onClick={() => {
                         if (!invoice?.id) return
                         setIsSaving(true)
@@ -1679,6 +1676,31 @@ function SelectPaymentSource({
     }
   }, [selectedType, paymentMethods])
 
+  // For offline payments, we need to set the correct payment method id automatically
+  useEffect(() => {
+    if (!isDestination) return
+    if (!vendorId) return
+    if (selectedType !== Mercoa.PaymentMethodType.OffPlatform) return
+
+    const existingOffPlatformPaymentMethod = paymentMethods.find(
+      (paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.OffPlatform,
+    )
+    if (existingOffPlatformPaymentMethod) {
+      setValue(sourceOrDestination, existingOffPlatformPaymentMethod.id)
+    } else {
+      // if there is no off platform payment method, we need to create one
+      mercoaSession.client?.entity.paymentMethod
+        .create(vendorId, {
+          type: Mercoa.PaymentMethodType.OffPlatform,
+        })
+        .then((resp) => {
+          if (resp) {
+            setValue(sourceOrDestination, resp.id)
+          }
+        })
+    }
+  }, [isDestination, vendorId, selectedType])
+
   return (
     <div className="mt-4">
       <MercoaCombobox
@@ -1689,26 +1711,22 @@ function SelectPaymentSource({
         value={availableTypes.find((type) => type.key === selectedType)}
         displayIndex="value"
       />
-      {selectedType == 'na' && (
-        <p className="pt-5 text-justify text-gray-700 text-sm">
-          We will email {vendorName} and get their payment details. If we don&apos;t hear back, we will let you know.
-        </p>
-      )}
-
-      {selectedType && selectedType != 'na' && (
+      {selectedType && selectedType != Mercoa.PaymentMethodType.OffPlatform && (
         <select
           {...register(sourceOrDestination)}
           className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm mt-4"
         >
           {paymentMethods
             ?.filter((paymentMethod) => {
-              if (selectedType === 'bankAccount') return paymentMethod.type === 'bankAccount'
-              if (selectedType === 'card') return paymentMethod.type === 'card'
-              if (paymentMethod.type === 'custom') return paymentMethod.schemaId === selectedType
+              if (selectedType === Mercoa.PaymentMethodType.BankAccount)
+                return paymentMethod.type === Mercoa.PaymentMethodType.BankAccount
+              if (selectedType === Mercoa.PaymentMethodType.Card)
+                return paymentMethod.type === Mercoa.PaymentMethodType.Card
+              if (paymentMethod.type === Mercoa.PaymentMethodType.Custom) return paymentMethod.schemaId === selectedType
             })
             .map((paymentMethod) => (
               <option key={paymentMethod.id} value={paymentMethod.id}>
-                {paymentMethod.type === 'bankAccount' && (
+                {paymentMethod.type === Mercoa.PaymentMethodType.BankAccount && (
                   <>
                     <BuildingLibraryIcon className="h-5 w-5" aria-hidden="true" />
                     {paymentMethod.accountName ? `${paymentMethod.accountName} - ` : ''}
@@ -1716,13 +1734,13 @@ function SelectPaymentSource({
                     {String(paymentMethod.accountNumber).slice(-4)}
                   </>
                 )}
-                {paymentMethod.type === 'card' && (
+                {paymentMethod.type === Mercoa.PaymentMethodType.Card && (
                   <>
                     <CreditCardIcon className="h-5 w-5" aria-hidden="true" />
                     {paymentMethod.cardBrand} ••••{paymentMethod.lastFour}
                   </>
                 )}
-                {paymentMethod.type === 'custom' && (
+                {paymentMethod.type === Mercoa.PaymentMethodType.Custom && (
                   <>
                     <BuildingLibraryIcon className="h-5 w-5" aria-hidden="true" />
                     {findCustomPaymentMethodAccountNameAndNumber(paymentMethod).accountName}{' '}
@@ -2366,7 +2384,7 @@ function MetadataWell({
     if (value === 'true') value = 'Yes'
     if (value === 'false') value = 'No'
   } else if (schema.type === Mercoa.MetadataType.KeyValue) {
-    entityMetadata?.value?.find((e) => {
+    entityMetadata?.value?.find((e: string) => {
       let parsedValue = {
         key: '',
         value: '',
