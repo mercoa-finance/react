@@ -194,9 +194,9 @@ export function InvoiceDetails({
         <div className="min-w-[300px] mr-5">
           {uploadedFile ? (
             <>
-              <div className={`items-center ${ocrProcessing ? 'flex' : 'hidden'}`}>
-                <span className="mr-5 text-gray-800"> Invoice Processing </span>
-                <LoadingSpinnerIcon />
+              <div className={`text-center ${ocrProcessing ? 'block mb-5' : 'hidden'}`}>
+                <span className="text-gray-800  w-full"> Extracting Invoice Details </span>
+                <ProgressBar />
               </div>
               <InvoiceDocuments documents={new Array(uploadedFile)} height={height} />
             </>
@@ -2699,5 +2699,28 @@ function LineItemRow({
         </button>
       </td>
     </tr>
+  )
+}
+
+const ProgressBar = () => {
+  const [progressPercentage, setProgressPercentage] = useState(0)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgressPercentage((prevProgressPercentage) => {
+        if (prevProgressPercentage === 100) {
+          return 80
+        } else {
+          return prevProgressPercentage + 1
+        }
+      })
+    }, 300)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="h-2 w-full bg-gray-300">
+      <div style={{ width: `${progressPercentage}%` }} className={`rounded-sm h-full bg-mercoa-primary`}></div>
+    </div>
   )
 }
