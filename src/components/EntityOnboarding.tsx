@@ -321,17 +321,12 @@ export function DateOfBirthBlock({
   )
 }
 
-export const last4SSNSchema = {
+export const SSNSchema = {
   dob: yup.date().required('Date of birth is required'),
-  taxID: yup
-    .string()
-    .matches(/^[0-9]+$/, 'Invalid SSN')
-    .max(4)
-    .min(4)
-    .required('Last 4 of SSN is required'),
+  taxID: yup.string().required('SSN is required'),
 }
 
-export function SSNLast4Block({
+export function SSNBlock({
   control,
   errors,
   readOnly,
@@ -345,7 +340,7 @@ export function SSNLast4Block({
   return (
     <div>
       <label htmlFor="taxID" className="block text-left text-sm font-medium text-gray-700">
-        Last 4 of SSN
+        SSN
       </label>
       <div className="mt-1">
         <Controller
@@ -357,7 +352,7 @@ export function SSNLast4Block({
                 <input
                   type="text"
                   className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                  placeholder="1234"
+                  placeholder="123-45-6789"
                   value={field.value}
                   onChange={field.onChange}
                   readOnly={readOnly}
@@ -366,7 +361,7 @@ export function SSNLast4Block({
             } else {
               return (
                 <InputMask
-                  mask="9999"
+                  mask="999-99-9999"
                   value={field.value}
                   onChange={field.onChange}
                   readOnly={readOnly}
@@ -377,7 +372,7 @@ export function SSNLast4Block({
                       <input
                         {...inputProps}
                         type="text"
-                        placeholder="1234"
+                        placeholder="123-45-6789"
                         className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                       />
                     )) as any
@@ -839,9 +834,7 @@ export async function createOrUpdateEntity({
       ...(data.taxID &&
         data.taxID != '****' && {
           governmentId: {
-            ssn: {
-              lastFour: data.taxID,
-            },
+            ssn: data.taxID,
           },
         }),
       name: {
@@ -1122,9 +1115,7 @@ export function EntityOnboardingForm({
       formState: { errors, isValid },
     } = useForm({
       mode: 'onChange',
-      resolver: yupResolver(
-        yup.object(disableKYB ? nameBlockSchema : { ...last4SSNSchema, ...nameBlockSchema }).required(),
-      ),
+      resolver: yupResolver(yup.object(disableKYB ? nameBlockSchema : { ...SSNSchema, ...nameBlockSchema }).required()),
       defaultValues: {
         firstName: data.firstName,
         middleName: data.middleName,
@@ -1158,7 +1149,8 @@ export function EntityOnboardingForm({
         {!disableKYB && (
           <div className="mt-2 grid grid-cols-2 gap-3">
             <DateOfBirthBlock control={control} errors={errors} />
-            <SSNLast4Block control={control} errors={errors} />
+            <SSNBlock control={control} errors={errors} />
+            {JSON.stringify(errors)}
           </div>
         )}
         <div className="mt-5 sm:mt-6">
@@ -1460,9 +1452,7 @@ export function RepresentativeOnboardingForm({
         country: 'US',
       },
       governmentId: {
-        ssn: {
-          lastFour: data.taxID,
-        },
+        ssn: data.taxID,
       },
       responsibilities: {
         isController: data.isController,
@@ -1508,7 +1498,7 @@ export function RepresentativeOnboardingForm({
             <EmailBlock register={register} errors={errors} />
             <PhoneBlock control={control} errors={errors} />
             <DateOfBirthBlock control={control} errors={errors} />
-            <SSNLast4Block control={control} errors={errors} />
+            <SSNBlock control={control} errors={errors} />
 
             <div className="mt-2">
               <label htmlFor="jobTitle" className="block text-left text-sm font-medium text-gray-700">
@@ -2035,12 +2025,12 @@ export function EntityOnboarding({
                 />
               </div>
             )}
-            {onboardingOptions?.individual.ssnLast4.show && (
-              <SSNLast4Block
+            {onboardingOptions?.individual.ssn.show && (
+              <SSNBlock
                 control={control}
                 errors={errors}
-                readOnly={!onboardingOptions.individual.ssnLast4.edit}
-                required={onboardingOptions.individual.ssnLast4.required}
+                readOnly={!onboardingOptions.individual.ssn.edit}
+                required={onboardingOptions.individual.ssn.required}
               />
             )}
           </>
