@@ -654,6 +654,7 @@ export function EditInvoiceForm({
     if (ocrResponse.invoice.dueDate) setValue('dueDate', ocrResponse.invoice.dueDate)
     setValue('deductionDate', ocrResponse.invoice.deductionDate)
     if (ocrResponse.invoice.currency) setValue('currency', ocrResponse.invoice.currency)
+    if (ocrResponse.invoice.metadata) setValue('metadata', JSON.stringify(ocrResponse.invoice.metadata))
     // setValue('vendorName', ocrResponse.vendor.name)
     // setValue('vendorId', ocrResponse.vendor.id)
     if (ocrResponse.invoice.lineItems)
@@ -2307,6 +2308,7 @@ function MetadataCombobox({
       }}
       value={comboboxValue}
       multiple={schema.allowMultiple}
+      freeText
     />
   )
 }

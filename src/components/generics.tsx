@@ -359,6 +359,7 @@ export function MercoaCombobox({
   className,
   labelClassName,
   inputClassName,
+  freeText,
 }: {
   onChange: (val: any) => any
   options: { value: any; disabled: boolean }[]
@@ -371,6 +372,7 @@ export function MercoaCombobox({
   className?: string
   labelClassName?: string
   inputClassName?: string
+  freeText?: boolean
 }) {
   const [query, setQuery] = useState('')
   const [selectedValue, setSelectedValue] = useState(value)
@@ -379,13 +381,22 @@ export function MercoaCombobox({
     setSelectedValue(value)
   }, [value])
 
+  useEffect(() => {
+    if (freeText && query !== '') {
+      setSelectedValue(query)
+    }
+  }, [query, freeText])
+
   const filteredOptions =
     query === ''
       ? options
-      : options.filter((option) => {
-          const value = displayIndex ? option.value[displayIndex] : option.value
-          return value?.toLowerCase().includes(query.toLowerCase())
-        })
+      : [
+          ...options.filter((option) => {
+            const value = displayIndex ? option.value[displayIndex] : option.value
+            return value?.toLowerCase().includes(query.toLowerCase())
+          }),
+          ...(freeText ? [{ value: query, disabled: false }] : []),
+        ]
 
   function displayValue(value: any) {
     if (multiple && Array.isArray(value)) {
