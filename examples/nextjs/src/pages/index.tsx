@@ -43,8 +43,12 @@ export async function getServerSideProps() {
 
 export default function Home({ token }: { token?: string }) {
   return (
-    <main className={`flex flex-col items-center gap-y-2 pt-5`}>
-      <h1 className="text-xl font-bold">Mercoa Next.js Example</h1>
+    <main className="flex flex-col items-center gap-y-2 pt-5">
+      <h1 className="text-xl font-bold hover:text-gray-700">Mercoa Next.js Example</h1>
+
+      <div className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 mr-2 whitespace-nowrap py-4 px-1 text-sm font-medium sm:mr-0 sm:border-b-2">
+        hello
+      </div>
       {token}
       {token ? (
         <MercoaSession token={token} />

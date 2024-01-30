@@ -49,7 +49,21 @@ export type OnboardingFormData = {
 // Onboarding Blocks //////////////////////////////////////////////////////////
 
 export const addressBlockSchema = {
-  addressLine1: yup.string().required('Address is required'),
+  addressLine1: yup
+    .string()
+    .required('Address is required')
+    .test('addressLine1', 'PO Boxes are not supported', (value) => {
+      if (value?.trim().startsWith('PO') || value?.trim().startsWith('P.O.')) {
+        return false
+      }
+      return true
+    })
+    .test('addressLine1', 'Address is required', (value) => {
+      if (value?.trim().startsWith('undefined')) {
+        return false
+      }
+      return true
+    }),
   addressLine2: yup.string(),
   city: yup.string().required('City is required'),
   stateOrProvince: yup.string().length(2).required(),
@@ -64,6 +78,8 @@ export function AddressBlock({
   trigger,
   readOnly,
   required,
+  label,
+  placeholder,
 }: {
   register: Function
   errors: any
@@ -72,6 +88,8 @@ export function AddressBlock({
   trigger: Function
   readOnly?: boolean
   required?: boolean
+  label?: string
+  placeholder?: string
 }) {
   const mercoaSession = useMercoaSession()
   const { ref } = usePlacesWidget({
@@ -90,6 +108,7 @@ export function AddressBlock({
       setValue('city', city ?? '', { shouldDirty: true })
       setValue('stateOrProvince', state ?? '', { shouldDirty: true })
       setValue('postalCode', postalCode ?? '', { shouldDirty: true })
+      setValue('country', 'US', { shouldDirty: true })
       trigger()
     },
     options: {
@@ -97,6 +116,10 @@ export function AddressBlock({
       types: ['address'],
     },
   })
+
+  useEffect(() => {
+    setValue('country', 'US', { shouldDirty: true })
+  }, [])
 
   const stateOrProvince = watch('stateOrProvince')
   const [showAddress, setShowAddress] = useState(!!readOnly || stateOrProvince)
@@ -106,7 +129,7 @@ export function AddressBlock({
       {!showAddress ? (
         <>
           <label htmlFor="addressLine1" className="block text-left text-sm font-medium text-gray-700">
-            Address
+            {label ?? 'Address'}
           </label>
           <div className="mt-1">
             <input
@@ -115,7 +138,7 @@ export function AddressBlock({
                 setShowAddress(true)
               }}
               type="text"
-              placeholder="Enter a location"
+              placeholder={placeholder ?? 'Enter a location'}
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               required={required}
             />
@@ -125,7 +148,7 @@ export function AddressBlock({
         <div className="grid grid-cols-2 gap-4 mb-5">
           <div className="mt-1 col-span-2">
             <label htmlFor="addressLine1" className="block text-left text-sm font-medium text-gray-700">
-              Address
+              {label ?? 'Address'}
             </label>
             <input
               {...register('addressLine1')}
@@ -235,6 +258,7 @@ export function NameBlock({
             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           />
         </div>
+        {errors.firstName?.message && <p className="text-sm text-red-500">{errors.firstName?.message.toString()}</p>}
       </div>
       <div>
         <label htmlFor="middleName" className="block text-left text-sm font-medium text-gray-700">
@@ -261,6 +285,7 @@ export function NameBlock({
             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           />
         </div>
+        {errors.lastName?.message && <p className="text-sm text-red-500">{errors.lastName?.message.toString()}</p>}
       </div>
       <div>
         <label htmlFor="suffix" className="block text-left text-sm font-medium text-gray-700">
@@ -284,6 +309,19 @@ export function NameBlock({
       </div>
     </div>
   )
+}
+
+export const dateOfBirthSchema = {
+  dob: yup
+    .date()
+    .typeError('Date of birth is required')
+    .required('Date of birth is required')
+    .test('dob', 'Must be at least 18 years old', (value) => {
+      if (dayjs(value).isAfter(dayjs().subtract(18, 'years'))) {
+        return false
+      }
+      return true
+    }),
 }
 
 export function DateOfBirthBlock({
@@ -317,13 +355,16 @@ export function DateOfBirthBlock({
           )}
         />
       </div>
+      {errors.dob?.message && <p className="text-sm text-red-500">{errors.dob?.message.toString()}</p>}
     </div>
   )
 }
 
 export const SSNSchema = {
-  dob: yup.date().required('Date of birth is required'),
-  taxID: yup.string().required('SSN is required'),
+  taxID: yup
+    .string()
+    .matches(/^\d{3}-\d{2}-\d{4}$/, 'Invalid SSN')
+    .required('SSN is required'),
 }
 
 export function SSNBlock({
@@ -383,6 +424,7 @@ export function SSNBlock({
           }}
         />
       </div>
+      {errors.taxID?.message && <p className="text-sm text-red-500">{errors.taxID?.message.toString()}</p>}
     </div>
   )
 }
@@ -422,7 +464,10 @@ export function EmailBlock({
 }
 
 export const phoneSchema = {
-  phoneNumber: yup.string().required('Phone number is required'),
+  phoneNumber: yup
+    .string()
+    .matches(/^\(\d{3}\) \d{3}-\d{4}$/, 'Invalid phone number')
+    .required('Phone number is required'),
 }
 
 export function PhoneBlock({
@@ -1115,7 +1160,11 @@ export function EntityOnboardingForm({
       formState: { errors, isValid },
     } = useForm({
       mode: 'onChange',
-      resolver: yupResolver(yup.object(disableKYB ? nameBlockSchema : { ...SSNSchema, ...nameBlockSchema }).required()),
+      resolver: yupResolver(
+        yup
+          .object(disableKYB ? nameBlockSchema : { ...SSNSchema, ...dateOfBirthSchema, ...nameBlockSchema })
+          .required(),
+      ),
       defaultValues: {
         firstName: data.firstName,
         middleName: data.middleName,
@@ -1399,12 +1448,15 @@ export function RepresentativeOnboardingForm({
   const schema = yup
     .object({
       email: yup.string().email('Email is not valid').required('Email is required'),
-      phoneNumber: yup.string().required('Phone number is required'),
+      ...phoneSchema,
       ...addressBlockSchema,
       ...nameBlockSchema,
+      ...dateOfBirthSchema,
+      ...SSNSchema,
       jobTitle: yup.string().required('Job title is required'),
       ownershipPercentage: yup
         .number()
+        .typeError('Ownership percentage is required')
         .min(0, 'Ownership percentage must be greater than 0')
         .max(100, 'Ownership percentage must be less than 100')
         .required('Ownership percentage is required'),
@@ -1507,7 +1559,6 @@ export function RepresentativeOnboardingForm({
               <div className="mt-1">
                 <input
                   {...register('jobTitle')}
-                  required
                   type="text"
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
@@ -1524,7 +1575,6 @@ export function RepresentativeOnboardingForm({
               <div className="mt-1">
                 <input
                   {...register('ownershipPercentage')}
-                  required
                   type="number"
                   min={0}
                   max={100}
@@ -1537,7 +1587,14 @@ export function RepresentativeOnboardingForm({
               )}
             </div>
           </div>
-          <AddressBlock register={register} errors={errors} setValue={setValue} trigger={trigger} watch={watch} />
+          <AddressBlock
+            register={register}
+            errors={errors}
+            setValue={setValue}
+            trigger={trigger}
+            watch={watch}
+            label="Residential Address"
+          />
           <div className="relative mt-2 flex items-start items-center">
             <div className="flex h-5 items-center">
               <input
@@ -2072,6 +2129,7 @@ export function EntityOnboarding({
             {onboardingOptions?.business.address.show && (
               <div className="col-span-2">
                 <AddressBlock
+                  label="Business Address"
                   register={register}
                   errors={errors}
                   setValue={setValue}

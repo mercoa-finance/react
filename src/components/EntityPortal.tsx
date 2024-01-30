@@ -1,9 +1,11 @@
 import {
   ArrowLeftIcon,
+  BriefcaseIcon,
   BuildingLibraryIcon,
   ClockIcon,
   EnvelopeIcon,
   LockClosedIcon,
+  LockOpenIcon,
   PlusIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline'
@@ -12,7 +14,9 @@ import { jwtDecode } from 'jwt-decode'
 import { useEffect, useState } from 'react'
 import {
   AcceptToSButton,
+  ApprovalPolicies,
   BankAccounts,
+  Counterparties,
   CustomPaymentMethod,
   EntityOnboarding,
   EntityUserNotificationTable,
@@ -37,10 +41,8 @@ export function EntityPortal({ token }: { token: string }) {
   const { invoiceId } = params
 
   const [screen, setScreenLocal] = useState('inbox')
-  const [selectedInboxTab, setSelectedInboxTab] = useState<Mercoa.InvoiceStatus>('DRAFT')
 
   const [invoice, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>()
-  const [documents, setDocuments] = useState<Mercoa.DocumentResponse[] | undefined>()
 
   const entity = mercoaSession.entity
   const user = mercoaSession.user
@@ -67,15 +69,7 @@ export function EntityPortal({ token }: { token: string }) {
     if (invoiceId) {
       mercoaSession.client?.invoice.get(invoiceId as string).then((resp) => {
         setInvoice(resp)
-        setDocuments(undefined)
-        if (resp.hasDocuments) {
-          mercoaSession.client?.invoice.document.getAll(invoiceId as string).then((resp) => {
-            if (resp) setDocuments(resp)
-            setScreen('invoice')
-          })
-        } else {
-          setScreen('invoice')
-        }
+        setScreen('invoice')
       })
     }
   }, [invoiceId])
@@ -232,6 +226,28 @@ export function EntityPortal({ token }: { token: string }) {
               <span className="hidden md:inline-block">Representatives</span>
             </MercoaButton>
           )}
+          {tokenOptions?.pages?.counterparties && screen !== 'counterparties' && screen !== 'invoice' && (
+            <MercoaButton
+              onClick={() => setScreen('counterparties')}
+              type="button"
+              isEmphasized={false}
+              className="ml-2 inline-flex text-sm"
+            >
+              <BriefcaseIcon className="-ml-1 inline-flex h-5 w-5 md:mr-2" />{' '}
+              <span className="hidden md:inline-block">Vendors</span>
+            </MercoaButton>
+          )}
+          {tokenOptions?.pages?.approvals && screen !== 'approvals' && screen !== 'invoice' && (
+            <MercoaButton
+              onClick={() => setScreen('approvals')}
+              type="button"
+              isEmphasized={false}
+              className="ml-2 inline-flex text-sm"
+            >
+              <LockOpenIcon className="-ml-1 inline-flex h-5 w-5 md:mr-2" />{' '}
+              <span className="hidden md:inline-block">Approval Rules</span>
+            </MercoaButton>
+          )}
           {mercoaSession.iframeOptions?.options?.entity?.enableMercoaPayments &&
             tokenOptions?.pages?.paymentMethods &&
             screen !== 'payments' &&
@@ -247,14 +263,13 @@ export function EntityPortal({ token }: { token: string }) {
               </MercoaButton>
             )}
 
-          {screen !== 'invoice' && (
+          {screen !== 'invoice' && screen !== 'counterparties' && (
             <MercoaButton
               isEmphasized
               type="button"
               className="ml-2 inline-flex text-sm"
               onClick={() => {
                 setScreen('invoice')
-                setDocuments(undefined)
                 setInvoice(undefined)
               }}
             >
@@ -266,22 +281,10 @@ export function EntityPortal({ token }: { token: string }) {
       </div>
       {screen === 'inbox' && (
         <InvoiceInbox
-          onTabChange={(tab) => setSelectedInboxTab(tab)}
-          selectedTab={selectedInboxTab}
           statuses={tokenOptions?.invoice?.status}
           onSelectInvoice={(invoice) => {
             setInvoice(invoice)
-            setDocuments(undefined)
-            if (invoice.hasDocuments) {
-              mercoaSession.client?.invoice.document.getAll(invoice.id).then((resp) => {
-                setScreen('invoice')
-                if (resp) {
-                  setDocuments(resp)
-                }
-              })
-            } else {
-              setScreen('invoice')
-            }
+            setScreen('invoice')
           }}
         />
       )}
@@ -319,6 +322,13 @@ export function EntityPortal({ token }: { token: string }) {
           <EntityUserNotificationTable entityId={entity.id} userId={user.id} />
         </div>
       )}
+      {screen === 'approvals' && (
+        <div>
+          <h3 className="my-8">Approval Rules</h3>
+          <ApprovalPolicies />
+        </div>
+      )}
+      {screen === 'counterparties' && <Counterparties type="payee" />}
       {screen === 'representatives' && (
         <div>
           <p className="font-gray-700 mt-2 text-sm">
@@ -350,7 +360,6 @@ export function EntityPortal({ token }: { token: string }) {
       {screen === 'invoice' && (
         <InvoiceDetails
           invoice={invoice}
-          documents={documents}
           addPaymentMethodRedirect={() => setScreen('payments')}
           onRedirect={(invoice) => {
             if (!invoice) {

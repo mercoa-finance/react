@@ -71,3 +71,7 @@ export const prettyBusinessTypes = {
   UnincorporatedNonProfit: 'Unincorporated Nonprofit',
   IncorporatedNonProfit: 'Incorporated Nonprofit',
 }
+
+export function getEndpoint() {
+  return 'https://api.mercoa.com'
+}

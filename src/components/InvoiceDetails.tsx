@@ -8,6 +8,8 @@ import {
   ChevronRightIcon,
   CreditCardIcon,
   DocumentDuplicateIcon,
+  EnvelopeIcon,
+  ExclamationCircleIcon,
   ExclamationTriangleIcon,
   PencilSquareIcon,
   PlusCircleIcon,
@@ -24,23 +26,26 @@ import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import Draggable from 'react-draggable'
 import Dropzone from 'react-dropzone'
-import { Controller, FieldArrayWithId, useFieldArray, useForm } from 'react-hook-form'
+import { Controller, FieldArrayWithId, FieldErrors, useFieldArray, useForm } from 'react-hook-form'
 import { Document, Page } from 'react-pdf'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { isWeekday, subtractWeekdays } from '../lib/scheduling'
-import { CounterpartySearch } from './CounterpartySearch'
+import { isWeekday } from '../lib/scheduling'
+import { CounterpartySearch } from './Counterparties'
 import { InvoiceStatusPill } from './Inbox'
+import { InvoiceComments } from './InvoiceComments'
 import {
   AddBankAccountForm,
   AddCheckForm,
   AddCustomPaymentMethodForm,
+  LoadingSpinner,
   LoadingSpinnerIcon,
   MercoaButton,
   MercoaCombobox,
   Tooltip,
   findCustomPaymentMethodAccountNameAndNumber,
+  useDebounce,
   useMercoaSession,
 } from './index'
 
@@ -53,15 +58,23 @@ function classNames(...classes: any) {
 }
 
 export function InvoiceDetails({
+  invoiceId,
   invoice,
-  documents,
   onRedirect,
   addPaymentMethodRedirect,
+  children,
 }: {
+  invoiceId?: Mercoa.InvoiceId
   invoice?: Mercoa.InvoiceResponse
-  documents?: Array<Mercoa.DocumentResponse>
   onRedirect: (invoice: Mercoa.InvoiceResponse | undefined) => void
   addPaymentMethodRedirect?: () => void
+  children?: ({
+    invoice,
+    documents,
+  }: {
+    invoice: Mercoa.InvoiceResponse | undefined
+    documents: Mercoa.DocumentResponse[] | undefined
+  }) => React.ReactNode
 }) {
   const mercoaSession = useMercoaSession()
   const [uploadedFile, setUploadedFile] = useState<{ fileReaderObj: string; mimeType: string }>()
@@ -69,17 +82,9 @@ export function InvoiceDetails({
   const [uploadedImage, setUploadedImage] = useState<string>()
   const [ocrProcessing, setOcrProcessing] = useState<boolean>(false)
   const [invoiceLocal, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>(invoice)
-  const [height, setHeight] = useState<number>(typeof window !== 'undefined' ? window.innerHeight - 120 : 0)
-
-  function handleResize() {
-    setHeight(window.innerHeight - 120)
-  }
-  useEffect(() => {
-    window.addEventListener('resize', handleResize, false)
-    return () => {
-      window.removeEventListener('resize', handleResize)
-    }
-  }, [])
+  const [documents, setDocuments] = useState<Mercoa.DocumentResponse[]>()
+  const [height, setHeight] = useState<number>(typeof window !== 'undefined' ? window.innerHeight - 70 : 0)
+  const [isViewingInvoiceMobile, setIsViewingInvoiceMobile] = useState<boolean>(false)
 
   async function refreshInvoice(invoiceId: Mercoa.InvoiceId) {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
@@ -89,139 +94,134 @@ export function InvoiceDetails({
     }
   }
 
+  async function refreshOcrJob(ocrJobId: string) {
+    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    const resp = await mercoaSession.client?.ocr.getAsyncOcr(ocrJobId)
+    if (resp && resp.status === Mercoa.OcrJobStatus.Success) {
+      setOcrResponse(resp.data)
+      setOcrProcessing(false)
+    } else if (resp && resp.status === Mercoa.OcrJobStatus.Failed) {
+      toast.error('OCR failed')
+      setOcrProcessing(false)
+    } else {
+      setTimeout(() => refreshOcrJob(ocrJobId), 5000)
+    }
+  }
+
   async function onFileUpload(fileReaderObj: string, file: File) {
     setUploadedFile({ fileReaderObj, mimeType: file.type })
     setUploadedImage(fileReaderObj)
     // Run OCR on file upload
     setOcrProcessing(true)
     try {
-      // const ocrResponse: Mercoa.OcrResponse = {
-      //   invoice: {
-      //     amount: 2722.55,
-      //     invoiceNumber: '2167',
-      //     invoiceDate: new Date(),
-      //     dueDate: new Date(),
-      //     approvers: [],
-      //     approvalPolicy: [],
-      //     id: 'new',
-      //     status: Mercoa.InvoiceStatus.Draft,
-      //     paymentDestinationConfirmed: false,
-      //     transactions: [],
-      //     createdAt: new Date(),
-      //     updatedAt: new Date(),
-      //     serviceEndDate: new Date(),
-      //     serviceStartDate: new Date(),
-      //     lineItems: [],
-      //     currency: Mercoa.CurrencyCode.Usd,
-      //     hasDocuments: true,
-      //     comments: [],
-      //     metadata: {},
-      //   },
-      //   vendor: {
-      //     id: 'new',
-      //     email: 'ar@alpaca.markets',
-      //     isCustomer: false,
-      //     name: 'Alpaca Securities LLC',
-      //     acceptedTos: false,
-      //     status: Mercoa.EntityStatus.Pending,
-      //     createdAt: new Date(),
-      //     updatedAt: new Date(),
-      //     accountType: Mercoa.AccountType.Business,
-      //     isPayee: true,
-      //     isPayor: false,
-      //     profile: {
-      //       business: {
-      //         email: 'ar@alpaca.markets',
-      //         businessType: Mercoa.BusinessType.Llc,
-      //         legalBusinessName: 'Alpaca Securities LLC',
-      //         ownersProvided: false,
-      //         taxIdProvided: false,
-      //         website: 'alpaca.markets',
-      //       },
-      //     },
-      //   },
-      //   check: {
-      //     addressLine1: '710 Oakfield Dr Ste 210',
-      //     addressLine2: '',
-      //     city: 'Brandon',
-      //     stateOrProvince: 'FL',
-      //     postalCode: '33511',
-      //     country: 'US',
-      //     payToTheOrderOf: 'Alpaca Securities LLC',
-      //     supportedCurrencies: [Mercoa.CurrencyCode.Usd],
-      //     id: 'new',
-      //     createdAt: new Date(),
-      //     updatedAt: new Date(),
-      //     isDefaultDestination: false,
-      //     isDefaultSource: false,
-      //   },
-      //   bankAccount: {
-      //     accountNumber: '3302307899',
-      //     routingNumber: '121140399',
-      //     bankName: 'Silicon Valley Bank',
-      //     accountType: Mercoa.BankType.Checking,
-      //     status: Mercoa.BankStatus.Verified,
-      //     id: 'new',
-      //     supportedCurrencies: [Mercoa.CurrencyCode.Usd],
-      //     createdAt: new Date(),
-      //     updatedAt: new Date(),
-      //     isDefaultDestination: false,
-      //     isDefaultSource: false,
-      //   },
-      // }
-      const ocrResponse = await mercoaSession.client?.ocr.ocr({
+      //refreshOcrJob('ocr_57bab05c-0f69-4d98-86c5-ef258acf6253')
+      const ocrResponse = await mercoaSession.client?.ocr.runAsyncOcr({
         entityId: mercoaSession.entityId,
         image: fileReaderObj,
         mimeType: file.type,
       })
-      setOcrProcessing(false)
-      setOcrResponse(ocrResponse)
+      if (ocrResponse) {
+        refreshOcrJob(ocrResponse?.jobId)
+      } else {
+        toast.error('OCR failed')
+        setOcrProcessing(false)
+      }
     } catch (e) {
       console.log(e)
+      toast.error('OCR failed')
       setOcrProcessing(false)
     }
   }
 
   useEffect(() => {
-    if (!documents || !documents[0]) return
-    setUploadedFile({ fileReaderObj: documents?.[0]?.uri, mimeType: documents?.[0]?.mimeType })
-  }, [documents])
+    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    if (!invoice && invoiceId) {
+      refreshInvoice(invoiceId)
+    }
+  }, [invoice, invoiceId, mercoaSession.token, mercoaSession.entity?.id])
+
+  function handleResize() {
+    setHeight(window.innerHeight - 70)
+  }
+  useEffect(() => {
+    handleResize()
+    window.addEventListener('resize', handleResize, false)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (invoiceLocal && invoiceLocal.hasDocuments) {
+      mercoaSession.client?.invoice.document.getAll(invoiceLocal.id).then((documents) => {
+        if (documents && documents.length > 0) {
+          setDocuments(documents)
+          setUploadedFile({ fileReaderObj: documents?.[0]?.uri, mimeType: documents?.[0]?.mimeType })
+        }
+      })
+    }
+  }, [invoiceLocal])
+
+  const document = (
+    <div className="min-w-[300px] mr-5">
+      {uploadedFile ? (
+        <>
+          <div className={`text-center ${ocrProcessing ? 'block mb-5' : 'hidden'}`}>
+            <span className="text-gray-800  w-full"> Extracting Invoice Details </span>
+            <ProgressBar />
+          </div>
+          <InvoiceDocuments documents={new Array(uploadedFile)} height={height} />
+        </>
+      ) : (
+        <InvoiceDocumentsUpload onFileUpload={onFileUpload} />
+      )}
+    </div>
+  )
+
+  if (children) return <>{children({ invoice: invoiceLocal, documents })}</>
+
+  if (!invoiceLocal && invoiceId) {
+    return <LoadingSpinner />
+  }
 
   return (
     <Container>
       {/* ********* INVOICE UPLOAD FIELD */}
-      <Section minSize={0}>
-        <div className="min-w-[300px] mr-5">
-          {uploadedFile ? (
-            <>
-              <div className={`text-center ${ocrProcessing ? 'block mb-5' : 'hidden'}`}>
-                <span className="text-gray-800  w-full"> Extracting Invoice Details </span>
-                <ProgressBar />
-              </div>
-              <InvoiceDocuments documents={new Array(uploadedFile)} height={height} />
-            </>
-          ) : (
-            <InvoiceDocumentsUpload onFileUpload={onFileUpload} />
-          )}
-        </div>
-      </Section>
+      <Section minSize={0}>{document}</Section>
 
-      <Bar size={5} className="bg-gray-200 cursor-ew-resize">
+      <Bar size={5} className="bg-gray-200 cursor-ew-resize invisible min-[450px]:visible">
         <div className="w-3 h-10 bg-gray-500 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
       </Bar>
 
       {/* EDIT INVOICE FORM */}
-      <Section className="pl-5" minSize={300}>
-        <EditInvoiceForm
-          invoice={invoiceLocal}
-          ocrResponse={ocrResponse}
-          uploadedImage={uploadedImage}
-          setUploadedImage={setUploadedImage}
-          onRedirect={onRedirect}
-          refreshInvoice={refreshInvoice}
-          addPaymentMethodRedirect={addPaymentMethodRedirect}
-          height={height}
-        />
+      <Section className="pl-5 relative" minSize={400}>
+        <div className="flex w-full flex-row-reverse visible min-[450px]:invisible absolute top-2">
+          <MercoaButton
+            isEmphasized
+            size="sm"
+            type="button"
+            onClick={() => {
+              setIsViewingInvoiceMobile(!isViewingInvoiceMobile)
+            }}
+            className="mr-7 z-20"
+          >
+            View {isViewingInvoiceMobile ? 'Form' : 'Invoice'}
+          </MercoaButton>
+        </div>
+        {isViewingInvoiceMobile ? (
+          <div className="mt-20">{document}</div>
+        ) : (
+          <EditInvoiceForm
+            invoice={invoiceLocal}
+            ocrResponse={ocrResponse}
+            uploadedImage={uploadedImage}
+            setUploadedImage={setUploadedImage}
+            onRedirect={onRedirect}
+            refreshInvoice={refreshInvoice}
+            addPaymentMethodRedirect={addPaymentMethodRedirect}
+            height={height}
+          />
+        )}
       </Section>
     </Container>
   )
@@ -294,20 +294,19 @@ function InvoiceDocuments({
 }) {
   const [numPages, setNumPages] = useState<number>()
   const [pageNumber, setPageNumber] = useState<number>(1)
-
-  const useWidth = (target: any) => {
-    const [width, setWidth] = useState<number>()
-
-    useLayoutEffect(() => {
-      setWidth(target.current.getBoundingClientRect().width)
-    }, [target])
-
-    useResizeObserver(target, (entry) => setWidth(entry.contentRect.width))
-    return width
-  }
+  const [debouncedWidth, setDebouncedWidth] = useDebounce(0, 20)
 
   const wrapperDiv = useRef(null)
-  const width = useWidth(wrapperDiv)
+
+  useLayoutEffect(() => {
+    if (wrapperDiv.current === null) return
+    setDebouncedWidth((wrapperDiv.current as any).getBoundingClientRect().width)
+  }, [wrapperDiv])
+
+  useResizeObserver(wrapperDiv, (entry) => {
+    if (debouncedWidth && Math.abs(debouncedWidth - entry.contentRect.width) < 20) return
+    setDebouncedWidth(entry.contentRect.width)
+  })
 
   const documentNavigation = (
     <div className="flex justify-center ">
@@ -355,52 +354,43 @@ function InvoiceDocuments({
         <div ref={wrapperDiv}>
           {documents.map((document, i) => (
             <div key={i}>
-              {document.mimeType === 'application/pdf' ? (
-                <Document
-                  loading={
-                    <div
-                      className="mt-2 flex w-full items-center justify-center rounded-md border shadow-lg"
-                      style={{ height: '700px' }}
-                    >
-                      <LoadingSpinnerIcon />
-                    </div>
-                  }
-                  file={document.fileReaderObj}
-                  key={document.fileReaderObj}
-                  onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-                >
-                  <Page
-                    pageNumber={pageNumber}
-                    className="m-0 w-full p-0 mt-2 rounded-md border shadow-lg"
-                    renderTextLayer={false}
-                    renderAnnotationLayer={false}
-                    width={width}
+              <div className="rounded-md border shadow-lg" style={{ width: `${debouncedWidth}px` }}>
+                {document.mimeType === 'application/pdf' ? (
+                  <Document
+                    loading={
+                      <div className="mt-2 flex w-full items-center justify-center" style={{ height: '700px' }}>
+                        <LoadingSpinnerIcon />
+                      </div>
+                    }
+                    file={document.fileReaderObj}
+                    key={document.fileReaderObj}
+                    onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                  >
+                    <Page
+                      pageNumber={pageNumber}
+                      className="m-0 w-full p-0 mt-2"
+                      renderTextLayer={false}
+                      renderAnnotationLayer={false}
+                      width={debouncedWidth - 5}
+                    />
+                  </Document>
+                ) : (
+                  <img
+                    src={document.fileReaderObj}
+                    key={document.fileReaderObj}
+                    onLoad={() => setNumPages(1)}
+                    className="mt-2"
                   />
-                </Document>
-              ) : (
-                <img
-                  src={document.fileReaderObj}
-                  key={document.fileReaderObj}
-                  onLoad={() => setNumPages(1)}
-                  className="mt-2 rounded-md border shadow-lg"
-                />
-              )}
-
-              {document.fileReaderObj.startsWith('http') && (
-                <MercoaButton
-                  type="button"
-                  isEmphasized={false}
-                  onClick={() => {
-                    window.open(document.fileReaderObj, '_blank')
-                  }}
-                  className="mt-2"
-                >
+                )}
+              </div>
+              <a href={document.fileReaderObj} target="_blank" rel="noreferrer" className="mt-2" download>
+                <MercoaButton type="button" isEmphasized={false} className="mt-2">
                   <span className="hidden xl:inline">
                     <ArrowDownTrayIcon className="-ml-1 mr-2 inline-flex h-5 w-5" /> Download Invoice
                   </span>
                   <span className="inline xl:hidden">Download</span>
                 </MercoaButton>
-              )}
+              </a>
             </div>
           ))}
         </div>
@@ -438,7 +428,7 @@ export function EditInvoiceForm({
   const mercoaSession = useMercoaSession()
 
   const [sourcePaymentMethods, setSourcePaymentMethods] = useState<Array<Mercoa.PaymentMethodResponse>>([])
-  const [paymentMethodSchemas, setPaymentMethodSchemas] = useState<Array<Mercoa.PaymentMethodSchemaResponse>>([])
+  const [paymentMethodSchemas, setPaymentMethodSchemas] = useState<Array<Mercoa.CustomPaymentMethodSchemaResponse>>([])
   const [destinationPaymentMethods, setDestinationPaymentMethods] = useState<Array<Mercoa.PaymentMethodResponse>>([])
   const [supportedCurrencies, setSupportedCurrencies] = useState<Array<Mercoa.CurrencyCode>>([])
   const [selectedVendor, setSelectedVendor] = useState<Mercoa.EntityResponse | undefined>(invoice?.vendor)
@@ -487,32 +477,24 @@ export function EditInvoiceForm({
       dueDate: yup.date().required('Please select a due date').typeError('Please select a due date'),
       deductionDate: yup.date().typeError('Please select a deduction date'),
       invoiceDate: yup.date().required('Please select an invoice date').typeError('Please select an invoice date'),
-      approvers: yup
-        .array()
-        .of(
-          yup.object({
-            assignedUserId: yup.string().required(),
-            approvalSlotId: yup.string().required(),
-          }),
-        )
-        .length(invoice?.approvers.length ?? 0),
+      approvers: yup.mixed(),
       lineItems: yup.array().of(
         yup.object({
           id: yup.string(),
           description: yup.string().required(),
-          amount: yup.number().positive().required().typeError('Please enter a valid number'),
-          quantity: yup.number().positive().required().typeError('Please enter a valid number'),
-          unitPrice: yup.number().positive().required().typeError('Please enter a valid number'),
+          amount: yup.number().moreThan(-1).required().typeError('Please enter a valid number'),
+          quantity: yup.number().moreThan(-1).required().typeError('Please enter a valid number'),
+          unitPrice: yup.number().moreThan(-1).required().typeError('Please enter a valid number'),
           metadata: yup.mixed().nullable(),
           glAccountId: yup.string(),
         }),
       ),
       currency: yup.string().required(),
-      vendorId: yup.string().required(),
-      vendorName: yup.string().required(),
+      vendorId: yup.string(),
+      vendorName: yup.string(),
       paymentDestinationId: yup.string(),
       paymentMethodDestinationType: yup.string(),
-      paymentSourceId: yup.string().required(),
+      paymentSourceId: yup.string(),
       paymentMethodSourceType: yup.string(),
       saveAsDraft: yup.boolean(),
       metadata: yup.mixed().nullable(),
@@ -527,7 +509,7 @@ export function EditInvoiceForm({
     clearErrors,
     watch,
     control,
-    formState: { errors, dirtyFields },
+    formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -538,7 +520,7 @@ export function EditInvoiceForm({
       vendorName: invoice?.vendor?.name,
       invoiceDate: invoice?.invoiceDate ? dayjs(invoice?.invoiceDate).toDate() : undefined,
       dueDate: invoice?.dueDate ? dayjs(invoice?.dueDate).toDate() : undefined,
-      deductionDate: invoice?.dueDate ? subtractWeekdays(dayjs(invoice?.dueDate), 3).toDate() : undefined,
+      deductionDate: invoice?.deductionDate ? dayjs(invoice?.deductionDate).toDate() : undefined,
       lineItems: invoice?.lineItems ?? [],
       paymentDestinationId: invoice?.paymentDestination?.id,
       paymentMethodDestinationType: '',
@@ -588,30 +570,32 @@ export function EditInvoiceForm({
         setSourcePaymentMethods(resp)
       }
     })
-    mercoaSession.client?.paymentMethodSchema.getAll().then((resp: Mercoa.PaymentMethodSchemaResponse[]) => {
-      if (resp) {
-        setPaymentMethodSchemas(resp)
+    mercoaSession.client?.customPaymentMethodSchema
+      .getAll()
+      .then((resp: Mercoa.CustomPaymentMethodSchemaResponse[]) => {
+        if (resp) {
+          setPaymentMethodSchemas(resp)
 
-        // Figure out what currencies are supported by C1 -------------------------------
-        let supportedCurrencies: Mercoa.CurrencyCode[] = []
+          // Figure out what currencies are supported by C1 -------------------------------
+          let supportedCurrencies: Mercoa.CurrencyCode[] = []
 
-        const hasMercoaPaymentRails = mercoaSession.organization?.paymentMethods?.payerPayments.some(
-          (p) => p.active && (p.type === 'bankAccount' || p.type === 'card'),
-        )
+          const hasMercoaPaymentRails = mercoaSession.organization?.paymentMethods?.payerPayments.some(
+            (p) => p.active && (p.type === 'bankAccount' || p.type === 'card'),
+          )
 
-        // dedupe and add supported currencies
-        if (hasMercoaPaymentRails) {
-          supportedCurrencies.push('USD')
-        }
-        resp.forEach((p) => {
-          if (p.supportedCurrencies) {
-            supportedCurrencies = [...new Set([...supportedCurrencies, ...p.supportedCurrencies])]
+          // dedupe and add supported currencies
+          if (hasMercoaPaymentRails) {
+            supportedCurrencies.push('USD')
           }
-        })
-        setSupportedCurrencies(supportedCurrencies)
-        // ------------------------------------------------------------------------------
-      }
-    })
+          resp.forEach((p) => {
+            if (p.supportedCurrencies) {
+              supportedCurrencies = [...new Set([...supportedCurrencies, ...p.supportedCurrencies])]
+            }
+          })
+          setSupportedCurrencies(supportedCurrencies)
+          // ------------------------------------------------------------------------------
+        }
+      })
   }, [mercoaSession.client, mercoaSession.entity?.id, mercoaSession.token])
 
   // Get entity metadata
@@ -639,12 +623,6 @@ export function EditInvoiceForm({
     })
   }, [mercoaSession.client, vendorId, mercoaSession.token])
 
-  // Auto calculate deduction date based on due date
-  useEffect(() => {
-    if (dueDate)
-      setValue('deductionDate', dayjs.max(subtractWeekdays(dayjs(dueDate), 3), dayjs().add(1, 'day'))?.toDate())
-  }, [dueDate])
-
   // OCR Merge
   useEffect(() => {
     if (!ocrResponse) return
@@ -657,7 +635,7 @@ export function EditInvoiceForm({
     if (ocrResponse.invoice.metadata) setValue('metadata', JSON.stringify(ocrResponse.invoice.metadata))
     // setValue('vendorName', ocrResponse.vendor.name)
     // setValue('vendorId', ocrResponse.vendor.id)
-    if (ocrResponse.invoice.lineItems)
+    if (ocrResponse.invoice.lineItems && !mercoaSession.iframeOptions?.options?.invoice?.disableLineItems) {
       setValue(
         'lineItems',
         ocrResponse.invoice.lineItems.map((lineItem) => ({
@@ -673,6 +651,7 @@ export function EditInvoiceForm({
           updatedAt: lineItem.updatedAt ?? new Date(),
         })),
       )
+    }
 
     if (!selectedVendor) {
       if (ocrResponse.vendor.id === 'new' && mercoaSession.iframeOptions?.options?.vendors?.disableCreation) {
@@ -684,11 +663,9 @@ export function EditInvoiceForm({
     }
   }, [ocrResponse, selectedVendor])
 
-  const hasAssignedAllApprovers = !!invoice?.approvers.every((approver) => approver.assignedUserId)
-
   let approversAssigned = false
   if (invoice?.approvers) {
-    approversAssigned = !!approvers?.every((approver) => !!approver)
+    approversAssigned = !!approvers?.every((approver: any) => !!approver)
   } else {
     approversAssigned = !!invoice?.approvers.every((approver) => approver.assignedUserId)
   }
@@ -740,7 +717,7 @@ export function EditInvoiceForm({
       noteToSelf: data.description,
       payerId: mercoaSession.entity?.id,
       paymentSourceId: data.paymentSourceId,
-      approvers: data.approvers,
+      approvers: data.approvers.filter((e: { assignedUserId: string }) => e.assignedUserId),
       ...(data.vendorId !== 'new' && {
         vendorId: data.vendorId,
       }),
@@ -1064,7 +1041,7 @@ export function EditInvoiceForm({
               render={({ field }) => (
                 <DatePicker
                   className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
-                  placeholderText="Select Payment Date"
+                  placeholderText="Scheduled payment date"
                   onChange={(date) => field.onChange(date)}
                   selected={field.value}
                   minDate={dayjs().add(1, 'day').toDate()}
@@ -1091,60 +1068,70 @@ export function EditInvoiceForm({
           </div>
         </div>
 
-        {/*  GRAY BORDER  */}
-        <div className="border-b border-gray-900/10 pb-6 col-span-full" />
-
         {/*  LINE ITEMS */}
-        <div className="col-span-full">
-          <LineItems
-            lineItems={fields}
-            append={append}
-            remove={remove}
-            register={register}
-            currency={currency as Mercoa.CurrencyCode}
-            watch={watch}
-            hasDocument={!!uploadedImage || !!invoice?.hasDocuments}
-            paymentDestination={destinationPaymentMethods.find((pm) => pm.id === paymentDestinationId)}
-            paymentSource={sourcePaymentMethods.find((pm) => pm.id === paymentSourceId)}
-            setValue={setValue}
-            entityMetadata={entityMetadata}
-            width={width}
-          />
-        </div>
+        {!mercoaSession.iframeOptions?.options?.invoice?.disableLineItems && (
+          <>
+            {/*  GRAY BORDER  */}
+            <div className="border-b border-gray-900/10 pb-6 col-span-full" />
 
-        {/*  GRAY BORDER  */}
-        <div className="border-b border-gray-900/10 pb-6 col-span-full" />
+            <div className="col-span-full">
+              <LineItems
+                lineItems={fields}
+                append={append}
+                remove={remove}
+                register={register}
+                currency={currency as Mercoa.CurrencyCode}
+                watch={watch}
+                hasDocument={!!uploadedImage || !!invoice?.hasDocuments}
+                paymentDestination={destinationPaymentMethods.find((pm) => pm.id === paymentDestinationId)}
+                paymentSource={sourcePaymentMethods.find((pm) => pm.id === paymentSourceId)}
+                setValue={setValue}
+                entityMetadata={entityMetadata}
+                width={width}
+              />
+            </div>
+          </>
+        )}
 
         {/*  METADATA  */}
         {(mercoaSession.organization?.metadataSchema?.length ?? 0) > 0 && (
-          <label htmlFor="vendor-name" className="block text-lg font-medium leading-6 text-gray-700 mb-2 col-span-full">
-            Additional Invoice Details
-          </label>
+          <>
+            {/*  GRAY BORDER  */}
+            <div className="border-b border-gray-900/10 pb-6 col-span-full" />
+            <label
+              htmlFor="vendor-name"
+              className="block text-lg font-medium leading-6 text-gray-700 mb-2 col-span-full"
+            >
+              Additional Invoice Details
+            </label>
+
+            {mercoaSession.organization?.metadataSchema?.map((schema) => {
+              const md = JSON.parse((metadata as string) ?? {}) as Record<string, string>
+              const value = md?.[schema.key]
+              return (
+                <div className="col-span-full" key={schema.key}>
+                  <MetadataSelection
+                    entityMetadata={entityMetadata.find((m) => m.key === schema.key)}
+                    schema={schema}
+                    value={value}
+                    hasDocument={!!uploadedImage || !!invoice?.hasDocuments}
+                    paymentDestination={destinationPaymentMethods.find((pm) => pm.id === paymentDestinationId)}
+                    paymentSource={sourcePaymentMethods.find((pm) => pm.id === paymentSourceId)}
+                    setValue={(value: string | string[]) => {
+                      // combobox with multiple will return an array, but metadata needs a string, so join it with commas
+                      if (Array.isArray(value)) {
+                        value = value.join(',')
+                      }
+                      const newMetadata = JSON.parse((metadata as string) ?? {}) as Record<string, string>
+                      newMetadata[schema.key] = `${value}`
+                      setValue('metadata', JSON.stringify(newMetadata), { shouldDirty: true, shouldTouch: true })
+                    }}
+                  />
+                </div>
+              )
+            })}
+          </>
         )}
-        {mercoaSession.organization?.metadataSchema?.map((schema) => {
-          const md = JSON.parse((metadata as string) ?? {}) as Record<string, string>
-          const value = md?.[schema.key]
-          return (
-            <MetadataSelection
-              key={schema.key}
-              entityMetadata={entityMetadata.find((m) => m.key === schema.key)}
-              schema={schema}
-              value={value}
-              hasDocument={!!uploadedImage || !!invoice?.hasDocuments}
-              paymentDestination={destinationPaymentMethods.find((pm) => pm.id === paymentDestinationId)}
-              paymentSource={sourcePaymentMethods.find((pm) => pm.id === paymentSourceId)}
-              setValue={(value: string | string[]) => {
-                // combobox with multiple will return an array, but metadata needs a string, so join it with commas
-                if (Array.isArray(value)) {
-                  value = value.join(',')
-                }
-                const newMetadata = JSON.parse((metadata as string) ?? {}) as Record<string, string>
-                newMetadata[schema.key] = `${value}`
-                setValue('metadata', JSON.stringify(newMetadata), { shouldDirty: true, shouldTouch: true })
-              }}
-            />
-          )
-        })}
 
         {/*  GRAY BORDER  */}
         <div className="border-b border-gray-900/10 pb-6 col-span-full" />
@@ -1217,7 +1204,7 @@ export function EditInvoiceForm({
         <div className="col-span-full">
           {invoice?.approvers && invoice.approvers.length > 0 && selectedApprovers && (
             <>
-              {!hasAssignedAllApprovers && (
+              {invoice.status === Mercoa.InvoiceStatus.Draft ? (
                 <Controller
                   control={control}
                   name="approvers"
@@ -1231,8 +1218,7 @@ export function EditInvoiceForm({
                     />
                   )}
                 />
-              )}
-              {hasAssignedAllApprovers && (
+              ) : (
                 <ApproversAction
                   approverSlots={invoice.approvers}
                   invoiceId={invoice.id}
@@ -1245,14 +1231,26 @@ export function EditInvoiceForm({
           )}
         </div>
 
+        <div className="col-span-full" style={{ visibility: 'hidden' }}>
+          <ErrorOverview errors={errors} clearErrors={clearErrors} />
+        </div>
+
         {/* ACTION BUTTONS */}
         {invoice?.status != Mercoa.InvoiceStatus.Canceled &&
           invoice?.status != Mercoa.InvoiceStatus.Archived &&
           invoice?.status != Mercoa.InvoiceStatus.Paid && (
             <div className="absolute bottom-0 right-0 w-full bg-white z-10">
+              <ErrorOverview errors={errors} clearErrors={clearErrors} />
               <div className="container mx-auto flex flex-row-reverse items-center gap-2 py-3 px-4 sm:px-6 lg:px-8">
                 {invoice?.status != Mercoa.InvoiceStatus.Scheduled && (
                   <>
+                    {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation &&
+                      selectedVendor &&
+                      !selectedVendor?.email && (
+                        <MercoaButton isEmphasized disabled={true}>
+                          Vendor Email Required
+                        </MercoaButton>
+                      )}
                     <SaveInvoiceButton
                       nextInvoiceState={nextInvoiceState}
                       setValue={setValue}
@@ -1302,11 +1300,66 @@ export function EditInvoiceForm({
             </div>
           )}
       </form>
-      {invoice?.id && invoice.id !== 'new' ? (
-        <InvoiceComments invoice={invoice} refreshInvoice={refreshInvoice} />
-      ) : (
-        <div className="mt-10" />
-      )}
+
+      {/*  GRAY BORDER  */}
+      <div className="border-b border-gray-900/10 mb-4" />
+
+      {invoice?.id && invoice.id !== 'new' ? <InvoiceComments invoice={invoice} /> : <div className="mt-10" />}
+      <div className="mt-20" />
+    </div>
+  )
+}
+
+function ErrorOverview({ errors, clearErrors }: { errors: FieldErrors; clearErrors: Function }) {
+  const errorKeys = Object.keys(errors)
+  if (errorKeys.length === 0) return null
+
+  const keyToField = {
+    invoiceNumber: 'Invoice Number',
+    amount: 'Amount',
+    invoiceDate: 'Invoice Date',
+    dueDate: 'Due Date',
+    deductionDate: 'Scheduled Payment Date',
+    currency: 'Currency',
+    vendorId: 'Vendor',
+    paymentSourceId: 'Payment Source',
+    paymentDestinationId: 'Payment Destination',
+    approvers: 'Approvers',
+    lineItems: 'Line Items',
+  } as Record<string, string>
+
+  const errorMessages = {
+    approvers: 'Please select all approvers',
+    lineItems:
+      'Please make sure all line items have a description. Amount, quantity, and unit price must be positive numbers.',
+  } as Record<string, string>
+
+  return (
+    <div className="bg-red-50 border-l-4 border-red-400 p-4 relative">
+      {/* close button */}
+      <button
+        type="button"
+        className="absolute top-1 right-1 p-1 rounded-md hover:bg-red-100 focus:outline-none focus:bg-red-100"
+        onClick={() => clearErrors()}
+      >
+        <span className="sr-only">Close</span>
+        <XMarkIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+      </button>
+      <div className="flex">
+        <div className="flex-shrink-0">
+          <ExclamationCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
+        </div>
+        <div className="ml-3">
+          <h3 className="text-sm font-medium text-red-800">There were errors with your submission</h3>
+          <div className="mt-2 text-sm text-red-700">
+            <ul className="list-disc pl-5 space-y-1">
+              {errorKeys.map((key) => (
+                <li key={key}>{`${keyToField[key]}: ${errors[key]?.message ?? errorMessages[key] ?? ''}`}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -1327,7 +1380,7 @@ function SaveInvoiceButton({
   let text = 'Next'
   switch (nextInvoiceState) {
     case Mercoa.InvoiceStatus.Draft:
-      text = 'Save as Draft'
+      text = 'Save Draft'
       break
     case Mercoa.InvoiceStatus.New:
       if (approvers && approvers.length > 0) {
@@ -1525,7 +1578,7 @@ function SelectPaymentSource({
   currentPaymentMethodId,
 }: {
   paymentMethods: Array<Mercoa.PaymentMethodResponse>
-  paymentMethodSchemas: Array<Mercoa.PaymentMethodSchemaResponse>
+  paymentMethodSchemas: Array<Mercoa.CustomPaymentMethodSchemaResponse>
   register: Function
   errors: any
   watch: Function
@@ -1554,6 +1607,9 @@ function SelectPaymentSource({
   }
   if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'card')) {
     availableTypes.push({ key: 'card', value: 'Card' })
+  }
+  if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'check')) {
+    availableTypes.push({ key: 'check', value: 'Check' })
   }
   paymentMethods.forEach((paymentMethod) => {
     if (paymentMethod.type === 'custom') {
@@ -1624,6 +1680,8 @@ function SelectPaymentSource({
       setValue(paymentMethodTypeKey, 'bankAccount')
     } else if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'card')) {
       setValue(paymentMethodTypeKey, 'card')
+    } else if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'check')) {
+      setValue(paymentMethodTypeKey, 'check')
     } else if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'custom')) {
       let cpm: Mercoa.PaymentMethodResponse | undefined = paymentMethods.find(
         (paymentMethod) => paymentMethod.type === 'custom',
@@ -1667,6 +1725,8 @@ function SelectPaymentSource({
       setValue(sourceOrDestination, paymentMethods.find((paymentMethod) => paymentMethod.type === 'bankAccount')?.id)
     } else if (selectedType === 'card') {
       setValue(sourceOrDestination, paymentMethods.find((paymentMethod) => paymentMethod.type === 'card')?.id)
+    } else if (selectedType === 'check') {
+      setValue(sourceOrDestination, paymentMethods.find((paymentMethod) => paymentMethod.type === 'check')?.id)
     } else {
       setValue(
         sourceOrDestination,
@@ -1723,6 +1783,8 @@ function SelectPaymentSource({
                 return paymentMethod.type === Mercoa.PaymentMethodType.BankAccount
               if (selectedType === Mercoa.PaymentMethodType.Card)
                 return paymentMethod.type === Mercoa.PaymentMethodType.Card
+              if (selectedType === Mercoa.PaymentMethodType.Check)
+                return paymentMethod.type === Mercoa.PaymentMethodType.Check
               if (paymentMethod.type === Mercoa.PaymentMethodType.Custom) return paymentMethod.schemaId === selectedType
             })
             .map((paymentMethod) => (
@@ -1739,6 +1801,12 @@ function SelectPaymentSource({
                   <>
                     <CreditCardIcon className="h-5 w-5" aria-hidden="true" />
                     {paymentMethod.cardBrand} ••••{paymentMethod.lastFour}
+                  </>
+                )}
+                {paymentMethod.type === Mercoa.PaymentMethodType.Check && (
+                  <>
+                    <EnvelopeIcon className="h-5 w-5" aria-hidden="true" />
+                    {paymentMethod.payToTheOrderOf}: {paymentMethod.addressLine1}
                   </>
                 )}
                 {paymentMethod.type === Mercoa.PaymentMethodType.Custom && (
@@ -1779,7 +1847,9 @@ function SelectPaymentSource({
             <AddCustomPaymentMethodForm
               register={register}
               control={control}
-              schema={paymentMethodSchemas?.find((e) => e.id === selectedType) as Mercoa.PaymentMethodSchemaResponse}
+              schema={
+                paymentMethodSchemas?.find((e) => e.id === selectedType) as Mercoa.CustomPaymentMethodSchemaResponse
+              }
             />
           )}
         </div>
@@ -2041,123 +2111,9 @@ function ApproverActionButton({
 
 // End Approvers
 
-// Comments
-
-export function InvoiceComments({
-  invoice,
-  refreshInvoice,
-}: {
-  invoice?: Mercoa.InvoiceResponse
-  refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
-}) {
-  const mercoaSession = useMercoaSession()
-
-  const [comments, setComments] = useState<Array<Mercoa.CommentResponse>>(invoice?.comments ?? [])
-
-  const { register, handleSubmit, setValue } = useForm({
-    defaultValues: {
-      type: 'comment',
-      text: '',
-    },
-  })
-
-  function addComment({ type, text }: { type: string; text: string }) {
-    if (!mercoaSession.user?.id) {
-      toast.error('Please login as a user to comment')
-      return
-    }
-    if (!mercoaSession.token || !invoice?.id) return
-    if (type === 'comment') {
-      mercoaSession.client?.invoice.comment
-        .create(invoice.id, {
-          text,
-          userId: mercoaSession.user?.id,
-        })
-        .then((resp) => {
-          if (resp) {
-            console.log(resp)
-            setComments([...comments, resp])
-            setValue('text', '')
-          }
-        })
-    }
-  }
-
-  return (
-    <div className="py-6">
-      <h2 className="text-base font-semibold leading-7 text-gray-900 my-5">Comments</h2>
-      {comments.map((comment) => (
-        <div className="p-6 mb-6 text-base bg-gray-50 rounded-lg" key={comment.id}>
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center">
-              <p className="inline-flex items-center mr-1 text-sm text-gray-900">{comment.user?.name}</p>
-              <span aria-hidden="true" className="text-gray-400">
-                &middot;
-              </span>
-              <p className="text-sm text-gray-600 ml-1">{dayjs(comment.updatedAt).format('MMM DD, YYYY')}</p>
-            </div>
-          </div>
-          <div className="flex items-center">
-            <div className="flex-shrink-0 mr-3">
-              {comment.associatedApprovalAction?.action === Mercoa.ApproverAction.Approve && (
-                <div>
-                  <CheckCircleIcon className="h-5 w-5 text-green-500" aria-hidden="true" />
-                  <span className="sr-only">Approved</span>
-                </div>
-              )}
-              {comment.associatedApprovalAction?.action === Mercoa.ApproverAction.Reject && (
-                <div>
-                  <XCircleIcon className="h-5 w-5 text-red-500" aria-hidden="true" />
-                  <span className="sr-only">Rejected</span>
-                </div>
-              )}
-            </div>
-            <pre className="text-gray-500">{comment.text}</pre>
-          </div>
-        </div>
-      ))}
-      <div className="mt-2">
-        <form onSubmit={handleSubmit(addComment)} className="relative">
-          <div className="overflow-hidden rounded-lg shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-mercoa-primary">
-            <label htmlFor="text" className="sr-only">
-              Add your comment
-            </label>
-            <textarea
-              rows={3}
-              {...register('text')}
-              className="block w-full resize-none border-0 bg-transparent py-3 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
-              placeholder="Add your comment..."
-              defaultValue={''}
-            />
-
-            {/* Spacer element to match the height of the toolbar */}
-            <div className="py-2" aria-hidden="true">
-              {/* Matches height of button in toolbar (1px border + 36px content height) */}
-              <div className="py-px">
-                <div className="h-9" />
-              </div>
-            </div>
-          </div>
-
-          <div className="absolute inset-x-0 bottom-0 flex justify-between py-2 pl-3 pr-2">
-            <div className="flex-grow-1" />
-            <div className="flex-shrink-0">
-              <MercoaButton type="submit" isEmphasized={false}>
-                Post
-              </MercoaButton>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-// End Comments
-
 // Metadata
 
-function MetadataSelection({
+export function MetadataSelection({
   schema,
   value,
   entityMetadata,
@@ -2166,6 +2122,7 @@ function MetadataSelection({
   paymentDestination,
   paymentSource,
   lineItem,
+  skipValidation,
 }: {
   schema: Mercoa.MetadataSchema
   value?: string
@@ -2175,36 +2132,64 @@ function MetadataSelection({
   paymentDestination?: Mercoa.PaymentMethodResponse
   paymentSource?: Mercoa.PaymentMethodResponse
   lineItem?: boolean
+  skipValidation?: boolean
 }) {
   const [edit, setEdit] = useState(!value)
 
-  if (schema.showConditions?.hasDocument && !hasDocument) {
-    return <></>
-  }
+  // Filter out empty values from metadata
+  if (entityMetadata) {
+    entityMetadata.value = entityMetadata.value.filter((e) => e)
 
-  if (schema.showConditions?.hasOptions && !entityMetadata) {
-    return <></>
-  }
-
-  if (schema.lineItem && !lineItem) {
-    return <></>
-  }
-
-  if (schema.showConditions?.paymentDestinationTypes && schema.showConditions.paymentDestinationTypes.length > 0) {
-    if (!paymentDestination) return <></>
-    if (!schema.showConditions.paymentDestinationTypes.includes(paymentDestination.type)) return <></>
-    if (schema.showConditions.paymentDestinationTypes.includes('custom')) {
-      if (paymentDestination.type != Mercoa.PaymentMethodType.Custom) return <></>
-      if (!schema.showConditions?.paymentDestinationCustomSchemaIds?.includes(paymentDestination.schemaId)) return <></>
+    if (schema.type === Mercoa.MetadataType.KeyValue) {
+      entityMetadata.value = entityMetadata.value.filter((e) => {
+        try {
+          const parsedValue = dJSON.parse(e) as { key: string; value: string }
+          return parsedValue.key && parsedValue.value
+        } catch (e) {
+          console.error(e)
+        }
+        return false
+      })
+    }
+    if (entityMetadata?.value.length === 0) {
+      entityMetadata = undefined
     }
   }
 
-  if (schema.showConditions?.paymentSourceTypes && schema.showConditions.paymentSourceTypes.length > 0) {
-    if (!paymentSource) return <></>
-    if (!schema.showConditions.paymentSourceTypes.includes(paymentSource.type)) return <></>
-    if (schema.showConditions.paymentSourceTypes.includes('custom')) {
-      if (paymentSource.type != Mercoa.PaymentMethodType.Custom) return <></>
-      if (!schema.showConditions?.paymentSourceCustomSchemaIds?.includes(paymentSource.schemaId)) return <></>
+  if (!skipValidation) {
+    if (schema.showConditions?.hasDocument && !hasDocument) {
+      return <></>
+    }
+
+    if (schema.type === Mercoa.MetadataType.KeyValue && !entityMetadata) {
+      return <></>
+    }
+
+    if (schema.showConditions?.hasOptions && !entityMetadata) {
+      return <></>
+    }
+
+    if (schema.lineItem && !lineItem) {
+      return <></>
+    }
+
+    if (schema.showConditions?.paymentDestinationTypes && schema.showConditions.paymentDestinationTypes.length > 0) {
+      if (!paymentDestination) return <></>
+      if (!schema.showConditions.paymentDestinationTypes.includes(paymentDestination.type)) return <></>
+      if (schema.showConditions.paymentDestinationTypes.includes('custom')) {
+        if (paymentDestination.type != Mercoa.PaymentMethodType.Custom) return <></>
+        if (!schema.showConditions?.paymentDestinationCustomSchemaIds?.includes(paymentDestination.schemaId))
+          return <></>
+      }
+    }
+
+    if (schema.showConditions?.paymentSourceTypes && schema.showConditions.paymentSourceTypes.length > 0) {
+      if (!paymentSource) return <></>
+      if (!schema.showConditions.paymentSourceTypes.includes(paymentSource.type)) return <></>
+      if (schema.showConditions.paymentSourceTypes.includes('custom')) {
+        if (paymentSource.type != Mercoa.PaymentMethodType.Custom) return <></>
+        if (!schema.showConditions?.paymentSourceCustomSchemaIds?.includes(paymentSource.schemaId)) return <></>
+      }
     }
   }
 
@@ -2218,7 +2203,9 @@ function MetadataSelection({
       {schema.type === Mercoa.MetadataType.Boolean && (
         <MetadataBoolean schema={schema} setValue={setValue} value={value} />
       )}
-      {schema.type === Mercoa.MetadataType.Date && <MetadataDate setValue={setValue} value={value} />}
+      {schema.type === Mercoa.MetadataType.Date && (
+        <MetadataDate setValue={setValue} value={value} displayName={schema.displayName} />
+      )}
     </>
   )
 
@@ -2254,7 +2241,8 @@ function MetadataCombobox({
   let comboboxValue: string | string[] | undefined = value
   if (schema.allowMultiple) {
     // Metadata is stored as a comma separated string, but comboboxes expect an array
-    comboboxValue = value?.split(',')
+    if (Array.isArray(value)) comboboxValue = value
+    else comboboxValue = value?.split(',')
   }
 
   if (schema.type === Mercoa.MetadataType.KeyValue) {
@@ -2313,17 +2301,30 @@ function MetadataCombobox({
   )
 }
 
-function MetadataDate({ setValue, value }: { setValue: (e: string) => void; value?: string }) {
+function MetadataDate({
+  setValue,
+  value,
+  displayName,
+}: {
+  setValue: (e: string) => void
+  value?: string
+  displayName: string
+}) {
   return (
     <DatePicker
       className="block w-full rounded-md border-gray-300 sm:text-sm"
-      placeholderText="Select due date"
+      placeholderText={`Select ${displayName}`}
       onChange={(date) => {
         if (date) {
           setValue(date.toISOString())
         }
       }}
-      selected={dayjs(value).toDate()}
+      selected={(() => {
+        if (dayjs(value).isValid()) {
+          return dayjs(value).toDate()
+        }
+        return undefined
+      })()}
     />
   )
 }
@@ -2406,25 +2407,23 @@ function MetadataWell({
     })
   }
   return (
-    <>
-      <div className="flex items-center">
-        <div className="flex-auto">
-          <div className={classNames('flex items-center rounded-md')}>
-            <div className="flex-auto p-3">
-              <div className={classNames('text-sm font-medium', 'text-grey-900')}>{schema.displayName}</div>
-              <div className="text-sm text-gray-500">{value}</div>
-            </div>
-            <button
-              type="button"
-              onClick={setEdit}
-              className="mx-4 flex-shrink-0 p-1 text-mercoa-primary-text hover:opacity-75 cursor-pointer"
-            >
-              <PencilSquareIcon className="w-5 h-5" />
-            </button>
+    <div className="flex items-center">
+      <div className="flex-auto">
+        <div className={classNames('flex items-center rounded-md')}>
+          <div className="flex-auto p-3">
+            <div className={classNames('text-sm font-medium', 'text-grey-900')}>{schema.displayName}</div>
+            <div className="text-sm text-gray-500">{value}</div>
           </div>
+          <button
+            type="button"
+            onClick={setEdit}
+            className="mx-4 flex-shrink-0 p-1 text-mercoa-primary-text hover:opacity-75 cursor-pointer"
+          >
+            <PencilSquareIcon className="w-5 h-5" />
+          </button>
         </div>
       </div>
-    </>
+    </div>
   )
 }
 

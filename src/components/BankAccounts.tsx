@@ -7,8 +7,14 @@ import { useForm } from 'react-hook-form'
 import { usePlaidLink } from 'react-plaid-link'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
+import {
+  DefaultPaymentMethodIndicator,
+  LoadingSpinnerIcon,
+  MercoaButton,
+  Tooltip,
+  useMercoaSession,
+} from '../components/index'
 import { capitalize } from '../lib/lib'
-import { DefaultPaymentMethodIndicator, LoadingSpinnerIcon, MercoaButton, Tooltip, useMercoaSession } from './index'
 
 const validBankAccount = require('us-bank-account-validator')
 
@@ -167,7 +173,7 @@ export function AddBankViaPlaidOrManual({
       </div>
     )
   } else {
-    return null
+    return <div className="p-10 text-center"></div>
   }
 }
 
@@ -588,7 +594,8 @@ export function BankAccountComponent({
                 </span>
               </Tooltip>
             )}
-            {account?.status === (Mercoa.BankStatus.VerificationFailed || Mercoa.BankStatus.Errored) && (
+            {(account?.status === Mercoa.BankStatus.VerificationFailed ||
+              account?.status === Mercoa.BankStatus.Errored) && (
               /* @ts-ignore:next-line */
               <Tooltip title="Can only receive funds">
                 <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">

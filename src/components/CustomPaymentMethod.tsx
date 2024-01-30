@@ -17,7 +17,7 @@ export function CustomPaymentMethod({
   children?: Function
   onSelect?: Function
   showEdit?: boolean
-  schema?: Mercoa.PaymentMethodSchemaResponse
+  schema?: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
   const [paymentMethods, setPaymentMethods] = useState<Array<Mercoa.CustomPaymentMethodResponse>>()
   const [showDialog, setShowDialog] = useState(false)
@@ -69,7 +69,7 @@ export function CustomPaymentMethodComponent({
   onSelect?: Function
   selected?: boolean
   showEdit?: boolean
-  schema?: Mercoa.PaymentMethodSchemaResponse
+  schema?: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
   if (account) {
     const { accountName, accountNumber } = findCustomPaymentMethodAccountNameAndNumber(account)
@@ -144,7 +144,7 @@ export function AddCustomPaymentMethod({
   actions?: ReactNode
   formOnlySubmit?: Function
   custom?: Mercoa.CustomPaymentMethodRequest
-  schema: Mercoa.PaymentMethodSchemaResponse
+  schema: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -193,9 +193,9 @@ export function AddCustomPaymentMethodForm({
 }: {
   register: Function
   control: any
-  schema: Mercoa.PaymentMethodSchemaResponse
+  schema: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
-  const [schemaFields, setSchemaFields] = useState<Mercoa.PaymentMethodSchemaField[]>()
+  const [schemaFields, setSchemaFields] = useState<Mercoa.CustomPaymentMethodSchemaField[]>()
 
   const { append, fields } = useFieldArray({
     control,
@@ -224,7 +224,7 @@ export function AddCustomPaymentMethodForm({
           <label htmlFor={`~cpm~~.${index}.value`} className="block text-sm font-medium text-gray-700">
             {schemaFields?.[index]?.displayName || schemaFields?.[index]?.name}
           </label>
-          {schemaFields?.[index]?.type === Mercoa.PaymentMethodSchemaFieldType.Text && (
+          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Text && (
             <input
               {...register(`~cpm~~.${index}.value`)}
               type="text"
@@ -233,7 +233,7 @@ export function AddCustomPaymentMethodForm({
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
             />
           )}
-          {schemaFields?.[index]?.type === Mercoa.PaymentMethodSchemaFieldType.Url && (
+          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Url && (
             <input
               {...register(`~cpm~~.${index}.value`, {
                 pattern: {
@@ -249,7 +249,7 @@ export function AddCustomPaymentMethodForm({
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
             />
           )}
-          {schemaFields?.[index]?.type === Mercoa.PaymentMethodSchemaFieldType.Email && (
+          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Email && (
             <>
               <input
                 {...register(`~cpm~~.${index}.value`, {
@@ -267,7 +267,7 @@ export function AddCustomPaymentMethodForm({
               />
             </>
           )}
-          {schemaFields?.[index]?.type === Mercoa.PaymentMethodSchemaFieldType.Number && (
+          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Number && (
             <input
               {...register(`~cpm~~.${index}.value`)}
               type="number"
@@ -276,7 +276,7 @@ export function AddCustomPaymentMethodForm({
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
             />
           )}
-          {schemaFields?.[index]?.type === Mercoa.PaymentMethodSchemaFieldType.Select && (
+          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Select && (
             <select
               {...register(`~cpm~~.${index}.value`)}
               required={schemaFields?.[index]?.optional ? false : true}
@@ -289,7 +289,7 @@ export function AddCustomPaymentMethodForm({
               ))}
             </select>
           )}
-          {schemaFields?.[index]?.type === Mercoa.PaymentMethodSchemaFieldType.Date && (
+          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Date && (
             <Controller
               control={control}
               name={`~cpm~~.${index}.value`}
@@ -304,7 +304,7 @@ export function AddCustomPaymentMethodForm({
               )}
             />
           )}
-          {schemaFields?.[index]?.type === Mercoa.PaymentMethodSchemaFieldType.Phone && (
+          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Phone && (
             <Controller
               control={control}
               name={`~cpm~~.${index}.value`}
@@ -329,7 +329,7 @@ export function AddCustomPaymentMethodForm({
               )}
             />
           )}
-          {schemaFields?.[index]?.type === Mercoa.PaymentMethodSchemaFieldType.Address && (
+          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Address && (
             <Controller
               control={control}
               name={`~cpm~~.${index}.value`}

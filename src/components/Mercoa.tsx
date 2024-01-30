@@ -168,6 +168,7 @@ function useProvideSession({
           const { moov } = jwtDecode(String(e)) as { moov: { token: string; accountId: string } }
           setMoovAccountId(moov.accountId)
           setMoovToken(moov.token)
+          if (!moov || !moov.token || moov.token === 'sandbox') return
           try {
             const m = await loadMoov(moov.token)
             if (m) setMoov(m)
