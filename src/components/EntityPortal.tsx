@@ -177,7 +177,7 @@ export function EntityPortal({ token }: { token: string }) {
   }
 
   return (
-    <div className="container mx-auto px-4 pt-5 sm:px-6 lg:px-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex items-center">
         <div className="flex-auto text-sm text-gray-700 my-4 sm:mt-0">
           {screen === 'inbox' ? (
