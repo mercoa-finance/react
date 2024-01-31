@@ -1140,7 +1140,7 @@ export function InvoiceInbox({
         </select>
       </div>
       <div className="hidden md:block sm:border-b sm:border-gray-200">
-        <nav className="-mb-px block sm:flex sm:space-x-8 overflow-auto" aria-label="Tabs">
+        <nav className="-mb-px block sm:flex sm:space-x-6 overflow-auto" aria-label="Tabs">
           {tabs.map((status) => (
             <a
               onClick={() => {
