@@ -2562,7 +2562,7 @@ function LineItems({
       {/* ROWS */}
       <div className="mercoa-overflow-x-hidden hover:mercoa-overflow-x-visible mercoa-pointer-events-none">
         <table
-          className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300 mercoa-w-[600px] mercoa-relative mercoa-mb-6 pointer-events-auto"
+          className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300 mercoa-w-[600px] mercoa-relative mercoa-mb-6 mercoa-pointer-events-auto"
           id="lineItemsTable"
         >
           <thead>
@@ -2653,7 +2653,7 @@ function LineItemScrollBar({ width }: { width: number }) {
   }
 
   return (
-    <div className="mercoa-w-full mercoa-h-[10px] mercoa-bg-gray-100 mercoa-relative pointer-events-auto">
+    <div className="mercoa-w-full mercoa-h-[10px] mercoa-bg-gray-100 mercoa-relative mercoa-pointer-events-auto">
       <Draggable axis="x" bounds="parent" onDrag={(e, data) => onDrag(data)}>
         <div
           className="mercoa-h-[10px] mercoa-bg-gray-300 hover:mercoa-bg-gray-400 mercoa-absolute mercoa-top-0"
