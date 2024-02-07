@@ -111,10 +111,16 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
       })
       .then((resp) => {
         if (resp) {
+          const invoicesThatRequireReview = resp.data.filter((invoice) => {
+            return invoice.approvers?.some(
+              (approver) =>
+                approver.assignedUserId === mercoaSession.user?.id && approver.action === Mercoa.ApproverAction.None,
+            )
+          })
           setHasMore(resp.hasMore)
           setCount(resp.count)
-          setInvoices(resp.data)
-          setShowTable(resp.data.length > 0)
+          setInvoices(invoicesThatRequireReview)
+          setShowTable(invoicesThatRequireReview.length > 0)
         }
       })
   }, [
