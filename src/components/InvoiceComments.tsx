@@ -44,11 +44,13 @@ export function InvoiceComments({ invoice }: { invoice?: Mercoa.InvoiceResponse 
   }
 
   function getApprovalIcon(action: Mercoa.AssociatedApprovalAction) {
-    let approvalIcon = <div className="h-1.5 w-1.5 rounded-full bg-gray-100 ring-1 ring-gray-300" />
+    let approvalIcon = (
+      <div className="mercoa-h-1.5 mercoa-w-1.5 mercoa-rounded-full mercoa-bg-gray-100 mercoa-ring-1 mercoa-ring-gray-300" />
+    )
     if (action.action === 'APPROVE') {
-      approvalIcon = <CheckCircleIcon className="h-6 w-6 text-green-600" aria-hidden="true" />
+      approvalIcon = <CheckCircleIcon className="mercoa-h-6 mercoa-w-6 mercoa-text-green-600" aria-hidden="true" />
     } else if (action.action === 'REJECT') {
-      approvalIcon = <XCircleIcon className="h-6 w-6 text-red-600" aria-hidden="true" />
+      approvalIcon = <XCircleIcon className="mercoa-h-6 mercoa-w-6 mercoa-text-red-600" aria-hidden="true" />
     }
     return approvalIcon
   }
@@ -77,47 +79,47 @@ export function InvoiceComments({ invoice }: { invoice?: Mercoa.InvoiceResponse 
 
   return (
     <>
-      <ul role="list" className="space-y-6 ml-1">
+      <ul role="list" className="mercoa-space-y-6 mercoa-ml-1">
         {[initialCreationComment, ...filteredComments].map((comment, index) => (
-          <li key={comment.id} className="relative flex gap-x-4">
+          <li key={comment.id} className="mercoa-relative mercoa-flex mercoa-gap-x-4">
             <div
               className={`${
-                index === filteredComments.length ? 'h-6' : '-bottom-6'
-              } absolute left-0 top-0 flex w-6 justify-center`}
+                index === filteredComments.length ? 'mercoa-h-6' : '-mercoa-bottom-6'
+              } mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center`}
             >
-              <div className="w-px bg-gray-200" />
+              <div className="mercoa-w-px mercoa-bg-gray-200" />
             </div>
             {comment.text && (
               <>
-                <UserIcon className="h-8 w-8 text-gray-300 mt-3 text-gray-300 bg-gray-100 rounded-full p-1 -ml-1" />
-                <div className="flex-auto rounded-md p-3 ring-1 ring-inset ring-gray-200">
-                  <div className="flex justify-between gap-x-4">
-                    <div className="py-0.5 text-xs leading-5 text-gray-500">
-                      <span className="font-medium text-gray-900">{comment.user?.name}</span> commented
+                <UserIcon className="mercoa-h-8 mercoa-w-8 mercoa-text-gray-300 mercoa-mt-3 mercoa-text-gray-300 mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1 -mercoa-ml-1" />
+                <div className="mercoa-flex-auto mercoa-rounded-md mercoa-p-3 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-200">
+                  <div className="mercoa-flex mercoa-justify-between mercoa-gap-x-4">
+                    <div className="mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
+                      <span className="mercoa-font-medium mercoa-text-gray-900">{comment.user?.name}</span> commented
                     </div>
                     <time
                       dateTime={dayjs(comment.createdAt).toISOString()}
-                      className="flex-none py-0.5 text-xs leading-5 text-gray-500"
+                      className="mercoa-flex-none mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500"
                     >
                       {dayjs(comment.createdAt).fromNow()}
                     </time>
                   </div>
-                  <p className="text-sm leading-6 text-gray-500">{comment.text}</p>
+                  <p className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-500">{comment.text}</p>
                 </div>
               </>
             )}
             {comment.associatedApprovalAction && (
               <>
-                <div className="relative flex h-6 w-6 flex-none items-center justify-center bg-white">
+                <div className="mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center mercoa-bg-white">
                   {getApprovalIcon(comment.associatedApprovalAction)}
                 </div>
-                <p className="flex-auto py-0.5 text-xs leading-5 text-gray-500">
-                  <span className="font-medium text-gray-900">{comment.user?.name}</span>{' '}
+                <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
+                  <span className="mercoa-font-medium mercoa-text-gray-900">{comment.user?.name}</span>{' '}
                   {approvalToText[comment.associatedApprovalAction.action]} the invoice.
                 </p>
                 <time
                   dateTime={dayjs(comment.createdAt).toISOString()}
-                  className="flex-none py-0.5 text-xs leading-5 text-gray-500"
+                  className="mercoa-flex-none mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500"
                 >
                   {dayjs(comment.createdAt).fromNow()}
                 </time>
@@ -128,25 +130,25 @@ export function InvoiceComments({ invoice }: { invoice?: Mercoa.InvoiceResponse 
       </ul>
 
       {/* New comment form */}
-      <div className="mt-6 flex gap-x-3">
-        <form onSubmit={handleSubmit(addComment)} className="relative flex-auto">
-          <div className="overflow-hidden rounded-lg pb-12 shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-indigo-600">
-            <label htmlFor="comment" className="sr-only">
+      <div className="mercoa-mt-6 mercoa-flex mercoa-gap-x-3">
+        <form onSubmit={handleSubmit(addComment)} className="mercoa-relative mercoa-flex-auto">
+          <div className="mercoa-overflow-hidden mercoa-rounded-lg mercoa-pb-12 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-600">
+            <label htmlFor="comment" className="mercoa-sr-only">
               Add your comment
             </label>
             <textarea
               rows={2}
               {...register('text')}
-              className="block w-full resize-none border-0 bg-transparent py-1.5 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
+              className="mercoa-block mercoa-w-full mercoa-resize-none mercoa-border-0 mercoa-bg-transparent mercoa-py-1.5 mercoa-text-gray-900 placeholder:mercoa-text-gray-400 focus:mercoa-ring-0 sm:mercoa-text-sm sm:mercoa-leading-6"
               placeholder="Add your comment..."
             />
           </div>
 
-          <div className="absolute inset-x-0 bottom-0 flex justify-between py-2 pl-3 pr-2">
+          <div className="mercoa-absolute mercoa-inset-x-0 mercoa-bottom-0 mercoa-flex mercoa-justify-between mercoa-py-2 mercoa-pl-3 mercoa-pr-2">
             <div />
             <button
               type="submit"
-              className="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="mercoa-rounded-md mercoa-bg-white mercoa-px-2.5 mercoa-py-1.5 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50"
             >
               Comment
             </button>

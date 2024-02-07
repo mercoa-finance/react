@@ -58,7 +58,7 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
 
   if (!dataLoaded) {
     return (
-      <div className="mt-7">
+      <div className="mercoa-mt-7">
         <Skeleton rows={10} />
       </div>
     )
@@ -69,11 +69,14 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
       {/* ******** All invoices table ******** */}
       {mercoaSession.entity && !!invoices ? (
         <>
-          <div className="min-h-[600px]">
-            <table className="min-w-full divide-y divide-gray-300 mt-5">
+          <div className="mercoa-min-h-[600px]">
+            <table className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300 mercoa-mt-5">
               <thead>
                 <tr>
-                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-3">
+                  <th
+                    scope="col"
+                    className="mercoa-py-3.5 mercoa-pl-4 mercoa-pr-3 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 sm:mercoa-pl-3"
+                  >
                     <TableOrderHeader
                       title="Payer"
                       setOrder={(direction) => {
@@ -86,7 +89,7 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
                   </th>
                   <th
                     scope="col"
-                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 hidden sm:table-cell"
+                    className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-hidden sm:mercoa-table-cell"
                   >
                     <TableOrderHeader
                       title="Invoice Number"
@@ -98,7 +101,10 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
                       orderDirection={orderDirection}
                     />
                   </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                  <th
+                    scope="col"
+                    className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+                  >
                     <TableOrderHeader
                       title="Due Date"
                       setOrder={(direction) => {
@@ -109,7 +115,10 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
                       orderDirection={orderDirection}
                     />
                   </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                  <th
+                    scope="col"
+                    className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+                  >
                     <TableOrderHeader
                       title="Amount"
                       setOrder={(direction) => {
@@ -122,34 +131,36 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
                   </th>
                   <th
                     scope="col"
-                    className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 pl-6 hidden lg:table-cell"
+                    className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-pl-6 mercoa-hidden lg:mercoa-table-cell"
                   >
                     Status
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
+              <tbody className="mercoa-divide-y mercoa-divide-gray-200 mercoa-bg-white">
                 {invoices.map((invoice) => (
                   <tr
                     key={invoice.id}
-                    className="cursor-pointer hover:bg-gray-100"
+                    className="mercoa-cursor-pointer  hover:mercoa-bg-gray-100"
                     onClick={() => {
                       if (onClick) onClick(invoice)
                     }}
                   >
-                    <td className="whitespace-nowrap py-3 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-3">
+                    <td className="mercoa-whitespace-nowrap mercoa-py-3 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-3">
                       {invoice.payer?.name}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-900 hidden sm:table-cell">
+                    <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-text-gray-900 mercoa-hidden sm:mercoa-table-cell">
                       {invoice.invoiceNumber}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-900">
+                    <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-text-gray-900">
                       {dayjs(invoice.dueDate).format('MMM DD, YYYY')}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm text-gray-900">
+                    <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-text-gray-900">
                       {accounting.formatMoney(invoice.amount ?? '', currencyCodeToSymbol(invoice.currency))}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm hidden lg:table-cell">{invoice.status}</td>
+                    <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-hidden lg:mercoa-table-cell">
+                      {invoice.status}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -196,7 +207,7 @@ export function Receivables({ onSelectInvoice }: { onSelectInvoice?: (invoice: M
         {metrics.map((metric) => (
           <p key={metric.currency}>
             <span>{accounting.formatMoney(metric[key] ?? 0 ?? '', currencyCodeToSymbol(metric.currency))}</span>
-            <span className="text-gray-500 text-xs"> {metric.currency}</span>
+            <span className="mercoa-text-gray-500 mercoa-text-xs"> {metric.currency}</span>
           </p>
         ))}
       </div>
@@ -217,15 +228,15 @@ export function Receivables({ onSelectInvoice }: { onSelectInvoice?: (invoice: M
   }, [search, mercoaSession.client, mercoaSession.entity, mercoaSession.refreshId])
 
   return (
-    <div className="mt-8">
-      <div className="grid items-center grid-cols-3">
-        <div className="hidden md:block md:col-span-2" />
-        <div className="mt-2 flex w-full rounded-md shadow-sm mr-2 col-span-3 md:col-span-1">
+    <div className="mercoa-mt-8">
+      <div className="mercoa-grid mercoa-items-center mercoa-grid-cols-3">
+        <div className="mercoa-hidden md:mercoa-block md:mercoa-col-span-2" />
+        <div className="mercoa-mt-2 mercoa-flex mercoa-w-full mercoa-rounded-md mercoa-shadow-sm mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1">
           <DebouncedSearch placeholder="Search Payers" onSettle={setSearch} />
         </div>
       </div>
 
-      <div className="grid grid-cols-3 space-x-3 mt-2">
+      <div className="mercoa-grid mercoa-grid-cols-3 mercoa-space-x-3 mercoa-mt-2">
         <StatCard size="sm" title={`Total  Invoices`} value={sumTotalCount(invoiceMetrics) ?? 0} />
         <StatCard size="sm" title={`Total Amount`} value={formatCurrencyMetrics(invoiceMetrics, 'totalAmount')} />
         <StatCard size="sm" title={`Average Amount`} value={formatCurrencyMetrics(invoiceMetrics, 'averageAmount')} />

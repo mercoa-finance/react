@@ -1,12 +1,5 @@
 import { Dialog, Transition } from '@headlessui/react'
-import {
-  ChevronLeftIcon,
-  InformationCircleIcon,
-  PlusIcon,
-  TrashIcon,
-  UserIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline'
+import { InformationCircleIcon, PlusIcon, TrashIcon, UserIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import dayjs from 'dayjs'
@@ -20,7 +13,7 @@ import * as yup from 'yup'
 import { MercoaButton, MercoaCombobox, Tooltip, useMercoaSession } from '.'
 import { capitalize } from '../lib/lib'
 import { postalCodeRegex, usaStates } from '../lib/locations'
-import { AddDialog, LoadingSpinnerIcon } from './index'
+import { AddDialog } from './index'
 
 export type OnboardingFormData = {
   email: string
@@ -125,13 +118,16 @@ export function AddressBlock({
   const [showAddress, setShowAddress] = useState(!!readOnly || stateOrProvince)
 
   return (
-    <div className="mt-2">
+    <div className="mercoa-mt-2">
       {!showAddress ? (
         <>
-          <label htmlFor="addressLine1" className="block text-left text-sm font-medium text-gray-700">
+          <label
+            htmlFor="addressLine1"
+            className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+          >
             {label ?? 'Address'}
           </label>
-          <div className="mt-1">
+          <div className="mercoa-mt-1">
             <input
               ref={ref as any}
               onBlur={() => {
@@ -139,15 +135,18 @@ export function AddressBlock({
               }}
               type="text"
               placeholder={placeholder ?? 'Enter a location'}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
               required={required}
             />
           </div>
         </>
       ) : (
-        <div className="grid grid-cols-2 gap-4 mb-5">
-          <div className="mt-1 col-span-2">
-            <label htmlFor="addressLine1" className="block text-left text-sm font-medium text-gray-700">
+        <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-mb-5">
+          <div className="mercoa-mt-1 mercoa-col-span-2">
+            <label
+              htmlFor="addressLine1"
+              className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+            >
               {label ?? 'Address'}
             </label>
             <input
@@ -155,26 +154,36 @@ export function AddressBlock({
               readOnly={readOnly}
               required={required}
               type="text"
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
             />
-            {errors.addressLine1?.message && <p className="text-sm text-red-500">{errors.addressLine1?.message}</p>}
+            {errors.addressLine1?.message && (
+              <p className="mercoa-text-sm mercoa-text-red-500">{errors.addressLine1?.message}</p>
+            )}
           </div>
 
-          <div className="mt-1">
-            <label htmlFor="addressLine1" className="block text-left text-sm font-medium text-gray-700">
+          <div className="mercoa-mt-1">
+            <label
+              htmlFor="addressLine1"
+              className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+            >
               Apartment, suite, etc.
             </label>
             <input
               {...register('addressLine2')}
               readOnly={readOnly}
               type="text"
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
             />
-            {errors.addressLine2?.message && <p className="text-sm text-red-500">{errors.addressLine2?.message}</p>}
+            {errors.addressLine2?.message && (
+              <p className="mercoa-text-sm mercoa-text-red-500">{errors.addressLine2?.message}</p>
+            )}
           </div>
 
-          <div className="mt-1">
-            <label htmlFor="addressLine1" className="block text-left text-sm font-medium text-gray-700">
+          <div className="mercoa-mt-1">
+            <label
+              htmlFor="addressLine1"
+              className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+            >
               City
             </label>
             <input
@@ -182,12 +191,12 @@ export function AddressBlock({
               readOnly={readOnly}
               required={required}
               type="text"
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
             />
-            {errors.city?.message && <p className="text-sm text-red-500">{errors.city?.message}</p>}
+            {errors.city?.message && <p className="mercoa-text-sm mercoa-text-red-500">{errors.city?.message}</p>}
           </div>
 
-          <div className="mt-1">
+          <div className="mercoa-mt-1">
             <MercoaCombobox
               options={usaStates.map(({ name, abbreviation }) => ({
                 disabled: false,
@@ -198,16 +207,19 @@ export function AddressBlock({
               onChange={(value) => {
                 setValue('stateOrProvince', value, { shouldDirty: true })
               }}
-              inputClassName="py-2.5"
-              labelClassName="block text-left text-sm font-medium text-gray-700 -mb-2"
+              inputClassName="mercoa-py-2.5"
+              labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700 -mb-2"
             />
             {errors.stateOrProvince?.message && (
-              <p className="text-sm text-red-500">{errors.stateOrProvince?.message}</p>
+              <p className="mercoa-text-sm mercoa-text-red-500">{errors.stateOrProvince?.message}</p>
             )}
           </div>
 
-          <div className="mt-1">
-            <label htmlFor="addressLine1" className="block text-left text-sm font-medium text-gray-700">
+          <div className="mercoa-mt-1">
+            <label
+              htmlFor="addressLine1"
+              className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+            >
               Postal Code
             </label>
             <input
@@ -215,9 +227,11 @@ export function AddressBlock({
               readOnly={readOnly}
               required={required}
               type="text"
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
             />
-            {errors.postalCode?.message && <p className="text-sm text-red-500">{errors.postalCode?.message}</p>}
+            {errors.postalCode?.message && (
+              <p className="mercoa-text-sm mercoa-text-red-500">{errors.postalCode?.message}</p>
+            )}
           </div>
         </div>
       )}
@@ -244,58 +258,74 @@ export function NameBlock({
   required?: boolean
 }) {
   return (
-    <div className="mt-2 grid grid-cols-2 gap-3">
+    <div className="mercoa-mt-2 mercoa-grid mercoa-grid-cols-2 mercoa-gap-3">
       <div>
-        <label htmlFor="firstName" className="block text-left text-sm font-medium text-gray-700">
+        <label
+          htmlFor="firstName"
+          className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+        >
           First Name
         </label>
-        <div className="mt-1">
+        <div className="mercoa-mt-1">
           <input
             {...register('firstName')}
             readOnly={readOnly}
             required={required}
             type="text"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
           />
         </div>
-        {errors.firstName?.message && <p className="text-sm text-red-500">{errors.firstName?.message.toString()}</p>}
+        {errors.firstName?.message && (
+          <p className="mercoa-text-sm mercoa-text-red-500">{errors.firstName?.message.toString()}</p>
+        )}
       </div>
       <div>
-        <label htmlFor="middleName" className="block text-left text-sm font-medium text-gray-700">
-          Middle Name <span className="text-gray-400">{'(optional)'}</span>
+        <label
+          htmlFor="middleName"
+          className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+        >
+          Middle Name <span className="mercoa-text-gray-400">{'(optional)'}</span>
         </label>
-        <div className="mt-1">
+        <div className="mercoa-mt-1">
           <input
             {...register('middleName')}
             readOnly={readOnly}
             type="text"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
           />
         </div>
       </div>
       <div>
-        <label htmlFor="lastName" className="block text-left text-sm font-medium text-gray-700">
+        <label
+          htmlFor="lastName"
+          className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+        >
           Last Name
         </label>
-        <div className="mt-1">
+        <div className="mercoa-mt-1">
           <input
             {...register('lastName')}
             readOnly={readOnly}
             type="text"
-            className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
           />
         </div>
-        {errors.lastName?.message && <p className="text-sm text-red-500">{errors.lastName?.message.toString()}</p>}
+        {errors.lastName?.message && (
+          <p className="mercoa-text-sm mercoa-text-red-500">{errors.lastName?.message.toString()}</p>
+        )}
       </div>
       <div>
-        <label htmlFor="suffix" className="block text-left text-sm font-medium text-gray-700">
+        <label
+          htmlFor="suffix"
+          className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+        >
           Suffix
         </label>
-        <div className="mt-1">
+        <div className="mercoa-mt-1">
           <select
             {...register('suffix')}
             readOnly={readOnly}
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+            className="mercoa-mt-1 mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-py-2 mercoa-px-3 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-outline-none focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
           >
             <option value="">None</option>
             <option value="Sr.">Sr.</option>
@@ -337,16 +367,19 @@ export function DateOfBirthBlock({
 }) {
   return (
     <div>
-      <label htmlFor="dob" className="block text-left text-sm font-medium text-gray-700">
+      <label
+        htmlFor="dob"
+        className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+      >
         Date of birth
       </label>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <Controller
           control={control}
           name="dob"
           render={({ field }) => (
             <ReactDatePicker
-              className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
               onChange={(date) => field.onChange(date)}
               selected={field.value}
               required={required}
@@ -355,7 +388,7 @@ export function DateOfBirthBlock({
           )}
         />
       </div>
-      {errors.dob?.message && <p className="text-sm text-red-500">{errors.dob?.message.toString()}</p>}
+      {errors.dob?.message && <p className="mercoa-text-sm mercoa-text-red-500">{errors.dob?.message.toString()}</p>}
     </div>
   )
 }
@@ -380,10 +413,13 @@ export function SSNBlock({
 }) {
   return (
     <div>
-      <label htmlFor="taxID" className="block text-left text-sm font-medium text-gray-700">
+      <label
+        htmlFor="taxID"
+        className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+      >
         SSN
       </label>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <Controller
           control={control}
           name="taxID"
@@ -392,7 +428,7 @@ export function SSNBlock({
               return (
                 <input
                   type="text"
-                  className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                   placeholder="123-45-6789"
                   value={field.value}
                   onChange={field.onChange}
@@ -414,7 +450,7 @@ export function SSNBlock({
                         {...inputProps}
                         type="text"
                         placeholder="123-45-6789"
-                        className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                       />
                     )) as any
                   }
@@ -424,7 +460,9 @@ export function SSNBlock({
           }}
         />
       </div>
-      {errors.taxID?.message && <p className="text-sm text-red-500">{errors.taxID?.message.toString()}</p>}
+      {errors.taxID?.message && (
+        <p className="mercoa-text-sm mercoa-text-red-500">{errors.taxID?.message.toString()}</p>
+      )}
     </div>
   )
 }
@@ -445,20 +483,25 @@ export function EmailBlock({
   required?: boolean
 }) {
   return (
-    <div className="mt-2">
-      <label htmlFor="email" className="block text-left text-sm font-medium text-gray-700">
+    <div className="mercoa-mt-2">
+      <label
+        htmlFor="email"
+        className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+      >
         Email
       </label>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <input
           type="email"
           {...register('email')}
           readOnly={readOnly}
           required={required}
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
         />
       </div>
-      {errors.email?.message && <p className="text-sm text-red-500">{errors.email?.message.toString()}</p>}
+      {errors.email?.message && (
+        <p className="mercoa-text-sm mercoa-text-red-500">{errors.email?.message.toString()}</p>
+      )}
     </div>
   )
 }
@@ -482,11 +525,14 @@ export function PhoneBlock({
   required?: boolean
 }) {
   return (
-    <div className="mt-2">
-      <label htmlFor="phoneNumber" className="block text-left text-sm font-medium text-gray-700">
+    <div className="mercoa-mt-2">
+      <label
+        htmlFor="phoneNumber"
+        className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+      >
         Phone
       </label>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <Controller
           control={control}
           name="phoneNumber"
@@ -503,7 +549,7 @@ export function PhoneBlock({
                   <input
                     {...inputProps}
                     type="text"
-                    className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                     placeholder="(777) 777-7777"
                   />
                 )) as any
@@ -512,7 +558,9 @@ export function PhoneBlock({
           )}
         />
       </div>
-      {errors.phoneNumber?.message && <p className="text-sm text-red-500">{errors.phoneNumber?.message.toString()}</p>}
+      {errors.phoneNumber?.message && (
+        <p className="mercoa-text-sm mercoa-text-red-500">{errors.phoneNumber?.message.toString()}</p>
+      )}
     </div>
   )
 }
@@ -523,29 +571,38 @@ export const accountTypeSchema = {
 
 export function AccountTypeRadioBlock({ register, errors }: { register: Function; errors: any }) {
   return (
-    <div className="mt-3">
-      <label htmlFor="accountType" className="block text-left text-sm font-medium text-gray-700">
+    <div className="mercoa-mt-3">
+      <label
+        htmlFor="accountType"
+        className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+      >
         Account Type
       </label>
-      <div className="flex items-center">
+      <div className="mercoa-flex mercoa-items-center">
         <input
           {...register('accountType')}
           value={Mercoa.AccountType.Individual}
           type="radio"
-          className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          className="mercoa-h-4 mercoa-w-4 mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
         />
-        <label htmlFor="accountType" className="ml-3 block text-sm font-medium text-gray-700">
+        <label
+          htmlFor="accountType"
+          className="mercoa-ml-3 mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+        >
           Individual
         </label>
       </div>
-      <div className="flex items-center">
+      <div className="mercoa-flex mercoa-items-center">
         <input
           {...register('accountType')}
           value={Mercoa.AccountType.Business}
           type="radio"
-          className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          className="mercoa-h-4 mercoa-w-4 mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
         />
-        <label htmlFor="accountType" className="ml-3 block text-sm font-medium text-gray-700">
+        <label
+          htmlFor="accountType"
+          className="mercoa-ml-3 mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+        >
           Business
         </label>
       </div>
@@ -555,13 +612,16 @@ export function AccountTypeRadioBlock({ register, errors }: { register: Function
 
 export function AccountTypeSelectBlock({ register, errors }: { register: Function; errors: any }) {
   return (
-    <div className="mt-3">
-      <label htmlFor="accountType" className="block text-left text-sm font-medium text-gray-700">
+    <div className="mercoa-mt-3">
+      <label
+        htmlFor="accountType"
+        className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+      >
         Account Type
       </label>
       <select
         {...register('accountType')}
-        className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+        className="mercoa-mt-1 mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-py-2 mercoa-px-3 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-outline-none focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
       >
         <option value={Mercoa.AccountType.Individual}>Individual</option>
         <option value={Mercoa.AccountType.Business}>Business</option>
@@ -582,15 +642,18 @@ export function BusinessTypeBlock({
   required?: boolean
 }) {
   return (
-    <div className="mt-3">
-      <label htmlFor="businessType" className="block text-left text-sm font-medium text-gray-700">
+    <div className="mercoa-mt-3">
+      <label
+        htmlFor="businessType"
+        className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+      >
         Business Type
       </label>
       <select
         {...register('businessType')}
         readOnly={readOnly}
         required={required}
-        className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+        className="mercoa-mt-1 mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-py-2 mercoa-px-3 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-outline-none focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
       >
         <option value="" disabled>
           Select an option
@@ -625,21 +688,24 @@ export function LegalBusinessNameBlock({
   required?: boolean
 }) {
   return (
-    <div className="mt-2">
-      <label htmlFor="legalBusinessName" className="block text-left text-sm font-medium text-gray-700">
+    <div className="mercoa-mt-2">
+      <label
+        htmlFor="legalBusinessName"
+        className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+      >
         Business Name
       </label>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <input
           {...register('legalBusinessName')}
           readOnly={readOnly}
           required={required}
           type="text"
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
         />
       </div>
       {errors.legalBusinessName?.message && (
-        <p className="text-sm text-red-500">{errors.legalBusinessName?.message.toString()}</p>
+        <p className="mercoa-text-sm mercoa-text-red-500">{errors.legalBusinessName?.message.toString()}</p>
       )}
     </div>
   )
@@ -659,20 +725,23 @@ export function DoingBusinessAsBlock({
   readOnly?: boolean
 }) {
   return (
-    <div className="mt-2">
-      <label htmlFor="doingBusinessAs" className="block text-left text-sm font-medium text-gray-700">
-        Doing business as <span className="text-gray-400">{'(optional)'}</span>
+    <div className="mercoa-mt-2">
+      <label
+        htmlFor="doingBusinessAs"
+        className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+      >
+        Doing business as <span className="mercoa-text-gray-400">{'(optional)'}</span>
       </label>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <input
           {...register('doingBusinessAs')}
           readOnly={readOnly}
           type="text"
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
         />
       </div>
       {errors.doingBusinessAs?.message && (
-        <p className="text-sm text-red-500">{errors.doingBusinessAs?.message.toString()}</p>
+        <p className="mercoa-text-sm mercoa-text-red-500">{errors.doingBusinessAs?.message.toString()}</p>
       )}
     </div>
   )
@@ -681,7 +750,7 @@ export function DoingBusinessAsBlock({
 export const einSchema = {
   taxID: yup
     .string()
-    .matches(/^(0[1-9]|[1-9]\d)-\d{7}$/, 'Invalid EIN')
+    .matches(/^(0[1-9]|[1-9]\d)-\d{7}|[*]{2}-[*]{7}$/, 'Invalid EIN')
     .required('EIN is required'),
 }
 
@@ -697,11 +766,14 @@ export function EINBlock({
   readOnly?: boolean
 }) {
   return (
-    <div className="mt-2">
-      <label htmlFor="taxID" className="block text-left text-sm font-medium text-gray-700">
+    <div className="mercoa-mt-2">
+      <label
+        htmlFor="taxID"
+        className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+      >
         EIN
       </label>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <Controller
           control={control}
           name="taxID"
@@ -710,7 +782,7 @@ export function EINBlock({
               return (
                 <input
                   type="text"
-                  className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                   placeholder="12-3456789"
                   value={field.value}
                   onChange={field.onChange}
@@ -731,7 +803,7 @@ export function EINBlock({
                       <input
                         {...inputProps}
                         type="text"
-                        className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                         placeholder="12-3456789"
                       />
                     )) as any
@@ -742,13 +814,18 @@ export function EINBlock({
           }}
         />
       </div>
-      {errors.taxID?.message && <p className="text-sm text-red-500">{errors.taxID?.message.toString()}</p>}
+      {errors.taxID?.message && (
+        <p className="mercoa-text-sm mercoa-text-red-500">{errors.taxID?.message.toString()}</p>
+      )}
     </div>
   )
 }
 
 export const websiteSchema = {
-  website: yup.string().url('Website is not valid').required('Website is required'),
+  website: yup
+    .string()
+    .url('Website must start with http:// or https:// and be a valid URL')
+    .required('Website is required'),
 }
 
 export function WebsiteBlock({
@@ -763,20 +840,25 @@ export function WebsiteBlock({
   required?: boolean
 }) {
   return (
-    <div className="mt-2">
-      <label htmlFor="website" className="block text-left text-sm font-medium text-gray-700">
+    <div className="mercoa-mt-2">
+      <label
+        htmlFor="website"
+        className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+      >
         Website
       </label>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <input
           {...register('website')}
           type="text"
           readOnly={readOnly}
           required={required}
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
         />
       </div>
-      {errors.website?.message && <p className="text-sm text-red-500">{errors.website?.message.toString()}</p>}
+      {errors.website?.message && (
+        <p className="mercoa-text-sm mercoa-text-red-500">{errors.website?.message.toString()}</p>
+      )}
     </div>
   )
 }
@@ -797,22 +879,31 @@ export function DescriptionBlock({
   required?: boolean
 }) {
   return (
-    <div className="mt-2">
-      <label htmlFor="description" className="block text-left text-sm font-medium text-gray-700">
+    <div className="mercoa-mt-2">
+      <label
+        htmlFor="description"
+        className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+      >
         Business Description
       </label>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <input
           {...register('description')}
           type="text"
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
           readOnly={readOnly}
           required={required}
         />
       </div>
-      {errors.description?.message && <p className="text-sm text-red-500">{errors.description?.message.toString()}</p>}
+      {errors.description?.message && (
+        <p className="mercoa-text-sm mercoa-text-red-500">{errors.description?.message.toString()}</p>
+      )}
     </div>
   )
+}
+
+export const formationDateSchema = {
+  formationDate: yup.date().required('Formation date is required'),
 }
 
 export function FormationDateBlock({
@@ -828,16 +919,19 @@ export function FormationDateBlock({
 }) {
   return (
     <div>
-      <label htmlFor="formationDate" className="block text-left text-sm font-medium text-gray-700">
+      <label
+        htmlFor="formationDate"
+        className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+      >
         Business Formation Date
       </label>
-      <div className="mt-1 text-left">
+      <div className="mercoa-mt-1 mercoa-text-left">
         <Controller
           control={control}
           name="formationDate"
           render={({ field }) => (
             <ReactDatePicker
-              className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
               onChange={(date) => field.onChange(date)}
               selected={field.value}
               required={required}
@@ -965,8 +1059,8 @@ export async function createOrUpdateEntity({
       resp = await mercoaClient?.entity.create(postData)
     }
     if (onClose) onClose(postData)
-  } catch (e) {
-    toast.error('Error creating entity. Most likely the email is already in use.')
+  } catch (e: any) {
+    toast.error(`There was an error saving your data.\n Error: ${e.body}`)
     console.error(e)
   }
 
@@ -991,11 +1085,43 @@ export function EntityOnboardingButton({
   isPayor: boolean
 }) {
   const [showAdd, setShowAddLocal] = useState(false)
+  const mercoaSession = useMercoaSession()
 
   function setShowAdd(state: boolean) {
     setShowAddLocal(state)
     if (!state && onClose) onClose()
   }
+
+  const { register, handleSubmit, watch, formState } = useForm({
+    defaultValues: {
+      accountType: Mercoa.AccountType.Business,
+      legalBusinessName: '',
+      email: '',
+      firstName: '',
+      lastName: '',
+    },
+    resolver: async (data, context, options) => {
+      if (data.accountType === Mercoa.AccountType.Business) {
+        return await yupResolver(
+          yup.object({
+            ...accountTypeSchema,
+            ...legalBusinessNameSchema,
+            ...emailSchema,
+          }),
+        )(data, context, options as any)
+      } else {
+        return await yupResolver(
+          yup.object({
+            ...accountTypeSchema,
+            ...nameBlockSchema,
+            ...emailSchema,
+          }),
+        )(data, context, options as any)
+      }
+    },
+  })
+
+  const accountType = watch('accountType')
 
   return (
     <>
@@ -1005,45 +1131,76 @@ export function EntityOnboardingButton({
         }}
         className={
           className ||
-          'inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto'
+          'mercoa-inline-flex mercoa-items-center mercoa-justify-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-mercoa-primary mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-mercoa-primary-dark focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-mercoa-primary focus:mercoa-ring-offset-2 sm:mercoa-w-auto'
         }
       >
         {buttonText || 'Get Started'}
       </button>
       <Transition.Root show={showAdd} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={setShowAdd}>
+        <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={setShowAdd}>
           <Transition.Child
             as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
+            enter="mercoa-ease-out mercoa-duration-300"
+            enterFrom="mercoa-opacity-0"
+            enterTo="mercoa-opacity-100"
+            leave="mercoa-ease-in mercoa-duration-200"
+            leaveFrom="mercoa-opacity-100"
+            leaveTo="mercoa-opacity-0"
           >
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
           </Transition.Child>
 
-          <div className="fixed inset-0 z-10 overflow-y-auto">
-            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
+            <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
               <Transition.Child
                 as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                enterTo="opacity-100 translate-y-0 sm:scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                enter="mercoa-ease-out mercoa-duration-300"
+                enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+                enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                leave="mercoa-ease-in mercoa-duration-200"
+                leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
               >
-                <Dialog.Panel className="relative transform rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-6">
-                  <EntityOnboardingForm
-                    title={title}
-                    onClose={() => {
-                      setShowAdd(false)
-                    }}
-                    isPayee={isPayee}
-                    isPayor={isPayor}
-                  />
+                <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-sm sm:mercoa-p-6">
+                  <form
+                    onSubmit={handleSubmit(async (data) => {
+                      if (!mercoaSession.client) return
+                      const entity = await createOrUpdateEntity({
+                        data,
+                        onClose: setShowAdd,
+                        isPayee,
+                        isPayor,
+                        mercoaClient: mercoaSession.client,
+                      })
+                      if (entity) {
+                        const onboard = confirm('Do you want to onboard the entity?')
+                        if (onboard) {
+                          const link = await mercoaSession.client.entity.getOnboardingLink(entity.id, {
+                            type: isPayee ? 'PAYEE' : 'PAYOR',
+                          })
+                          window.location.href = link
+                        }
+                      }
+                    })}
+                  >
+                    <div>
+                      <AccountTypeSelectBlock register={register} errors={formState.errors} />
+                      {accountType === Mercoa.AccountType.Business ? (
+                        <LegalBusinessNameBlock register={register} errors={formState.errors} />
+                      ) : (
+                        <NameBlock register={register} errors={formState.errors} />
+                      )}
+                      <EmailBlock register={register} errors={formState.errors} />
+                    </div>
+                    <div className="mercoa-mt-4">
+                      <button
+                        type="submit"
+                        className="mercoa-w-full mercoa-inline-flex mercoa-justify-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-mercoa-primary mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-mercoa-primary-dark focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-mercoa-primary focus:mercoa-ring-offset-2 sm:mercoa-w-auto"
+                      >
+                        Continue
+                      </button>
+                    </div>
+                  </form>
                 </Dialog.Panel>
               </Transition.Child>
             </div>
@@ -1051,386 +1208,6 @@ export function EntityOnboardingButton({
         </Dialog>
       </Transition.Root>
     </>
-  )
-}
-
-export function EntityOnboardingForm({
-  title,
-  onClose,
-  isPayee,
-  isPayor,
-}: {
-  title?: string
-  onClose?: Function
-  isPayee: boolean
-  isPayor: boolean
-}) {
-  const mercoaSession = useMercoaSession()
-
-  const [step, setStep] = useState(0)
-  const [data, setData] = useState<any>({})
-
-  function StepOne() {
-    const schema = yup
-      .object({
-        ...emailSchema,
-        ...accountTypeSchema,
-        businessType: yup.string(),
-        disableKYB: yup.string(),
-      })
-      .required()
-
-    const {
-      register,
-      watch,
-      handleSubmit,
-      formState: { errors, isValid },
-    } = useForm({
-      mode: 'onChange',
-      resolver: yupResolver(schema),
-      defaultValues: {
-        accountType: data.accountType,
-        email: data.email,
-        businessType: data.businessType,
-        disableKYB: data.disableKYB || 'no',
-      },
-    })
-
-    const accountType = watch('accountType')
-
-    return (
-      <form
-        style={{ display: step === 0 ? 'block' : 'none' }}
-        onSubmit={handleSubmit((newData) => {
-          setData({ ...data, ...newData })
-          setStep(1)
-        })}
-      >
-        <EmailBlock register={register} errors={errors} />
-
-        <div className="mt-3">
-          <label htmlFor="disableKYB" className="block text-left text-sm font-medium text-gray-700">
-            Enable Payments
-          </label>
-          <div className="flex items-center">
-            <input
-              {...register('disableKYB')}
-              value="no"
-              type="radio"
-              className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-            />
-            <label htmlFor="disableKYB" className="ml-3 block text-sm font-medium text-gray-700">
-              Yes
-            </label>
-          </div>
-
-          <div className="flex items-center">
-            <input
-              {...register('disableKYB')}
-              value="yes"
-              type="radio"
-              className="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
-            />
-            <label htmlFor="disableKYB" className="ml-3 block text-sm font-medium text-gray-700">
-              No
-            </label>
-          </div>
-        </div>
-        <AccountTypeRadioBlock register={register} errors={errors} />
-
-        {accountType === 'business' && <BusinessTypeBlock register={register} errors={errors} />}
-
-        <div className="mt-5 sm:mt-6">
-          <button
-            disabled={!isValid}
-            className="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 sm:text-sm"
-          >
-            Continue
-          </button>
-        </div>
-      </form>
-    )
-  }
-
-  function IndStepTwo({ disableKYB }: { disableKYB: boolean }) {
-    const {
-      register,
-      handleSubmit,
-      control,
-      formState: { errors, isValid },
-    } = useForm({
-      mode: 'onChange',
-      resolver: yupResolver(
-        yup
-          .object(disableKYB ? nameBlockSchema : { ...SSNSchema, ...dateOfBirthSchema, ...nameBlockSchema })
-          .required(),
-      ),
-      defaultValues: {
-        firstName: data.firstName,
-        middleName: data.middleName,
-        lastName: data.lastName,
-        suffix: data.suffix,
-        ...(!disableKYB && {
-          dob: data.dob,
-          taxID: data.taxID,
-        }),
-      },
-    })
-
-    return (
-      <form
-        style={{ display: step === 1 ? 'block' : 'none' }}
-        onSubmit={handleSubmit((newData) => {
-          setData({ ...data, ...newData })
-          if (!mercoaSession.client) return
-          if (disableKYB)
-            createOrUpdateEntity({
-              data: { ...data, ...newData },
-              mercoaClient: mercoaSession.client,
-              onClose,
-              isPayee,
-              isPayor,
-            })
-          else setStep(2)
-        })}
-      >
-        <NameBlock register={register} errors={errors} />
-        {!disableKYB && (
-          <div className="mt-2 grid grid-cols-2 gap-3">
-            <DateOfBirthBlock control={control} errors={errors} />
-            <SSNBlock control={control} errors={errors} />
-            {JSON.stringify(errors)}
-          </div>
-        )}
-        <div className="mt-5 sm:mt-6">
-          <button
-            disabled={!isValid}
-            className="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 sm:text-sm"
-          >
-            Continue
-          </button>
-        </div>
-      </form>
-    )
-  }
-
-  function IndStepThree() {
-    const schema = yup
-      .object({
-        ...phoneSchema,
-        ...addressBlockSchema,
-      })
-      .required()
-
-    const {
-      control,
-      register,
-      handleSubmit,
-      setValue,
-      trigger,
-      watch,
-      formState: { errors, isValid },
-    } = useForm({
-      mode: 'onChange',
-      resolver: yupResolver(schema),
-      defaultValues: {
-        phoneNumber: data.phoneNumber,
-        addressLine1: data.addressLine1,
-        addressLine2: data.addressLine2,
-        city: data.city,
-        stateOrProvince: data.stateOrProvince,
-        postalCode: data.postalCode,
-      },
-    })
-
-    return (
-      <form
-        style={{ display: step === 2 ? 'block' : 'none' }}
-        onSubmit={handleSubmit((newData) => {
-          setData({ ...data, ...newData })
-          if (!mercoaSession.client) return
-          createOrUpdateEntity({
-            data: { ...data, ...newData },
-            mercoaClient: mercoaSession.client,
-            onClose,
-            isPayee,
-            isPayor,
-          })
-        })}
-      >
-        <PhoneBlock control={control} errors={errors} />
-        <AddressBlock register={register} errors={errors} setValue={setValue} trigger={trigger} watch={watch} />
-        <div className="mt-5 sm:mt-6">
-          <button
-            disabled={!isValid}
-            className="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 sm:text-sm"
-          >
-            Continue
-          </button>
-        </div>
-      </form>
-    )
-  }
-
-  function BizStepTwo({ disableKYB }: { disableKYB: boolean }) {
-    const schema = yup
-      .object({
-        ...legalBusinessNameSchema,
-        ...doingBusinessAsSchema,
-        ...(!disableKYB && einSchema),
-      })
-      .required()
-
-    const {
-      control,
-      register,
-      handleSubmit,
-      formState: { errors, isValid },
-    } = useForm({
-      mode: 'onChange',
-      resolver: yupResolver(schema),
-      defaultValues: {
-        legalBusinessName: data.legalBusinessName,
-        doingBusinessAs: data.doingBusinessAs,
-        taxID: data.taxID,
-      },
-    })
-
-    return (
-      <form
-        style={{ display: step === 1 ? 'block' : 'none' }}
-        onSubmit={handleSubmit((newData) => {
-          setData({ ...data, ...newData })
-          if (!mercoaSession.client) return
-          if (disableKYB)
-            createOrUpdateEntity({
-              data: { ...data, ...newData },
-              mercoaClient: mercoaSession.client,
-              onClose,
-              isPayee,
-              isPayor,
-            })
-          else setStep(2)
-        })}
-      >
-        <LegalBusinessNameBlock register={register} errors={errors} required />
-        <DoingBusinessAsBlock register={register} errors={errors} />
-        {!disableKYB && <EINBlock control={control} errors={errors} />}
-        <div className="mt-5 sm:mt-6">
-          <button
-            disabled={!isValid}
-            className="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 sm:text-sm"
-          >
-            Continue
-          </button>
-        </div>
-      </form>
-    )
-  }
-
-  function BizStepThree() {
-    const schema = yup
-      .object({
-        ...phoneSchema,
-        ...websiteSchema,
-        ...addressBlockSchema,
-      })
-      .required()
-
-    const {
-      control,
-      register,
-      handleSubmit,
-      setValue,
-      trigger,
-      watch,
-      formState: { errors, isValid },
-    } = useForm({
-      mode: 'onChange',
-      resolver: yupResolver(schema),
-      defaultValues: {
-        phoneNumber: data.phoneNumber,
-        website: data.website,
-        addressLine1: data.addressLine1,
-        addressLine2: data.addressLine2,
-        city: data.city,
-        stateOrProvince: data.stateOrProvince,
-        postalCode: data.postalCode,
-      },
-    })
-
-    return (
-      <form
-        style={{ display: step === 2 ? 'block' : 'none' }}
-        onSubmit={handleSubmit((newData) => {
-          setData({ ...data, ...newData })
-          if (!mercoaSession.client) return
-          createOrUpdateEntity({
-            data: { ...data, ...newData },
-            mercoaClient: mercoaSession.client,
-            onClose,
-            isPayee,
-            isPayor,
-          })
-        })}
-      >
-        <PhoneBlock control={control} errors={errors} />
-        <WebsiteBlock register={register} errors={errors} />
-        <AddressBlock register={register} errors={errors} setValue={setValue} trigger={trigger} watch={watch} />
-        <div className="mt-5 sm:mt-6">
-          <button
-            disabled={!isValid}
-            className="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 sm:text-sm"
-          >
-            Continue
-          </button>
-        </div>
-      </form>
-    )
-  }
-
-  if (!mercoaSession.token) return <LoadingSpinnerIcon />
-
-  return (
-    <div>
-      <div className="flex">
-        <ChevronLeftIcon
-          className="h-5 w-5 cursor-pointer rounded-md p-0.5 hover:bg-gray-100"
-          type="button"
-          onClick={() => {
-            setStep(Math.max(0, step - 1))
-          }}
-          style={{ visibility: step > 0 ? 'visible' : 'hidden' }}
-        />
-        <div className="flex-1" />
-        <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
-          <button></button>
-          {title || 'Create Account'}
-        </Dialog.Title>
-        <div className="flex-1" />
-        <XMarkIcon
-          className="h-5 w-5 cursor-pointer rounded-md p-0.5 hover:bg-gray-100"
-          type="button"
-          onClick={() => {
-            if (onClose) onClose()
-          }}
-        />
-      </div>
-      <div className="mt-1">
-        <StepOne />
-        {data.accountType === 'individual' ? (
-          <>
-            <IndStepTwo disableKYB={data.disableKYB === 'yes'} />
-            {data.disableKYB != 'yes' && <IndStepThree />}
-          </>
-        ) : (
-          <>
-            <BizStepTwo disableKYB={data.disableKYB === 'yes'} />
-            {data.disableKYB != 'yes' && <BizStepThree />}
-          </>
-        )}
-      </div>
-    </div>
   )
 }
 
@@ -1527,16 +1304,16 @@ export function RepresentativeOnboardingForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div>
-        <div className="mt-1">
-          <div className="flex">
-            <div className="flex-1" />
-            <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+        <div className="mercoa-mt-1">
+          <div className="mercoa-flex">
+            <div className="mercoa-flex-1" />
+            <Dialog.Title as="h3" className="mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
               <button></button>
               {title || 'Create Account'}
             </Dialog.Title>
-            <div className="flex-1" />
+            <div className="mercoa-flex-1" />
             <XMarkIcon
-              className="h-5 w-5 cursor-pointer rounded-md p-0.5 hover:bg-gray-100"
+              className="mercoa-h-5 mercoa-w-5 mercoa-cursor-pointer  mercoa-rounded-md mercoa-p-0.5 hover:mercoa-bg-gray-100"
               type="button"
               onClick={() => {
                 if (onClose) onClose()
@@ -1546,44 +1323,50 @@ export function RepresentativeOnboardingForm({
 
           <NameBlock register={register} errors={errors} />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-3">
             <EmailBlock register={register} errors={errors} />
             <PhoneBlock control={control} errors={errors} />
             <DateOfBirthBlock control={control} errors={errors} />
             <SSNBlock control={control} errors={errors} />
 
-            <div className="mt-2">
-              <label htmlFor="jobTitle" className="block text-left text-sm font-medium text-gray-700">
+            <div className="mercoa-mt-2">
+              <label
+                htmlFor="jobTitle"
+                className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+              >
                 Job Title
               </label>
-              <div className="mt-1">
+              <div className="mercoa-mt-1">
                 <input
                   {...register('jobTitle')}
                   type="text"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                 />
               </div>
               {errors.jobTitle?.message && (
-                <p className="text-sm text-red-500">{errors.jobTitle?.message.toString()}</p>
+                <p className="mercoa-text-sm mercoa-text-red-500">{errors.jobTitle?.message.toString()}</p>
               )}
             </div>
 
-            <div className="mt-2">
-              <label htmlFor="ownershipPercentage" className="block text-left text-sm font-medium text-gray-700">
+            <div className="mercoa-mt-2">
+              <label
+                htmlFor="ownershipPercentage"
+                className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+              >
                 Percent Ownership
               </label>
-              <div className="mt-1">
+              <div className="mercoa-mt-1">
                 <input
                   {...register('ownershipPercentage')}
                   type="number"
                   min={0}
                   max={100}
                   placeholder="0-100"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                 />
               </div>
               {errors.ownershipPercentage?.message && (
-                <p className="text-sm text-red-500">{errors.ownershipPercentage?.message.toString()}</p>
+                <p className="mercoa-text-sm mercoa-text-red-500">{errors.ownershipPercentage?.message.toString()}</p>
               )}
             </div>
           </div>
@@ -1595,29 +1378,30 @@ export function RepresentativeOnboardingForm({
             watch={watch}
             label="Residential Address"
           />
-          <div className="relative mt-2 flex items-start items-center">
-            <div className="flex h-5 items-center">
+          <div className="mercoa-relative mercoa-mt-2 mercoa-flex mercoa-items-start mercoa-items-center">
+            <div className="mercoa-flex mercoa-h-5 mercoa-items-center">
               <input
                 {...register('isController')}
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                className="mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
               />
             </div>
-            <div className="ml-3 text-sm">
+            <div className="mercoa-ml-3 mercoa-text-sm">
               {/* @ts-ignore:next-line */}
               <Tooltip title="Every business requires a controller. Examples include the CEO, COO, Treasurer, President, Vice President, or Managing Partner.">
-                <label htmlFor="isController" className="font-medium text-gray-700">
-                  This person is a company controller <InformationCircleIcon className="inline h-5 w-5" />
+                <label htmlFor="isController" className="mercoa-font-medium mercoa-text-gray-700">
+                  This person is a company controller{' '}
+                  <InformationCircleIcon className="mercoa-inline mercoa-h-5 mercoa-w-5" />
                 </label>
               </Tooltip>
             </div>
           </div>
         </div>
       </div>
-      <div className="mt-5 sm:mt-6">
+      <div className="mercoa-mt-5 sm:mercoa-mt-6">
         <button
           disabled={!isValid}
-          className="inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 sm:text-sm"
+          className="mercoa-inline-flex mercoa-w-full mercoa-justify-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-mercoa-primary mercoa-px-4 mercoa-py-2 mercoa-text-base mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-mercoa-primary-dark focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-mercoa-primary focus:mercoa-ring-offset-2 disabled:mercoa-bg-mercoa-primary-light sm:mercoa-text-sm"
         >
           Add Representative
         </button>
@@ -1659,12 +1443,12 @@ export function Representatives({
       <>
         {reps &&
           reps.map((account) => (
-            <div className="mt-2" key={account.id}>
+            <div className="mercoa-mt-2" key={account.id}>
               <RepresentativeComponent representative={account} onSelect={onSelect} showEdit={showEdit} />
             </div>
           ))}
         {showAdd && (
-          <div className="mt-2">
+          <div className="mercoa-mt-2">
             <AddDialog
               show={showDialog}
               onClose={onClose}
@@ -1717,32 +1501,45 @@ export function RepresentativeComponent({
           if (onSelect) onSelect(representative)
         }}
         key={representative?.id}
-        className={`relative flex items-center space-x-3 rounded-lg border ${
-          selected ? 'border-indigo-300' : 'border-gray-300'
-        } bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 ${
-          onSelect ? 'cursor-pointer hover:border-gray-400' : ''
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border ${
+          selected ? 'mercoa-border-mercoa-primary' : 'mercoa-border-gray-300'
+        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 ${
+          onSelect ? 'mercoa-cursor-pointer hover:mercoa-border-gray-400' : ''
         }`}
       >
-        <div className="flex-shrink-0 rounded-full bg-gray-200 p-1 text-gray-600">
-          <UserIcon className={`h-5 w-5 ${selected ? 'text-indigo-400' : ''}`} />
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          <UserIcon className="mercoa-h-5 mercoa-w-5" />
         </div>
-        <div className="min-w-0 flex-1">
-          {!showEdit && <span className="absolute inset-0" aria-hidden="true" />}
-          <p className={`text-sm font-medium text-gray-900 ${selected ? 'underline' : ''}`}>
+        <div className="mercoa-min-w-0 mercoa-flex-1">
+          {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
+          <p className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}>
             {representative.name.firstName} {representative.name.lastName} - {representative.responsibilities?.jobTitle}
           </p>
-          <p className={`text-xs font-medium text-gray-900 ${selected ? 'underline' : ''}`}>
+          <p className={`mercoa-text-xs mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}>
             Ownership: {representative.responsibilities?.ownershipPercentage}%
           </p>
           {representative.responsibilities?.isController && (
-            <p className={`text-xs font-medium text-gray-900 ${selected ? 'underline' : ''}`}>Controller</p>
+            <p
+              className={`mercoa-text-xs mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}
+            >
+              Controller
+            </p>
           )}
         </div>
         {showEdit && (
-          <div className="flex-shrink-0">
-            <button className="ml-1 cursor-pointer hover:text-red-300" onClick={() => deleteAccount()}>
+          <div className="mercoa-flex-shrink-0">
+            <button
+              className="mercoa-ml-1 mercoa-cursor-pointer hover:mercoa-text-red-300"
+              onClick={() => deleteAccount()}
+            >
               {' '}
-              <TrashIcon className="h-5 w-5" />
+              <TrashIcon className="mercoa-h-5 mercoa-w-5" />
             </button>
           </div>
         )}
@@ -1754,17 +1551,23 @@ export function RepresentativeComponent({
         onClick={() => {
           if (onSelect) onSelect(representative)
         }}
-        className={`relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:border-gray-400 ${
-          onSelect ? 'cursor-pointer' : ''
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
+          onSelect ? 'mercoa-cursor-pointer ' : ''
         }`}
       >
-        <div className="flex-shrink-0 rounded-full bg-gray-200 p-1 text-gray-600">
-          <PlusIcon className="h-5 w-5" />
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          <PlusIcon className="mercoa-h-5 mercoa-w-5" />
         </div>
-        <div className="min-w-0 flex-1">
-          <span className="absolute inset-0" aria-hidden="true" />
-          <p className="text-sm font-medium text-gray-900">Add new representative</p>
-          <p className="truncate text-sm text-gray-500"></p>
+        <div className="mercoa-min-w-0 mercoa-flex-1">
+          <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
+          <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">Add new representative</p>
+          <p className="mercoa-truncate mercoa-text-sm mercoa-text-gray-500"></p>
         </div>
       </div>
     )
@@ -1801,7 +1604,7 @@ export function VerifyOwnersButton({ entity }: { entity: Mercoa.EntityResponse }
       disabled={!hasController}
       tooltip={hasController ? undefined : 'Please add at least one representative who is a controller'}
       isEmphasized
-      className="mt-2"
+      className="mercoa-mt-2"
     >
       Verify Account
     </MercoaButton>
@@ -1839,32 +1642,32 @@ export function AcceptToSButton({
         {buttonText || 'Terms of Service'}
       </MercoaButton>
       <Transition.Root show={showAdd} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={setShowAdd}>
+        <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={setShowAdd}>
           <Transition.Child
             as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
+            enter="mercoa-ease-out mercoa-duration-300"
+            enterFrom="mercoa-opacity-0"
+            enterTo="mercoa-opacity-100"
+            leave="mercoa-ease-in mercoa-duration-200"
+            leaveFrom="mercoa-opacity-100"
+            leaveTo="mercoa-opacity-0"
           >
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
           </Transition.Child>
 
-          <div className="fixed inset-0 z-10 overflow-y-auto">
-            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
+            <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
               <Transition.Child
                 as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                enterTo="opacity-100 translate-y-0 sm:scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                enter="mercoa-ease-out mercoa-duration-300"
+                enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+                enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                leave="mercoa-ease-in mercoa-duration-200"
+                leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
               >
-                <Dialog.Panel className="relative transform rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6">
-                  <Dialog.Title className="mb-3 w-full text-center text-xl text-gray-800 underline">
+                <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-md sm:mercoa-p-6">
+                  <Dialog.Title className="mercoa-mb-3 mercoa-w-full mercoa-text-center mercoa-text-xl mercoa-text-gray-800 mercoa-underline">
                     {title || 'Terms of Service'}
                   </Dialog.Title>
                   <AcceptTosForm entity={entity} onComplete={setShowAdd} />
@@ -1904,9 +1707,9 @@ export function AcceptTosForm({
         mercoaSession.refresh()
       })}
     >
-      <div className="mb-10 text-sm">
+      <div className="mercoa-mb-10 mercoa-text-sm">
         <b>{capitalize(mercoaSession.organization?.name)}</b> has partnered with{' '}
-        <a href="https://mercoa.com" target="_blank" rel="noreferrer" className="text-blue-500 underline">
+        <a href="https://mercoa.com" target="_blank" rel="noreferrer" className="mercoa-text-blue-500 mercoa-underline">
           Mercoa
         </a>{' '}
         to provide financial services.
@@ -1917,7 +1720,7 @@ export function AcceptTosForm({
           href="https://mercoa.com/legal/platform-agreement/"
           target="_blank"
           rel="noreferrer"
-          className="text-blue-500 underline"
+          className="mercoa-text-blue-500 mercoa-underline"
         >
           Mercoa Platform Agreement
         </a>{' '}
@@ -1926,28 +1729,28 @@ export function AcceptTosForm({
           href="https://mercoa.com/legal/privacy-policy/"
           target="_blank"
           rel="noreferrer"
-          className="text-blue-500 underline"
+          className="mercoa-text-blue-500 mercoa-underline"
         >
           Privacy Policy
         </a>
         .
       </div>
-      <div className="relative mt-2 flex items-start items-center">
-        <div className="flex h-5 items-center">
+      <div className="mercoa-relative mercoa-mt-2 mercoa-flex mercoa-items-start mercoa-items-center">
+        <div className="mercoa-flex mercoa-h-5 mercoa-items-center">
           <input
             {...register('mercoa')}
             type="checkbox"
-            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            className="mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
           />
         </div>
-        <div className="ml-3 text-sm">
-          <label htmlFor="isController" className="font-medium text-gray-700">
+        <div className="mercoa-ml-3 mercoa-text-sm">
+          <label htmlFor="isController" className="mercoa-font-medium mercoa-text-gray-700">
             I have read and accept the{' '}
             <a
               href="https://mercoa.com/legal/platform-agreement/"
               target="_blank"
               rel="noreferrer"
-              className="text-blue-500 underline"
+              className="mercoa-text-blue-500 mercoa-underline"
             >
               {' '}
               Mercoa terms of service
@@ -1955,7 +1758,7 @@ export function AcceptTosForm({
           </label>
         </div>
       </div>
-      <MercoaButton isEmphasized disabled={!data.mercoa} className="mt-5" size="md">
+      <MercoaButton isEmphasized disabled={!data.mercoa} className="mercoa-mt-5" size="md">
         Confirm
       </MercoaButton>
     </form>
@@ -1986,12 +1789,14 @@ export function EntityOnboarding({
       accountType: entity.accountType,
       email: entity.email,
 
-      firstName: entity.profile.individual?.name.firstName,
+      firstName: entity.profile.individual?.name.firstName ?? '',
       middleName: entity.profile.individual?.name.middleName,
-      lastName: entity.profile.individual?.name.lastName,
+      lastName: entity.profile.individual?.name.lastName ?? '',
       suffix: entity.profile.individual?.name.suffix,
 
-      phoneNumber: entity.profile.individual?.phone?.number ?? entity.profile.business?.phone?.number,
+      phoneNumber: formatPhoneNumber(
+        entity.profile.individual?.phone?.number ?? entity.profile.business?.phone?.number,
+      ),
 
       addressLine1: entity.profile.individual?.address?.addressLine1 ?? entity.profile.business?.address?.addressLine1,
       addressLine2: entity.profile.individual?.address?.addressLine2 ?? entity.profile.business?.address?.addressLine2,
@@ -2013,6 +1818,37 @@ export function EntityOnboarding({
       website: entity.profile.business?.website,
       formationDate: new Date(),
     },
+    resolver: async (data, context, options) => {
+      if (data.accountType === Mercoa.AccountType.Individual) {
+        return yupResolver(
+          yup
+            .object({
+              ...(onboardingOptions?.individual.name.required && nameBlockSchema),
+              ...(onboardingOptions?.individual.email.required && emailSchema),
+              ...(onboardingOptions?.individual.phone.required && phoneSchema),
+              ...(onboardingOptions?.individual.dateOfBirth.required && dateOfBirthSchema),
+              ...(onboardingOptions?.individual.address.required && addressBlockSchema),
+              ...(onboardingOptions?.individual.ssn.required && SSNSchema),
+            })
+            .required(),
+        )(data, context, options as any) as any
+      } else {
+        return yupResolver(
+          yup
+            .object({
+              ...(onboardingOptions?.business.name.required && legalBusinessNameSchema),
+              ...(onboardingOptions?.business.email.required && emailSchema),
+              ...(onboardingOptions?.business.phone.required && phoneSchema),
+              ...(onboardingOptions?.business.website.required && websiteSchema),
+              ...(onboardingOptions?.business.address.required && addressBlockSchema),
+              ...(onboardingOptions?.business.ein.required && einSchema),
+              ...(onboardingOptions?.business.formationDate.required && formationDateSchema),
+              ...(onboardingOptions?.business.description.required && descriptionSchema),
+            })
+            .required(),
+        )(data, context, options as any) as any
+      }
+    },
   })
 
   const accountType = watch('accountType')
@@ -2025,16 +1861,16 @@ export function EntityOnboarding({
         setEntityData(data)
       })}
     >
-      <div className="sm:grid sm:grid-cols-2 gap-4">
+      <div className="sm:mercoa-grid sm:mercoa-grid-cols-2 mercoa-gap-4">
         {onboardingOptions?.enableBusiness && onboardingOptions?.enableIndividual && (
-          <div className="col-span-2">
+          <div className="mercoa-col-span-2">
             <AccountTypeSelectBlock register={register} errors={errors} />
           </div>
         )}
         {accountType === 'individual' && (
           <>
             {onboardingOptions?.individual.email.show && (
-              <div className="col-span-2">
+              <div className="mercoa-col-span-2">
                 <EmailBlock
                   register={register}
                   errors={errors}
@@ -2044,7 +1880,7 @@ export function EntityOnboarding({
               </div>
             )}
             {onboardingOptions?.individual.name.show && (
-              <div className="col-span-2">
+              <div className="mercoa-col-span-2">
                 <NameBlock
                   register={register}
                   errors={errors}
@@ -2070,7 +1906,7 @@ export function EntityOnboarding({
               />
             )}
             {onboardingOptions?.individual.address.show && (
-              <div className="col-span-2">
+              <div className="mercoa-col-span-2">
                 <AddressBlock
                   register={register}
                   errors={errors}
@@ -2127,7 +1963,7 @@ export function EntityOnboarding({
               />
             )}
             {onboardingOptions?.business.address.show && (
-              <div className="col-span-2">
+              <div className="mercoa-col-span-2">
                 <AddressBlock
                   label="Business Address"
                   register={register}
@@ -2165,7 +2001,7 @@ export function EntityOnboarding({
               />
             )}
             {onboardingOptions?.business.description.show && (
-              <div className="col-span-2">
+              <div className="mercoa-col-span-2">
                 <DescriptionBlock
                   register={register}
                   errors={errors}
@@ -2177,8 +2013,8 @@ export function EntityOnboarding({
           </>
         )}
       </div>
-      <div className="mt-8 flex">
-        <div className="flex-1" />
+      <div className="mercoa-mt-8 mercoa-flex">
+        <div className="mercoa-flex-1" />
         <MercoaButton isEmphasized>Next</MercoaButton>
       </div>
     </form>
@@ -2221,9 +2057,9 @@ export function EntityCreation({
         setEntityData(data)
       })}
     >
-      <div className="gap-4">
+      <div className="mercoa-gap-4">
         {onboardingOptions?.enableBusiness && onboardingOptions?.enableIndividual && (
-          <div className="col-span-2">
+          <div className="mercoa-col-span-2">
             <AccountTypeSelectBlock register={register} errors={errors} />
           </div>
         )}
@@ -2268,8 +2104,8 @@ export function EntityCreation({
           </>
         )}
       </div>
-      <div className="mt-8 flex">
-        <div className="flex-1" />
+      <div className="mercoa-mt-8 mercoa-flex">
+        <div className="mercoa-flex-1" />
         <MercoaButton isEmphasized>Next</MercoaButton>
       </div>
     </form>
@@ -2294,4 +2130,13 @@ export function entityDetailsForMercoaPaymentsCompleted(entity: Mercoa.EntityRes
     if (!entity.profile.individual.governmentIdProvided) return false
   }
   return true
+}
+
+function formatPhoneNumber(phoneNumberString?: string) {
+  var cleaned = ('' + phoneNumberString).replace(/\D/g, '')
+  var match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/)
+  if (match) {
+    return '(' + match[1] + ') ' + match[2] + '-' + match[3]
+  }
+  return phoneNumberString
 }

@@ -3,6 +3,7 @@ const defaultTheme = require('tailwindcss/defaultTheme')
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
+  prefix: 'mercoa-',
   theme: {
     fontSize: {
       xs: ['0.75rem', { lineHeight: '1rem' }],
@@ -36,6 +37,7 @@ export default {
         'mercoa-primary-dark': 'var(--mercoa-primary-dark)',
         'mercoa-primary-text': 'var(--mercoa-primary-text)',
         'mercoa-primary-text-invert': 'var(--mercoa-primary-text-invert)',
+        'mercoa-logo-background': 'var(--mercoa-logo-background)',
       },
     },
   },

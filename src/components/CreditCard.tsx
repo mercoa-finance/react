@@ -62,18 +62,18 @@ export function CreditCards({
     return (
       <>
         {!cards && (
-          <div className="p-9 text-center">
+          <div className="mercoa-p-9 mercoa-text-center">
             <LoadingSpinnerIcon />
           </div>
         )}
         {cards &&
           cards.map((account) => (
-            <div className="mt-2" key={account.id}>
+            <div className="mercoa-mt-2" key={account.id}>
               <CreditCardComponent account={account} onSelect={onSelect} showEdit={showEdit} />
             </div>
           ))}
         {cards && showAdd && (
-          <div className="mt-2">
+          <div className="mercoa-mt-2">
             <AddDialog
               show={showDialog}
               onClose={onClose}
@@ -142,16 +142,20 @@ export function AddCreditCard({
   }, [mercoaSession.moovToken, mercoaSession.moovAccountId, mercoaSession.entityId])
 
   return (
-    <div className="space-y-3 text-left">
-      {title || <h3 className="text-center text-lg font-medium leading-6 text-gray-900">Add Card</h3>}
-      <div className="flex items-center justify-center">
+    <div className="mercoa-space-y-3 mercoa-text-left">
+      {title || (
+        <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+          Add Card
+        </h3>
+      )}
+      <div className="mercoa-flex mercoa-items-center mercoa-justify-center">
         {/* @ts-ignore */}
         <moov-card-link />
       </div>
-      <div className="flex justify-between">
+      <div className="mercoa-flex mercoa-justify-between">
         {actions || (
           <button
-            className="ml-3 rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            className="mercoa-ml-3 mercoa-rounded-md mercoa-bg-indigo-600 mercoa-px-3 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2"
             onClick={() => {
               const cardInput = document.querySelector('moov-card-link')
               // @ts-ignore
@@ -194,25 +198,31 @@ export function CreditCardComponent({
           if (onSelect) onSelect(account)
         }}
         key={`${account?.id}`}
-        className={`relative flex items-center space-x-3 rounded-lg border ${
-          selected ? 'border-indigo-300' : 'border-gray-300'
-        } bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 ${
-          onSelect ? 'cursor-pointer hover:border-gray-400' : ''
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border ${
+          selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
+        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
+          onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
         }`}
       >
-        <div className="flex-shrink-0 rounded-full bg-gray-200 p-1 text-gray-600">
-          <CreditCardIcon className={`h-5 w-5 ${selected ? 'text-indigo-400' : ''}`} />
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          <CreditCardIcon className="mercoa-h-5 mercoa-w-5" />
         </div>
-        <div className="flex min-w-0 flex-1 justify-between">
+        <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
           <div>
-            {!showEdit && <span className="absolute inset-0" aria-hidden="true" />}
-            <p className={`text-sm font-medium text-gray-900 ${selected ? 'underline' : ''}`}>{`${capitalize(
-              brand,
-            )} ••••${account?.lastFour}`}</p>
+            {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
+            <p
+              className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}
+            >{`${capitalize(brand)} ••••${account?.lastFour}`}</p>
           </div>
         </div>
         {showEdit && (
-          <div className="flex cursor-pointer">
+          <div className="mercoa-flex mercoa-cursor-pointer ">
             <DefaultPaymentMethodIndicator paymentMethod={account} />
           </div>
         )}
@@ -224,17 +234,23 @@ export function CreditCardComponent({
         onClick={() => {
           if (onSelect) onSelect(account)
         }}
-        className={`relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:border-gray-400 ${
-          onSelect ? 'cursor-pointer' : ''
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
+          onSelect ? 'mercoa-cursor-pointer ' : ''
         }`}
       >
-        <div className="flex-shrink-0 rounded-full bg-gray-200 p-1 text-gray-600">
-          <PlusIcon className="h-5 w-5" />
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          <PlusIcon className="mercoa-h-5 mercoa-w-5" />
         </div>
-        <div className="min-w-0 flex-1">
-          <span className="absolute inset-0" aria-hidden="true" />
-          <p className="text-sm font-medium text-gray-900">Add new card</p>
-          <p className="truncate text-sm text-gray-500"></p>
+        <div className="mercoa-min-w-0 mercoa-flex-1">
+          <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
+          <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">Add new card</p>
+          <p className="mercoa-truncate mercoa-text-sm mercoa-text-gray-500"></p>
         </div>
       </div>
     )

@@ -218,6 +218,7 @@ function useProvideSession({
       return `#${rr}${gg}${bb}`
     }
 
+    const logoBackground = organization?.colorScheme?.logoBackgroundColor || 'transparent' // default is transparent
     const primary = organization?.colorScheme?.primaryColor || '#4f46e5' // default is indigo-600
     const primaryLight = organization?.colorScheme?.primaryColor
       ? adjustBrightness(organization?.colorScheme?.primaryColor, 40)
@@ -234,6 +235,7 @@ function useProvideSession({
       primaryTextInvert = '#111827' // black
     }
 
+    document.documentElement.style.setProperty('--mercoa-logo-background', logoBackground)
     document.documentElement.style.setProperty('--mercoa-primary', primary)
     document.documentElement.style.setProperty('--mercoa-primary-light', primaryLight)
     document.documentElement.style.setProperty('--mercoa-primary-dark', primaryDark)

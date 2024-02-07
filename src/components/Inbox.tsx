@@ -143,31 +143,35 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
         <>
           {mercoaSession.entity && !!invoices ? (
             <>
-              <div className="mt-7 ">
+              <div className="mercoa-mt-7 ">
                 {/* ******** TITLE ******** */}
-                <div className="sm:flex sm:items-center">
-                  <div className="sm:flex-auto">
-                    <h1 className="text-base font-semibold leading-6 text-gray-900">Assigned to Me</h1>
-                    <p className="mt-2 text-sm text-gray-700">A list of all invoices that require your review</p>
+                <div className="sm:mercoa-flex sm:mercoa-items-center">
+                  <div className="sm:mercoa-flex-auto">
+                    <h1 className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-900">
+                      Assigned to Me
+                    </h1>
+                    <p className="mercoa-mt-2 mercoa-text-sm mercoa-text-gray-700">
+                      A list of all invoices that require your review
+                    </p>
                   </div>
                 </div>
-                <div className="flow-root">
-                  <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                    <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                      <div className="relative">
+                <div className="mercoa-flow-root">
+                  <div className="-mercoa-mx-4 -mercoa-my-2 mercoa-overflow-x-auto sm:-mercoa-mx-6 lg:-mercoa-mx-8">
+                    <div className="mercoa-inline-block mercoa-min-w-full mercoa-py-2 mercoa-align-middle sm:mercoa-px-6 lg:mercoa-px-8">
+                      <div className="mercoa-relative">
                         {/* ******** BULK ACTIONS ******** */}
                         {selectedInvoices.length > 0 && (
-                          <div className="absolute left-14 top-0 flex h-12 items-center space-x-3 bg-white sm:left-12">
+                          <div className="mercoa-absolute mercoa-left-14 mercoa-top-0 mercoa-flex mercoa-h-12 mercoa-items-center mercoa-space-x-3 mercoa-bg-white sm:mercoa-left-12">
                             <button
                               type="button"
-                              className="inline-flex items-center rounded bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-white"
+                              className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
                               onClick={handleApprove}
                             >
                               Approve
                             </button>
                             <button
                               type="button"
-                              className="inline-flex items-center rounded bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-white"
+                              className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
                               onClick={handleReject}
                             >
                               Reject
@@ -175,14 +179,14 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                           </div>
                         )}
                         {/* ******** TABLE ******** */}
-                        <table className="min-w-full table-fixed divide-y divide-gray-300 mt-5">
+                        <table className="mercoa-min-w-full table-mercoa-fixed mercoa-divide-y mercoa-divide-gray-300 mercoa-mt-5">
                           {/* ******** COLUMN HEADERS ******** */}
                           <thead>
                             <tr>
-                              <th scope="col" className="relative px-7 sm:w-12 sm:px-6">
+                              <th scope="col" className="mercoa-relative mercoa-px-7 sm:mercoa-w-12 sm:mercoa-px-6">
                                 <input
                                   type="checkbox"
-                                  className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-mercoa-primary-text focus:ring-mercoa-primary"
+                                  className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
                                   ref={checkbox}
                                   checked={checked}
                                   onChange={toggleAll}
@@ -190,7 +194,7 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                               </th>
                               <th
                                 scope="col"
-                                className="min-w-[12rem] py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-3"
+                                className="mercoa-min-w-[12rem] mercoa-py-3.5 mercoa-pl-4 mercoa-pr-3 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 sm:mercoa-pl-3"
                               >
                                 <TableOrderHeader
                                   title="Vendor"
@@ -204,7 +208,7 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                               </th>
                               <th
                                 scope="col"
-                                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 hidden sm:table-cell"
+                                className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-hidden sm:mercoa-table-cell"
                               >
                                 <TableOrderHeader
                                   title="Invoice Number"
@@ -216,7 +220,10 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                                   orderDirection={orderDirection}
                                 />
                               </th>
-                              <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                              <th
+                                scope="col"
+                                className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+                              >
                                 <TableOrderHeader
                                   title="Due Date"
                                   setOrder={(direction) => {
@@ -227,7 +234,10 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                                   orderDirection={orderDirection}
                                 />
                               </th>
-                              <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                              <th
+                                scope="col"
+                                className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+                              >
                                 <TableOrderHeader
                                   title="Amount"
                                   setOrder={(direction) => {
@@ -240,7 +250,7 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                               </th>
                               <th
                                 scope="col"
-                                className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 pl-6 hidden lg:table-cell"
+                                className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-pl-6 mercoa-hidden lg:mercoa-table-cell"
                               >
                                 Status
                               </th>
@@ -248,22 +258,22 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                           </thead>
 
                           {/* ******** TABLE BODY ******** */}
-                          <tbody className="divide-y divide-gray-200 bg-white">
+                          <tbody className="mercoa-divide-y mercoa-divide-gray-200 mercoa-bg-white">
                             {invoices.map((invoice) => (
                               <tr
                                 key={invoice.id}
                                 className={classNames(
-                                  'cursor-pointer hover:bg-gray-100',
-                                  selectedInvoices.includes(invoice) ? 'bg-gray-50' : undefined,
+                                  'mercoa-cursor-pointer  hover:mercoa-bg-gray-100',
+                                  selectedInvoices.includes(invoice) ? 'mercoa-bg-gray-50' : undefined,
                                 )}
                               >
-                                <td className="relative px-7 sm:w-12 sm:px-6">
+                                <td className="mercoa-relative mercoa-px-7 sm:mercoa-w-12 sm:mercoa-px-6">
                                   {selectedInvoices.includes(invoice) && (
-                                    <div className="absolute inset-y-0 left-0 w-0.5 bg-mercoa-primary" />
+                                    <div className="mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-w-0.5 mercoa-bg-mercoa-primary" />
                                   )}
                                   <input
                                     type="checkbox"
-                                    className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-mercoa-primary-text focus:ring-mercoa-primary"
+                                    className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
                                     value={invoice.id}
                                     checked={selectedInvoices.includes(invoice)}
                                     onChange={(e) =>
@@ -277,8 +287,10 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                                 </td>
                                 <td
                                   className={classNames(
-                                    'whitespace-nowrap py-3 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-3',
-                                    selectedInvoices.includes(invoice) ? 'text-mercoa-primary-text' : 'text-gray-900',
+                                    'mercoa-whitespace-nowrap mercoa-py-3 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-3',
+                                    selectedInvoices.includes(invoice)
+                                      ? 'mercoa-text-mercoa-primary-text'
+                                      : 'mercoa-text-gray-900',
                                   )}
                                   onClick={() => {
                                     if (onClick) onClick(invoice)
@@ -287,7 +299,7 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                                   {invoice.vendor?.name}
                                 </td>
                                 <td
-                                  className="whitespace-nowrap px-3 py-3 text-sm text-gray-900 hidden sm:table-cell"
+                                  className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-text-gray-900 mercoa-hidden sm:mercoa-table-cell"
                                   onClick={() => {
                                     if (onClick) onClick(invoice)
                                   }}
@@ -295,7 +307,7 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                                   {invoice.invoiceNumber}
                                 </td>
                                 <td
-                                  className="whitespace-nowrap px-3 py-3 text-sm text-gray-900"
+                                  className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-text-gray-900"
                                   onClick={() => {
                                     if (onClick) onClick(invoice)
                                   }}
@@ -303,7 +315,7 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                                   {dayjs(invoice.dueDate).format('MMM DD, YYYY')}
                                 </td>
                                 <td
-                                  className="whitespace-nowrap px-3 py-3 text-sm text-gray-900"
+                                  className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-text-gray-900"
                                   onClick={() => {
                                     if (onClick) onClick(invoice)
                                   }}
@@ -311,7 +323,7 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
                                   {accounting.formatMoney(invoice.amount ?? '', currencyCodeToSymbol(invoice.currency))}
                                 </td>
                                 <td
-                                  className="whitespace-nowrap px-3 py-3 text-sm hidden lg:table-cell"
+                                  className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-hidden lg:mercoa-table-cell"
                                   onClick={() => {
                                     if (onClick) onClick(invoice)
                                   }}
@@ -340,10 +352,12 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
               </div>
 
               {/* Header for the table beneath ApprovalsTable, so it only renders when ApprovalsTable is rendered.*/}
-              <div className="mt-10 sm:flex sm:items-center">
-                <div className="sm:flex-auto">
-                  <h1 className="text-base font-semibold leading-6 text-gray-900">All invoices</h1>
-                  <p className="mt-2 text-sm text-gray-700">
+              <div className="mercoa-mt-10 sm:mercoa-flex sm:mercoa-items-center">
+                <div className="sm:mercoa-flex-auto">
+                  <h1 className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-900">
+                    All invoices
+                  </h1>
+                  <p className="mercoa-mt-2 mercoa-text-sm mercoa-text-gray-700">
                     A list of all invoices that require review from an assigned approver
                   </p>
                 </div>
@@ -368,12 +382,12 @@ function SchedulePaymentModal({
   setDate: Function
 }) {
   return (
-    <Dialog as="div" open={show} onClose={closeModal} className="relative z-10">
+    <Dialog as="div" open={show} onClose={closeModal} className="mercoa-relative mercoa-z-10">
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-      {/* Full-screen container to center the panel */}
-      <div className="fixed inset-0 overflow-y-auto">
-        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+      <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-black/30" aria-hidden="true" />
+      {/* Full-screen  mercoa-container to center the panel */}
+      <div className="mercoa-fixed mercoa-inset-0 mercoa-overflow-y-auto">
+        <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
           <DatePickerPanel closeModal={closeModal} setDate={setDate} />
         </div>
       </div>
@@ -385,15 +399,15 @@ function DatePickerPanel({ closeModal, setDate }: { closeModal: () => void; setD
   const [selectedDate, setSelectedDate] = useState<Date | null>()
 
   return (
-    <Dialog.Panel className="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-6">
+    <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pb-4 mercoa-pt-5 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-sm sm:mercoa-p-6">
       <div>
-        <div className="mt-3 text-center sm:mt-5">
-          <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
+        <div className="mercoa-mt-3 mercoa-text-center sm:mercoa-mt-5">
+          <Dialog.Title as="h3" className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-900">
             When should these payments be scheduled?
           </Dialog.Title>
-          <div className="mt-2">
+          <div className="mercoa-mt-2">
             <DatePicker
-              className="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
               placeholderText="Select deduction date"
               onChange={(date) => setSelectedDate(date)}
               selected={selectedDate}
@@ -403,10 +417,10 @@ function DatePickerPanel({ closeModal, setDate }: { closeModal: () => void; setD
           </div>
         </div>
       </div>
-      <div className="mt-5 sm:mt-6">
+      <div className="mercoa-mt-5 sm:mercoa-mt-6">
         <MercoaButton
           type="button"
-          className="inline-flex w-full justify-center "
+          className="mercoa-inline-flex mercoa-w-full mercoa-justify-center "
           isEmphasized
           onClick={() => {
             closeModal()
@@ -593,7 +607,7 @@ function InvoiceInboxTable({
           const blob = new Blob([csv], { type: 'text/csv' })
           const url = window.URL.createObjectURL(blob)
           const a = document.createElement('a')
-          a.setAttribute('hidden', '')
+          a.setAttribute('mercoa-hidden', '')
           a.setAttribute('href', url)
           a.setAttribute('download', `mercoa-invoice-export-${dayjs().format('YYYY-MM-DD')}.csv`)
           document.body.appendChild(a)
@@ -647,7 +661,7 @@ function InvoiceInboxTable({
 
   if (!dataLoaded) {
     return (
-      <div className="mt-7">
+      <div className="mercoa-mt-7">
         <Skeleton rows={10} />
       </div>
     )
@@ -657,14 +671,14 @@ function InvoiceInboxTable({
     <>
       {mercoaSession.entity && !!invoices ? (
         <>
-          <div className="min-h-[600px]">
-            <div className="relative">
+          <div className="mercoa-min-h-[600px]">
+            <div className="mercoa-relative">
               {/* ******** BULK ACTIONS ******** */}
               {status.some((status) => status === Mercoa.InvoiceStatus.Approved) && selectedInvoices.length > 0 && (
-                <div className="absolute left-14 top-0 flex h-12 items-center space-x-3 bg-white sm:left-12">
+                <div className="mercoa-absolute mercoa-left-14 mercoa-top-0 mercoa-flex mercoa-h-12 mercoa-items-center mercoa-space-x-3 mercoa-bg-white sm:mercoa-left-12">
                   <button
                     type="button"
-                    className="inline-flex items-center rounded bg-white px-2 py-1 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-white"
+                    className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
                     onClick={showModal}
                   >
                     Schedule Payment
@@ -672,16 +686,16 @@ function InvoiceInboxTable({
                 </div>
               )}
               {/* ******** TABLE ******** */}
-              <table className="min-w-full table-fixed divide-y divide-gray-300 mt-5">
+              <table className="mercoa-min-w-full table-mercoa-fixed mercoa-divide-y mercoa-divide-gray-300 mercoa-mt-5">
                 {/* ******** COLUMN HEADERS ******** */}
                 <thead>
                   <tr>
                     {/* ******** CHECK BOX HEADER ******** */}
                     {status.some((status) => status === Mercoa.InvoiceStatus.Approved) && (
-                      <th scope="col" className="relative px-7 sm:w-12 sm:px-6">
+                      <th scope="col" className="mercoa-relative mercoa-px-7 sm:mercoa-w-12 sm:mercoa-px-6">
                         <input
                           type="checkbox"
-                          className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-mercoa-primary-text focus:ring-mercoa-primary"
+                          className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
                           ref={checkbox}
                           checked={checked}
                           onChange={toggleAll}
@@ -690,7 +704,7 @@ function InvoiceInboxTable({
                     )}
                     <th
                       scope="col"
-                      className="min-w-[12rem] py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-3"
+                      className="mercoa-min-w-[12rem] mercoa-py-3.5 mercoa-pl-4 mercoa-pr-3 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 sm:mercoa-pl-3"
                     >
                       <TableOrderHeader
                         title="Vendor"
@@ -704,7 +718,7 @@ function InvoiceInboxTable({
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 hidden sm:table-cell"
+                      className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-hidden sm:mercoa-table-cell"
                     >
                       <TableOrderHeader
                         title="Invoice Number"
@@ -716,7 +730,10 @@ function InvoiceInboxTable({
                         orderDirection={orderDirection}
                       />
                     </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <th
+                      scope="col"
+                      className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+                    >
                       <TableOrderHeader
                         title="Due Date"
                         setOrder={(direction) => {
@@ -727,7 +744,10 @@ function InvoiceInboxTable({
                         orderDirection={orderDirection}
                       />
                     </th>
-                    <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <th
+                      scope="col"
+                      className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+                    >
                       <TableOrderHeader
                         title="Amount"
                         setOrder={(direction) => {
@@ -740,7 +760,7 @@ function InvoiceInboxTable({
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 pl-6 hidden lg:table-cell"
+                      className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-pl-6 mercoa-hidden lg:mercoa-table-cell"
                     >
                       Status
                     </th>
@@ -752,7 +772,7 @@ function InvoiceInboxTable({
                     ) && (
                       <th
                         scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 group inline-flex items-center"
+                        className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 group mercoa-inline-flex mercoa-items-center"
                       >
                         Deduction Date
                       </th>
@@ -761,24 +781,24 @@ function InvoiceInboxTable({
                 </thead>
 
                 {/* ******** TABLE BODY ******** */}
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody className="mercoa-divide-y mercoa-divide-gray-200 mercoa-bg-white">
                   {invoices.map((invoice) => (
                     <tr
                       key={invoice.id}
                       className={classNames(
-                        'cursor-pointer hover:bg-gray-100',
-                        selectedInvoices.includes(invoice) ? 'bg-gray-50' : undefined,
+                        'mercoa-cursor-pointer  hover:mercoa-bg-gray-100',
+                        selectedInvoices.includes(invoice) ? 'mercoa-bg-gray-50' : undefined,
                       )}
                     >
                       {/* ******** CHECK BOX ******** */}
                       {status.some((status) => status === Mercoa.InvoiceStatus.Approved) && (
-                        <td className="relative px-7 sm:w-12 sm:px-6">
+                        <td className="mercoa-relative mercoa-px-7 sm:mercoa-w-12 sm:mercoa-px-6">
                           {selectedInvoices.includes(invoice) && (
-                            <div className="absolute inset-y-0 left-0 w-0.5 bg-mercoa-primary" />
+                            <div className="mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-w-0.5 mercoa-bg-mercoa-primary" />
                           )}
                           <input
                             type="checkbox"
-                            className="absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-mercoa-primary-text focus:ring-mercoa-primary"
+                            className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
                             value={invoice.id}
                             checked={selectedInvoices.includes(invoice)}
                             onChange={(e) =>
@@ -793,8 +813,10 @@ function InvoiceInboxTable({
                       )}
                       <td
                         className={classNames(
-                          'whitespace-nowrap py-3 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-3',
-                          selectedInvoices.includes(invoice) ? 'text-mercoa-primary-text' : 'text-gray-900',
+                          'mercoa-whitespace-nowrap mercoa-py-3 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-3',
+                          selectedInvoices.includes(invoice)
+                            ? 'mercoa-text-mercoa-primary-text'
+                            : 'mercoa-text-gray-900',
                         )}
                         onClick={() => {
                           if (onClick) onClick(invoice)
@@ -803,7 +825,7 @@ function InvoiceInboxTable({
                         {invoice.vendor?.name}
                       </td>
                       <td
-                        className="whitespace-nowrap px-3 py-3 text-sm text-gray-900 hidden sm:table-cell"
+                        className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-text-gray-900 mercoa-hidden sm:mercoa-table-cell"
                         onClick={() => {
                           if (onClick) onClick(invoice)
                         }}
@@ -811,7 +833,7 @@ function InvoiceInboxTable({
                         {invoice.invoiceNumber}
                       </td>
                       <td
-                        className="whitespace-nowrap px-3 py-3 text-sm text-gray-900"
+                        className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-text-gray-900"
                         onClick={() => {
                           if (onClick) onClick(invoice)
                         }}
@@ -819,7 +841,7 @@ function InvoiceInboxTable({
                         {dayjs(invoice.dueDate).format('MMM DD, YYYY')}
                       </td>
                       <td
-                        className="whitespace-nowrap px-3 py-3 text-sm text-gray-900"
+                        className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-text-gray-900"
                         onClick={() => {
                           if (onClick) onClick(invoice)
                         }}
@@ -827,7 +849,7 @@ function InvoiceInboxTable({
                         {accounting.formatMoney(invoice.amount ?? '', currencyCodeToSymbol(invoice.currency))}
                       </td>
                       <td
-                        className="whitespace-nowrap px-3 py-3 text-sm hidden lg:table-cell"
+                        className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-hidden lg:mercoa-table-cell"
                         onClick={() => {
                           if (onClick) onClick(invoice)
                         }}
@@ -842,7 +864,7 @@ function InvoiceInboxTable({
                       ) &&
                         invoice.deductionDate && (
                           <td
-                            className="whitespace-nowrap px-3 py-3 text-sm hidden lg:table-cell"
+                            className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-hidden lg:mercoa-table-cell"
                             onClick={() => {
                               if (onClick) onClick(invoice)
                             }}
@@ -878,8 +900,8 @@ function InvoiceInboxTable({
 }
 
 export function InvoiceStatusPill({ invoice }: { invoice: Mercoa.InvoiceResponse }) {
-  let backgroundColor = 'bg-gray-100'
-  let textColor = 'text-black'
+  let backgroundColor = 'mercoa-bg-gray-100'
+  let textColor = 'mercoa-text-black'
   let message = ''
   let failureReason = ''
   if (invoice.failureType === Mercoa.InvoiceFailureType.InsufficientFunds) {
@@ -888,22 +910,22 @@ export function InvoiceStatusPill({ invoice }: { invoice: Mercoa.InvoiceResponse
 
   if (invoice.status === Mercoa.InvoiceStatus.Draft) {
     if (!invoice.vendor || !invoice.amount || !invoice.dueDate) {
-      backgroundColor = 'bg-yellow-100'
-      textColor = 'text-black'
+      backgroundColor = 'mercoa-bg-yellow-100'
+      textColor = 'mercoa-text-black'
       message = 'Draft Incomplete'
     } else {
-      backgroundColor = 'bg-green-100'
-      textColor = 'text-green-800'
+      backgroundColor = 'mercoa-bg-green-100'
+      textColor = 'mercoa-text-green-800'
       message = 'Draft Ready'
     }
   } else if (invoice.status === Mercoa.InvoiceStatus.New) {
     if (!invoice.paymentSourceId || !invoice.vendor || !invoice.amount || !invoice.dueDate) {
-      backgroundColor = 'bg-yellow-100'
-      textColor = 'text-gray-800'
+      backgroundColor = 'mercoa-bg-yellow-100'
+      textColor = 'mercoa-text-gray-800'
       message = 'Incomplete'
     } else {
-      backgroundColor = 'bg-green-100'
-      textColor = 'text-green-800'
+      backgroundColor = 'mercoa-bg-green-100'
+      textColor = 'mercoa-text-green-800'
       message = 'Ready for Review'
     }
   } else if (invoice.status === Mercoa.InvoiceStatus.Approved) {
@@ -914,12 +936,12 @@ export function InvoiceStatusPill({ invoice }: { invoice: Mercoa.InvoiceResponse
       !invoice.amount ||
       !invoice.dueDate
     ) {
-      backgroundColor = 'bg-yellow-100'
-      textColor = 'text-black'
+      backgroundColor = 'mercoa-bg-yellow-100'
+      textColor = 'mercoa-text-black'
       message = 'Incomplete'
     } else {
-      backgroundColor = 'bg-green-100'
-      textColor = 'text-green-800'
+      backgroundColor = 'mercoa-bg-green-100'
+      textColor = 'mercoa-text-green-800'
       message = 'Ready for Payment'
     }
   } else if (invoice.status === Mercoa.InvoiceStatus.Scheduled) {
@@ -930,43 +952,43 @@ export function InvoiceStatusPill({ invoice }: { invoice: Mercoa.InvoiceResponse
       !invoice.amount ||
       !invoice.dueDate
     ) {
-      backgroundColor = 'bg-yellow-100'
-      textColor = 'text-black'
+      backgroundColor = 'mercoa-bg-yellow-100'
+      textColor = 'mercoa-text-black'
       message = 'Incomplete'
     } else {
-      backgroundColor = 'bg-green-100'
-      textColor = 'text-green-800'
+      backgroundColor = 'mercoa-bg-green-100'
+      textColor = 'mercoa-text-green-800'
       message = 'Payment Scheduled'
     }
   } else if (invoice.status === Mercoa.InvoiceStatus.Pending) {
-    backgroundColor = 'bg-yellow-100'
-    textColor = 'text-black'
+    backgroundColor = 'mercoa-bg-yellow-100'
+    textColor = 'mercoa-text-black'
     message = 'Payment Processing'
   } else if (invoice.status === Mercoa.InvoiceStatus.Paid) {
-    backgroundColor = 'bg-green-100'
-    textColor = 'text-green-800'
+    backgroundColor = 'mercoa-bg-green-100'
+    textColor = 'mercoa-text-green-800'
     message = 'Paid'
   } else if (invoice.status === Mercoa.InvoiceStatus.Canceled) {
-    backgroundColor = 'bg-red-100'
-    textColor = 'text-red-800'
+    backgroundColor = 'mercoa-bg-red-100'
+    textColor = 'mercoa-text-red-800'
     message = 'Canceled'
   } else if (invoice.status === Mercoa.InvoiceStatus.Archived) {
-    backgroundColor = 'bg-gray-100'
-    textColor = 'text-black'
+    backgroundColor = 'mercoa-bg-gray-100'
+    textColor = 'mercoa-text-black'
     message = 'Archived'
   } else if (invoice.status === Mercoa.InvoiceStatus.Refused) {
-    backgroundColor = 'bg-red-100'
-    textColor = 'text-red-800'
+    backgroundColor = 'mercoa-bg-red-100'
+    textColor = 'mercoa-text-red-800'
     message = 'Refused'
   } else if (invoice.status === Mercoa.InvoiceStatus.Failed) {
-    backgroundColor = 'bg-red-100'
-    textColor = 'text-red-800'
+    backgroundColor = 'mercoa-bg-red-100'
+    textColor = 'mercoa-text-red-800'
     message = 'Failed ' + failureReason
   }
 
   return message ? (
     <p
-      className={`inline-flex items-center whitespace-nowrap rounded-full px-3 py-0.5 text-xs font-medium ${backgroundColor} ${textColor} md:ml-2`}
+      className={`mercoa-inline-flex mercoa-items-center mercoa-whitespace-nowrap mercoa-rounded-full mercoa-px-3 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium ${backgroundColor} ${textColor} md:mercoa-ml-2`}
     >
       {message}
     </p>
@@ -1074,7 +1096,7 @@ export function InvoiceInbox({
         {metrics.map((metric) => (
           <p key={metric.currency}>
             <span>{accounting.formatMoney(metric[key] ?? 0 ?? '', currencyCodeToSymbol(metric.currency))}</span>
-            <span className="text-gray-500 text-xs"> {metric.currency}</span>
+            <span className="mercoa-text-gray-500 mercoa-text-xs"> {metric.currency}</span>
           </p>
         ))}
       </div>
@@ -1109,24 +1131,24 @@ export function InvoiceInbox({
   if (Object.keys(invoiceMetrics ?? {}).length < 1) return <LoadingSpinner />
 
   return (
-    <div className="mt-8">
-      <div className="grid items-center grid-cols-3">
-        <div className="hidden md:block md:col-span-2" />
-        <div className="mt-2 flex w-full rounded-md shadow-sm mr-2 col-span-3 md:col-span-1">
+    <div className="mercoa-mt-8">
+      <div className="mercoa-grid mercoa-items-center mercoa-grid-cols-3">
+        <div className="mercoa-hidden md:mercoa-block md:mercoa-col-span-2" />
+        <div className="mercoa-mt-2 mercoa-flex mercoa-w-full mercoa-rounded-md mercoa-shadow-sm mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1">
           <DebouncedSearch placeholder="Search Vendors" onSettle={setSearch} />
         </div>
       </div>
 
       {/* Inbox Selector Tabs */}
-      <div className="md:hidden mt-2">
-        <label htmlFor="tabs" className="sr-only">
+      <div className="md:mercoa-hidden mercoa-mt-2">
+        <label htmlFor="tabs" className="mercoa-sr-only">
           Select a tab
         </label>
         {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
         <select
           id="tabs"
           name="tabs"
-          className="block w-full rounded-md border-gray-300 py-1 pl-3 pr-10 text-base focus:border-mercoa-primary focus:outline-none focus:ring-mercoa-primary sm:text-sm"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-py-1 mercoa-pl-3 mercoa-pr-10 mercoa-text-base focus:mercoa-border-mercoa-primary focus:mercoa-outline-none focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
           defaultValue={selectedTab}
           onChange={(e) => {
             setSelectedTab(e.target.value as Mercoa.InvoiceStatus)
@@ -1139,8 +1161,11 @@ export function InvoiceInbox({
           ))}
         </select>
       </div>
-      <div className="hidden md:block sm:border-b sm:border-gray-200">
-        <nav className="-mb-px block sm:flex sm:space-x-6 overflow-auto" aria-label="Tabs">
+      <div className="mercoa-hidden md:mercoa-block sm:mercoa-border-b sm:mercoa-border-gray-200">
+        <nav
+          className="-mercoa-mb-px mercoa-block sm:mercoa-flex sm:mercoa-space-x-6 mercoa-overflow-auto"
+          aria-label="Tabs"
+        >
           {tabs.map((status) => (
             <a
               onClick={() => {
@@ -1150,18 +1175,18 @@ export function InvoiceInbox({
               href="#"
               className={`${
                 status == selectedTab
-                  ? 'text-mercoa-primary sm:border-mercoa-primary'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-              } mr-2 whitespace-nowrap py-4 px-1 text-sm font-medium sm:mr-0 sm:border-b-2`}
+                  ? 'mercoa-text-mercoa-primary sm:mercoa-border-mercoa-primary'
+                  : 'mercoa-border-transparent mercoa-text-gray-500 hover:mercoa-border-gray-300 hover:mercoa-text-gray-700'
+              } mercoa-mr-2 mercoa-whitespace-nowrap mercoa-py-4 mercoa-px-1 mercoa-text-sm mercoa-font-medium sm:mercoa-mr-0 sm:mercoa-border-b-2`}
               aria-current={tabToName[status] == selectedTab ? 'page' : undefined}
             >
               {tabToName[status]}{' '}
               <span
                 className={`${
                   status == selectedTab
-                    ? 'bg-mercoa-primary text-mercoa-primary-text-invert'
-                    : 'bg-gray-100 text-gray-800'
-                } inline-flex items-center rounded-full  px-2.5 py-0.5 text-xs font-medium`}
+                    ? 'mercoa-bg-mercoa-primary mercoa-text-mercoa-primary-text-invert'
+                    : 'mercoa-bg-gray-100 mercoa-text-gray-800'
+                } mercoa-inline-flex mercoa-items-center mercoa-rounded-full  mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium`}
               >
                 {' '}
                 {sumTotalCount(invoiceMetrics?.[status] ?? [])}
@@ -1171,7 +1196,7 @@ export function InvoiceInbox({
         </nav>
       </div>
 
-      <div className="grid grid-cols-3 space-x-3 mt-2">
+      <div className="mercoa-grid mercoa-grid-cols-3 mercoa-space-x-3 mercoa-mt-2">
         <StatCard
           size="sm"
           title={`Total ${tabToName[selectedTab]} Invoices`}

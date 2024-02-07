@@ -50,11 +50,15 @@ export function AddCheck({
   }
 
   return (
-    <form className="space-y-3 text-left" onSubmit={handleSubmit((formOnlySubmit as any) || submitCheck)}>
-      {title || <h3 className="text-center text-lg font-medium leading-6 text-gray-900">Add Check Address</h3>}
+    <form className="mercoa-space-y-3 mercoa-text-left" onSubmit={handleSubmit((formOnlySubmit as any) || submitCheck)}>
+      {title || (
+        <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+          Add Check Address
+        </h3>
+      )}
       <AddCheckForm register={register} />
       {actions || (
-        <button className="relative inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+        <button className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-indigo-600 mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2">
           Add Check Address
         </button>
       )}
@@ -64,53 +68,53 @@ export function AddCheck({
 
 export function AddCheckForm({ register }: { register: Function }) {
   return (
-    <div className="mt-2">
-      <div className="mt-1">
+    <div className="mercoa-mt-2">
+      <div className="mercoa-mt-1">
         <input
           {...register('payToTheOrderOf')}
           type="text"
           placeholder="Pay To The Order Of"
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
         />
       </div>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <input
           {...register('addressLine1')}
           type="text"
           placeholder="Address Line 1"
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
         />
       </div>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <input
           {...register('addressLine2')}
           type="text"
           placeholder="Address Line 2"
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
         />
       </div>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <input
           {...register('city')}
           type="text"
           placeholder="City"
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
         />
       </div>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <input
           {...register('stateOrProvince')}
           type="text"
           placeholder="State Or Province"
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
         />
       </div>
-      <div className="mt-1">
+      <div className="mercoa-mt-1">
         <input
           {...register('postalCode')}
           type="text"
           placeholder="Postal Code"
-          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
         />
       </div>
     </div>
@@ -145,33 +149,42 @@ export function CheckComponent({
           if (onSelect) onSelect(account)
         }}
         key={`${account?.addressLine1} ${account?.addressLine1}`}
-        className={`relative flex items-center space-x-3 rounded-lg border ${
-          selected ? 'border-indigo-300' : 'border-gray-300'
-        } bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 ${
-          onSelect ? 'cursor-pointer hover:border-gray-400' : ''
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border ${
+          selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
+        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
+          onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
         }`}
       >
-        <div className="flex-shrink-0 rounded-full bg-gray-200 p-1 text-gray-600">
-          <EnvelopeIcon className={`h-5 w-5 ${selected ? 'text-indigo-400' : ''}`} />
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          <EnvelopeIcon className="mercoa-h-5 mercoa-w-5" />
         </div>
-        <div className="min-w-0 flex-1">
-          {!showEdit && <span className="absolute inset-0" aria-hidden="true" />}
+        <div className="mercoa-min-w-0 mercoa-flex-1">
+          {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
           <p
-            className={`text-sm font-medium text-gray-900 ${selected ? 'underline' : ''}`}
+            className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}
           >{`${account?.payToTheOrderOf}`}</p>
           <p
-            className={`text-sm font-medium text-gray-900 ${selected ? 'underline' : ''}`}
+            className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}
           >{`${account?.addressLine1}, ${account?.addressLine2}`}</p>
           <p
-            className={`text-sm font-medium text-gray-900 ${selected ? 'underline' : ''}`}
+            className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}
           >{`${account?.city} ${account?.stateOrProvince}, ${account?.postalCode}`}</p>
         </div>
         {showEdit && (
-          <div className="flex-shrink-0">
+          <div className="mercoa-flex-shrink-0">
             <DefaultPaymentMethodIndicator paymentMethod={account} />
-            <button className="ml-1 cursor-pointer hover:text-red-300" onClick={() => deleteAccount()}>
+            <button
+              className="mercoa-ml-1 mercoa-cursor-pointer hover:mercoa-text-red-300"
+              onClick={() => deleteAccount()}
+            >
               {' '}
-              <TrashIcon className="h-5 w-5" />
+              <TrashIcon className="mercoa-h-5 mercoa-w-5" />
             </button>
           </div>
         )}
@@ -183,17 +196,23 @@ export function CheckComponent({
         onClick={() => {
           if (onSelect) onSelect()
         }}
-        className={`relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:border-gray-400 ${
-          onSelect ? 'cursor-pointer' : ''
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
+          onSelect ? 'mercoa-cursor-pointer ' : ''
         }`}
       >
-        <div className="flex-shrink-0 rounded-full bg-gray-200 p-1 text-gray-600">
-          <PlusIcon className="h-5 w-5" />
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          <PlusIcon className="mercoa-h-5 mercoa-w-5" />
         </div>
-        <div className="min-w-0 flex-1">
-          <span className="absolute inset-0" aria-hidden="true" />
-          <p className="text-sm font-medium text-gray-900">Add new address</p>
-          <p className="truncate text-sm text-gray-500"></p>
+        <div className="mercoa-min-w-0 mercoa-flex-1">
+          <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
+          <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">Add new address</p>
+          <p className="mercoa-truncate mercoa-text-sm mercoa-text-gray-500"></p>
         </div>
       </div>
     )

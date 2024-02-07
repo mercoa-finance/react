@@ -41,13 +41,13 @@ export function CustomPaymentMethod({
     return (
       <>
         {!paymentMethods && (
-          <div className="p-9 text-center">
+          <div className="mercoa-p-9 mercoa-text-center">
             <LoadingSpinnerIcon />
           </div>
         )}
         {paymentMethods &&
           paymentMethods?.map((account) => (
-            <div className="mt-2" key={account.id}>
+            <div className="mercoa-mt-2" key={account.id}>
               <CustomPaymentMethodComponent account={account} onSelect={onSelect} schema={schema} showEdit={showEdit} />
             </div>
           ))}
@@ -79,25 +79,31 @@ export function CustomPaymentMethodComponent({
           if (onSelect) onSelect(account)
         }}
         key={account?.id}
-        className={`relative flex items-center space-x-3 rounded-lg border ${
-          selected ? 'border-indigo-300' : 'border-gray-300'
-        } bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 ${
-          onSelect ? 'cursor-pointer hover:border-gray-400' : ''
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border ${
+          selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
+        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
+          onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
         }`}
       >
-        <div className="flex-shrink-0 rounded-full bg-gray-200 p-1 text-gray-600">
-          <BuildingLibraryIcon className={`h-5 w-5 ${selected ? 'text-indigo-400' : ''}`} />
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          <BuildingLibraryIcon className="mercoa-h-5 mercoa-w-5" />
         </div>
-        <div className="flex min-w-0 flex-1 justify-between">
+        <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
           <div>
-            {!showEdit && <span className="absolute inset-0" aria-hidden="true" />}
-            <p className={`text-sm font-medium text-gray-900 ${selected ? 'underline' : ''}`}>{`${capitalize(
-              accountName,
-            )} ${accountNumber ? `••••${String(accountNumber).slice(-4)}` : ''}`}</p>
+            {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
+            <p
+              className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}
+            >{`${capitalize(accountName)} ${accountNumber ? `••••${String(accountNumber).slice(-4)}` : ''}`}</p>
           </div>
         </div>
         {showEdit && (
-          <div className="flex cursor-pointer">
+          <div className="mercoa-flex mercoa-cursor-pointer ">
             <DefaultPaymentMethodIndicator paymentMethod={account} />
           </div>
         )}
@@ -109,19 +115,29 @@ export function CustomPaymentMethodComponent({
         onClick={() => {
           if (onSelect) onSelect()
         }}
-        className={`relative flex items-center space-x-3 rounded-lg border ${
-          selected ? 'border-indigo-300' : 'border-gray-300'
-        } bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 ${
-          onSelect ? 'cursor-pointer hover:border-gray-400' : ''
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border ${
+          selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
+        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
+          onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
         }`}
       >
-        <div className="flex-shrink-0 rounded-full bg-gray-200 p-1 text-gray-600">
-          <BuildingLibraryIcon className={`h-5 w-5 ${selected ? 'text-indigo-400' : ''}`} />
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          <BuildingLibraryIcon className="mercoa-h-5 mercoa-w-5" />
         </div>
-        <div className="flex min-w-0 flex-1 justify-between">
+        <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
           <div>
-            <span className="absolute inset-0" aria-hidden="true" />
-            <p className={`text-sm font-medium text-gray-900 ${selected ? 'underline' : ''}`}>Add new {schema.name}</p>
+            <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
+            <p
+              className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}
+            >
+              Add new {schema.name}
+            </p>
           </div>
         </div>
       </div>
@@ -174,11 +190,15 @@ export function AddCustomPaymentMethod({
   }
 
   return (
-    <form className="space-y-3 text-left" onSubmit={handleSubmit((formOnlySubmit as any) || submitCPM)}>
-      {title || <h3 className="text-center text-lg font-medium leading-6 text-gray-900">{schema.name}</h3>}
+    <form className="mercoa-space-y-3 mercoa-text-left" onSubmit={handleSubmit((formOnlySubmit as any) || submitCPM)}>
+      {title || (
+        <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+          {schema.name}
+        </h3>
+      )}
       <AddCustomPaymentMethodForm register={register} schema={schema} control={control} />
       {actions || (
-        <button className="relative inline-flex items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+        <button className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-indigo-600 mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2">
           Add
         </button>
       )}
@@ -218,10 +238,13 @@ export function AddCustomPaymentMethodForm({
   }, [schemaFields])
 
   return (
-    <div className="mt-2">
+    <div className="mercoa-mt-2">
       {fields?.map((field, index) => (
-        <div className="mt-1" key={field.id}>
-          <label htmlFor={`~cpm~~.${index}.value`} className="block text-sm font-medium text-gray-700">
+        <div className="mercoa-mt-1" key={field.id}>
+          <label
+            htmlFor={`~cpm~~.${index}.value`}
+            className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+          >
             {schemaFields?.[index]?.displayName || schemaFields?.[index]?.name}
           </label>
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Text && (
@@ -230,7 +253,7 @@ export function AddCustomPaymentMethodForm({
               type="text"
               required={schemaFields?.[index]?.optional ? false : true}
               placeholder={`${schemaFields?.[index]?.displayName || schemaFields?.[index]?.name}`}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
             />
           )}
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Url && (
@@ -246,7 +269,7 @@ export function AddCustomPaymentMethodForm({
               type="text"
               required={schemaFields?.[index]?.optional ? false : true}
               placeholder={`https://example.com`}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
             />
           )}
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Email && (
@@ -263,7 +286,7 @@ export function AddCustomPaymentMethodForm({
                 type="text"
                 required={schemaFields?.[index]?.optional ? false : true}
                 placeholder={`name@example.com`}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
+                className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
               />
             </>
           )}
@@ -273,14 +296,14 @@ export function AddCustomPaymentMethodForm({
               type="number"
               required={schemaFields?.[index]?.optional ? false : true}
               placeholder={`${schemaFields?.[index]?.displayName || schemaFields?.[index]?.name}`}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
             />
           )}
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Select && (
             <select
               {...register(`~cpm~~.${index}.value`)}
               required={schemaFields?.[index]?.optional ? false : true}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
             >
               {schemaFields?.[index]?.options?.map((option, index) => (
                 <option key={index} value={option}>
@@ -295,7 +318,7 @@ export function AddCustomPaymentMethodForm({
               name={`~cpm~~.${index}.value`}
               render={({ field }) => (
                 <ReactDatePicker
-                  className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
+                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                   onChange={(date) => field.onChange(date)}
                   selected={field.value}
                   required={schemaFields?.[index]?.optional ? false : true}
@@ -320,7 +343,7 @@ export function AddCustomPaymentMethodForm({
                       <input
                         {...inputProps}
                         type="text"
-                        className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
+                        className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                         placeholder="(777) 777-7777"
                       />
                     )) as any
@@ -381,7 +404,7 @@ function CustomAddressBlock({
       ref={ref as any}
       type="text"
       placeholder="Enter a location"
-      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+      className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
       required={required}
     />
   )

@@ -85,7 +85,7 @@ export function EntityPortal({ token }: { token: string }) {
     if (!entity?.acceptedTos) {
       content = (
         <>
-          <p className="font-gray-700 my-2 text-sm">
+          <p className="mercoa-font-gray-700 mercoa-my-2 mercoa-text-sm">
             Before you can get started, please read and accept the terms of service
           </p>
           <AcceptToSButton title="Terms of Service" buttonText="View Terms of Service" entity={entity} />
@@ -94,18 +94,19 @@ export function EntityPortal({ token }: { token: string }) {
     } else if (!entityDetailsForMercoaPaymentsCompleted(entity)) {
       content = (
         <>
-          <div className="text-gray-800">
-            <p className="text-lg font-normal">
+          <div className="mercoa-text-gray-800">
+            <p className="mercoa-text-lg mercoa-font-normal">
               To pay bills and invoices with {mercoaSession.organization.name}, you&apos;ll need to provide us with a
               few pieces of information.
             </p>
-            <div className="p-4 text-sm rounded-md bg-gray-100 my-4 grid gap-3">
-              <p className="flex items-center">
-                <LockClosedIcon className="w-5 h-5 mr-5" /> Your information is used for verification purposes and
-                isn&apos;t used for third-party marketing. We take your privacy seriously.
+            <div className="mercoa-p-4 mercoa-text-sm mercoa-rounded-md mercoa-bg-gray-100 mercoa-my-4 mercoa-grid mercoa-gap-3">
+              <p className="mercoa-flex mercoa-items-center">
+                <LockClosedIcon className="mercoa-w-5 mercoa-h-5 mercoa-mr-5" /> Your information is used for
+                verification purposes and isn&apos;t used for third-party marketing. We take your privacy seriously.
               </p>
-              <p className="flex items-center">
-                <ClockIcon className="w-4 h-4 mr-5" /> This process should take approximately 5 minutes to complete.
+              <p className="mercoa-flex mercoa-items-center">
+                <ClockIcon className="mercoa-w-4 mercoa-h-4 mercoa-mr-5" /> This process should take approximately 5
+                minutes to complete.
               </p>
             </div>
           </div>
@@ -132,28 +133,28 @@ export function EntityPortal({ token }: { token: string }) {
     } else if (!entity?.profile?.business?.ownersProvided && entity.accountType === 'business') {
       content = (
         <>
-          <p className="mb-5">
+          <p className="mercoa-mb-5">
             {' '}
             Before you can pay bills, you must add business representatives and verify your account.
           </p>
-          <div className="mt-8">
+          <div className="mercoa-mt-8">
             <Representatives showEdit showAdd />
           </div>
           {!mercoaSession.entity?.profile.business?.ownersProvided && (
-            <div className="mt-8 text-left">
-              <h2 className="font-gray-800 text-lg">KYC Verification</h2>
-              <p className="font-gray-700 mt-2 text-sm">
+            <div className="mercoa-mt-8 mercoa-text-left">
+              <h2 className="mercoa-font-gray-800 mercoa-text-lg">KYC Verification</h2>
+              <p className="mercoa-font-gray-700 mercoa-mt-2 mercoa-text-sm">
                 Banking regulations require that we perform a &quot;Know Your Customer&quot; (KYC) process to verify
                 account identity before enabling the ability to pay bills or send invoices.
               </p>
-              <p className="font-gray-700 mt-2 text-sm">
+              <p className="mercoa-font-gray-700 mercoa-mt-2 mercoa-text-sm">
                 Individuals with significant ownership in the business (over 25%) must be added as representatives.
               </p>
-              <p className="font-gray-700 mt-2 text-sm">
+              <p className="mercoa-font-gray-700 mercoa-mt-2 mercoa-text-sm">
                 At least one controller must be added as a representative. Examples include the CEO, COO, Treasurer,
                 President, Vice President, or Managing Partner.
               </p>
-              <p className="font-gray-700 mt-2 text-sm">
+              <p className="mercoa-font-gray-700 mercoa-mt-2 mercoa-text-sm">
                 Once all representatives have been added, click &quot;Verify Account&quot; to start this process.
               </p>
               <VerifyOwnersButton entity={entity} />
@@ -163,23 +164,23 @@ export function EntityPortal({ token }: { token: string }) {
       )
     } else {
       content = (
-        <div className="mt-10 text-center text-gray-800">
-          <p className="mb-5"> We are currently verifying your account. Please come back shortly.</p>
+        <div className="mercoa-mt-10 mercoa-text-center mercoa-text-gray-800">
+          <p className="mercoa-mb-5"> We are currently verifying your account. Please come back shortly.</p>
         </div>
       )
     }
     return (
-      <div className="container mx-auto mt-5 text-center">
-        <h2 className="font-gray-800 text-lg">Welcome to your Accounts Payable Dashboard</h2>
+      <div className=" mercoa-container mercoa-mx-auto mercoa-mt-5 mercoa-text-center">
+        <h2 className="mercoa-font-gray-800 mercoa-text-lg">Welcome to your Accounts Payable Dashboard</h2>
         {content}
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="flex items-center">
-        <div className="flex-auto text-sm text-gray-700 my-4 sm:mt-0">
+    <div className=" mercoa-container mercoa-mx-auto mercoa-px-4 sm:mercoa-px-6 lg:mercoa-px-8">
+      <div className="mercoa-flex mercoa-items-center">
+        <div className="mercoa-flex-auto mercoa-text-sm mercoa-text-gray-700 mercoa-my-4 sm:mercoa-mt-0">
           {screen === 'inbox' ? (
             <>
               {organization?.emailProvider?.inboxDomain && (
@@ -196,23 +197,23 @@ export function EntityPortal({ token }: { token: string }) {
               onClick={() => setScreen('inbox')}
               type="button"
               isEmphasized={false}
-              className="ml-2 inline-flex text-sm"
+              className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
             >
-              <ArrowLeftIcon className="-ml-1 inline-flex h-5 w-5 md:mr-2" />{' '}
-              <span className="hidden md:inline-block">Back</span>
+              <ArrowLeftIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+              <span className="mercoa-hidden md:mercoa-inline-block">Back</span>
             </MercoaButton>
           )}
         </div>
-        <div className="my-4 flex-none sm:mt-0 sm:ml-16">
+        <div className="mercoa-my-4 mercoa-flex-none sm:mercoa-mt-0 sm:mercoa-ml-16">
           {user && tokenOptions?.pages?.notifications && screen !== 'notifications' && screen !== 'invoice' && (
             <MercoaButton
               onClick={() => setScreen('notifications')}
               type="button"
               isEmphasized={false}
-              className="ml-2 inline-flex text-sm"
+              className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
             >
-              <EnvelopeIcon className="-ml-1 inline-flex h-5 w-5 md:mr-2" />{' '}
-              <span className="hidden md:inline-block">Notifications</span>
+              <EnvelopeIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+              <span className="mercoa-hidden md:mercoa-inline-block">Notifications</span>
             </MercoaButton>
           )}
           {tokenOptions?.pages?.representatives && screen !== 'representatives' && screen !== 'invoice' && (
@@ -220,10 +221,10 @@ export function EntityPortal({ token }: { token: string }) {
               onClick={() => setScreen('representatives')}
               type="button"
               isEmphasized={false}
-              className="ml-2 inline-flex text-sm"
+              className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
             >
-              <UsersIcon className="-ml-1 inline-flex h-5 w-5 md:mr-2" />{' '}
-              <span className="hidden md:inline-block">Representatives</span>
+              <UsersIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+              <span className="mercoa-hidden md:mercoa-inline-block">Representatives</span>
             </MercoaButton>
           )}
           {tokenOptions?.pages?.counterparties && screen !== 'counterparties' && screen !== 'invoice' && (
@@ -231,10 +232,10 @@ export function EntityPortal({ token }: { token: string }) {
               onClick={() => setScreen('counterparties')}
               type="button"
               isEmphasized={false}
-              className="ml-2 inline-flex text-sm"
+              className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
             >
-              <BriefcaseIcon className="-ml-1 inline-flex h-5 w-5 md:mr-2" />{' '}
-              <span className="hidden md:inline-block">Vendors</span>
+              <BriefcaseIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+              <span className="mercoa-hidden md:mercoa-inline-block">Vendors</span>
             </MercoaButton>
           )}
           {tokenOptions?.pages?.approvals && screen !== 'approvals' && screen !== 'invoice' && (
@@ -242,10 +243,10 @@ export function EntityPortal({ token }: { token: string }) {
               onClick={() => setScreen('approvals')}
               type="button"
               isEmphasized={false}
-              className="ml-2 inline-flex text-sm"
+              className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
             >
-              <LockOpenIcon className="-ml-1 inline-flex h-5 w-5 md:mr-2" />{' '}
-              <span className="hidden md:inline-block">Approval Rules</span>
+              <LockOpenIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+              <span className="mercoa-hidden md:mercoa-inline-block">Approval Rules</span>
             </MercoaButton>
           )}
           {mercoaSession.iframeOptions?.options?.entity?.enableMercoaPayments &&
@@ -256,10 +257,10 @@ export function EntityPortal({ token }: { token: string }) {
                 onClick={() => setScreen('payments')}
                 type="button"
                 isEmphasized={false}
-                className="ml-2 inline-flex text-sm"
+                className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
               >
-                <BuildingLibraryIcon className="-ml-1 inline-flex h-5 w-5 md:mr-2" />{' '}
-                <span className="hidden md:inline-block">Payment Methods</span>
+                <BuildingLibraryIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+                <span className="mercoa-hidden md:mercoa-inline-block">Payment Methods</span>
               </MercoaButton>
             )}
 
@@ -267,14 +268,14 @@ export function EntityPortal({ token }: { token: string }) {
             <MercoaButton
               isEmphasized
               type="button"
-              className="ml-2 inline-flex text-sm"
+              className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
               onClick={() => {
                 setScreen('invoice')
                 setInvoice(undefined)
               }}
             >
-              <PlusIcon className="-ml-1 inline-flex h-5 w-5 md:mr-2" />{' '}
-              <span className="hidden md:inline-block">New Invoice</span>
+              <PlusIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+              <span className="mercoa-hidden md:mercoa-inline-block">New Invoice</span>
             </MercoaButton>
           )}
         </div>
@@ -294,7 +295,7 @@ export function EntityPortal({ token }: { token: string }) {
             (e) => e.type === Mercoa.PaymentMethodType.BankAccount && e.active,
           ) && (
             <>
-              <h3 className="mt-8">Bank Accounts</h3>
+              <h3 className="mercoa-mt-8">Bank Accounts</h3>
               <BankAccounts showEdit showAdd />
             </>
           )}
@@ -302,7 +303,7 @@ export function EntityPortal({ token }: { token: string }) {
             (e) => e.type === Mercoa.PaymentMethodType.Card && e.active,
           ) && (
             <>
-              <h3 className="mt-8">Cards</h3>
+              <h3 className="mercoa-mt-8">Cards</h3>
               <CreditCards showEdit showAdd />
             </>
           )}
@@ -310,7 +311,7 @@ export function EntityPortal({ token }: { token: string }) {
             (e) => e.type === Mercoa.PaymentMethodType.Custom && e.active,
           ) && (
             <>
-              <h3 className="mt-8"></h3>
+              <h3 className="mercoa-mt-8"></h3>
               <CustomPaymentMethod showEdit />
             </>
           )}
@@ -318,24 +319,24 @@ export function EntityPortal({ token }: { token: string }) {
       )}
       {user && screen === 'notifications' && (
         <div>
-          <h3 className="mt-8">Notifications</h3>
+          <h3 className="mercoa-mt-8">Notifications</h3>
           <EntityUserNotificationTable entityId={entity.id} userId={user.id} />
         </div>
       )}
       {screen === 'approvals' && (
         <div>
-          <h3 className="my-8">Approval Rules</h3>
+          <h3 className="mercoa-my-8">Approval Rules</h3>
           <ApprovalPolicies />
         </div>
       )}
       {screen === 'counterparties' && <Counterparties type="payee" />}
       {screen === 'representatives' && (
         <div>
-          <p className="font-gray-700 mt-2 text-sm">
+          <p className="mercoa-font-gray-700 mercoa-mt-2 mercoa-text-sm">
             Regulatory guidelines require that all individuals with significant ownership in the business (over 25%)
             must be added as representatives.
           </p>
-          <p className="font-gray-700 mt-1 text-sm">
+          <p className="mercoa-font-gray-700 mercoa-mt-1 mercoa-text-sm">
             Every business also requires a controller. Examples include the CEO, COO, Treasurer, President, Vice
             President, or Managing Partner.
           </p>
@@ -343,13 +344,13 @@ export function EntityPortal({ token }: { token: string }) {
           <Representatives showEdit showAdd />
 
           {entity && entity.accountType === 'business' && !entity.profile?.business?.ownersProvided && (
-            <div className="mt-8">
-              <h2 className="font-gray-800 text-lg">KYC Verification</h2>
-              <p className="font-gray-700 mt-2 text-sm">
+            <div className="mercoa-mt-8">
+              <h2 className="mercoa-font-gray-800 mercoa-text-lg">KYC Verification</h2>
+              <p className="mercoa-font-gray-700 mercoa-mt-2 mercoa-text-sm">
                 Banking regulations require that we perform a &quot;Know Your Customer&quot; (KYC) process to verify
                 account identity before enabling the ability to pay bills or send invoices.
               </p>
-              <p className="font-gray-700 mt-2 text-sm">
+              <p className="mercoa-font-gray-700 mercoa-mt-2 mercoa-text-sm">
                 Once all representatives have been added, click &quot;Verify Account&quot; to start this process.
               </p>
               <VerifyOwnersButton entity={entity} />

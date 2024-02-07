@@ -62,18 +62,18 @@ export function BankAccounts({
     return (
       <>
         {!bankAccounts && (
-          <div className="p-9 text-center">
+          <div className="mercoa-p-9 mercoa-text-center">
             <LoadingSpinnerIcon />
           </div>
         )}
         {bankAccounts &&
           bankAccounts.map((account) => (
-            <div className="mt-2" key={account.id}>
+            <div className="mercoa-mt-2" key={account.id}>
               <BankAccountComponent account={account} onSelect={onSelect} showEdit={showEdit} />
             </div>
           ))}
         {bankAccounts && showAdd && (
-          <div className="mt-2">
+          <div className="mercoa-mt-2">
             <AddDialog
               show={showDialog}
               onClose={onClose}
@@ -89,7 +89,7 @@ export function BankAccounts({
           </div>
         )}
         {bankAccounts && bankAccounts.length == 0 && verifiedOnly && (
-          <div className="mt-2 text-left text-gray-700">
+          <div className="mercoa-mt-2 mercoa-text-left mercoa-text-gray-700">
             No verified bank accounts found. Please add and verify at least one bank account.
           </div>
         )}
@@ -168,12 +168,12 @@ export function AddBankViaPlaidOrManual({
     return <AddBankAccount title={title} actions={actions} onSubmit={onSubmit} />
   } else if (!linkToken || !ready) {
     return (
-      <div className="p-9 text-center">
+      <div className="mercoa-p-9 mercoa-text-center">
         <LoadingSpinnerIcon />
       </div>
     )
   } else {
-    return <div className="p-10 text-center"></div>
+    return <div className="mercoa-p-10 mercoa-text-center"></div>
   }
 }
 
@@ -246,8 +246,15 @@ export function AddBankAccount({
   }
 
   return (
-    <form className="space-y-3 text-left" onSubmit={handleSubmit((formOnlySubmit as any) || submitBankAccount)}>
-      {title || <h3 className="text-center text-lg font-medium leading-6 text-gray-900">Manually Add Bank Account</h3>}
+    <form
+      className="mercoa-space-y-3 mercoa-text-left"
+      onSubmit={handleSubmit((formOnlySubmit as any) || submitBankAccount)}
+    >
+      {title || (
+        <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+          Manually Add Bank Account
+        </h3>
+      )}
 
       <AddBankAccountForm
         register={register}
@@ -259,7 +266,7 @@ export function AddBankAccount({
       />
 
       {actions || (
-        <div className="flex justify-between">
+        <div className="mercoa-flex mercoa-justify-between">
           <MercoaButton
             isEmphasized={false}
             onClick={() => {
@@ -315,43 +322,43 @@ export function AddBankAccountForm({
   return (
     <>
       <div>
-        <label htmlFor="routingNumber" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="routingNumber" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
           Routing Number
         </label>
-        <div className="mt-1">
+        <div className="mercoa-mt-1">
           <input
             {...register('routingNumber')}
-            className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+            className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
           />
           {errors?.routingNumber?.message && (
-            <p className="text-sm text-red-500">Please enter a valid routing number</p>
+            <p className="mercoa-text-sm mercoa-text-red-500">Please enter a valid routing number</p>
           )}
         </div>
       </div>
 
       <div>
-        <label htmlFor="accountNumber" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="accountNumber" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
           Account Number
         </label>
-        <div className="mt-1">
+        <div className="mercoa-mt-1">
           <input
             {...register('accountNumber')}
-            className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+            className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
           />
           {errors?.accountNumber?.message && (
-            <p className="text-sm text-red-500">Please enter a valid account number</p>
+            <p className="mercoa-text-sm mercoa-text-red-500">Please enter a valid account number</p>
           )}
         </div>
       </div>
 
       <div>
-        <label htmlFor="accountType" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="accountType" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
           Account Type
         </label>
-        <div className="mt-1">
+        <div className="mercoa-mt-1">
           <select
             {...register('accountType')}
-            className="mt-1 block w-full rounded-md border border-gray-300 bg-white py-2 px-3 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+            className="mercoa-mt-1 mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-py-2 mercoa-px-3 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
           >
             <option value="CHECKING">Checking</option>
             <option value="SAVINGS">Savings</option>
@@ -362,17 +369,19 @@ export function AddBankAccountForm({
 
       {bankName && (
         <div>
-          <label htmlFor="bankName" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="bankName" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
             Bank Name
           </label>
-          <div className="mt-1">
+          <div className="mercoa-mt-1">
             <input
               readOnly
               disabled
               {...register('bankName')}
-              className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+              className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
             />
-            {errors?.bankName?.message && <p className="text-sm text-red-500">Please enter the bank name</p>}
+            {errors?.bankName?.message && (
+              <p className="mercoa-text-sm mercoa-text-red-500">Please enter the bank name</p>
+            )}
           </div>
         </div>
       )}
@@ -409,17 +418,17 @@ export function EditBankAccount({
   return (
     <form onSubmit={handleSubmit(onUpdate)}>
       <div>
-        <label htmlFor="accountName" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="accountName" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
           Account Name
         </label>
-        <div className="mt-1">
+        <div className="mercoa-mt-1">
           <input
             {...register('accountName')}
-            className="block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 placeholder-gray-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
+            className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
           />
         </div>
       </div>
-      <div className="flex justify-between mt-2">
+      <div className="mercoa-flex mercoa-justify-between mercoa-mt-2">
         <MercoaButton
           isEmphasized={false}
           onClick={() => {
@@ -438,31 +447,31 @@ export function EditBankAccount({
 export function AddDialog({ show, onClose, component }: { show: boolean; onClose: Function; component: ReactNode }) {
   return (
     <Transition.Root show={show} as={Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={() => onClose()}>
+      <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={() => onClose()}>
         <Transition.Child
           as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
+          enter="mercoa-ease-out mercoa-duration-300"
+          enterFrom="mercoa-opacity-0"
+          enterTo="mercoa-opacity-100"
+          leave="mercoa-ease-in mercoa-duration-200"
+          leaveFrom="mercoa-opacity-100"
+          leaveTo="mercoa-opacity-0"
         >
-          <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+          <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
         </Transition.Child>
 
-        <div className="fixed inset-0 z-10 overflow-y-auto">
-          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
+          <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
             <Transition.Child
               as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-              enterTo="opacity-100 translate-y-0 sm:scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enter="mercoa-ease-out mercoa-duration-300"
+              enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+              enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+              leave="mercoa-ease-in mercoa-duration-200"
+              leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+              leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
             >
-              <Dialog.Panel className="relative transform rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6">
+              <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-md sm:mercoa-p-6">
                 {component}
               </Dialog.Panel>
             </Transition.Child>
@@ -507,19 +516,25 @@ export function BankAccountComponent({
           if (onSelect) onSelect(account)
         }}
         key={`${account?.routingNumber} ${account?.accountNumber}`}
-        className={`relative flex items-center space-x-3 rounded-lg border ${
-          selected ? 'border-indigo-300' : 'border-gray-300'
-        } bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 ${
-          onSelect ? 'cursor-pointer hover:border-gray-400' : ''
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border ${
+          selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
+        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
+          onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
         }`}
       >
-        <div className="flex-shrink-0 rounded-full bg-gray-200 p-1 text-gray-600">
-          <BuildingLibraryIcon className={`h-5 w-5 ${selected ? 'text-indigo-400' : ''}`} />
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          <BuildingLibraryIcon className="mercoa-h-5 mercoa-w-5" />
         </div>
-        <div className="flex min-w-0 flex-1 justify-between">
-          <div className="group flex">
+        <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
+          <div className="mercoa-group mercoa-flex">
             <div>
-              {!showEdit && <span className="absolute inset-0" aria-hidden="true" />}
+              {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
               <AddDialog
                 component={<EditBankAccount paymentMethodId={account.id} onSubmit={() => setShowNameEdit(false)} />}
                 onClose={() => setShowNameEdit(false)}
@@ -527,20 +542,34 @@ export function BankAccountComponent({
               />
               {account?.accountName ? (
                 <>
-                  <p className={`text-sm font-medium text-gray-900 ${selected ? 'underline' : ''}`}>
+                  <p
+                    className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
+                      selected ? 'mercoa-underline' : ''
+                    }`}
+                  >
                     {account.accountName}
                   </p>
-                  <p className={`text-xs font-medium text-gray-800 ${selected ? 'underline' : ''}`}>
+                  <p
+                    className={`mercoa-text-xs mercoa-font-medium mercoa-text-gray-800 ${
+                      selected ? 'mercoa-underline' : ''
+                    }`}
+                  >
                     {account?.bankName}
                     {` ••••${String(account?.accountNumber).slice(-4)}`}
                   </p>
                 </>
               ) : (
                 <>
-                  <p className={`text-sm font-medium text-gray-900 ${selected ? 'underline' : ''}`}>{`${capitalize(
-                    account?.accountType,
-                  )} ••••${String(account?.accountNumber).slice(-4)}`}</p>
-                  <p className={`text-xs font-medium text-gray-800 ${selected ? 'underline' : ''}`}>
+                  <p
+                    className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
+                      selected ? 'mercoa-underline' : ''
+                    }`}
+                  >{`${capitalize(account?.accountType)} ••••${String(account?.accountNumber).slice(-4)}`}</p>
+                  <p
+                    className={`mercoa-text-xs mercoa-font-medium mercoa-text-gray-800 ${
+                      selected ? 'mercoa-underline' : ''
+                    }`}
+                  >
                     {account?.bankName}
                   </p>
                 </>
@@ -550,16 +579,16 @@ export function BankAccountComponent({
               <MercoaButton
                 size="sm"
                 isEmphasized={false}
-                className="hidden group-hover:block ml-2"
+                className="mercoa-hidden group-hover:mercoa-block mercoa-ml-2"
                 onClick={() => setShowNameEdit(true)}
               >
-                <PencilIcon className="h-5 w-5" />
+                <PencilIcon className="mercoa-h-5 mercoa-w-5" />
               </MercoaButton>
             )}
           </div>
           {showEdit && (account?.status === Mercoa.BankStatus.New || account?.status === Mercoa.BankStatus.Pending) && (
             <button
-              className="relative inline-flex items-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-green-700"
+              className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-md mercoa-bg-green-600 mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-green-700"
               onClick={() => setVerify(true)}
             >
               {account?.status === Mercoa.BankStatus.New && 'Start Verification'}
@@ -568,12 +597,12 @@ export function BankAccountComponent({
           )}
         </div>
         {showEdit && (
-          <div className="flex cursor-pointer">
+          <div className="mercoa-flex mercoa-cursor-pointer ">
             <DefaultPaymentMethodIndicator paymentMethod={account} />
             {account?.status === Mercoa.BankStatus.New && (
               /* @ts-ignore:next-line */
               <Tooltip title="Can only receive funds">
-                <span className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800">
+                <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-indigo-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-indigo-800">
                   New
                 </span>
               </Tooltip>
@@ -581,7 +610,7 @@ export function BankAccountComponent({
             {account?.status === Mercoa.BankStatus.Verified && (
               /* @ts-ignore:next-line */
               <Tooltip title="Can send and receive funds">
-                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-green-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-green-800">
                   Verified
                 </span>
               </Tooltip>
@@ -589,7 +618,7 @@ export function BankAccountComponent({
             {account?.status === Mercoa.BankStatus.Pending && (
               /* @ts-ignore:next-line */
               <Tooltip title="Can only receive funds">
-                <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-yellow-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-yellow-800">
                   Pending
                 </span>
               </Tooltip>
@@ -598,32 +627,32 @@ export function BankAccountComponent({
               account?.status === Mercoa.BankStatus.Errored) && (
               /* @ts-ignore:next-line */
               <Tooltip title="Can only receive funds">
-                <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-red-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-red-800">
                   VERIFICATION FAILED
                 </span>
               </Tooltip>
             )}
-            {/* <Popover className="relative">
+            {/* <Popover className="mercoa-relative">
           {({ }) => (
             <>{(account?.bankAccount?.status === Mercoa.BankStatus.New || account?.bankAccount?.status === Mercoa.BankStatus.Pending) &&
               <>
-                <Popover.Button className='text-gray-900 group inline-flex items-center hover:bg-gray-200 rounded-md p-1 bg-white text-base font-medium hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2'>
-                  <EllipsisVerticalIcon className="h-5 w-5" />
+                <Popover.Button className='mercoa-text-gray-900 group mercoa-inline-flex mercoa-items-center hover:mercoa-bg-gray-200 mercoa-rounded-md mercoa-p-1 mercoa-bg-white mercoa-text-base mercoa-font-medium hover:mercoa-text-gray-900 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2'>
+                  <EllipsisVerticalIcon className="mercoa-h-5 mercoa-w-5" />
                 </Popover.Button>
 
                 <Transition
                   as={Fragment}
-                  enter="transition ease-out duration-200"
-                  enterFrom="opacity-0 translate-y-1"
-                  enterTo="opacity-100 translate-y-0"
-                  leave="transition ease-in duration-150"
-                  leaveFrom="opacity-100 translate-y-0"
-                  leaveTo="opacity-0 translate-y-1"
+                  enter="mercoa-transition mercoa-ease-out mercoa-duration-200"
+                  enterFrom="mercoa-opacity-0 mercoa-translate-y-1"
+                  enterTo="mercoa-opacity-100 mercoa-translate-y-0"
+                  leave="mercoa-transition mercoa-ease-in mercoa-duration-150"
+                  leaveFrom="mercoa-opacity-100 mercoa-translate-y-0"
+                  leaveTo="mercoa-opacity-0 mercoa-translate-y-1"
                 >
-                  <Popover.Panel className="absolute left-1/2 z-10 mt-3 w-48 -translate-x-1/2 transform px-2 sm:px-0">
-                    <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 bg-white p-4">
+                  <Popover.Panel className="mercoa-absolute mercoa-left-1/2 mercoa-z-10 mercoa-mt-3 mercoa-w-48 -mercoa-translate-x-1/2 mercoa-transform mercoa-px-2 sm:mercoa-px-0">
+                    <div className="mercoa-overflow-hidden mercoa-rounded-lg mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 mercoa-bg-white mercoa-p-4">
                       {(account?.bankAccount?.status === Mercoa.BankStatus.New || account?.bankAccount?.status === Mercoa.BankStatus.Pending) &&
-                        <button className="text-sm mb-1 w-full p-1 hover:bg-gray-100 rounded-md" onClick={() => setVerify(true)}>Verify Account</button>}
+                        <button className="mercoa-text-sm mercoa-mb-1 mercoa-w-full mercoa-p-1 hover:mercoa-bg-gray-100 mercoa-rounded-md" onClick={() => setVerify(true)}>Verify Account</button>}
                     </div>
                   </Popover.Panel>
                 </Transition>
@@ -631,46 +660,49 @@ export function BankAccountComponent({
           )}
         </Popover> */}
             <Transition.Root show={!!verify} as={Fragment}>
-              <Dialog as="div" className="relative z-10" onClose={() => setVerify(false)}>
+              <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={() => setVerify(false)}>
                 <Transition.Child
                   as={Fragment}
-                  enter="ease-out duration-300"
-                  enterFrom="opacity-0"
-                  enterTo="opacity-100"
-                  leave="ease-in duration-200"
-                  leaveFrom="opacity-100"
-                  leaveTo="opacity-0"
+                  enter="mercoa-ease-out mercoa-duration-300"
+                  enterFrom="mercoa-opacity-0"
+                  enterTo="mercoa-opacity-100"
+                  leave="mercoa-ease-in mercoa-duration-200"
+                  leaveFrom="mercoa-opacity-100"
+                  leaveTo="mercoa-opacity-0"
                 >
-                  <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                  <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
                 </Transition.Child>
 
-                <div className="fixed inset-0 z-10 overflow-y-auto">
-                  <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
+                  <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
                     <Transition.Child
                       as={Fragment}
-                      enter="ease-out duration-300"
-                      enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                      enterTo="opacity-100 translate-y-0 sm:scale-100"
-                      leave="ease-in duration-200"
-                      leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                      leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                      enter="mercoa-ease-out mercoa-duration-300"
+                      enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+                      enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                      leave="mercoa-ease-in mercoa-duration-200"
+                      leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                      leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
                     >
-                      <Dialog.Panel className="relative transform rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
-                        <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+                      <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-lg sm:mercoa-p-6">
+                        <Dialog.Title
+                          as="h3"
+                          className="mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
+                        >
                           Verify Account
                         </Dialog.Title>
 
                         {account?.status === Mercoa.BankStatus.New && (
                           <>
-                            <p className="mt-5 text-sm">
+                            <p className="mercoa-mt-5 mercoa-text-sm">
                               Mercoa will send two small deposits to verify this account. These deposits may take up to
                               1-2 days to appear.
                             </p>
-                            <p className="mt-3 text-sm">
+                            <p className="mercoa-mt-3 mercoa-text-sm">
                               Once transactions have been sent, you&apos;ll have 14 days to verify their values.
                             </p>
                             {mercoaSession.organization?.sandbox && (
-                              <p className="mt-3 rounded-md bg-orange-200 p-1 text-sm">
+                              <p className="mercoa-mt-3 mercoa-rounded-md mercoa-bg-orange-200 mercoa-p-1 mercoa-text-sm">
                                 <b>Test Mode:</b> actual deposits will not be sent. Use 0 and 0 as the values to
                                 instantly verify the account in the next step.
                               </p>
@@ -686,7 +718,7 @@ export function BankAccountComponent({
                                   mercoaSession.refresh()
                                 }
                               }}
-                              className="mt-5 inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 sm:text-sm"
+                              className="mercoa-mt-5 mercoa-inline-flex mercoa-w-full mercoa-justify-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-indigo-600 mercoa-px-4 mercoa-py-2 mercoa-text-base mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2 disabled:mercoa-bg-indigo-300 sm:mercoa-text-sm"
                             >
                               Send deposits
                             </button>
@@ -709,20 +741,23 @@ export function BankAccountComponent({
                               }
                             })}
                           >
-                            <p className="mt-5 text-sm">
+                            <p className="mercoa-mt-5 mercoa-text-sm">
                               Micro-deposits may take up to 2 days to appear on your statement. Once you have both
                               values please enter the amounts to verify this account.
                             </p>
                             {mercoaSession.organization?.sandbox && (
-                              <p className="mt-3 rounded-md bg-orange-200 p-1 text-sm">
+                              <p className="mercoa-mt-3 mercoa-rounded-md mercoa-bg-orange-200 mercoa-p-1 mercoa-text-sm">
                                 <b>Test Mode:</b> use 0 and 0 to instantly verify this account.
                               </p>
                             )}
-                            <div className="mt-2">
-                              <label htmlFor="md1" className="block text-left text-sm font-medium text-gray-700">
+                            <div className="mercoa-mt-2">
+                              <label
+                                htmlFor="md1"
+                                className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+                              >
                                 Amount
                               </label>
-                              <div className="mt-1">
+                              <div className="mercoa-mt-1">
                                 <input
                                   {...register('md1')}
                                   type="number"
@@ -730,15 +765,18 @@ export function BankAccountComponent({
                                   step={0.01}
                                   min={0}
                                   max={0.99}
-                                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
                                 />
                               </div>
                             </div>
-                            <div className="mt-2">
-                              <label htmlFor="md2" className="block text-left text-sm font-medium text-gray-700">
+                            <div className="mercoa-mt-2">
+                              <label
+                                htmlFor="md2"
+                                className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+                              >
                                 Amount
                               </label>
-                              <div className="mt-1">
+                              <div className="mercoa-mt-1">
                                 <input
                                   {...register('md2')}
                                   type="number"
@@ -746,11 +784,11 @@ export function BankAccountComponent({
                                   step={0.01}
                                   min={0}
                                   max={0.99}
-                                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
                                 />
                               </div>
                             </div>
-                            <button className="mt-5 inline-flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:bg-indigo-300 sm:text-sm">
+                            <button className="mercoa-mt-5 mercoa-inline-flex mercoa-w-full mercoa-justify-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-indigo-600 mercoa-px-4 mercoa-py-2 mercoa-text-base mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2 disabled:mercoa-bg-indigo-300 sm:mercoa-text-sm">
                               Verify Account
                             </button>
                           </form>
@@ -771,17 +809,23 @@ export function BankAccountComponent({
         onClick={() => {
           if (onSelect) onSelect(account)
         }}
-        className={`relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:border-gray-400 ${
-          onSelect ? 'cursor-pointer' : ''
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
+          onSelect ? 'mercoa-cursor-pointer ' : ''
         }`}
       >
-        <div className="flex-shrink-0 rounded-full bg-gray-200 p-1 text-gray-600">
-          <PlusIcon className="h-5 w-5" />
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          <PlusIcon className="mercoa-h-5 mercoa-w-5" />
         </div>
-        <div className="min-w-0 flex-1">
-          <span className="absolute inset-0" aria-hidden="true" />
-          <p className="text-sm font-medium text-gray-900">Add new bank account</p>
-          <p className="truncate text-sm text-gray-500"></p>
+        <div className="mercoa-min-w-0 mercoa-flex-1">
+          <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
+          <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">Add new bank account</p>
+          <p className="mercoa-truncate mercoa-text-sm mercoa-text-gray-500"></p>
         </div>
       </div>
     )

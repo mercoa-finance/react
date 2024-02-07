@@ -163,11 +163,11 @@ export function InvoiceDetails({
   }, [invoiceLocal])
 
   const document = (
-    <div className="min-w-[300px] mr-5">
+    <div className="mercoa-min-w-[300px] mercoa-mr-5">
       {uploadedFile ? (
         <>
-          <div className={`text-center ${ocrProcessing ? 'block mb-5' : 'hidden'}`}>
-            <span className="text-gray-800  w-full"> Extracting Invoice Details </span>
+          <div className={`mercoa-text-center ${ocrProcessing ? 'mercoa-block mercoa-mb-5' : 'mercoa-hidden'}`}>
+            <span className="mercoa-text-gray-800 mercoa-w-full"> Extracting Invoice Details </span>
             <ProgressBar />
           </div>
           <InvoiceDocuments documents={new Array(uploadedFile)} height={height} />
@@ -189,13 +189,13 @@ export function InvoiceDetails({
       {/* ********* INVOICE UPLOAD FIELD */}
       <Section minSize={0}>{document}</Section>
 
-      <Bar size={5} className="bg-gray-200 cursor-ew-resize invisible min-[450px]:visible">
-        <div className="w-3 h-10 bg-gray-500 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+      <Bar size={5} className="mercoa-bg-gray-200 mercoa-cursor-ew-resize mercoa-invisible min-[450px]:mercoa-visible">
+        <div className="mercoa-w-3 mercoa-h-10 mercoa-bg-gray-500 mercoa-absolute mercoa-top-1/2 mercoa-left-1/2 mercoa-transform -mercoa-translate-x-1/2 -mercoa-translate-y-1/2" />
       </Bar>
 
       {/* EDIT INVOICE FORM */}
-      <Section className="pl-5 relative" minSize={400}>
-        <div className="flex w-full flex-row-reverse visible min-[450px]:invisible absolute top-2">
+      <Section className="mercoa-pl-5 mercoa-relative" minSize={400}>
+        <div className="mercoa-flex mercoa-w-full mercoa-flex-row-reverse visible min-[450px]:mercoa-invisible mercoa-absolute mercoa-top-2">
           <MercoaButton
             isEmphasized
             size="sm"
@@ -203,13 +203,13 @@ export function InvoiceDetails({
             onClick={() => {
               setIsViewingInvoiceMobile(!isViewingInvoiceMobile)
             }}
-            className="mr-7 z-20"
+            className="mercoa-mr-7 mercoa-z-20"
           >
             View {isViewingInvoiceMobile ? 'Form' : 'Invoice'}
           </MercoaButton>
         </div>
         {isViewingInvoiceMobile ? (
-          <div className="mt-20">{document}</div>
+          <div className="mercoa-mt-20">{document}</div>
         ) : (
           <EditInvoiceForm
             invoice={invoiceLocal}
@@ -260,24 +260,30 @@ function InvoiceDocumentsUpload({ onFileUpload }: { onFileUpload: (fileReaderObj
     >
       {({ getRootProps, getInputProps, isDragActive }) => (
         <div
-          className={`mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 ${
-            isDragActive ? 'border-mercoa-primary' : 'border-gray-300'
-          } px-6 py-10`}
+          className={`mercoa-mt-2 mercoa-flex mercoa-justify-center mercoa-rounded-lg mercoa-border mercoa-border-dashed mercoa-border-gray-900/25 ${
+            isDragActive ? 'mercoa-border-mercoa-primary' : 'mercoa-border-gray-300'
+          } mercoa-px-6 mercoa-py-10`}
           {...getRootProps()}
         >
-          <div className="text-center">
-            <PhotoIcon className="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
-            <div className="mt-4 flex text-sm text-gray-600">
+          <div className="mercoa-text-center">
+            <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
+            <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm mercoa-text-gray-600">
               <label
                 htmlFor="file-upload"
-                className="relative cursor-pointer rounded-md bg-white font-semibold text-mercoa-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-mercoa-primary focus-within:ring-offset-2 hover:text-indigo-500"
+                className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-bg-white mercoa-font-semibold mercoa-text-mercoa-primary focus-within:mercoa-outline-none focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 hover:mercoa-text-indigo-500"
               >
                 <span>Upload an invoice</span>
-                <input {...getInputProps()} id="file-upload" name="file-upload" type="file" className="sr-only" />
+                <input
+                  {...getInputProps()}
+                  id="file-upload"
+                  name="file-upload"
+                  type="file"
+                  className="mercoa-sr-only"
+                />
               </label>
-              <p className="pl-1">or drag and drop</p>
+              <p className="mercoa-pl-1">or drag and drop</p>
             </div>
-            <p className="text-xs leading-5 text-gray-600">PNG, JPG, PDF up to 10MB</p>
+            <p className="mercoa-text-xs mercoa-leading-5 mercoa-text-gray-600">PNG, JPG, PDF up to 10MB</p>
           </div>
         </div>
       )}
@@ -309,15 +315,18 @@ function InvoiceDocuments({
   })
 
   const documentNavigation = (
-    <div className="flex justify-center ">
-      <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+    <div className="mercoa-flex mercoa-justify-center">
+      <nav
+        className="mercoa-isolate mercoa-inline-flex -mercoa-space-x-px mercoa-rounded-md mercoa-shadow-sm"
+        aria-label="Pagination"
+      >
         <button
           type="button"
           onClick={() => setPageNumber(Math.max(pageNumber - 1, 1))}
-          className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+          className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-l-md mercoa-px-2 mercoa-py-2 mercoa-text-gray-400 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 focus:mercoa-z-20 focus:mercoa-outline-offset-0"
         >
-          <span className="sr-only">Previous</span>
-          <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
+          <span className="mercoa-sr-only">Previous</span>
+          <ChevronLeftIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
         </button>
 
         {Array.from(new Array(numPages), (el, index) => (
@@ -328,8 +337,8 @@ function InvoiceDocuments({
             aria-current={pageNumber != index + 1 ? 'false' : 'page'}
             className={
               pageNumber != index + 1
-                ? 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
-                : 'relative z-10 inline-flex items-center bg-mercoa-primary px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mercoa-primary'
+                ? 'mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 focus:mercoa-z-20 focus:mercoa-outline-offset-0'
+                : 'mercoa-relative mercoa-z-10 mercoa-inline-flex mercoa-items-center mercoa-bg-mercoa-primary mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-white focus:mercoa-z-20 focus-visible:outline focus-visible:mercoa-outline-2 focus-visible:mercoa-outline-offset-2 focus-visible:mercoa-outline-mercoa-primary'
             }
           >
             {index + 1}
@@ -339,10 +348,10 @@ function InvoiceDocuments({
         <button
           type="button"
           onClick={() => setPageNumber(Math.min(pageNumber + 1, numPages ?? 1))}
-          className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+          className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 mercoa-py-2 mercoa-text-gray-400 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 focus:mercoa-z-20 focus:mercoa-outline-offset-0"
         >
-          <span className="sr-only">Next</span>
-          <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
+          <span className="mercoa-sr-only">Next</span>
+          <ChevronRightIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
         </button>
       </nav>
     </div>
@@ -354,11 +363,17 @@ function InvoiceDocuments({
         <div ref={wrapperDiv}>
           {documents.map((document, i) => (
             <div key={i}>
-              <div className="rounded-md border shadow-lg" style={{ width: `${debouncedWidth}px` }}>
+              <div
+                className="mercoa-rounded-md mercoa-border mercoa-shadow-lg"
+                style={{ width: `${debouncedWidth}px` }}
+              >
                 {document.mimeType === 'application/pdf' ? (
                   <Document
                     loading={
-                      <div className="mt-2 flex w-full items-center justify-center" style={{ height: '700px' }}>
+                      <div
+                        className="mercoa-mt-2 mercoa-flex mercoa-w-full mercoa-items-center mercoa-justify-center"
+                        style={{ height: '700px' }}
+                      >
                         <LoadingSpinnerIcon />
                       </div>
                     }
@@ -368,7 +383,7 @@ function InvoiceDocuments({
                   >
                     <Page
                       pageNumber={pageNumber}
-                      className="m-0 w-full p-0 mt-2"
+                      className="mercoa-m-0 mercoa-w-full mercoa-p-0 mercoa-mt-2"
                       renderTextLayer={false}
                       renderAnnotationLayer={false}
                       width={debouncedWidth - 5}
@@ -379,16 +394,17 @@ function InvoiceDocuments({
                     src={document.fileReaderObj}
                     key={document.fileReaderObj}
                     onLoad={() => setNumPages(1)}
-                    className="mt-2"
+                    className="mercoa-mt-2"
                   />
                 )}
               </div>
-              <a href={document.fileReaderObj} target="_blank" rel="noreferrer" className="mt-2" download>
-                <MercoaButton type="button" isEmphasized={false} className="mt-2">
-                  <span className="hidden xl:inline">
-                    <ArrowDownTrayIcon className="-ml-1 mr-2 inline-flex h-5 w-5" /> Download Invoice
+              <a href={document.fileReaderObj} target="_blank" rel="noreferrer" className="mercoa-mt-2" download>
+                <MercoaButton type="button" isEmphasized={false} className="mercoa-mt-2">
+                  <span className="mercoa-hidden xl:mercoa-inline">
+                    <ArrowDownTrayIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-h-5 mercoa-w-5" />{' '}
+                    Download Invoice
                   </span>
-                  <span className="inline xl:hidden">Download</span>
+                  <span className="mercoa-inline xl:mercoa-hidden">Download</span>
                 </MercoaButton>
               </a>
             </div>
@@ -399,7 +415,7 @@ function InvoiceDocuments({
   )
 
   return (
-    <div className="overflow-auto" style={{ height: `${height}px` }}>
+    <div className="mercoa-overflow-auto" style={{ height: `${height}px` }}>
       {documentNavigation}
       {documentView}
     </div>
@@ -452,21 +468,21 @@ export function EditInvoiceForm({
   const wrapperDiv = useRef(null)
   const width = useWidth(wrapperDiv)
 
-  let formCols = 'grid-cols-1'
+  let formCols = 'mercoa-grid-cols-1'
   if (width && width > 300) {
-    formCols = 'grid-cols-2'
+    formCols = 'mercoa-grid-cols-2'
   }
   if (width && width > 500) {
-    formCols = 'grid-cols-3'
+    formCols = 'mercoa-grid-cols-3'
   }
   if (width && width > 700) {
-    formCols = 'grid-cols-4'
+    formCols = 'mercoa-grid-cols-4'
   }
   if (width && width > 900) {
-    formCols = 'grid-cols-5'
+    formCols = 'mercoa-grid-cols-5'
   }
   if (width && width > 1100) {
-    formCols = 'grid-cols-6'
+    formCols = 'mercoa-grid-cols-6'
   }
 
   const schema = yup
@@ -482,9 +498,9 @@ export function EditInvoiceForm({
         yup.object({
           id: yup.string(),
           description: yup.string().required(),
-          amount: yup.number().moreThan(-1).required().typeError('Please enter a valid number'),
-          quantity: yup.number().moreThan(-1).required().typeError('Please enter a valid number'),
-          unitPrice: yup.number().moreThan(-1).required().typeError('Please enter a valid number'),
+          amount: yup.number().required().typeError('Please enter a valid number'),
+          quantity: yup.number().required().typeError('Please enter a valid number'),
+          unitPrice: yup.number().required().typeError('Please enter a valid number'),
           metadata: yup.mixed().nullable(),
           glAccountId: yup.string(),
         }),
@@ -834,7 +850,7 @@ export function EditInvoiceForm({
         .catch((e) => {
           console.log(e.statusCode)
           console.log(e.body)
-          toast.error(`'There was an error creating the invoice.\n Error: ${e.body}`)
+          toast.error(`There was an error creating the invoice.\n Error: ${e.body}`)
           toast.error(
             'There was an error creating the invoice. Make sure the invoice number is unique for this vendor and try again.',
           )
@@ -877,22 +893,27 @@ export function EditInvoiceForm({
   }
 
   return (
-    <div style={{ height: `${height}px` }} className="overflow-auto pr-2 pb-10" ref={wrapperDiv}>
-      <h2 className="text-base font-semibold leading-7 text-gray-900">
+    <div style={{ height: `${height}px` }} className="mercoa-overflow-auto mercoa-pr-2 mercoa-pb-10" ref={wrapperDiv}>
+      <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900">
         Edit Invoice {invoice && <InvoiceStatusPill invoice={invoice} />}
       </h2>
-      <p className="mb-3 text-xs leading-6 text-gray-400 select-all">{invoice?.id}</p>
+      <p className="mercoa-mb-3 mercoa-text-xs mercoa-leading-6 mercoa-text-gray-400 mercoa-select-all">
+        {invoice?.id}
+      </p>
 
-      {/*  GRAY BORDER  */}
-      <div className="border-b border-gray-900/10 mb-4" />
+      {/*  GRAY border  */}
+      <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-mb-4" />
 
       {/*  VENDOR SEARCH */}
-      <div className="sm:col-span-3">
-        <label htmlFor="vendor-name" className="block text-lg font-medium leading-6 text-gray-700">
+      <div className="sm:mercoa-col-span-3">
+        <label
+          htmlFor="vendor-name"
+          className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700"
+        >
           Vendor
         </label>
 
-        <div className="mt-2 flex items-center justify-left">
+        <div className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-left">
           <CounterpartySearch
             type="payee"
             onSelect={(vendor) => {
@@ -906,68 +927,74 @@ export function EditInvoiceForm({
         </div>
       </div>
 
-      {/*  GRAY BORDER  */}
-      <div className="border-b border-gray-900/10 pb-6" />
+      {/*  GRAY border  */}
+      <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6" />
 
       <form
         onSubmit={handleSubmit(saveInvoice)}
         className={`${
           vendorId === 'new' && !mercoaSession.iframeOptions?.options?.vendors?.disableCreation
-            ? 'opacity-25 pointer-events-none'
+            ? 'mercoa-opacity-25 mercoa-pointer-events-none'
             : ''
         }
         ${formCols}
-        mt-6 grid gap-x-6 gap-y-4`}
+        mercoa-mt-6 mercoa-grid mercoa-gap-x-6 mercoa-gap-y-4`}
       >
-        <label htmlFor="vendor-name" className="block text-lg font-medium leading-6 text-gray-700 mb-2 col-span-full">
+        <label
+          htmlFor="vendor-name"
+          className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mb-2 mercoa-col-span-full"
+        >
           Invoice Details
         </label>
 
         {/*  INVOICE NUMBER */}
-        <div className="sm:col-span-1">
-          <div className="flex justify-between">
+        <div className="sm:mercoa-col-span-1">
+          <div className="mercoa-flex mercoa-justify-between">
             <label
               htmlFor="invoiceNumber"
-              className="block text-sm font-medium leading-6 text-gray-900 whitespace-nowrap"
+              className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-whitespace-nowrap"
             >
               Invoice #
             </label>
-            <span className="text-xs leading-6 text-gray-500 ml-1">Optional</span>
+            <span className="mercoa-text-xs mercoa-leading-6 mercoa-text-gray-500 mercoa-ml-1">Optional</span>
           </div>
 
-          <div className="mt-2">
+          <div className="mercoa-mt-2">
             <input
               type="text"
               {...register('invoiceNumber')}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
               placeholder="#1024"
             />
           </div>
         </div>
 
         {/*  INVOICE AMOUNT */}
-        <div className="sm:col-span-1">
-          <label htmlFor="amount" className="block text-sm font-medium leading-6 text-gray-900">
+        <div className="sm:mercoa-col-span-1">
+          <label
+            htmlFor="amount"
+            className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
+          >
             Amount
           </label>
-          <div className="relative mt-2 rounded-md shadow-sm">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-              <span className="text-gray-500 sm:text-sm">{currencyCodeToSymbol(currency)}</span>
+          <div className="mercoa-relative mercoa-mt-2 mercoa-rounded-md mercoa-shadow-sm">
+            <div className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-flex mercoa-items-center mercoa-pl-3">
+              <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
             </div>
             <input
               type="text"
               {...register('amount')}
-              className={`block w-full rounded-md border-0 py-1.5 pr-[4.4rem] text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6
-                ${currencyCodeToSymbol(currency).length > 1 ? 'pl-12' : 'pl-6'}`}
+              className={`mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-pr-[4.4rem] mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6
+                ${currencyCodeToSymbol(currency).length > 1 ? 'mercoa-pl-12' : 'mercoa-pl-6'}`}
               placeholder="0.00"
             />
-            <div className="absolute inset-y-0 right-0 flex items-center">
-              <label htmlFor="currency" className="sr-only">
+            <div className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center">
+              <label htmlFor="currency" className="mercoa-sr-only">
                 Currency
               </label>
               <select
                 {...register('currency')}
-                className="h-full rounded-md border-0 bg-transparent py-0 pl-2 pr-7 text-gray-500 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm"
+                className="mercoa-h-full mercoa-rounded-md mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
               >
                 {supportedCurrencies.map((option: Mercoa.CurrencyCode, index: number) => (
                   <option key={index} value={option}>
@@ -977,21 +1004,26 @@ export function EditInvoiceForm({
               </select>
             </div>
           </div>
-          {errors.amount?.message && <p className="text-sm text-red-500">{errors.amount?.message.toString()}</p>}
+          {errors.amount?.message && (
+            <p className="mercoa-text-sm mercoa-text-red-500">{errors.amount?.message.toString()}</p>
+          )}
         </div>
 
         {/*  INVOICE DATE */}
-        <div className="col-span-1">
-          <label htmlFor="invoiceDate" className="block text-sm font-medium leading-6 text-gray-900">
+        <div className="mercoa-col-span-1">
+          <label
+            htmlFor="invoiceDate"
+            className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
+          >
             Invoice Date
           </label>
-          <div className="relative mt-2">
+          <div className="mercoa-relative mercoa-mt-2">
             <Controller
               control={control}
               name="invoiceDate"
               render={({ field }) => (
                 <DatePicker
-                  className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
+                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                   placeholderText="Select invoice date"
                   onChange={(date) => field.onChange(date)}
                   selected={field.value}
@@ -1000,22 +1032,25 @@ export function EditInvoiceForm({
             />
           </div>
           {errors.invoiceDate?.message && (
-            <p className="text-sm text-red-500">{errors.invoiceDate?.message.toString()}</p>
+            <p className="mercoa-text-sm mercoa-text-red-500">{errors.invoiceDate?.message.toString()}</p>
           )}
         </div>
 
         {/*  DUE DATE */}
-        <div className="col-span-1">
-          <label htmlFor="dueDate" className="block text-sm font-medium leading-6 text-gray-900">
+        <div className="mercoa-col-span-1">
+          <label
+            htmlFor="dueDate"
+            className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
+          >
             Due Date
           </label>
-          <div className="relative mt-2">
+          <div className="mercoa-relative mercoa-mt-2">
             <Controller
               control={control}
               name="dueDate"
               render={({ field }) => (
                 <DatePicker
-                  className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
+                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                   placeholderText="Select due date"
                   onChange={(date) => field.onChange(date)}
                   selected={field.value}
@@ -1023,24 +1058,26 @@ export function EditInvoiceForm({
               )}
             />
           </div>
-          {errors.dueDate?.message && <p className="text-sm text-red-500">{errors.dueDate?.message.toString()}</p>}
+          {errors.dueDate?.message && (
+            <p className="mercoa-text-sm mercoa-text-red-500">{errors.dueDate?.message.toString()}</p>
+          )}
         </div>
 
         {/*  SCHEDULED PAYMENT DATE */}
-        <div className="col-span-1">
+        <div className="mercoa-col-span-1">
           <label
             htmlFor="deductionDate"
-            className="block text-sm font-medium leading-6 text-gray-900 whitespace-nowrap"
+            className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-whitespace-nowrap"
           >
             Scheduled Payment Date
           </label>
-          <div className="relative mt-2">
+          <div className="mercoa-relative mercoa-mt-2">
             <Controller
               control={control}
               name="deductionDate"
               render={({ field }) => (
                 <DatePicker
-                  className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm"
+                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                   placeholderText="Scheduled payment date"
                   onChange={(date) => field.onChange(date)}
                   selected={field.value}
@@ -1053,16 +1090,19 @@ export function EditInvoiceForm({
         </div>
 
         {/*  DESCRIPTION */}
-        <div className="col-span-full">
-          <label htmlFor="description" className="block text-sm font-medium leading-6 text-gray-900 ">
+        <div className="mercoa-col-span-full">
+          <label
+            htmlFor="description"
+            className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 "
+          >
             Description
           </label>
-          <div className="mt-2">
+          <div className="mercoa-mt-2">
             <textarea
               id="description"
               {...register('description')}
               rows={3}
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
               defaultValue={''}
             />
           </div>
@@ -1071,10 +1111,10 @@ export function EditInvoiceForm({
         {/*  LINE ITEMS */}
         {!mercoaSession.iframeOptions?.options?.invoice?.disableLineItems && (
           <>
-            {/*  GRAY BORDER  */}
-            <div className="border-b border-gray-900/10 pb-6 col-span-full" />
+            {/*  GRAY border  */}
+            <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
 
-            <div className="col-span-full">
+            <div className="mercoa-col-span-full">
               <LineItems
                 lineItems={fields}
                 append={append}
@@ -1094,13 +1134,13 @@ export function EditInvoiceForm({
         )}
 
         {/*  METADATA  */}
-        {(mercoaSession.organization?.metadataSchema?.length ?? 0) > 0 && (
+        {(mercoaSession.organization?.metadataSchema?.filter((e) => !e.lineItem)?.length ?? 0) > 0 && (
           <>
-            {/*  GRAY BORDER  */}
-            <div className="border-b border-gray-900/10 pb-6 col-span-full" />
+            {/*  GRAY border  */}
+            <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
             <label
               htmlFor="vendor-name"
-              className="block text-lg font-medium leading-6 text-gray-700 mb-2 col-span-full"
+              className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mb-2 mercoa-col-span-full"
             >
               Additional Invoice Details
             </label>
@@ -1109,7 +1149,7 @@ export function EditInvoiceForm({
               const md = JSON.parse((metadata as string) ?? {}) as Record<string, string>
               const value = md?.[schema.key]
               return (
-                <div className="col-span-full" key={schema.key}>
+                <div className="mercoa-col-span-full" key={schema.key}>
                   <MetadataSelection
                     entityMetadata={entityMetadata.find((m) => m.key === schema.key)}
                     schema={schema}
@@ -1133,12 +1173,14 @@ export function EditInvoiceForm({
           </>
         )}
 
-        {/*  GRAY BORDER  */}
-        <div className="border-b border-gray-900/10 pb-6 col-span-full" />
+        {/*  GRAY border  */}
+        <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
 
         {/*  PAYMENT SOURCE */}
-        <div className="pb-6 col-span-full">
-          <h2 className="block text-lg font-medium leading-6 text-gray-700 mt-5">How do you want to pay?</h2>
+        <div className="mercoa-pb-6 mercoa-col-span-full">
+          <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
+            How do you want to pay?
+          </h2>
           {addPaymentMethodRedirect &&
           sourcePaymentMethods.length < 1 &&
           mercoaSession.iframeOptions?.options?.entity?.enableMercoaPayments ? (
@@ -1164,9 +1206,9 @@ export function EditInvoiceForm({
 
         {/*  PAYMENT DESTINATION  */}
         {vendorName && (
-          <div className="border-b border-gray-900/10 pb-16 col-span-full">
-            <h2 className="block text-lg font-medium leading-6 text-gray-700 mt-5">
-              How does <span className="text-gray-800 underline">{vendorName}</span> want to get paid?
+          <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-16 mercoa-col-span-full">
+            <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
+              How does <span className="mercoa-text-gray-800 mercoa-underline">{vendorName}</span> want to get paid?
             </h2>
             <SelectPaymentSource
               paymentMethods={destinationPaymentMethods}
@@ -1190,18 +1232,18 @@ export function EditInvoiceForm({
                 <MercoaButton
                   isEmphasized={false}
                   onClick={getVendorLink}
-                  className="inline-flex text-sm float-right mt-3"
+                  className="mercoa-inline-flex mercoa-text-sm mercoa-float-right mercoa-mt-3"
                   type="button"
                 >
-                  <DocumentDuplicateIcon className="h-5 w-5 md:mr-2" />{' '}
-                  <span className="hidden md:inline-block">Get Payment Acceptance Link</span>
+                  <DocumentDuplicateIcon className="mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+                  <span className="mercoa-hidden md:mercoa-inline-block">Get Payment Acceptance Link</span>
                 </MercoaButton>
               )}
           </div>
         )}
 
         {/* APPROVALS */}
-        <div className="col-span-full">
+        <div className="mercoa-col-span-full">
           {invoice?.approvers && invoice.approvers.length > 0 && selectedApprovers && (
             <>
               {invoice.status === Mercoa.InvoiceStatus.Draft ? (
@@ -1226,12 +1268,12 @@ export function EditInvoiceForm({
                   refreshInvoice={refreshInvoice}
                 />
               )}
-              {errors.approvers && <p className="text-sm text-red-500">Please select all approvers</p>}
+              {errors.approvers && <p className="mercoa-text-sm mercoa-text-red-500">Please select all approvers</p>}
             </>
           )}
         </div>
 
-        <div className="col-span-full" style={{ visibility: 'hidden' }}>
+        <div className="mercoa-col-span-full" style={{ visibility: 'hidden' }}>
           <ErrorOverview errors={errors} clearErrors={clearErrors} />
         </div>
 
@@ -1239,9 +1281,9 @@ export function EditInvoiceForm({
         {invoice?.status != Mercoa.InvoiceStatus.Canceled &&
           invoice?.status != Mercoa.InvoiceStatus.Archived &&
           invoice?.status != Mercoa.InvoiceStatus.Paid && (
-            <div className="absolute bottom-0 right-0 w-full bg-white z-10">
+            <div className="mercoa-absolute mercoa-bottom-0 mercoa-right-0 mercoa-w-full mercoa-bg-white mercoa-z-10">
               <ErrorOverview errors={errors} clearErrors={clearErrors} />
-              <div className="container mx-auto flex flex-row-reverse items-center gap-2 py-3 px-4 sm:px-6 lg:px-8">
+              <div className=" mercoa-container mercoa-mx-auto mercoa-flex mercoa-flex-row-reverse mercoa-items-center mercoa-gap-2 mercoa-py-3 mercoa-px-4 sm:mercoa-px-6 lg:mercoa-px-8">
                 {invoice?.status != Mercoa.InvoiceStatus.Scheduled && (
                   <>
                     {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation &&
@@ -1301,11 +1343,11 @@ export function EditInvoiceForm({
           )}
       </form>
 
-      {/*  GRAY BORDER  */}
-      <div className="border-b border-gray-900/10 mb-4" />
+      {/*  GRAY border  */}
+      <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-mb-4" />
 
-      {invoice?.id && invoice.id !== 'new' ? <InvoiceComments invoice={invoice} /> : <div className="mt-10" />}
-      <div className="mt-20" />
+      {invoice?.id && invoice.id !== 'new' ? <InvoiceComments invoice={invoice} /> : <div className="mercoa-mt-10" />}
+      <div className="mercoa-mt-20" />
     </div>
   )
 }
@@ -1335,24 +1377,26 @@ function ErrorOverview({ errors, clearErrors }: { errors: FieldErrors; clearErro
   } as Record<string, string>
 
   return (
-    <div className="bg-red-50 border-l-4 border-red-400 p-4 relative">
+    <div className="mercoa-bg-red-50 mercoa-border-l-4 mercoa-border-red-400 mercoa-p-4 mercoa-relative">
       {/* close button */}
       <button
         type="button"
-        className="absolute top-1 right-1 p-1 rounded-md hover:bg-red-100 focus:outline-none focus:bg-red-100"
+        className="mercoa-absolute mercoa-top-1 mercoa-right-1 mercoa-p-1 mercoa-rounded-md hover:mercoa-bg-red-100 focus:mercoa-outline-none focus:mercoa-bg-red-100"
         onClick={() => clearErrors()}
       >
-        <span className="sr-only">Close</span>
-        <XMarkIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+        <span className="mercoa-sr-only">Close</span>
+        <XMarkIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
       </button>
-      <div className="flex">
-        <div className="flex-shrink-0">
-          <ExclamationCircleIcon className="h-5 w-5 text-red-400" aria-hidden="true" />
+      <div className="mercoa-flex">
+        <div className="mercoa-flex-shrink-0">
+          <ExclamationCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-red-400" aria-hidden="true" />
         </div>
-        <div className="ml-3">
-          <h3 className="text-sm font-medium text-red-800">There were errors with your submission</h3>
-          <div className="mt-2 text-sm text-red-700">
-            <ul className="list-disc pl-5 space-y-1">
+        <div className="mercoa-ml-3">
+          <h3 className="mercoa-text-sm mercoa-font-medium mercoa-text-red-800">
+            There were errors with your submission
+          </h3>
+          <div className="mercoa-mt-2 mercoa-text-sm mercoa-text-red-700">
+            <ul className="mercoa-list-disc mercoa-pl-5 mercoa-space-y-1">
               {errorKeys.map((key) => (
                 <li key={key}>{`${keyToField[key]}: ${errors[key]?.message ?? errorMessages[key] ?? ''}`}</li>
               ))}
@@ -1404,7 +1448,11 @@ function SaveInvoiceButton({
     approvers.every((e) => e.assignedUserId) &&
     !approvers.every((e) => e.action === Mercoa.ApproverAction.Approve)
   ) {
-    return <span className="text-center text-gray-800 font-medium p-3 rounded-md bg-gray-50">Waiting for approval</span>
+    return (
+      <span className="mercoa-text-center mercoa-text-gray-800 mercoa-font-medium mercoa-p-3 mercoa-rounded-md mercoa-bg-gray-50">
+        Waiting for approval
+      </span>
+    )
   }
   if (
     text === 'Submit for Approval' &&
@@ -1491,58 +1539,64 @@ function CancelPayment({
           <Transition.Root show={showCancelInvoice} as={Fragment}>
             <Dialog
               as="div"
-              className="relative z-10"
+              className="mercoa-relative mercoa-z-10"
               onClose={() => setShowCancelInvoice(false)}
               initialFocus={cancelButtonRef}
             >
               <Transition.Child
                 as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0"
-                enterTo="opacity-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100"
-                leaveTo="opacity-0"
+                enter="mercoa-ease-out mercoa-duration-300"
+                enterFrom="mercoa-opacity-0"
+                enterTo="mercoa-opacity-100"
+                leave="mercoa-ease-in mercoa-duration-200"
+                leaveFrom="mercoa-opacity-100"
+                leaveTo="mercoa-opacity-0"
               >
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
               </Transition.Child>
 
-              <div className="fixed inset-0 z-10 overflow-y-auto">
-                <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+              <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
+                <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
                   <Transition.Child
                     as={Fragment}
-                    enter="ease-out duration-300"
-                    enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                    enterTo="opacity-100 translate-y-0 sm:scale-100"
-                    leave="ease-in duration-200"
-                    leaveFrom="opacity-100 translate-y-0 sm:scale-100"
-                    leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    enter="mercoa-ease-out mercoa-duration-300"
+                    enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+                    enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                    leave="mercoa-ease-in mercoa-duration-200"
+                    leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                    leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
                   >
-                    <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
-                      <div className="sm:flex sm:items-start">
-                        <div className="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                          <ExclamationTriangleIcon className="h-6 w-6 text-red-600" aria-hidden="true" />
+                    <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-overflow-hidden mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pb-4 mercoa-pt-5 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-lg sm:mercoa-p-6">
+                      <div className="sm:mercoa-flex sm:mercoa-items-start">
+                        <div className="mercoa-mx-auto mercoa-flex mercoa-h-12 mercoa-w-12 mercoa-flex-shrink-0 mercoa-items-center mercoa-justify-center mercoa-rounded-full mercoa-bg-red-100 sm:mercoa-mx-0 sm:mercoa-h-10 sm:mercoa-w-10">
+                          <ExclamationTriangleIcon
+                            className="mercoa-h-6 mercoa-w-6 mercoa-text-red-600"
+                            aria-hidden="true"
+                          />
                         </div>
-                        <div className="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
-                          <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
+                        <div className="mercoa-mt-3 mercoa-text-center sm:mercoa-ml-4 sm:mercoa-mt-0 sm:mercoa-text-left">
+                          <Dialog.Title
+                            as="h3"
+                            className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-900"
+                          >
                             {buttonText}
                           </Dialog.Title>
-                          <div className="mt-2">
-                            <p className="text-sm text-gray-500">{promptText}</p>
+                          <div className="mercoa-mt-2">
+                            <p className="mercoa-text-sm mercoa-text-gray-500">{promptText}</p>
                           </div>
                         </div>
                       </div>
-                      <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                      <div className="mercoa-mt-5 sm:mercoa-mt-4 sm:mercoa-flex sm:mercoa-flex-row-reverse">
                         <button
                           type="button"
-                          className="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto"
+                          className="mercoa-inline-flex mercoa-w-full mercoa-justify-center mercoa-rounded-md mercoa-bg-red-600 mercoa-px-3 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-red-500 sm:mercoa-ml-3 sm:mercoa-w-auto"
                           onClick={cancel}
                         >
                           {buttonText}
                         </button>
                         <button
                           type="button"
-                          className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto"
+                          className="mercoa-mt-3 mercoa-inline-flex mercoa-w-full mercoa-justify-center mercoa-rounded-md mercoa-bg-white mercoa-px-3 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 sm:mercoa-mt-0 sm:mercoa-w-auto"
                           onClick={() => setShowCancelInvoice(false)}
                           ref={cancelButtonRef}
                         >
@@ -1763,7 +1817,7 @@ function SelectPaymentSource({
   }, [isDestination, vendorId, selectedType])
 
   return (
-    <div className="mt-4">
+    <div className="mercoa-mt-4">
       <MercoaCombobox
         options={availableTypes.map((type) => ({ value: type, disabled: false }))}
         onChange={(selected) => {
@@ -1775,7 +1829,7 @@ function SelectPaymentSource({
       {selectedType && selectedType != Mercoa.PaymentMethodType.OffPlatform && (
         <select
           {...register(sourceOrDestination)}
-          className="block w-full rounded-md border-gray-300 focus:border-mercoa-primary focus:ring-mercoa-primary sm:text-sm mt-4"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm mercoa-mt-4"
         >
           {paymentMethods
             ?.filter((paymentMethod) => {
@@ -1791,7 +1845,7 @@ function SelectPaymentSource({
               <option key={paymentMethod.id} value={paymentMethod.id}>
                 {paymentMethod.type === Mercoa.PaymentMethodType.BankAccount && (
                   <>
-                    <BuildingLibraryIcon className="h-5 w-5" aria-hidden="true" />
+                    <BuildingLibraryIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
                     {paymentMethod.accountName ? `${paymentMethod.accountName} - ` : ''}
                     {paymentMethod.bankName} ••••
                     {String(paymentMethod.accountNumber).slice(-4)}
@@ -1799,19 +1853,19 @@ function SelectPaymentSource({
                 )}
                 {paymentMethod.type === Mercoa.PaymentMethodType.Card && (
                   <>
-                    <CreditCardIcon className="h-5 w-5" aria-hidden="true" />
+                    <CreditCardIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
                     {paymentMethod.cardBrand} ••••{paymentMethod.lastFour}
                   </>
                 )}
                 {paymentMethod.type === Mercoa.PaymentMethodType.Check && (
                   <>
-                    <EnvelopeIcon className="h-5 w-5" aria-hidden="true" />
+                    <EnvelopeIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
                     {paymentMethod.payToTheOrderOf}: {paymentMethod.addressLine1}
                   </>
                 )}
                 {paymentMethod.type === Mercoa.PaymentMethodType.Custom && (
                   <>
-                    <BuildingLibraryIcon className="h-5 w-5" aria-hidden="true" />
+                    <BuildingLibraryIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
                     {findCustomPaymentMethodAccountNameAndNumber(paymentMethod).accountName}{' '}
                     {findCustomPaymentMethodAccountNameAndNumber(paymentMethod).accountNumber
                       ? `••••${String(findCustomPaymentMethodAccountNameAndNumber(paymentMethod).accountNumber).slice(
@@ -1831,7 +1885,7 @@ function SelectPaymentSource({
         </select>
       )}
       {paymentId === 'new' && (
-        <div className="mt-2">
+        <div className="mercoa-mt-2">
           {selectedType === 'bankAccount' && (
             <AddBankAccountForm
               register={register}
@@ -1910,9 +1964,11 @@ function ApproversSelection({
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-base font-semibold leading-7 text-gray-900 mt-5">Approvals</h2>
-      {hasError && <p className="text-sm text-red-500">Please assign all approvers for this invoice.</p>}
+    <div className="mercoa-space-y-4">
+      <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900 mercoa-mt-5">
+        Approvals
+      </h2>
+      {hasError && <p className="mercoa-text-sm mercoa-text-red-500">Please assign all approvers for this invoice.</p>}
       {approverSlots.map((slot, index) => (
         <ApproverCombobox
           key={index}
@@ -1984,8 +2040,10 @@ function ApproversAction({
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-base font-semibold leading-7 text-gray-900 mt-5">Approvals</h2>
+    <div className="mercoa-space-y-4">
+      <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900 mercoa-mt-5">
+        Approvals
+      </h2>
       {approverSlots.map((slot) => {
         let user = findAssignedUser(slot)
         if (user) {
@@ -2013,26 +2071,30 @@ function ApproverWell({
   let bgColor = ''
   let icon
   if (approverSlot.action === Mercoa.ApproverAction.None) {
-    bgColor = 'bg-gray-50'
+    bgColor = 'mercoa-bg-gray-50'
     icon = <></>
   } else if (approverSlot.action === Mercoa.ApproverAction.Approve) {
-    bgColor = 'bg-green-50'
-    icon = <CheckCircleIcon className="h-8 w-8 text-green-400" aria-hidden="true" />
+    bgColor = 'mercoa-bg-green-50'
+    icon = <CheckCircleIcon className="mercoa-h-8 mercoa-w-8 mercoa-text-green-400" aria-hidden="true" />
   } else if (approverSlot.action === Mercoa.ApproverAction.Reject) {
-    bgColor = 'bg-red-50'
-    icon = <XCircleIcon className="h-8 w-8 text-red-400" aria-hidden="true" />
+    bgColor = 'mercoa-bg-red-50'
+    icon = <XCircleIcon className="mercoa-h-8 mercoa-w-8 mercoa-text-red-400" aria-hidden="true" />
   }
 
   return (
     <>
-      <div className="flex items-center">
-        <div className="flex-auto">
-          <div className={classNames('flex items-center rounded-md', bgColor)}>
-            <div className="flex-auto p-3">
-              <div className={classNames('text-sm font-medium', 'text-grey-900')}>{approver.name}</div>
-              <div className="text-sm text-gray-500">{approver.email}</div>
+      <div className="mercoa-flex mercoa-items-center">
+        <div className="mercoa-flex-auto">
+          <div className={classNames('mercoa-flex mercoa-items-center mercoa-rounded-md', bgColor)}>
+            <div className="mercoa-flex-auto mercoa-p-3">
+              <div className={classNames('mercoa-text-sm mercoa-font-medium', 'mercoa-text-grey-900')}>
+                {approver.name}
+              </div>
+              <div className="mercoa-text-sm mercoa-text-gray-500">{approver.email}</div>
             </div>
-            <div className="mx-4 flex-shrink-0 p-1 text-mercoa-primary-text hover:opacity-75">{icon}</div>
+            <div className="mercoa-mx-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75">
+              {icon}
+            </div>
           </div>
         </div>
       </div>
@@ -2086,7 +2148,7 @@ function ApproverActionButton({
   }
 
   return (
-    <div className="flex items-center justify-end gap-x-2">
+    <div className="mercoa-flex mercoa-items-center mercoa-justify-end mercoa-gap-x-2">
       <MercoaButton
         disabled={approverSlot.action === Mercoa.ApproverAction.Reject}
         color="red"
@@ -2221,7 +2283,9 @@ export function MetadataSelection({
 
   return (
     <div>
-      <h3 className="mt-3 block text-sm font-medium leading-6 text-gray-900">{schema.displayName}</h3>
+      <h3 className="mercoa-mt-3 mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+        {schema.displayName}
+      </h3>
       {metadataSelection}
     </div>
   )
@@ -2312,7 +2376,7 @@ function MetadataDate({
 }) {
   return (
     <DatePicker
-      className="block w-full rounded-md border-gray-300 sm:text-sm"
+      className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 sm:mercoa-text-sm"
       placeholderText={`Select ${displayName}`}
       onChange={(date) => {
         if (date) {
@@ -2339,29 +2403,35 @@ function MetadataBoolean({
   value?: string
 }) {
   return (
-    <div className="space-y-4 sm:flex sm:items-center sm:space-x-10 sm:space-y-0">
-      <div className="flex items-center">
+    <div className="mercoa-space-y-4 sm:mercoa-flex sm:mercoa-items-center sm:mercoa-space-x-10 sm:mercoa-space-y-0">
+      <div className="mercoa-flex mercoa-items-center">
         <input
           type="radio"
           name={`true-false-${schema.key}`}
           defaultChecked={value === 'true'}
-          className="h-4 w-4 border-gray-300 text-mercoa-primary focus:ring-mercoa-primary"
+          className="mercoa-h-4 mercoa-w-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary"
           onChange={() => setValue('true')}
         />
-        <label htmlFor={`true-false-${schema.key}`} className="ml-3 block text-sm font-medium leading-6 text-gray-900">
+        <label
+          htmlFor={`true-false-${schema.key}`}
+          className="mercoa-ml-3 mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
+        >
           Yes
         </label>
       </div>
 
-      <div className="flex items-center">
+      <div className="mercoa-flex mercoa-items-center">
         <input
           type="radio"
           name={`true-false-${schema.key}`}
           defaultChecked={value === 'false'}
-          className="h-4 w-4 border-gray-300 text-mercoa-primary focus:ring-mercoa-primary"
+          className="mercoa-h-4 mercoa-w-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary"
           onChange={() => setValue('false')}
         />
-        <label htmlFor={`true-false-${schema.key}`} className="ml-3 block text-sm font-medium leading-6 text-gray-900">
+        <label
+          htmlFor={`true-false-${schema.key}`}
+          className="mercoa-ml-3 mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
+        >
           No
         </label>
       </div>
@@ -2407,19 +2477,21 @@ function MetadataWell({
     })
   }
   return (
-    <div className="flex items-center">
-      <div className="flex-auto">
-        <div className={classNames('flex items-center rounded-md')}>
-          <div className="flex-auto p-3">
-            <div className={classNames('text-sm font-medium', 'text-grey-900')}>{schema.displayName}</div>
-            <div className="text-sm text-gray-500">{value}</div>
+    <div className="mercoa-flex mercoa-items-center">
+      <div className="mercoa-flex-auto">
+        <div className={classNames('mercoa-flex mercoa-items-center mercoa-rounded-md')}>
+          <div className="mercoa-flex-auto mercoa-p-3">
+            <div className={classNames('mercoa-text-sm mercoa-font-medium', 'mercoa-text-grey-900')}>
+              {schema.displayName}
+            </div>
+            <div className="mercoa-text-sm mercoa-text-gray-500">{value}</div>
           </div>
           <button
             type="button"
             onClick={setEdit}
-            className="mx-4 flex-shrink-0 p-1 text-mercoa-primary-text hover:opacity-75 cursor-pointer"
+            className="mercoa-mx-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75 mercoa-cursor-pointer "
           >
-            <PencilSquareIcon className="w-5 h-5" />
+            <PencilSquareIcon className="mercoa-w-5 mercoa-h-5" />
           </button>
         </div>
       </div>
@@ -2459,10 +2531,12 @@ function LineItems({
 }) {
   const mercoaSession = useMercoaSession()
   return (
-    <div className="grid grid-cols-1 gap-x-6 gap-y-4">
+    <div className="mercoa-grid mercoa-grid-cols-1 mercoa-gap-x-6 mercoa-gap-y-4">
       {/* HEADER */}
-      <div className="flex items-center mt-5">
-        <h2 className="text-base font-semibold leading-6 text-gray-700 text-lg">Line Items</h2>
+      <div className="mercoa-flex mercoa-items-center mercoa-mt-5">
+        <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-700 mercoa-text-lg">
+          Line Items
+        </h2>
         <button
           onClick={() => {
             append({
@@ -2474,23 +2548,29 @@ function LineItems({
             })
           }}
           type="button"
-          className="ml-4 flex-shrink-0 col-span-1"
+          className="mercoa-ml-4 mercoa-flex-shrink-0 mercoa-col-span-1"
         >
           <Tooltip title="Add line item">
-            <PlusCircleIcon className="h-5 w-5 text-gray-400 hover:opacity-75" aria-hidden="true" />
+            <PlusCircleIcon
+              className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400 hover:mercoa-opacity-75"
+              aria-hidden="true"
+            />
           </Tooltip>
-          <span className="sr-only">Add line item</span>
+          <span className="mercoa-sr-only">Add line item</span>
         </button>
       </div>
       {/* ROWS */}
-      <div className="overflow-x-hidden hover:overflow-x-visible pointer-events-none">
+      <div className="mercoa-overflow-x-hidden hover:mercoa-overflow-x-visible mercoa-pointer-events-none">
         <table
-          className="min-w-full divide-y divide-gray-300 w-[600px] relative mb-6 pointer-events-auto"
+          className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300 mercoa-w-[600px] mercoa-relative mercoa-mb-6 pointer-events-auto"
           id="lineItemsTable"
         >
           <thead>
-            <tr className="divide-x divide-gray-200">
-              <th scope="col" className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900 min-w-[300px]">
+            <tr className="mercoa-divide-x mercoa-divide-gray-200">
+              <th
+                scope="col"
+                className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-min-w-[300px]"
+              >
                 Description
               </th>
               {mercoaSession.organization?.metadataSchema
@@ -2499,28 +2579,37 @@ function LineItems({
                   return (
                     <th
                       scope="col"
-                      className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900 min-w-[200px]"
+                      className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-min-w-[200px]"
                       key={schema.key}
                     >
                       {schema.displayName}
                     </th>
                   )
                 })}
-              <th scope="col" className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+              <th
+                scope="col"
+                className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+              >
                 Qty
               </th>
-              <th scope="col" className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+              <th
+                scope="col"
+                className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+              >
                 Price
               </th>
-              <th scope="col" className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+              <th
+                scope="col"
+                className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+              >
                 Amount
               </th>
               <th>
-                <span className="sr-only">Remove</span>
+                <span className="mercoa-sr-only">Remove</span>
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody className="mercoa-divide-y mercoa-divide-gray-200 mercoa-bg-white">
             {lineItems?.map((field, index) => (
               <LineItemRow
                 currency={currency}
@@ -2564,10 +2653,10 @@ function LineItemScrollBar({ width }: { width: number }) {
   }
 
   return (
-    <div className="w-full h-[10px] bg-gray-100 relative pointer-events-auto">
+    <div className="mercoa-w-full mercoa-h-[10px] mercoa-bg-gray-100 mercoa-relative pointer-events-auto">
       <Draggable axis="x" bounds="parent" onDrag={(e, data) => onDrag(data)}>
         <div
-          className="h-[10px] bg-gray-300 hover:bg-gray-400 absolute top-0"
+          className="mercoa-h-[10px] mercoa-bg-gray-300 hover:mercoa-bg-gray-400 mercoa-absolute mercoa-top-0"
           style={{ width: `${scrollBarWidth}px` }}
         />
       </Draggable>
@@ -2600,13 +2689,13 @@ function LineItemRow({
 }) {
   const mercoaSession = useMercoaSession()
   return (
-    <tr className="divide-x divide-gray-200">
-      <td className="whitespace-nowrap p-1 text-sm text-gray-500">
+    <tr className="mercoa-divide-x mercoa-divide-gray-200">
+      <td className="mercoa-whitespace-nowrap mercoa-p-1 mercoa-text-sm mercoa-text-gray-500">
         {' '}
         <input
           type="text"
-          className="block w-full border-0 py-1.5 text-gray-900
-           placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6"
+          className="mercoa-block mercoa-w-full mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900
+           placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
           {...register(`lineItems.${index}.description`)}
         />
       </td>
@@ -2619,7 +2708,7 @@ function LineItemRow({
               ? watch(`lineItems.${index}.glAccountId`)
               : watch(`lineItems.${index}.metadata.${schema.key}`)
           return (
-            <td className="whitespace-nowrap text-sm text-gray-500" key={schema.key}>
+            <td className="mercoa-whitespace-nowrap mercoa-text-sm mercoa-text-gray-500" key={schema.key}>
               <MetadataSelection
                 entityMetadata={entityMetadata.find((m) => m.key === schema.key)}
                 schema={schema}
@@ -2651,52 +2740,51 @@ function LineItemRow({
             </td>
           )
         })}
-      <td className="whitespace-nowrap p-1 text-sm text-gray-500">
+      <td className="mercoa-whitespace-nowrap mercoa-p-1 mercoa-text-sm mercoa-text-gray-500">
         <input
           type="text"
-          className={`block w-full border-0 py-1.5 
-            text-gray-900 
-            placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6`}
+          className={`mercoa-block mercoa-w-full mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 
+            placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6`}
           placeholder="1"
           {...register(`lineItems.${index}.quantity`)}
         />
       </td>
-      <td className="whitespace-nowrap p-1 text-sm text-gray-500">
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <span className="text-gray-500 sm:text-sm">{currencyCodeToSymbol(currency)}</span>
+      <td className="mercoa-whitespace-nowrap mercoa-p-1 mercoa-text-sm mercoa-text-gray-500">
+        <div className="mercoa-relative">
+          <div className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-flex mercoa-items-center mercoa-pl-3">
+            <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
           </div>
           <input
             type="text"
-            className={`block w-full border-0 py-1.5 
-            text-gray-900 
-            placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6 pl-6
-            ${currencyCodeToSymbol(currency).length > 1 ? 'pl-12' : 'pl-6'}`}
+            className={`mercoa-block mercoa-w-full mercoa-border-0 mercoa-py-1.5 
+            mercoa-text-gray-900 
+            placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 mercoa-pl-6
+            ${currencyCodeToSymbol(currency).length > 1 ? 'mercoa-pl-12' : 'mercoa-pl-6'}`}
             placeholder="0.00"
             {...register(`lineItems.${index}.unitPrice`)}
           />
         </div>
       </td>
-      <td className="whitespace-nowrap py-1 pl-1 pr-1 text-sm text-gray-500 sm:pr-0">
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <span className="text-gray-500 sm:text-sm">{currencyCodeToSymbol(currency)}</span>
+      <td className="mercoa-whitespace-nowrap mercoa-py-1 mercoa-pl-1 mercoa-pr-1 mercoa-text-sm mercoa-text-gray-500 sm:pr-0">
+        <div className="mercoa-relative">
+          <div className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-flex mercoa-items-center mercoa-pl-3">
+            <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
           </div>
           <input
             type="text"
-            className={`block w-full rounded-md border-0 py-1.5 
-            text-gray-900 
-            placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-mercoa-primary sm:text-sm sm:leading-6 pl-6
-            ${currencyCodeToSymbol(currency).length > 1 ? 'pl-12' : 'pl-6'}`}
+            className={`mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 
+            mercoa-text-gray-900 
+            placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 mercoa-pl-6
+            ${currencyCodeToSymbol(currency).length > 1 ? 'mercoa-pl-12' : 'mercoa-pl-6'}`}
             placeholder="0.00"
             {...register(`lineItems.${index}.amount`)}
           />
         </div>
       </td>
-      <td className="whitespace-nowrap py-1 pl-1 pr-1 text-sm text-gray-500 sm:pr-0">
+      <td className="mercoa-whitespace-nowrap mercoa-py-1 mercoa-pl-1 mercoa-pr-1 mercoa-text-sm mercoa-text-gray-500 sm:pr-0">
         <button type="button" onClick={() => remove(index)}>
-          <XMarkIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-          <span className="sr-only">Remove line item</span>
+          <XMarkIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
+          <span className="mercoa-sr-only">Remove line item</span>
         </button>
       </td>
     </tr>
@@ -2720,8 +2808,11 @@ const ProgressBar = () => {
   }, [])
 
   return (
-    <div className="h-2 w-full bg-gray-300">
-      <div style={{ width: `${progressPercentage}%` }} className={`rounded-sm h-full bg-mercoa-primary`}></div>
+    <div className="mercoa-h-2 mercoa-w-full mercoa-bg-gray-300">
+      <div
+        style={{ width: `${progressPercentage}%` }}
+        className={`mercoa-rounded-sm mercoa-h-full mercoa-bg-mercoa-primary`}
+      ></div>
     </div>
   )
 }

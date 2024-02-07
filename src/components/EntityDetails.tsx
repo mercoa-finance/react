@@ -17,7 +17,7 @@ export function EntityStatus({ entity }: { entity?: Mercoa.EntityResponse }) {
       {entity.status === 'unverified' && (
         /* @ts-ignore:next-line */
         <Tooltip title="Can only receive funds">
-          <span className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-800">
+          <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-indigo-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-indigo-800">
             Unverified
           </span>
         </Tooltip>
@@ -25,7 +25,7 @@ export function EntityStatus({ entity }: { entity?: Mercoa.EntityResponse }) {
       {entity.status === 'verified' && (
         /* @ts-ignore:next-line */
         <Tooltip title="Can send and receive funds">
-          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+          <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-green-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-green-800">
             Verified
           </span>
         </Tooltip>
@@ -34,7 +34,7 @@ export function EntityStatus({ entity }: { entity?: Mercoa.EntityResponse }) {
         (entity.status === 'review' && (
           /* @ts-ignore:next-line */
           <Tooltip title="Can only receive funds">
-            <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+            <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-yellow-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-yellow-800">
               Pending
             </span>
           </Tooltip>
@@ -43,7 +43,7 @@ export function EntityStatus({ entity }: { entity?: Mercoa.EntityResponse }) {
         (entity.status === 'failed' && (
           /* @ts-ignore:next-line */
           <Tooltip title="Can only receive funds">
-            <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+            <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-red-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-red-800">
               VERIFICATION FAILED
             </span>
           </Tooltip>
