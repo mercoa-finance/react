@@ -2727,7 +2727,14 @@ function LineItemRow({
                       shouldTouch: true,
                     })
                   } else {
-                    const newMetadata = JSON.parse(JSON.stringify(metadata ?? '{}')) as Record<string, string>
+                    let newMetadata = {} as Record<string, string>
+                    if (metadata) {
+                      newMetadata = (
+                        typeof metadata === 'string'
+                          ? JSON.parse(metadata ?? '{}')
+                          : JSON.parse(JSON.stringify(metadata))
+                      ) as Record<string, string>
+                    }
                     newMetadata[schema.key] = `${value}`
                     setValue(`lineItems.${index}.metadata`, newMetadata, {
                       shouldDirty: true,
