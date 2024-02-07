@@ -569,6 +569,21 @@ export function EditInvoiceForm({
     name: 'lineItems',
   })
 
+  // Auto-calculate line item amounts and total amount
+  watch((data, { name, type }) => {
+    if (type != 'change') return
+    if (!name?.startsWith('lineItems')) return
+    if (name.endsWith('amount') || name.endsWith('description') || name.endsWith('name')) return
+    const lineItems = data.lineItems as Mercoa.InvoiceLineItemRequest[]
+    let amount = lineItems.reduce((acc, lineItem, index) => {
+      lineItem.amount = Math.floor((lineItem.quantity ?? 1) * (lineItem.unitPrice ?? 1) * 100) / 100
+      setValue(`lineItems.${index}.amount`, lineItem.amount)
+      return acc + lineItem.amount
+    }, 0)
+    amount = Math.floor(amount * 100) / 100
+    setValue('amount', amount)
+  })
+
   useEffect(() => {
     setSelectedApprovers(
       invoice?.approvers.map((e) => ({
@@ -1244,32 +1259,42 @@ export function EditInvoiceForm({
 
         {/* APPROVALS */}
         <div className="mercoa-col-span-full">
-          {invoice?.approvers && invoice.approvers.length > 0 && selectedApprovers && (
-            <>
-              {invoice.status === Mercoa.InvoiceStatus.Draft ? (
-                <Controller
-                  control={control}
-                  name="approvers"
-                  render={({ field: { onChange } }) => (
-                    <ApproversSelection
-                      approverSlots={invoice.approvers}
-                      selectedApprovers={selectedApprovers}
-                      setSelectedApprovers={handleApproverSelect}
-                      hasError={!!errors.approvers?.message}
-                      formOnChange={onChange}
+          {invoice && (
+            <div className="mercoa-space-y-4">
+              <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900 mercoa-mt-5">
+                Approvals
+              </h2>
+              {invoice?.approvers && invoice.approvers.length > 0 && selectedApprovers && (
+                <>
+                  {invoice.status === Mercoa.InvoiceStatus.Draft ? (
+                    <Controller
+                      control={control}
+                      name="approvers"
+                      render={({ field: { onChange } }) => (
+                        <ApproversSelection
+                          approverSlots={invoice.approvers}
+                          selectedApprovers={selectedApprovers}
+                          setSelectedApprovers={handleApproverSelect}
+                          formOnChange={onChange}
+                        />
+                      )}
                     />
+                  ) : (
+                    <>
+                      {invoice?.approvers?.map((slot) => {
+                        const user = mercoaSession.users.find((user) => user.id === slot.assignedUserId)
+                        if (user) {
+                          return <ApproverWell key={user.id} approverSlot={slot} approver={user} />
+                        }
+                      })}
+                    </>
                   )}
-                />
-              ) : (
-                <ApproversAction
-                  approverSlots={invoice.approvers}
-                  invoiceId={invoice.id}
-                  invoiceStatus={invoice.status}
-                  refreshInvoice={refreshInvoice}
-                />
+                  {errors.approvers && (
+                    <p className="mercoa-text-sm mercoa-text-red-500">Please select all approvers</p>
+                  )}
+                </>
               )}
-              {errors.approvers && <p className="mercoa-text-sm mercoa-text-red-500">Please select all approvers</p>}
-            </>
+            </div>
           )}
         </div>
 
@@ -1284,6 +1309,7 @@ export function EditInvoiceForm({
             <div className="mercoa-absolute mercoa-bottom-0 mercoa-right-0 mercoa-w-full mercoa-bg-white mercoa-z-10">
               <ErrorOverview errors={errors} clearErrors={clearErrors} />
               <div className=" mercoa-container mercoa-mx-auto mercoa-flex mercoa-flex-row-reverse mercoa-items-center mercoa-gap-2 mercoa-py-3 mercoa-px-4 sm:mercoa-px-6 lg:mercoa-px-8">
+                <ApproverActionButton invoice={invoice} refreshInvoice={refreshInvoice} />
                 {invoice?.status != Mercoa.InvoiceStatus.Scheduled && (
                   <>
                     {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation &&
@@ -1448,11 +1474,7 @@ function SaveInvoiceButton({
     approvers.every((e) => e.assignedUserId) &&
     !approvers.every((e) => e.action === Mercoa.ApproverAction.Approve)
   ) {
-    return (
-      <span className="mercoa-text-center mercoa-text-gray-800 mercoa-font-medium mercoa-p-3 mercoa-rounded-md mercoa-bg-gray-50">
-        Waiting for approval
-      </span>
-    )
+    return <></>
   }
   if (
     text === 'Submit for Approval' &&
@@ -1918,7 +1940,6 @@ function ApproversSelection({
   approverSlots,
   selectedApprovers,
   setSelectedApprovers,
-  hasError,
   formOnChange,
 }: {
   approverSlots: Mercoa.ApprovalSlot[]
@@ -1928,7 +1949,6 @@ function ApproversSelection({
     approver: Mercoa.ApprovalSlotAssignment,
     formOnChange: (val: any) => void,
   ) => void
-  hasError: boolean
   formOnChange: (val: any) => void
 }) {
   const mercoaSession = useMercoaSession()
@@ -1964,11 +1984,7 @@ function ApproversSelection({
   }
 
   return (
-    <div className="mercoa-space-y-4">
-      <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900 mercoa-mt-5">
-        Approvals
-      </h2>
-      {hasError && <p className="mercoa-text-sm mercoa-text-red-500">Please assign all approvers for this invoice.</p>}
+    <>
       {approverSlots.map((slot, index) => (
         <ApproverCombobox
           key={index}
@@ -1990,7 +2006,7 @@ function ApproversSelection({
           }}
         />
       ))}
-    </div>
+    </>
   )
 }
 
@@ -2017,47 +2033,6 @@ function ApproverCombobox({
       secondaryDisplayIndex="email"
       disabledText="Already assigned"
     />
-  )
-}
-
-function ApproversAction({
-  approverSlots,
-  invoiceId,
-  invoiceStatus,
-  refreshInvoice,
-}: {
-  approverSlots: Mercoa.ApprovalSlot[]
-  invoiceId: Mercoa.InvoiceId
-  invoiceStatus: Mercoa.InvoiceStatus
-  refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
-}) {
-  const mercoaSession = useMercoaSession()
-  const loggedInUserApprovalSlot = approverSlots.find((e) => e.assignedUserId === mercoaSession.user?.id)
-
-  const findAssignedUser = (approverSlot: Mercoa.ApprovalSlot) => {
-    let user = mercoaSession.users.find((user) => user.id === approverSlot.assignedUserId)
-    return user
-  }
-
-  return (
-    <div className="mercoa-space-y-4">
-      <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900 mercoa-mt-5">
-        Approvals
-      </h2>
-      {approverSlots.map((slot) => {
-        let user = findAssignedUser(slot)
-        if (user) {
-          return <ApproverWell key={user.id} approverSlot={slot} approver={user} />
-        }
-      })}
-      {loggedInUserApprovalSlot && invoiceStatus === Mercoa.InvoiceStatus.New && (
-        <ApproverActionButton
-          approverSlot={loggedInUserApprovalSlot}
-          invoiceId={invoiceId}
-          refreshInvoice={refreshInvoice}
-        />
-      )}
-    </div>
   )
 }
 
@@ -2103,25 +2078,31 @@ function ApproverWell({
 }
 
 function ApproverActionButton({
-  approverSlot,
-  invoiceId,
+  invoice,
   refreshInvoice,
 }: {
-  approverSlot: Mercoa.ApprovalSlot
-  invoiceId: Mercoa.InvoiceId
+  invoice?: Mercoa.InvoiceResponse
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
 }) {
   const mercoaSession = useMercoaSession()
+  if (invoice?.status != Mercoa.InvoiceStatus.New) return <></>
+  const approverSlot = invoice.approvers.find((e) => e.assignedUserId === mercoaSession.user?.id)
+  if (!approverSlot)
+    return (
+      <span className="mercoa-text-center mercoa-text-gray-800 mercoa-font-medium mercoa-p-3 mercoa-rounded-md mercoa-bg-gray-50">
+        Waiting for approval
+      </span>
+    )
   const handleApprove = () => {
     const approvalData: Mercoa.ApprovalRequest = {
       userId: approverSlot.assignedUserId ?? '',
     }
     if (approvalData.userId) {
       mercoaSession.client?.invoice.approval
-        .approve(invoiceId, approvalData)
+        .approve(invoice.id, approvalData)
         .then(() => {
           toast.success('Invoice approved')
-          refreshInvoice(invoiceId)
+          refreshInvoice(invoice.id)
         })
         .catch((e) => {
           console.log(e)
@@ -2135,10 +2116,10 @@ function ApproverActionButton({
     }
     if (approvalData.userId) {
       mercoaSession.client?.invoice.approval
-        .reject(invoiceId, approvalData)
+        .reject(invoice.id, approvalData)
         .then(() => {
           toast.success('Invoice rejected')
-          refreshInvoice(invoiceId)
+          refreshInvoice(invoice.id)
         })
         .catch((e) => {
           console.log(e)
@@ -2541,7 +2522,7 @@ function LineItems({
           onClick={() => {
             append({
               name: '',
-              description: '',
+              description: `Line Item ${(lineItems?.length ?? 0) + 1}`,
               amount: 0,
               unitPrice: 0,
               quantity: 1,
@@ -2625,6 +2606,7 @@ function LineItems({
                 hasDocument={hasDocument}
               />
             ))}
+            {(lineItems?.length ?? 0) > 0 && <tr /> /* Add a row for the bottom border */}
           </tbody>
         </table>
         <LineItemScrollBar width={width} />
@@ -2784,6 +2766,8 @@ function LineItemRow({
             placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 mercoa-pl-6
             ${currencyCodeToSymbol(currency).length > 1 ? 'mercoa-pl-12' : 'mercoa-pl-6'}`}
             placeholder="0.00"
+            readOnly
+            disabled
             {...register(`lineItems.${index}.amount`)}
           />
         </div>
