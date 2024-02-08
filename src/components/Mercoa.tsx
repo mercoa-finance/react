@@ -200,6 +200,7 @@ function useProvideSession({
 
   // Set C1-defined color theming
   useEffect(() => {
+    if (!organization?.colorScheme) return
     const adjustBrightness = (col: string, amt: number) => {
       col = col.replace(/^#/, '')
       if (col.length === 3) col = col[0] + col[0] + col[1] + col[1] + col[2] + col[2]
@@ -218,14 +219,10 @@ function useProvideSession({
       return `#${rr}${gg}${bb}`
     }
 
-    const logoBackground = organization?.colorScheme?.logoBackgroundColor || 'transparent' // default is transparent
-    const primary = organization?.colorScheme?.primaryColor || '#4f46e5' // default is indigo-600
-    const primaryLight = organization?.colorScheme?.primaryColor
-      ? adjustBrightness(organization?.colorScheme?.primaryColor, 40)
-      : '#6366f1' //default is indigo-500
-    const primaryDark = organization?.colorScheme?.primaryColor
-      ? adjustBrightness(organization?.colorScheme?.primaryColor, -40)
-      : '#4338ca' //default is indigo-700
+    const logoBackground = organization.colorScheme.logoBackgroundColor || 'transparent' // default is transparent
+    const primary = organization.colorScheme.primaryColor || '#4f46e5' // default is indigo-600
+    const primaryLight = adjustBrightness(primary, 40)
+    const primaryDark = adjustBrightness(primary, -40)
 
     let primaryText = primary
     let primaryTextInvert = '#ffffff'

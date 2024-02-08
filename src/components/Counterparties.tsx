@@ -42,7 +42,7 @@ const schema = yup
     middleName: yup.string(),
     suffix: yup.string(),
     businessType: yup.string(),
-    website: yup.string(),
+    website: yup.string().url('Website must start with http:// or https:// and be a valid URL'),
     description: yup.string(),
   })
   .required()
