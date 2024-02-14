@@ -34,7 +34,7 @@ export function CreditCards({
   showAdd?: boolean
   showEdit?: boolean
 }) {
-  const [cards, setCards] = useState<Array<Mercoa.CardResponse>>()
+  const [cards, setCards] = useState<Array<Mercoa.PaymentMethodResponse.Card>>()
   const [showDialog, setShowDialog] = useState(false)
 
   const mercoaSession = useMercoaSession()
@@ -46,7 +46,7 @@ export function CreditCards({
             .filter((e) => {
               return e
             })
-            .map((e) => e as Mercoa.CardResponse),
+            .map((e) => e as Mercoa.PaymentMethodResponse.Card),
         )
       })
     }
@@ -178,7 +178,7 @@ export function CreditCardComponent({
   selected,
 }: {
   children?: Function
-  account?: Mercoa.CardResponse
+  account?: Mercoa.PaymentMethodResponse.Card
   onSelect?: Function
   selected?: boolean
   showEdit?: boolean

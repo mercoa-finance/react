@@ -2,13 +2,10 @@ import { Bar, Container, Section } from '@column-resizer/react'
 import { Dialog, Transition } from '@headlessui/react'
 import {
   ArrowDownTrayIcon,
-  BuildingLibraryIcon,
   CheckCircleIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  CreditCardIcon,
   DocumentDuplicateIcon,
-  EnvelopeIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
   PencilSquareIcon,
@@ -36,15 +33,17 @@ import { CounterpartySearch } from './Counterparties'
 import { InvoiceStatusPill } from './Inbox'
 import { InvoiceComments } from './InvoiceComments'
 import {
-  AddBankAccountForm,
-  AddCheckForm,
-  AddCustomPaymentMethodForm,
+  AddBankAccountDialog,
+  AddCheckDialog,
+  BankAccountComponent,
+  CheckComponent,
+  CreditCardComponent,
+  CustomPaymentMethodComponent,
   LoadingSpinner,
   LoadingSpinnerIcon,
   MercoaButton,
   MercoaCombobox,
   Tooltip,
-  findCustomPaymentMethodAccountNameAndNumber,
   useDebounce,
   useMercoaSession,
 } from './index'
@@ -63,11 +62,13 @@ export function InvoiceDetails({
   onRedirect,
   addPaymentMethodRedirect,
   children,
+  heightOffset,
 }: {
   invoiceId?: Mercoa.InvoiceId
   invoice?: Mercoa.InvoiceResponse
   onRedirect: (invoice: Mercoa.InvoiceResponse | undefined) => void
   addPaymentMethodRedirect?: () => void
+  heightOffset?: number
   children?: ({
     invoice,
     documents,
@@ -83,7 +84,9 @@ export function InvoiceDetails({
   const [ocrProcessing, setOcrProcessing] = useState<boolean>(false)
   const [invoiceLocal, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>(invoice)
   const [documents, setDocuments] = useState<Mercoa.DocumentResponse[]>()
-  const [height, setHeight] = useState<number>(typeof window !== 'undefined' ? window.innerHeight - 70 : 0)
+  const [height, setHeight] = useState<number>(
+    typeof window !== 'undefined' ? window.innerHeight - (heightOffset ?? 70) : 0,
+  )
   const [isViewingInvoiceMobile, setIsViewingInvoiceMobile] = useState<boolean>(false)
 
   async function refreshInvoice(invoiceId: Mercoa.InvoiceId) {
@@ -141,7 +144,7 @@ export function InvoiceDetails({
   }, [invoice, invoiceId, mercoaSession.token, mercoaSession.entity?.id])
 
   function handleResize() {
-    setHeight(window.innerHeight - 70)
+    setHeight(window.innerHeight - (heightOffset ?? 70))
   }
   useEffect(() => {
     handleResize()
@@ -195,7 +198,7 @@ export function InvoiceDetails({
 
       {/* EDIT INVOICE FORM */}
       <Section className="mercoa-pl-5 mercoa-relative" minSize={400}>
-        <div className="mercoa-flex mercoa-w-full mercoa-flex-row-reverse visible min-[450px]:mercoa-invisible mercoa-absolute mercoa-top-2">
+        <div className="mercoa-flex mercoa-w-full mercoa-flex-row-reverse mercoa-visible min-[450px]:mercoa-invisible mercoa-absolute mercoa-top-2">
           <MercoaButton
             isEmphasized
             size="sm"
@@ -510,6 +513,7 @@ export function EditInvoiceForm({
       vendorName: yup.string(),
       paymentDestinationId: yup.string(),
       paymentMethodDestinationType: yup.string(),
+      paymentDestinationOptions: yup.mixed().nullable(),
       paymentSourceId: yup.string(),
       paymentMethodSourceType: yup.string(),
       saveAsDraft: yup.boolean(),
@@ -524,6 +528,7 @@ export function EditInvoiceForm({
     setError,
     clearErrors,
     watch,
+    setFocus,
     control,
     formState: { errors },
   } = useForm({
@@ -540,6 +545,7 @@ export function EditInvoiceForm({
       lineItems: invoice?.lineItems ?? [],
       paymentDestinationId: invoice?.paymentDestination?.id,
       paymentMethodDestinationType: '',
+      paymentDestinationOptions: invoice?.paymentDestinationOptions,
       paymentSourceId: invoice?.paymentSource?.id,
       paymentMethodSourceType: '',
       description: invoice?.noteToSelf ?? '',
@@ -563,6 +569,8 @@ export function EditInvoiceForm({
   const paymentSourceId = watch('paymentSourceId')
   const approvers = watch('approvers')
   const metadata = watch('metadata')
+  const lineItems = watch('lineItems')
+  const paymentDestinationOptions = watch('paymentDestinationOptions') as Mercoa.PaymentDestinationOptions
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -570,19 +578,46 @@ export function EditInvoiceForm({
   })
 
   // Auto-calculate line item amounts and total amount
-  watch((data, { name, type }) => {
-    if (type != 'change') return
-    if (!name?.startsWith('lineItems')) return
-    if (name.endsWith('amount') || name.endsWith('description') || name.endsWith('name')) return
-    const lineItems = data.lineItems as Mercoa.InvoiceLineItemRequest[]
-    let amount = lineItems.reduce((acc, lineItem, index) => {
-      lineItem.amount = Math.floor((lineItem.quantity ?? 1) * (lineItem.unitPrice ?? 1) * 100) / 100
-      setValue(`lineItems.${index}.amount`, lineItem.amount)
-      return acc + lineItem.amount
-    }, 0)
+
+  function calculateTotalAmountFromLineItems() {
+    if (lineItems?.find((e) => isNaN(e.amount as number))) {
+      setError('amount', { type: 'manual', message: 'Please enter a valid number' })
+      return
+    }
+    let amount =
+      lineItems?.reduce((acc, lineItem, index) => {
+        return acc + Number(lineItem.amount) ?? 0
+      }, 0) ?? 0
     amount = Math.floor(amount * 100) / 100
     setValue('amount', amount)
-  })
+    setFocus('amount')
+  }
+
+  // watch((data, { name, type }) => {
+  //   if (type != 'change') return
+  //   if (!name?.startsWith('lineItems')) return
+  //   if (name.endsWith('description') || name.endsWith('name')) return
+  //   let amount = 0
+  //   if (name.endsWith('amount')) {
+  //     const lineItems = data.lineItems as Mercoa.InvoiceLineItemRequest[]
+  //     if (lineItems.find((e) => isNaN(e.amount))) {
+  //       setError('amount', { type: 'manual', message: 'Please enter a valid number' })
+  //       return
+  //     }
+  //     amount = lineItems.reduce((acc, lineItem, index) => {
+  //       return acc + Number(lineItem.amount) ?? 0
+  //     }, 0)
+  //   } else {
+  //     const lineItems = data.lineItems as Mercoa.InvoiceLineItemRequest[]
+  //     amount = lineItems.reduce((acc, lineItem, index) => {
+  //       lineItem.amount = Math.floor((lineItem.quantity ?? 1) * (lineItem.unitPrice ?? 1) * 100) / 100
+  //       setValue(`lineItems.${index}.amount`, lineItem.amount)
+  //       return acc + lineItem.amount
+  //     }, 0)
+  //   }
+  //   amount = Math.floor(amount * 100) / 100
+  //   setValue('amount', amount)
+  // })
 
   useEffect(() => {
     setSelectedApprovers(
@@ -645,13 +680,17 @@ export function EditInvoiceForm({
   }, [supportedCurrencies])
 
   // Get destination payment methods
-  useEffect(() => {
+
+  async function refreshVendorPaymentMethods() {
     if (!mercoaSession.token || !vendorId) return
-    mercoaSession.client?.entity.paymentMethod.getAll(vendorId).then((resp) => {
-      if (resp) {
-        setDestinationPaymentMethods(resp)
-      }
-    })
+    const resp = await mercoaSession.client?.entity.paymentMethod.getAll(vendorId)
+    if (resp) {
+      setDestinationPaymentMethods(resp)
+    }
+  }
+
+  useEffect(() => {
+    refreshVendorPaymentMethods()
   }, [mercoaSession.client, vendorId, mercoaSession.token])
 
   // OCR Merge
@@ -736,7 +775,7 @@ export function EditInvoiceForm({
 
   const saveInvoice = async (data: any) => {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    //setIsSaving(true)
+    setIsSaving(true)
     const invoiceData: Mercoa.InvoiceRequest = {
       status: data.saveAsDraft ? Mercoa.InvoiceStatus.Draft : nextInvoiceState,
       amount: Number(data.amount),
@@ -753,6 +792,9 @@ export function EditInvoiceForm({
         vendorId: data.vendorId,
       }),
       paymentDestinationId: data.paymentDestinationId,
+      ...(data.paymentMethodDestinationType === 'check' && {
+        paymentDestinationOptions: data.paymentDestinationOptions,
+      }),
       lineItems: data.lineItems.map((lineItem: any) => ({
         ...(lineItem.id && { id: lineItem.id }),
         description: lineItem.description,
@@ -768,6 +810,18 @@ export function EditInvoiceForm({
       creatorEntityId: mercoaSession.entity?.id,
     }
     console.log({ data, invoiceData })
+
+    // Make sure line items amount is equal to invoice amount
+    if (!mercoaSession.iframeOptions?.options?.invoice?.disableLineItems && data.lineItems.length > 0) {
+      const lineItemsTotal = data.lineItems.reduce((acc: number, lineItem: any) => {
+        return acc + Number(lineItem.amount)
+      }, 0)
+      if (lineItemsTotal !== Number(data.amount)) {
+        setError('amount', { type: 'manual', message: 'Line item amounts do not match total amount' })
+        setIsSaving(false)
+        return
+      }
+    }
 
     // Create new vendor payment method if needed
     if (data.paymentMethodDestinationType && (!data.paymentDestinationId || data.paymentDestinationId === 'new')) {
@@ -906,6 +960,24 @@ export function EditInvoiceForm({
       toast.error('There was an issue generating the vendor link. Please refresh and try again.')
     }
   }
+
+  const printCheckButton = (
+    <MercoaButton
+      type="button"
+      isEmphasized
+      onClick={async () => {
+        if (!invoice?.id) return
+        const pdf = await mercoaSession.client?.invoice.generateCheckPdf(invoice.id)
+        if (pdf) {
+          window.open(pdf.uri, '_blank')
+        } else {
+          toast.error('There was an error generating the check PDF')
+        }
+      }}
+    >
+      Print Check
+    </MercoaButton>
+  )
 
   return (
     <div style={{ height: `${height}px` }} className="mercoa-overflow-auto mercoa-pr-2 mercoa-pb-10" ref={wrapperDiv}>
@@ -1143,13 +1215,25 @@ export function EditInvoiceForm({
                 setValue={setValue}
                 entityMetadata={entityMetadata}
                 width={width}
+                calculateTotalAmountFromLineItems={calculateTotalAmountFromLineItems}
               />
             </div>
           </>
         )}
 
         {/*  METADATA  */}
-        {(mercoaSession.organization?.metadataSchema?.filter((e) => !e.lineItem)?.length ?? 0) > 0 && (
+        {(mercoaSession.organization?.metadataSchema?.filter(
+          (schema) =>
+            !schema.lineItem &&
+            showMetadata({
+              schema,
+              entityMetadata: entityMetadata.find((m) => m.key === schema.key),
+              hasDocument: !!uploadedImage || !!invoice?.hasDocuments,
+              hasNoLineItems: fields.length === 0,
+              paymentDestination: destinationPaymentMethods.find((pm) => pm.id === paymentDestinationId),
+              paymentSource: sourcePaymentMethods.find((pm) => pm.id === paymentSourceId),
+            }),
+        )?.length ?? 0) > 0 && (
           <>
             {/*  GRAY border  */}
             <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
@@ -1164,25 +1248,25 @@ export function EditInvoiceForm({
               const md = JSON.parse((metadata as string) ?? {}) as Record<string, string>
               const value = md?.[schema.key]
               return (
-                <div className="mercoa-col-span-full" key={schema.key}>
-                  <MetadataSelection
-                    entityMetadata={entityMetadata.find((m) => m.key === schema.key)}
-                    schema={schema}
-                    value={value}
-                    hasDocument={!!uploadedImage || !!invoice?.hasDocuments}
-                    paymentDestination={destinationPaymentMethods.find((pm) => pm.id === paymentDestinationId)}
-                    paymentSource={sourcePaymentMethods.find((pm) => pm.id === paymentSourceId)}
-                    setValue={(value: string | string[]) => {
-                      // combobox with multiple will return an array, but metadata needs a string, so join it with commas
-                      if (Array.isArray(value)) {
-                        value = value.join(',')
-                      }
-                      const newMetadata = JSON.parse((metadata as string) ?? {}) as Record<string, string>
-                      newMetadata[schema.key] = `${value}`
-                      setValue('metadata', JSON.stringify(newMetadata), { shouldDirty: true, shouldTouch: true })
-                    }}
-                  />
-                </div>
+                <MetadataSelection
+                  key={schema.key}
+                  entityMetadata={entityMetadata.find((m) => m.key === schema.key)}
+                  schema={schema}
+                  value={value}
+                  hasDocument={!!uploadedImage || !!invoice?.hasDocuments}
+                  hasNoLineItems={fields.length === 0}
+                  paymentDestination={destinationPaymentMethods.find((pm) => pm.id === paymentDestinationId)}
+                  paymentSource={sourcePaymentMethods.find((pm) => pm.id === paymentSourceId)}
+                  setValue={(value: string | string[]) => {
+                    // combobox with multiple will return an array, but metadata needs a string, so join it with commas
+                    if (Array.isArray(value)) {
+                      value = value.join(',')
+                    }
+                    const newMetadata = JSON.parse((metadata as string) ?? {}) as Record<string, string>
+                    newMetadata[schema.key] = `${value}`
+                    setValue('metadata', JSON.stringify(newMetadata), { shouldDirty: true, shouldTouch: true })
+                  }}
+                />
               )
             })}
           </>
@@ -1208,16 +1292,14 @@ export function EditInvoiceForm({
               paymentMethodSchemas={paymentMethodSchemas}
               currentPaymentMethodId={invoice?.paymentSourceId}
               isSource
-              register={register}
               watch={watch}
-              errors={errors}
-              control={control}
               setValue={setValue}
-              setError={setError}
-              clearErrors={clearErrors}
             />
           )}
         </div>
+
+        {/*  GRAY border  */}
+        <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
 
         {/*  PAYMENT DESTINATION  */}
         {vendorName && (
@@ -1230,15 +1312,10 @@ export function EditInvoiceForm({
               paymentMethodSchemas={paymentMethodSchemas}
               currentPaymentMethodId={invoice?.paymentDestinationId}
               isDestination
-              vendorName={vendorName}
               vendorId={vendorId}
-              register={register}
               watch={watch}
-              errors={errors}
-              control={control}
               setValue={setValue}
-              setError={setError}
-              clearErrors={clearErrors}
+              refreshVendorPaymentMethods={refreshVendorPaymentMethods}
             />
             {invoice?.id &&
               invoice?.status != Mercoa.InvoiceStatus.Canceled &&
@@ -1307,64 +1384,73 @@ export function EditInvoiceForm({
           invoice?.status != Mercoa.InvoiceStatus.Archived &&
           invoice?.status != Mercoa.InvoiceStatus.Paid && (
             <div className="mercoa-absolute mercoa-bottom-0 mercoa-right-0 mercoa-w-full mercoa-bg-white mercoa-z-10">
-              <ErrorOverview errors={errors} clearErrors={clearErrors} />
-              <div className=" mercoa-container mercoa-mx-auto mercoa-flex mercoa-flex-row-reverse mercoa-items-center mercoa-gap-2 mercoa-py-3 mercoa-px-4 sm:mercoa-px-6 lg:mercoa-px-8">
-                <ApproverActionButton invoice={invoice} refreshInvoice={refreshInvoice} />
-                {invoice?.status != Mercoa.InvoiceStatus.Scheduled && (
-                  <>
-                    {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation &&
-                      selectedVendor &&
-                      !selectedVendor?.email && (
-                        <MercoaButton isEmphasized disabled={true}>
-                          Vendor Email Required
+              {isSaving ? (
+                <div className="mercoa-flex mercoa-items-center mercoa-justify-center mercoa-p-2">
+                  <LoadingSpinnerIcon />
+                </div>
+              ) : (
+                <>
+                  <ErrorOverview errors={errors} clearErrors={clearErrors} />
+                  <div className=" mercoa-container mercoa-mx-auto mercoa-flex mercoa-flex-row-reverse mercoa-items-center mercoa-gap-2 mercoa-py-3 mercoa-px-4 sm:mercoa-px-6 lg:mercoa-px-8">
+                    <ApproverActionButton invoice={invoice} refreshInvoice={refreshInvoice} setIsSaving={setIsSaving} />
+                    {invoice?.status != Mercoa.InvoiceStatus.Scheduled && (
+                      <>
+                        {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation &&
+                          selectedVendor &&
+                          !selectedVendor?.email && (
+                            <MercoaButton isEmphasized disabled={true}>
+                              Vendor Email Required
+                            </MercoaButton>
+                          )}
+                        {nextInvoiceState === Mercoa.InvoiceStatus.Scheduled &&
+                        paymentDestinationOptions?.type === 'check' &&
+                        paymentDestinationOptions?.delivery === 'PRINT' ? (
+                          <>{printCheckButton}</>
+                        ) : (
+                          <SaveInvoiceButton
+                            nextInvoiceState={nextInvoiceState}
+                            setValue={setValue}
+                            approvers={invoice?.approvers}
+                            approverSlots={approvers}
+                          />
+                        )}
+                        {nextInvoiceState === 'NEW' && invoice?.status !== 'NEW' && (
+                          <MercoaButton isEmphasized={false} onClick={() => setValue('saveAsDraft', true)}>
+                            Save Draft
+                          </MercoaButton>
+                        )}
+                      </>
+                    )}
+                    {(invoice?.status === Mercoa.InvoiceStatus.Scheduled ||
+                      invoice?.status === Mercoa.InvoiceStatus.Pending) &&
+                      invoice?.paymentDestination?.type === Mercoa.PaymentMethodType.OffPlatform && (
+                        <MercoaButton
+                          disabled={isSaving}
+                          isEmphasized={true}
+                          onClick={() => {
+                            if (!invoice?.id) return
+                            setIsSaving(true)
+                            if (confirm('Are you sure you want to mark this invoice as paid? This cannot be undone.')) {
+                              mercoaSession.client?.invoice
+                                .update(invoice?.id, { status: Mercoa.InvoiceStatus.Paid })
+                                .then((resp) => {
+                                  if (resp) {
+                                    console.log(resp)
+                                    toast.success('Invoice marked as paid')
+                                    refreshInvoice(resp.id)
+                                  }
+                                  setIsSaving(false)
+                                })
+                            }
+                          }}
+                        >
+                          Mark as Paid
                         </MercoaButton>
                       )}
-                    <SaveInvoiceButton
-                      nextInvoiceState={nextInvoiceState}
-                      setValue={setValue}
-                      approvers={invoice?.approvers}
-                      approverSlots={approvers}
-                      isSaving={isSaving}
-                    />
-                    {nextInvoiceState === 'NEW' && invoice?.status !== 'NEW' && (
-                      <MercoaButton
-                        isEmphasized={false}
-                        onClick={() => setValue('saveAsDraft', true)}
-                        disabled={isSaving}
-                      >
-                        Save Draft
-                      </MercoaButton>
-                    )}
-                  </>
-                )}
-                {(invoice?.status === Mercoa.InvoiceStatus.Scheduled ||
-                  invoice?.status === Mercoa.InvoiceStatus.Pending) &&
-                  invoice?.paymentDestination?.type === Mercoa.PaymentMethodType.OffPlatform && (
-                    <MercoaButton
-                      disabled={isSaving}
-                      isEmphasized={true}
-                      onClick={() => {
-                        if (!invoice?.id) return
-                        setIsSaving(true)
-                        if (confirm('Are you sure you want to mark this invoice as paid? This cannot be undone.')) {
-                          mercoaSession.client?.invoice
-                            .update(invoice?.id, { status: Mercoa.InvoiceStatus.Paid })
-                            .then((resp) => {
-                              if (resp) {
-                                console.log(resp)
-                                toast.success('Invoice marked as paid')
-                                refreshInvoice(resp.id)
-                              }
-                              setIsSaving(false)
-                            })
-                        }
-                      }}
-                    >
-                      Mark as Paid
-                    </MercoaButton>
-                  )}
-                <CancelPayment invoice={invoice} refreshInvoice={refreshInvoice} onRedirect={onRedirect} />
-              </div>
+                    <CancelPayment invoice={invoice} refreshInvoice={refreshInvoice} onRedirect={onRedirect} />
+                  </div>
+                </>
+              )}
             </div>
           )}
       </form>
@@ -1373,6 +1459,13 @@ export function EditInvoiceForm({
       <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-mb-4" />
 
       {invoice?.id && invoice.id !== 'new' ? <InvoiceComments invoice={invoice} /> : <div className="mercoa-mt-10" />}
+
+      {invoice?.status === Mercoa.InvoiceStatus.Paid &&
+        paymentDestinationOptions?.type === 'check' &&
+        paymentDestinationOptions?.delivery === 'PRINT' && (
+          <div className="mercoa-mt-10 mercoa-flex mercoa-flex-row-reverse">{printCheckButton}</div>
+        )}
+
       <div className="mercoa-mt-20" />
     </div>
   )
@@ -1398,8 +1491,7 @@ function ErrorOverview({ errors, clearErrors }: { errors: FieldErrors; clearErro
 
   const errorMessages = {
     approvers: 'Please select all approvers',
-    lineItems:
-      'Please make sure all line items have a description. Amount, quantity, and unit price must be positive numbers.',
+    lineItems: 'Please make sure all line items have a description and amount.',
   } as Record<string, string>
 
   return (
@@ -1439,13 +1531,11 @@ function SaveInvoiceButton({
   setValue,
   approverSlots,
   approvers,
-  isSaving,
 }: {
   nextInvoiceState: string
   setValue: Function
   approverSlots?: { approvalSlotId: string; assignedUserId: string | undefined }[]
   approvers?: Mercoa.ApprovalSlot[]
-  isSaving: boolean
 }) {
   let text = 'Next'
   switch (nextInvoiceState) {
@@ -1483,13 +1573,13 @@ function SaveInvoiceButton({
     !approverSlots.every((e) => e.assignedUserId)
   ) {
     return (
-      <MercoaButton type="submit" isEmphasized onClick={() => setValue('saveAsDraft', false)} disabled>
+      <MercoaButton type="submit" isEmphasized disabled>
         Please assign all approvers
       </MercoaButton>
     )
   }
   return (
-    <MercoaButton type="submit" isEmphasized onClick={() => setValue('saveAsDraft', false)} disabled={isSaving}>
+    <MercoaButton type="submit" isEmphasized onClick={() => setValue('saveAsDraft', false)}>
       {text}
     </MercoaButton>
   )
@@ -1640,33 +1730,23 @@ function CancelPayment({
 function SelectPaymentSource({
   paymentMethods,
   paymentMethodSchemas,
-  register,
-  errors,
   watch,
-  control,
   setValue,
-  setError,
-  clearErrors,
   isSource,
   isDestination,
-  vendorName,
   vendorId,
   currentPaymentMethodId,
+  refreshVendorPaymentMethods,
 }: {
   paymentMethods: Array<Mercoa.PaymentMethodResponse>
   paymentMethodSchemas: Array<Mercoa.CustomPaymentMethodSchemaResponse>
-  register: Function
-  errors: any
   watch: Function
-  control: any
   setValue: Function
-  setError: Function
-  clearErrors: Function
   isSource?: boolean
   isDestination?: boolean
-  vendorName?: string
   vendorId?: string
   currentPaymentMethodId?: string
+  refreshVendorPaymentMethods?: Function
 }) {
   let paymentMethodTypeKey = 'paymentMethodSourceType'
   let sourceOrDestination = 'paymentSourceId'
@@ -1772,6 +1852,14 @@ function SelectPaymentSource({
 
   // set a default payment method
   useEffect(() => {
+    if (currentPaymentMethodId) {
+      const paymentMethod = paymentMethods.find((paymentMethod) => paymentMethod.id === currentPaymentMethodId)
+      if (paymentMethod) {
+        setValue(sourceOrDestination, paymentMethod.id)
+        return
+      }
+    }
+
     // Check for default payment method
     if (isSource) {
       const defaultPm = paymentMethods.find((e) => e.isDefaultSource)
@@ -1788,30 +1876,35 @@ function SelectPaymentSource({
         return
       }
     }
+  }, [paymentMethods])
 
-    if (currentPaymentMethodId) {
-      const paymentMethod = paymentMethods.find((paymentMethod) => paymentMethod.id === currentPaymentMethodId)
-      if (paymentMethod) {
-        setValue(sourceOrDestination, paymentMethod.id)
-        return
-      }
-    }
-
-    if (selectedType === 'bankAccount') {
-      setValue(sourceOrDestination, paymentMethods.find((paymentMethod) => paymentMethod.type === 'bankAccount')?.id)
-    } else if (selectedType === 'card') {
-      setValue(sourceOrDestination, paymentMethods.find((paymentMethod) => paymentMethod.type === 'card')?.id)
-    } else if (selectedType === 'check') {
-      setValue(sourceOrDestination, paymentMethods.find((paymentMethod) => paymentMethod.type === 'check')?.id)
+  // if selectedType changes, set the payment method id to the first payment method of that type
+  function setMethodOnTypeChange(selectedType: Mercoa.PaymentMethodType) {
+    if (selectedType === Mercoa.PaymentMethodType.BankAccount) {
+      setValue(
+        sourceOrDestination,
+        paymentMethods.find((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)?.id,
+      )
+    } else if (selectedType === Mercoa.PaymentMethodType.Card) {
+      setValue(
+        sourceOrDestination,
+        paymentMethods.find((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)?.id,
+      )
+    } else if (selectedType === Mercoa.PaymentMethodType.Check) {
+      setValue(
+        sourceOrDestination,
+        paymentMethods.find((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)?.id,
+      )
     } else {
       setValue(
         sourceOrDestination,
         paymentMethods.find(
-          (paymentMethod) => paymentMethod.type === 'custom' && paymentMethod.schemaId === selectedType,
+          (paymentMethod) =>
+            paymentMethod.type === Mercoa.PaymentMethodType.Custom && paymentMethod.schemaId === selectedType,
         )?.id,
       )
     }
-  }, [selectedType, paymentMethods])
+  }
 
   // For offline payments, we need to set the correct payment method id automatically
   useEffect(() => {
@@ -1844,91 +1937,133 @@ function SelectPaymentSource({
         options={availableTypes.map((type) => ({ value: type, disabled: false }))}
         onChange={(selected) => {
           setValue(paymentMethodTypeKey, selected.key)
+          setMethodOnTypeChange(selected.key)
         }}
         value={availableTypes.find((type) => type.key === selectedType)}
         displayIndex="value"
       />
-      {selectedType && selectedType != Mercoa.PaymentMethodType.OffPlatform && (
-        <select
-          {...register(sourceOrDestination)}
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm mercoa-mt-4"
-        >
+      {selectedType === Mercoa.PaymentMethodType.BankAccount && (
+        <>
           {paymentMethods
-            ?.filter((paymentMethod) => {
-              if (selectedType === Mercoa.PaymentMethodType.BankAccount)
-                return paymentMethod.type === Mercoa.PaymentMethodType.BankAccount
-              if (selectedType === Mercoa.PaymentMethodType.Card)
-                return paymentMethod.type === Mercoa.PaymentMethodType.Card
-              if (selectedType === Mercoa.PaymentMethodType.Check)
-                return paymentMethod.type === Mercoa.PaymentMethodType.Check
-              if (paymentMethod.type === Mercoa.PaymentMethodType.Custom) return paymentMethod.schemaId === selectedType
-            })
+            ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)
             .map((paymentMethod) => (
-              <option key={paymentMethod.id} value={paymentMethod.id}>
-                {paymentMethod.type === Mercoa.PaymentMethodType.BankAccount && (
-                  <>
-                    <BuildingLibraryIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
-                    {paymentMethod.accountName ? `${paymentMethod.accountName} - ` : ''}
-                    {paymentMethod.bankName} ••••
-                    {String(paymentMethod.accountNumber).slice(-4)}
-                  </>
-                )}
-                {paymentMethod.type === Mercoa.PaymentMethodType.Card && (
-                  <>
-                    <CreditCardIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
-                    {paymentMethod.cardBrand} ••••{paymentMethod.lastFour}
-                  </>
-                )}
-                {paymentMethod.type === Mercoa.PaymentMethodType.Check && (
-                  <>
-                    <EnvelopeIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
-                    {paymentMethod.payToTheOrderOf}: {paymentMethod.addressLine1}
-                  </>
-                )}
-                {paymentMethod.type === Mercoa.PaymentMethodType.Custom && (
-                  <>
-                    <BuildingLibraryIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
-                    {findCustomPaymentMethodAccountNameAndNumber(paymentMethod).accountName}{' '}
-                    {findCustomPaymentMethodAccountNameAndNumber(paymentMethod).accountNumber
-                      ? `••••${String(findCustomPaymentMethodAccountNameAndNumber(paymentMethod).accountNumber).slice(
-                          -4,
-                        )}`
-                      : ''}
-                  </>
-                )}
-              </option>
+              <div key={paymentMethod.id} className="mercoa-mt-1">
+                <BankAccountComponent
+                  account={paymentMethod as Mercoa.PaymentMethodResponse.BankAccount}
+                  selected={paymentId === paymentMethod.id}
+                  onSelect={() => setValue(sourceOrDestination, paymentMethod.id)}
+                />
+              </div>
             ))}
-          {isDestination &&
-            mercoaSession.organization?.paymentMethods?.backupDisbursements.some((e) => {
-              if (!e.active) return false
-              if (e.type === 'custom') return e.name === selectedType
-              return e.type === selectedType
-            }) && <option value={'new'}>Add New</option>}
-        </select>
+          {isDestination && (
+            <AddBankAccountDialog
+              entityId={vendorId}
+              onSelect={async (paymentMethod: Mercoa.PaymentMethodResponse.BankAccount) => {
+                if (refreshVendorPaymentMethods) await refreshVendorPaymentMethods()
+                setTimeout(() => {
+                  setValue(paymentMethodTypeKey, Mercoa.PaymentMethodType.BankAccount, { shouldDirty: true })
+                  setValue(sourceOrDestination, paymentMethod.id)
+                }, 100)
+              }}
+            />
+          )}
+        </>
       )}
-      {paymentId === 'new' && (
-        <div className="mercoa-mt-2">
-          {selectedType === 'bankAccount' && (
-            <AddBankAccountForm
-              register={register}
-              errors={errors}
-              watch={watch}
-              setValue={setValue}
-              setError={setError}
-              clearErrors={clearErrors}
-            />
+      {selectedType === Mercoa.PaymentMethodType.Check && (
+        <>
+          {paymentMethods
+            ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)
+            .map((paymentMethod) => (
+              <div key={paymentMethod.id} className="mercoa-mt-1">
+                <CheckComponent
+                  account={paymentMethod as Mercoa.PaymentMethodResponse.Check}
+                  selected={paymentId === paymentMethod.id}
+                  onSelect={() => setValue(sourceOrDestination, paymentMethod.id)}
+                />
+              </div>
+            ))}
+          {isDestination && (
+            <>
+              <AddCheckDialog
+                entityId={vendorId}
+                onSelect={async (paymentMethod: Mercoa.PaymentMethodResponse.Check) => {
+                  if (refreshVendorPaymentMethods) await refreshVendorPaymentMethods()
+                  setTimeout(() => {
+                    setValue(paymentMethodTypeKey, Mercoa.PaymentMethodType.Check, { shouldDirty: true })
+                    setValue(sourceOrDestination, paymentMethod.id)
+                  }, 100)
+                }}
+              />
+              <div className="mercoa-mt-2" />
+              <MercoaCombobox
+                label="Check Delivery Method"
+                options={[
+                  {
+                    value: {
+                      key: 'MAIL',
+                      value: 'Mail it for me',
+                    },
+                    disabled: false,
+                  },
+                  {
+                    value: {
+                      key: 'PRINT',
+                      value: 'Print it myself',
+                    },
+                    disabled: false,
+                  },
+                ]}
+                onChange={(selected) => {
+                  setValue('paymentDestinationOptions', {
+                    type: 'check',
+                    delivery: selected.key,
+                  })
+                }}
+                displayIndex="value"
+                value={() => {
+                  const destOption = watch('paymentDestinationOptions')
+                  if (destOption?.type === 'check') {
+                    return destOption.delivery === 'MAIL'
+                      ? { key: 'MAIL', value: 'Mail it for me' }
+                      : { key: 'PRINT', value: 'Print it myself' }
+                  }
+                }}
+              />
+            </>
           )}
-          {selectedType === 'check' && <AddCheckForm register={register} />}
-          {selectedType.startsWith('cpms_') && (
-            <AddCustomPaymentMethodForm
-              register={register}
-              control={control}
-              schema={
-                paymentMethodSchemas?.find((e) => e.id === selectedType) as Mercoa.CustomPaymentMethodSchemaResponse
-              }
-            />
-          )}
-        </div>
+        </>
+      )}
+      {selectedType === Mercoa.PaymentMethodType.Card && (
+        <>
+          {paymentMethods
+            ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
+            .map((paymentMethod) => (
+              <div key={paymentMethod.id} className="mercoa-mt-1">
+                <CreditCardComponent
+                  account={paymentMethod as Mercoa.PaymentMethodResponse.Card}
+                  selected={paymentId === paymentMethod.id}
+                  onSelect={() => setValue(sourceOrDestination, paymentMethod.id)}
+                />
+              </div>
+            ))}
+        </>
+      )}
+      {selectedType.startsWith('cpms_') && (
+        <>
+          {paymentMethods
+            ?.filter(
+              (paymentMethod) => (paymentMethod as Mercoa.PaymentMethodResponse.Custom).schemaId === selectedType,
+            )
+            .map((paymentMethod) => (
+              <div key={paymentMethod.id} className="mercoa-mt-1">
+                <CustomPaymentMethodComponent
+                  account={paymentMethod as Mercoa.PaymentMethodResponse.Custom}
+                  selected={paymentId === paymentMethod.id}
+                  onSelect={() => setValue(sourceOrDestination, paymentMethod.id)}
+                />
+              </div>
+            ))}
+        </>
       )}
     </div>
   )
@@ -2080,9 +2215,11 @@ function ApproverWell({
 function ApproverActionButton({
   invoice,
   refreshInvoice,
+  setIsSaving,
 }: {
   invoice?: Mercoa.InvoiceResponse
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
+  setIsSaving: (isSaving: boolean) => void
 }) {
   const mercoaSession = useMercoaSession()
   if (invoice?.status != Mercoa.InvoiceStatus.New) return <></>
@@ -2098,13 +2235,16 @@ function ApproverActionButton({
       userId: approverSlot.assignedUserId ?? '',
     }
     if (approvalData.userId) {
+      setIsSaving(true)
       mercoaSession.client?.invoice.approval
         .approve(invoice.id, approvalData)
         .then(() => {
+          setIsSaving(false)
           toast.success('Invoice approved')
           refreshInvoice(invoice.id)
         })
         .catch((e) => {
+          setIsSaving(false)
           console.log(e)
           toast.error('There was an error approving this invoice. Please try again.')
         })
@@ -2115,13 +2255,16 @@ function ApproverActionButton({
       userId: approverSlot.assignedUserId ?? '',
     }
     if (approvalData.userId) {
+      setIsSaving(true)
       mercoaSession.client?.invoice.approval
         .reject(invoice.id, approvalData)
         .then(() => {
+          setIsSaving(false)
           toast.success('Invoice rejected')
           refreshInvoice(invoice.id)
         })
         .catch((e) => {
+          setIsSaving(false)
           console.log(e)
           toast.error('There was an error rejecting this invoice. Please try again.')
         })
@@ -2162,6 +2305,7 @@ export function MetadataSelection({
   entityMetadata,
   setValue,
   hasDocument,
+  hasNoLineItems,
   paymentDestination,
   paymentSource,
   lineItem,
@@ -2172,6 +2316,7 @@ export function MetadataSelection({
   entityMetadata?: Mercoa.EntityMetadataResponse
   setValue: (e: string) => void
   hasDocument: boolean
+  hasNoLineItems: boolean
   paymentDestination?: Mercoa.PaymentMethodResponse
   paymentSource?: Mercoa.PaymentMethodResponse
   lineItem?: boolean
@@ -2199,41 +2344,19 @@ export function MetadataSelection({
     }
   }
 
-  if (!skipValidation) {
-    if (schema.showConditions?.hasDocument && !hasDocument) {
-      return <></>
-    }
-
-    if (schema.type === Mercoa.MetadataType.KeyValue && !entityMetadata) {
-      return <></>
-    }
-
-    if (schema.showConditions?.hasOptions && !entityMetadata) {
-      return <></>
-    }
-
-    if (schema.lineItem && !lineItem) {
-      return <></>
-    }
-
-    if (schema.showConditions?.paymentDestinationTypes && schema.showConditions.paymentDestinationTypes.length > 0) {
-      if (!paymentDestination) return <></>
-      if (!schema.showConditions.paymentDestinationTypes.includes(paymentDestination.type)) return <></>
-      if (schema.showConditions.paymentDestinationTypes.includes('custom')) {
-        if (paymentDestination.type != Mercoa.PaymentMethodType.Custom) return <></>
-        if (!schema.showConditions?.paymentDestinationCustomSchemaIds?.includes(paymentDestination.schemaId))
-          return <></>
-      }
-    }
-
-    if (schema.showConditions?.paymentSourceTypes && schema.showConditions.paymentSourceTypes.length > 0) {
-      if (!paymentSource) return <></>
-      if (!schema.showConditions.paymentSourceTypes.includes(paymentSource.type)) return <></>
-      if (schema.showConditions.paymentSourceTypes.includes('custom')) {
-        if (paymentSource.type != Mercoa.PaymentMethodType.Custom) return <></>
-        if (!schema.showConditions?.paymentSourceCustomSchemaIds?.includes(paymentSource.schemaId)) return <></>
-      }
-    }
+  if (
+    !skipValidation &&
+    !showMetadata({
+      schema,
+      entityMetadata,
+      hasDocument,
+      hasNoLineItems,
+      paymentDestination,
+      paymentSource,
+      lineItem,
+    })
+  ) {
+    return <></>
   }
 
   const metadataSelection = (
@@ -2263,7 +2386,7 @@ export function MetadataSelection({
   // }
 
   return (
-    <div>
+    <div className="mercoa-col-span-full">
       <h3 className="mercoa-mt-3 mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
         {schema.displayName}
       </h3>
@@ -2496,6 +2619,7 @@ function LineItems({
   paymentSource,
   hasDocument,
   width,
+  calculateTotalAmountFromLineItems,
 }: {
   lineItems?: FieldArrayWithId[]
   append: Function
@@ -2509,6 +2633,7 @@ function LineItems({
   paymentSource?: Mercoa.PaymentMethodResponse
   hasDocument: boolean
   width: number
+  calculateTotalAmountFromLineItems: () => void
 }) {
   const mercoaSession = useMercoaSession()
   return (
@@ -2550,6 +2675,12 @@ function LineItems({
             <tr className="mercoa-divide-x mercoa-divide-gray-200">
               <th
                 scope="col"
+                className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+              >
+                Amount
+              </th>
+              <th
+                scope="col"
                 className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-min-w-[300px]"
               >
                 Description
@@ -2567,7 +2698,7 @@ function LineItems({
                     </th>
                   )
                 })}
-              <th
+              {/* <th
                 scope="col"
                 className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
               >
@@ -2578,13 +2709,7 @@ function LineItems({
                 className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
               >
                 Price
-              </th>
-              <th
-                scope="col"
-                className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
-              >
-                Amount
-              </th>
+              </th> */}
               <th>
                 <span className="mercoa-sr-only">Remove</span>
               </th>
@@ -2606,7 +2731,28 @@ function LineItems({
                 hasDocument={hasDocument}
               />
             ))}
-            {(lineItems?.length ?? 0) > 0 && <tr /> /* Add a row for the bottom border */}
+            {(lineItems?.length ?? 0) > 0 && (
+              <>
+                <tr>
+                  <td colSpan={3} className="mercoa-py-1">
+                    <MercoaButton
+                      size="sm"
+                      isEmphasized={false}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        e.preventDefault()
+                        calculateTotalAmountFromLineItems()
+                      }}
+                      type="button"
+                    >
+                      Calculate total invoice amount
+                    </MercoaButton>
+                  </td>
+                </tr>
+                <tr />
+                {/* Add a row for the bottom border */}
+              </>
+            )}
           </tbody>
         </table>
         <LineItemScrollBar width={width} />
@@ -2672,6 +2818,22 @@ function LineItemRow({
   const mercoaSession = useMercoaSession()
   return (
     <tr className="mercoa-divide-x mercoa-divide-gray-200">
+      <td className="mercoa-whitespace-nowrap mercoa-py-1 mercoa-pl-1 mercoa-pr-1 mercoa-text-sm mercoa-text-gray-500 sm:pr-0">
+        <div className="mercoa-relative">
+          <div className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-flex mercoa-items-center mercoa-pl-3">
+            <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
+          </div>
+          <input
+            type="text"
+            className={`mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 
+            mercoa-text-gray-900 
+            placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 mercoa-pl-6
+            ${currencyCodeToSymbol(currency).length > 1 ? 'mercoa-pl-12' : 'mercoa-pl-6'}`}
+            placeholder="0.00"
+            {...register(`lineItems.${index}.amount`)}
+          />
+        </div>
+      </td>
       <td className="mercoa-whitespace-nowrap mercoa-p-1 mercoa-text-sm mercoa-text-gray-500">
         {' '}
         <input
@@ -2695,6 +2857,7 @@ function LineItemRow({
                 entityMetadata={entityMetadata.find((m) => m.key === schema.key)}
                 schema={schema}
                 value={value}
+                hasNoLineItems={false}
                 hasDocument={hasDocument}
                 paymentDestination={paymentDestination}
                 paymentSource={paymentSource}
@@ -2729,7 +2892,7 @@ function LineItemRow({
             </td>
           )
         })}
-      <td className="mercoa-whitespace-nowrap mercoa-p-1 mercoa-text-sm mercoa-text-gray-500">
+      {/* <td className="mercoa-whitespace-nowrap mercoa-p-1 mercoa-text-sm mercoa-text-gray-500">
         <input
           type="text"
           className={`mercoa-block mercoa-w-full mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 
@@ -2753,25 +2916,7 @@ function LineItemRow({
             {...register(`lineItems.${index}.unitPrice`)}
           />
         </div>
-      </td>
-      <td className="mercoa-whitespace-nowrap mercoa-py-1 mercoa-pl-1 mercoa-pr-1 mercoa-text-sm mercoa-text-gray-500 sm:pr-0">
-        <div className="mercoa-relative">
-          <div className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-flex mercoa-items-center mercoa-pl-3">
-            <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
-          </div>
-          <input
-            type="text"
-            className={`mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 
-            mercoa-text-gray-900 
-            placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 mercoa-pl-6
-            ${currencyCodeToSymbol(currency).length > 1 ? 'mercoa-pl-12' : 'mercoa-pl-6'}`}
-            placeholder="0.00"
-            readOnly
-            disabled
-            {...register(`lineItems.${index}.amount`)}
-          />
-        </div>
-      </td>
+      </td> */}
       <td className="mercoa-whitespace-nowrap mercoa-py-1 mercoa-pl-1 mercoa-pr-1 mercoa-text-sm mercoa-text-gray-500 sm:pr-0">
         <button type="button" onClick={() => remove(index)}>
           <XMarkIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
@@ -2806,4 +2951,62 @@ const ProgressBar = () => {
       ></div>
     </div>
   )
+}
+
+function showMetadata({
+  schema,
+  hasDocument,
+  hasNoLineItems,
+  entityMetadata,
+  lineItem,
+  paymentDestination,
+  paymentSource,
+}: {
+  schema: Mercoa.MetadataSchema
+  hasDocument: boolean
+  hasNoLineItems: boolean
+  entityMetadata?: Mercoa.EntityMetadataResponse
+  lineItem?: boolean
+  paymentDestination?: Mercoa.PaymentMethodResponse
+  paymentSource?: Mercoa.PaymentMethodResponse
+}) {
+  if (schema.showConditions?.hasDocument && !hasDocument) {
+    return false
+  }
+
+  if (schema.showConditions?.hasNoLineItems && !hasNoLineItems) {
+    return false
+  }
+
+  if (schema.type === Mercoa.MetadataType.KeyValue && !entityMetadata) {
+    return false
+  }
+
+  if (schema.showConditions?.hasOptions && !entityMetadata) {
+    return false
+  }
+
+  if (schema.lineItem && !lineItem) {
+    return false
+  }
+
+  if (schema.showConditions?.paymentDestinationTypes && schema.showConditions.paymentDestinationTypes.length > 0) {
+    if (!paymentDestination) return false
+    if (!schema.showConditions.paymentDestinationTypes.includes(paymentDestination.type)) return false
+    if (schema.showConditions.paymentDestinationTypes.includes('custom')) {
+      if (paymentDestination.type != Mercoa.PaymentMethodType.Custom) return false
+      if (!schema.showConditions?.paymentDestinationCustomSchemaIds?.includes(paymentDestination.schemaId)) return false
+    }
+  }
+
+  if (schema.showConditions?.paymentSourceTypes && schema.showConditions.paymentSourceTypes.length > 0) {
+    if (!paymentSource) return false
+    if (!schema.showConditions.paymentSourceTypes.includes(paymentSource.type)) return false
+    if (schema.showConditions.paymentSourceTypes.includes('custom')) {
+      if (paymentSource.type != Mercoa.PaymentMethodType.Custom) return false
+      if (!schema.showConditions?.paymentSourceCustomSchemaIds?.includes(paymentSource.schemaId)) return false
+    }
+  }
+
+  return true
 }

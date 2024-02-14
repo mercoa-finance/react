@@ -15,7 +15,13 @@ The Mercoa React component library uses a [React Context](https://legacy.reactjs
 ### Basic Usage
 
 ```javascript
+// First import the base tailwind.css file
+// If you are already using tailwind in your project, you can skip this step
+import '@mercoa/react/dist/tailwind.base.css'
+
+// Import the Mercoa styles after the base tailwind.css file or your own tailwind CSS
 import '@mercoa/react/dist/style.css'
+
 import { MercoaSession } from '@mercoa/react'
 
 export default function Index() {
@@ -75,10 +81,11 @@ function Example() {
 
 #### Props
 
-| prop      | description                                                                   | required |
-| --------- | ----------------------------------------------------------------------------- | -------- |
-| invoice   | A `Mercoa.InvoiceResponse` object to view/edit.                               | No       |
-| invoiceId | ID of the invoice to view/edit. If `invoice` is passed, this will be ignored. | No       |
+| prop         | description                                                                                                                                                                                                                                                                                                                   | required           |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| invoice      | A `Mercoa.InvoiceResponse` object to view/edit.                                                                                                                                                                                                                                                                               | No                 |
+| invoiceId    | ID of the invoice to view/edit. If `invoice` is passed, this will be ignored.                                                                                                                                                                                                                                                 | No                 |
+| heightOffset | Height offset in pixels. By default, the invoice details component will expand to the full window height. Pass in a hightOffset to shrink the max height of the component. For example, if you have a header that that takes up 150px, you can set a height offset of 200px to give the component enough room to fully render | No (default is 70) |
 
 #### Example
 
@@ -89,24 +96,6 @@ function Example() {
   return (
     <MercoaSession token={'xxx'}>
       <InvoiceDetails invoiceId={'xxx'} />
-    </MercoaSession>
-  )
-}
-```
-
-### ApprovalPolicies
-
-`ApprovalPolicies` renders the current approval rules and policies for the entity, and lets them create/update/delete policies.
-
-#### Example
-
-```javascript
-import { MercoaSession, ApprovalPolicies } from '@mercoa/react'
-
-function Example() {
-  return (
-    <MercoaSession token={'xxx'}>
-      <ApprovalPolicies />
     </MercoaSession>
   )
 }

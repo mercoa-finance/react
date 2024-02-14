@@ -1,5 +1,5 @@
 import { Dialog, Transition } from '@headlessui/react'
-import { BuildingLibraryIcon, PencilIcon, PlusIcon } from '@heroicons/react/24/outline'
+import { BuildingLibraryIcon, InformationCircleIcon, PencilIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
 import { Fragment, ReactNode, useEffect, useState } from 'react'
@@ -8,10 +8,12 @@ import { usePlaidLink } from 'react-plaid-link'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import {
+  AddDialog,
   DefaultPaymentMethodIndicator,
   LoadingSpinnerIcon,
   MercoaButton,
   Tooltip,
+  stopPropagate,
   useMercoaSession,
 } from '../components/index'
 import { capitalize } from '../lib/lib'
@@ -31,8 +33,7 @@ export function BankAccounts({
   showEdit?: boolean
   verifiedOnly?: boolean
 }) {
-  const [bankAccounts, setBankAccounts] = useState<Array<Mercoa.BankAccountResponse>>()
-  const [showDialog, setShowDialog] = useState(false)
+  const [bankAccounts, setBankAccounts] = useState<Array<Mercoa.PaymentMethodResponse.BankAccount>>()
 
   const mercoaSession = useMercoaSession()
   useEffect(() => {
@@ -42,7 +43,7 @@ export function BankAccounts({
         .then((resp) => {
           setBankAccounts(
             resp
-              .map((e) => e as Mercoa.BankAccountResponse)
+              .map((e) => e as Mercoa.PaymentMethodResponse.BankAccount)
               .filter((e) => {
                 if (verifiedOnly && e.status != 'VERIFIED') return null
                 return e
@@ -50,12 +51,7 @@ export function BankAccounts({
           )
         })
     }
-  }, [mercoaSession.entity?.id, mercoaSession.token, showDialog, mercoaSession.refreshId])
-
-  const onClose = (account?: Mercoa.PaymentMethodResponse) => {
-    setShowDialog(false)
-    if (onSelect && account) onSelect(account)
-  }
+  }, [mercoaSession.entity?.id, mercoaSession.token, mercoaSession.refreshId])
 
   if (children) return children({ bankAccounts })
   else {
@@ -72,22 +68,7 @@ export function BankAccounts({
               <BankAccountComponent account={account} onSelect={onSelect} showEdit={showEdit} />
             </div>
           ))}
-        {bankAccounts && showAdd && (
-          <div className="mercoa-mt-2">
-            <AddDialog
-              show={showDialog}
-              onClose={onClose}
-              component={
-                <AddBankViaPlaidOrManual
-                  onSubmit={(data) => {
-                    onClose(data)
-                  }}
-                />
-              }
-            />
-            <BankAccountComponent onSelect={() => setShowDialog(true)} />
-          </div>
-        )}
+        {bankAccounts && showAdd && <AddBankAccountDialog onSelect={onSelect} />}
         {bankAccounts && bankAccounts.length == 0 && verifiedOnly && (
           <div className="mercoa-mt-2 mercoa-text-left mercoa-text-gray-700">
             No verified bank accounts found. Please add and verify at least one bank account.
@@ -98,390 +79,6 @@ export function BankAccounts({
   }
 }
 
-export function AddBankViaPlaidOrManual({
-  title,
-  actions,
-  onSubmit,
-}: {
-  title?: ReactNode
-  actions?: ReactNode
-  onSubmit: (data: Mercoa.PaymentMethodResponse) => void
-}) {
-  const mercoaSession = useMercoaSession()
-  const [showManual, setShowManual] = useState(false)
-
-  const [linkToken, setLinkToken] = useState<string | null>(null)
-
-  const generateToken = async () => {
-    if (!mercoaSession.entityId) return
-    const token = await mercoaSession.client?.entity.plaidLinkToken(mercoaSession.entityId)
-    if (!token) setShowManual(true)
-    else setLinkToken(token)
-  }
-
-  const { open, ready } = usePlaidLink({
-    token: linkToken,
-    onSuccess: async (public_token, metadata) => {
-      let resp: Mercoa.PaymentMethodResponse | undefined
-      await Promise.all(
-        metadata.accounts.map(async (account) => {
-          let accountType: Mercoa.BankType = Mercoa.BankType.Checking
-          if (account.subtype == 'savings') accountType = Mercoa.BankType.Savings
-
-          if (!mercoaSession.entityId) return
-          resp = await mercoaSession.client?.entity.paymentMethod.create(mercoaSession.entityId, {
-            type: 'bankAccount',
-            plaid: {
-              publicToken: public_token,
-              accountId: account.id,
-            },
-            accountNumber: account.mask,
-            routingNumber: '',
-            accountType,
-            bankName: metadata?.institution?.name ?? '',
-          })
-        }),
-      )
-
-      if (resp) onSubmit(resp)
-    },
-    onExit: (err, metadata) => {
-      console.log('onPlaidExit', { err, metadata })
-      if (err) {
-        toast.error('There was an error adding your bank account automatically. Please try again or add manually.')
-      }
-      setShowManual(true)
-    },
-  })
-
-  useEffect(() => {
-    generateToken()
-  }, [mercoaSession.entityId])
-
-  useEffect(() => {
-    if (linkToken && ready) {
-      open()
-    }
-  }, [linkToken, ready, open])
-
-  if (showManual) {
-    return <AddBankAccount title={title} actions={actions} onSubmit={onSubmit} />
-  } else if (!linkToken || !ready) {
-    return (
-      <div className="mercoa-p-9 mercoa-text-center">
-        <LoadingSpinnerIcon />
-      </div>
-    )
-  } else {
-    return <div className="mercoa-p-10 mercoa-text-center"></div>
-  }
-}
-
-export function AddBankAccount({
-  onSubmit,
-  title,
-  actions,
-  formOnlySubmit,
-  bankAccount,
-}: {
-  onSubmit?: Function
-  title?: ReactNode
-  actions?: ReactNode
-  formOnlySubmit?: Function
-  bankAccount?: Mercoa.BankAccountRequest
-}) {
-  const mercoaSession = useMercoaSession()
-
-  yup.addMethod(yup.string, 'accountNumber', function (message) {
-    return this.test({
-      name: 'accountNumber',
-      exclusive: true,
-      message: message || 'Invalid Account Number', // expect an i18n message to be passed in,
-      test: (value) => value && validBankAccount.accountNumber(value).isPotentiallyValid,
-    })
-  })
-
-  yup.addMethod(yup.string, 'routingNumber', function (message) {
-    return this.test({
-      name: 'routingNumber',
-      exclusive: true,
-      message: message || 'Invalid Routing Number', // expect an i18n message to be passed in,
-      test: (value) => value && validBankAccount.routingNumber(value).isPotentiallyValid,
-    })
-  })
-
-  const schema = yup
-    .object({
-      bankName: yup.string().required(),
-      //@ts-ignore
-      routingNumber: yup.string().required(),
-      //@ts-ignore
-      accountNumber: yup.string().accountNumber().required(),
-    })
-    .required()
-
-  const {
-    register,
-    setValue,
-    setError,
-    clearErrors,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm({
-    defaultValues: bankAccount,
-    resolver: yupResolver(schema),
-  })
-
-  async function submitBankAccount(bankAccount: Mercoa.BankAccountRequest) {
-    if (mercoaSession.entity?.id) {
-      const resp = await mercoaSession.client?.entity.paymentMethod.create(mercoaSession.entity?.id, {
-        ...bankAccount,
-        type: 'bankAccount',
-      })
-      if (!onSubmit) return
-      if (resp) onSubmit(resp)
-      else onSubmit()
-    }
-  }
-
-  return (
-    <form
-      className="mercoa-space-y-3 mercoa-text-left"
-      onSubmit={handleSubmit((formOnlySubmit as any) || submitBankAccount)}
-    >
-      {title || (
-        <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
-          Manually Add Bank Account
-        </h3>
-      )}
-
-      <AddBankAccountForm
-        register={register}
-        errors={errors}
-        watch={watch}
-        setValue={setValue}
-        setError={setError}
-        clearErrors={clearErrors}
-      />
-
-      {actions || (
-        <div className="mercoa-flex mercoa-justify-between">
-          <MercoaButton
-            isEmphasized={false}
-            onClick={() => {
-              if (onSubmit) onSubmit()
-            }}
-            type="button"
-          >
-            Back
-          </MercoaButton>
-          <MercoaButton isEmphasized>Add Bank Account</MercoaButton>
-        </div>
-      )}
-    </form>
-  )
-}
-
-export function AddBankAccountForm({
-  register,
-  errors,
-  watch,
-  setValue,
-  setError,
-  clearErrors,
-}: {
-  register: Function
-  errors: any
-  watch: Function
-  setValue: Function
-  setError: Function
-  clearErrors: Function
-}) {
-  const mercoaSession = useMercoaSession()
-  const routingNumber = watch('routingNumber')
-  const bankName = watch('bankName')
-
-  useEffect(() => {
-    setValue('bankName', '', { shouldDirty: true, shouldTouch: true })
-    if (!routingNumber) return
-    //if (validBankAccount.routingNumber(routingNumber).isPotentiallyValid) {
-    if (routingNumber.length === 9) {
-      mercoaSession.client?.bankLookup.find({ routingNumber }).then((bankNameResp) => {
-        if (bankNameResp.bankName) {
-          setValue('bankName', bankNameResp.bankName)
-          clearErrors('routingNumber')
-        } else {
-          setError('routingNumber', { message: 'invalid' })
-        }
-      })
-    } else if (routingNumber) {
-      setError('routingNumber', { message: 'invalid' })
-    }
-  }, [routingNumber])
-  return (
-    <>
-      <div>
-        <label htmlFor="routingNumber" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
-          Routing Number
-        </label>
-        <div className="mercoa-mt-1">
-          <input
-            {...register('routingNumber')}
-            className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-          />
-          {errors?.routingNumber?.message && (
-            <p className="mercoa-text-sm mercoa-text-red-500">Please enter a valid routing number</p>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <label htmlFor="accountNumber" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
-          Account Number
-        </label>
-        <div className="mercoa-mt-1">
-          <input
-            {...register('accountNumber')}
-            className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-          />
-          {errors?.accountNumber?.message && (
-            <p className="mercoa-text-sm mercoa-text-red-500">Please enter a valid account number</p>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <label htmlFor="accountType" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
-          Account Type
-        </label>
-        <div className="mercoa-mt-1">
-          <select
-            {...register('accountType')}
-            className="mercoa-mt-1 mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-py-2 mercoa-px-3 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-          >
-            <option value="CHECKING">Checking</option>
-            <option value="SAVINGS">Savings</option>
-            <option value="UNKNOWN">Other</option>
-          </select>
-        </div>
-      </div>
-
-      {bankName && (
-        <div>
-          <label htmlFor="bankName" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
-            Bank Name
-          </label>
-          <div className="mercoa-mt-1">
-            <input
-              readOnly
-              disabled
-              {...register('bankName')}
-              className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-            />
-            {errors?.bankName?.message && (
-              <p className="mercoa-text-sm mercoa-text-red-500">Please enter the bank name</p>
-            )}
-          </div>
-        </div>
-      )}
-    </>
-  )
-}
-
-export function EditBankAccount({
-  paymentMethodId,
-  onSubmit,
-}: {
-  paymentMethodId: Mercoa.PaymentMethodId
-  onSubmit?: Function
-}) {
-  const mercoaSession = useMercoaSession()
-
-  const { register, handleSubmit } = useForm()
-
-  function onUpdate(data: Mercoa.BankAccountUpdateRequest) {
-    if (mercoaSession.entity?.id) {
-      mercoaSession.client?.entity.paymentMethod
-        .update(mercoaSession.entity?.id, paymentMethodId, {
-          ...data,
-          type: Mercoa.PaymentMethodType.BankAccount,
-        })
-        .then(() => {
-          toast.success('Bank account updated')
-          if (onSubmit) onSubmit(data)
-          mercoaSession.refresh()
-        })
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit(onUpdate)}>
-      <div>
-        <label htmlFor="accountName" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
-          Account Name
-        </label>
-        <div className="mercoa-mt-1">
-          <input
-            {...register('accountName')}
-            className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-          />
-        </div>
-      </div>
-      <div className="mercoa-flex mercoa-justify-between mercoa-mt-2">
-        <MercoaButton
-          isEmphasized={false}
-          onClick={() => {
-            if (onSubmit) onSubmit()
-          }}
-          type="button"
-        >
-          Back
-        </MercoaButton>
-        <MercoaButton isEmphasized>Update</MercoaButton>
-      </div>
-    </form>
-  )
-}
-
-export function AddDialog({ show, onClose, component }: { show: boolean; onClose: Function; component: ReactNode }) {
-  return (
-    <Transition.Root show={show} as={Fragment}>
-      <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={() => onClose()}>
-        <Transition.Child
-          as={Fragment}
-          enter="mercoa-ease-out mercoa-duration-300"
-          enterFrom="mercoa-opacity-0"
-          enterTo="mercoa-opacity-100"
-          leave="mercoa-ease-in mercoa-duration-200"
-          leaveFrom="mercoa-opacity-100"
-          leaveTo="mercoa-opacity-0"
-        >
-          <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
-        </Transition.Child>
-
-        <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
-          <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
-            <Transition.Child
-              as={Fragment}
-              enter="mercoa-ease-out mercoa-duration-300"
-              enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
-              enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
-              leave="mercoa-ease-in mercoa-duration-200"
-              leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
-              leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
-            >
-              <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-md sm:mercoa-p-6">
-                {component}
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </div>
-      </Dialog>
-    </Transition.Root>
-  )
-}
-
 export function BankAccountComponent({
   children,
   account,
@@ -490,7 +87,7 @@ export function BankAccountComponent({
   selected,
 }: {
   children?: Function
-  account?: Mercoa.BankAccountResponse
+  account?: Mercoa.PaymentMethodResponse.BankAccount
   onSelect?: Function
   showEdit?: boolean
   selected?: boolean
@@ -531,12 +128,12 @@ export function BankAccountComponent({
         >
           <BuildingLibraryIcon className="mercoa-h-5 mercoa-w-5" />
         </div>
-        <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
-          <div className="mercoa-group mercoa-flex">
+        <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between mercoa-group">
+          <div className="mercoa-flex">
             <div>
               {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
               <AddDialog
-                component={<EditBankAccount paymentMethodId={account.id} onSubmit={() => setShowNameEdit(false)} />}
+                component={<EditBankAccount account={account} onSubmit={() => setShowNameEdit(false)} />}
                 onClose={() => setShowNameEdit(false)}
                 show={showNameEdit}
               />
@@ -830,4 +427,445 @@ export function BankAccountComponent({
       </div>
     )
   }
+}
+
+export function AddBankAccountDialog({ entityId, onSelect }: { entityId?: Mercoa.EntityId; onSelect?: Function }) {
+  const [showDialog, setShowDialog] = useState(false)
+
+  const onClose = (account?: Mercoa.PaymentMethodResponse) => {
+    setShowDialog(false)
+    if (onSelect && account) onSelect(account)
+  }
+
+  return (
+    <div className="mercoa-mt-2">
+      <AddDialog
+        show={showDialog}
+        onClose={onClose}
+        component={
+          <AddBankViaPlaidOrManual
+            onSubmit={(data) => {
+              onClose(data)
+            }}
+            entityId={entityId}
+          />
+        }
+      />
+      <BankAccountComponent onSelect={() => setShowDialog(true)} />
+    </div>
+  )
+}
+
+export function AddBankViaPlaidOrManual({
+  title,
+  actions,
+  onSubmit,
+  entityId,
+}: {
+  title?: ReactNode
+  actions?: ReactNode
+  onSubmit: (data: Mercoa.PaymentMethodResponse) => void
+  entityId?: Mercoa.EntityId
+}) {
+  const mercoaSession = useMercoaSession()
+  const [showManual, setShowManual] = useState(false)
+
+  const [linkToken, setLinkToken] = useState<string | null>(null)
+
+  const generateToken = async () => {
+    if (!mercoaSession.entityId) return
+    const token = await mercoaSession.client?.entity.plaidLinkToken(mercoaSession.entityId)
+    if (!token) setShowManual(true)
+    else setLinkToken(token)
+  }
+
+  const { open, ready } = usePlaidLink({
+    token: linkToken,
+    onSuccess: async (public_token, metadata) => {
+      let resp: Mercoa.PaymentMethodResponse | undefined
+      await Promise.all(
+        metadata.accounts.map(async (account) => {
+          let accountType: Mercoa.BankType = Mercoa.BankType.Checking
+          if (account.subtype == 'savings') accountType = Mercoa.BankType.Savings
+
+          if (!mercoaSession.entityId) return
+          resp = await mercoaSession.client?.entity.paymentMethod.create(mercoaSession.entityId, {
+            type: 'bankAccount',
+            plaid: {
+              publicToken: public_token,
+              accountId: account.id,
+            },
+            accountNumber: account.mask,
+            routingNumber: '',
+            accountType,
+            bankName: metadata?.institution?.name ?? '',
+          })
+        }),
+      )
+
+      if (resp) onSubmit(resp)
+    },
+    onExit: (err, metadata) => {
+      console.log('onPlaidExit', { err, metadata })
+      if (err) {
+        toast.error('There was an error adding your bank account automatically. Please try again or add manually.')
+      }
+      setShowManual(true)
+    },
+  })
+
+  useEffect(() => {
+    if (!mercoaSession.entityId) return
+    if (entityId && entityId != mercoaSession.entityId) {
+      setShowManual(true)
+    } else {
+      generateToken()
+    }
+  }, [mercoaSession.entityId, entityId])
+
+  useEffect(() => {
+    if (linkToken && ready) {
+      open()
+    }
+  }, [linkToken, ready, open])
+
+  if (showManual) {
+    return <AddBankAccount title={title} actions={actions} onSubmit={onSubmit} entityId={entityId} />
+  } else if (!linkToken || !ready) {
+    return (
+      <div className="mercoa-p-9 mercoa-text-center">
+        <LoadingSpinnerIcon />
+      </div>
+    )
+  } else {
+    return <div className="mercoa-p-10 mercoa-text-center"></div>
+  }
+}
+
+export function AddBankAccount({
+  onSubmit,
+  title,
+  actions,
+  formOnlySubmit,
+  bankAccount,
+  entityId,
+}: {
+  onSubmit?: Function
+  title?: ReactNode
+  actions?: ReactNode
+  formOnlySubmit?: Function
+  bankAccount?: Mercoa.BankAccountRequest
+  entityId?: Mercoa.EntityId
+}) {
+  const mercoaSession = useMercoaSession()
+
+  yup.addMethod(yup.string, 'accountNumber', function (message) {
+    return this.test({
+      name: 'accountNumber',
+      exclusive: true,
+      message: message || 'Invalid Account Number', // expect an i18n message to be passed in,
+      test: (value) => value && validBankAccount.accountNumber(value).isPotentiallyValid,
+    })
+  })
+
+  yup.addMethod(yup.string, 'routingNumber', function (message) {
+    return this.test({
+      name: 'routingNumber',
+      exclusive: true,
+      message: message || 'Invalid Routing Number', // expect an i18n message to be passed in,
+      test: (value) => value && validBankAccount.routingNumber(value).isPotentiallyValid,
+    })
+  })
+
+  const schema = yup
+    .object({
+      bankName: yup.string().required(),
+      //@ts-ignore
+      routingNumber: yup.string().required(),
+      //@ts-ignore
+      accountNumber: yup.string().accountNumber().required(),
+    })
+    .required()
+
+  const {
+    register,
+    setValue,
+    setError,
+    clearErrors,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm({
+    defaultValues: bankAccount,
+    resolver: yupResolver(schema),
+  })
+
+  async function submitBankAccount(bankAccount: Mercoa.BankAccountRequest) {
+    if (mercoaSession.entity?.id) {
+      const resp = await mercoaSession.client?.entity.paymentMethod.create(entityId ?? mercoaSession.entity?.id, {
+        ...bankAccount,
+        type: 'bankAccount',
+      })
+      if (!onSubmit) return
+      if (resp) onSubmit(resp)
+      else onSubmit()
+    }
+  }
+
+  return (
+    <form
+      className="mercoa-space-y-3 mercoa-text-left"
+      onSubmit={stopPropagate(handleSubmit((formOnlySubmit as any) || submitBankAccount))}
+    >
+      {title || (
+        <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+          Add Bank Account
+        </h3>
+      )}
+
+      <AddBankAccountForm
+        register={register}
+        errors={errors}
+        watch={watch}
+        setValue={setValue}
+        setError={setError}
+        clearErrors={clearErrors}
+      />
+
+      {actions || (
+        <div className="mercoa-flex mercoa-justify-between">
+          <MercoaButton
+            isEmphasized={false}
+            onClick={() => {
+              if (onSubmit) onSubmit()
+            }}
+            type="button"
+          >
+            Back
+          </MercoaButton>
+          <MercoaButton isEmphasized>Add Bank Account</MercoaButton>
+        </div>
+      )}
+    </form>
+  )
+}
+
+export function AddBankAccountForm({
+  register,
+  errors,
+  watch,
+  setValue,
+  setError,
+  clearErrors,
+}: {
+  register: Function
+  errors: any
+  watch: Function
+  setValue: Function
+  setError: Function
+  clearErrors: Function
+}) {
+  const mercoaSession = useMercoaSession()
+  const routingNumber = watch('routingNumber')
+  const bankName = watch('bankName')
+
+  useEffect(() => {
+    setValue('bankName', '', { shouldDirty: true, shouldTouch: true })
+    if (!routingNumber) return
+    //if (validBankAccount.routingNumber(routingNumber).isPotentiallyValid) {
+    if (routingNumber.length === 9) {
+      mercoaSession.client?.bankLookup.find({ routingNumber }).then((bankNameResp) => {
+        if (bankNameResp.bankName) {
+          setValue('bankName', bankNameResp.bankName)
+          clearErrors('routingNumber')
+        } else {
+          setError('routingNumber', { message: 'invalid' })
+        }
+      })
+    } else if (routingNumber) {
+      setError('routingNumber', { message: 'invalid' })
+    }
+  }, [routingNumber])
+  return (
+    <>
+      <div>
+        <label htmlFor="routingNumber" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
+          Routing Number
+        </label>
+        <div className="mercoa-mt-1">
+          <input
+            {...register('routingNumber')}
+            className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+          />
+          {errors?.routingNumber?.message && (
+            <p className="mercoa-text-sm mercoa-text-red-500">Please enter a valid routing number</p>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="accountNumber" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
+          Account Number
+        </label>
+        <div className="mercoa-mt-1">
+          <input
+            {...register('accountNumber')}
+            className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+          />
+          {errors?.accountNumber?.message && (
+            <p className="mercoa-text-sm mercoa-text-red-500">Please enter a valid account number</p>
+          )}
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="accountType" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
+          Account Type
+        </label>
+        <div className="mercoa-mt-1">
+          <select
+            {...register('accountType')}
+            className="mercoa-mt-1 mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-py-2 mercoa-px-3 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+          >
+            <option value="CHECKING">Checking</option>
+            <option value="SAVINGS">Savings</option>
+            <option value="UNKNOWN">Other</option>
+          </select>
+        </div>
+      </div>
+
+      {bankName && (
+        <div>
+          <label htmlFor="bankName" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
+            Bank Name
+          </label>
+          <div className="mercoa-mt-1">
+            <input
+              readOnly
+              disabled
+              {...register('bankName')}
+              className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+            />
+            {errors?.bankName?.message && (
+              <p className="mercoa-text-sm mercoa-text-red-500">Please enter the bank name</p>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+export function EditBankAccount({
+  account,
+  onSubmit,
+}: {
+  account: Mercoa.PaymentMethodResponse.BankAccount
+  onSubmit?: Function
+}) {
+  const mercoaSession = useMercoaSession()
+
+  const { register, handleSubmit, watch } = useForm({
+    defaultValues: {
+      accountName: account.accountName,
+      checkOptions: account.checkOptions,
+    },
+  })
+
+  function onUpdate(data: Mercoa.BankAccountUpdateRequest) {
+    if (mercoaSession.entity?.id) {
+      mercoaSession.client?.entity.paymentMethod
+        .update(mercoaSession.entity?.id, account.id, {
+          ...data,
+          type: Mercoa.PaymentMethodType.BankAccount,
+        })
+        .then(() => {
+          toast.success('Bank account updated')
+          if (onSubmit) onSubmit(data)
+          mercoaSession.refresh()
+        })
+    }
+  }
+
+  const checkEnabled = !!(account.accountType === 'CHECKING' && watch('checkOptions.enabled'))
+
+  return (
+    <form onSubmit={handleSubmit(onUpdate)}>
+      <div>
+        <label htmlFor="accountName" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
+          Account Name
+        </label>
+        <div className="mercoa-mt-1">
+          <input
+            {...register('accountName')}
+            className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+          />
+        </div>
+      </div>
+      {account.accountType === 'CHECKING' && (
+        <div className="mercoa-relative mercoa-mt-5 mercoa-flex mercoa-items-start mercoa-items-center">
+          <div className="mercoa-flex mercoa-h-5 mercoa-items-center">
+            <input
+              {...register('checkOptions.enabled')}
+              type="checkbox"
+              className="mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
+            />
+          </div>
+          <div className="mercoa-ml-3 mercoa-text-sm">
+            {/* @ts-ignore:next-line */}
+            <Tooltip title="If enabled, checks can be printed with the account and routing number of this account.">
+              <label htmlFor="checkOptions.enabled" className="mercoa-font-medium mercoa-text-gray-700">
+                Enable Check Payments
+                <InformationCircleIcon className="mercoa-inline mercoa-h-5 mercoa-w-5" />
+              </label>
+            </Tooltip>
+          </div>
+        </div>
+      )}
+      {checkEnabled && (
+        <>
+          <div className="mercoa-mt-2">
+            <label
+              htmlFor="checkOptions.initialCheckNumber"
+              className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+            >
+              Initial Check Number
+            </label>
+            <div className="mercoa-mt-1">
+              <input
+                {...register('checkOptions.initialCheckNumber')}
+                className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+              />
+            </div>
+          </div>
+          <div className="mercoa-mt-2">
+            <label
+              htmlFor="checkOptions.signatoryName"
+              className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
+            >
+              Signatory Name
+            </label>
+            <div className="mercoa-mt-1">
+              <input
+                {...register('checkOptions.signatoryName')}
+                className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+              />
+            </div>
+          </div>
+        </>
+      )}
+      <div className="mercoa-flex mercoa-justify-between mercoa-mt-5">
+        <MercoaButton
+          isEmphasized={false}
+          onClick={() => {
+            if (onSubmit) onSubmit()
+          }}
+          type="button"
+        >
+          Back
+        </MercoaButton>
+        <MercoaButton isEmphasized>Update</MercoaButton>
+      </div>
+    </form>
+  )
 }

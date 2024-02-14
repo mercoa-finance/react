@@ -545,6 +545,9 @@ function CounterpartyAddOrEdit({
               className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
               placeholder="https://www.example.com"
             />
+            {errors?.website?.message && (
+              <p className="mercoa-text-sm mercoa-text-red-500">{errors?.website?.message}</p>
+            )}
           </div>
           <div className="mercoa-mt-1">
             <label

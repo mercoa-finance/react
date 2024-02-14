@@ -623,6 +623,7 @@ function Trigger({
                     })
                   }}
                   hasDocument
+                  hasNoLineItems
                   skipValidation
                   value={watch(`policies.${index}.trigger.${triggerIndex}.value`)}
                   entityMetadata={metadata.find(

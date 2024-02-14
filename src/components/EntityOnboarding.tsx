@@ -1,5 +1,13 @@
 import { Dialog, Transition } from '@headlessui/react'
-import { InformationCircleIcon, PlusIcon, TrashIcon, UserIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import {
+  CheckCircleIcon,
+  InformationCircleIcon,
+  PlusIcon,
+  TrashIcon,
+  UserIcon,
+  XCircleIcon,
+  XMarkIcon,
+} from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import dayjs from 'dayjs'
@@ -227,7 +235,7 @@ export function AddressBlock({
               readOnly={readOnly}
               required={required}
               type="text"
-              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+              className="mercoa-mt-2 mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
             />
             {errors.postalCode?.message && (
               <p className="mercoa-text-sm mercoa-text-red-500">{errors.postalCode?.message}</p>
@@ -864,7 +872,7 @@ export function WebsiteBlock({
 }
 
 export const descriptionSchema = {
-  website: yup.string().required('Description is required'),
+  description: yup.string().required('Description is required'),
 }
 
 export function DescriptionBlock({
@@ -1463,6 +1471,32 @@ export function Representatives({
             <RepresentativeComponent onSelect={() => setShowDialog(true)} />
           </div>
         )}
+        <div className="mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-mt-5">
+          {reps?.some((e) => e.responsibilities.isController) ? (
+            <>
+              <CheckCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-green-400" />
+              <p className="mercoa-font-gray-700 mercoa-text-sm">At least one controller is added</p>
+            </>
+          ) : (
+            <>
+              <XCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-red-400" />
+              <p className="mercoa-font-gray-700 mercoa-text-sm">At least one controller needs to be added</p>
+            </>
+          )}
+        </div>
+        <div className="mercoa-flex mercoa-items-center mercoa-space-x-3">
+          {reps && reps?.length > 0 ? (
+            <>
+              <CheckCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-green-400" />
+              <p className="mercoa-font-gray-700 mercoa-text-sm">At least one representative is added</p>
+            </>
+          ) : (
+            <>
+              <XCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-red-400" />
+              <p className="mercoa-font-gray-700 mercoa-text-sm">At least one representative needs to be added</p>
+            </>
+          )}
+        </div>
       </>
     )
   }

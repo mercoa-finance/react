@@ -1,125 +1,10 @@
 import { EnvelopeIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
-import { ReactNode } from 'react'
+import { ReactNode, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as yup from 'yup'
-import { DefaultPaymentMethodIndicator, useMercoaSession } from './index'
-
-export function AddCheck({
-  onSubmit,
-  title,
-  actions,
-  formOnlySubmit,
-  check,
-}: {
-  onSubmit?: Function
-  title?: ReactNode
-  actions?: ReactNode
-  formOnlySubmit?: Function
-  check?: Mercoa.CheckRequest
-}) {
-  const mercoaSession = useMercoaSession()
-
-  const schema = yup
-    .object({
-      payToTheOrderOf: yup.string().required(),
-      addressLine1: yup.string().required(),
-      city: yup.string().required(),
-      stateOrProvince: yup.string().required(),
-      postalCode: yup.string().required(),
-    })
-    .required()
-
-  const { register, handleSubmit } = useForm({
-    defaultValues: check,
-    resolver: yupResolver(schema),
-  })
-
-  async function submitCheck(check: Mercoa.CheckRequest) {
-    if (mercoaSession.entity?.id) {
-      check.country = 'US'
-      const resp = await mercoaSession.client?.entity.paymentMethod.create(mercoaSession.entity?.id, {
-        ...check,
-        type: 'check',
-      })
-      if (!onSubmit) return
-      if (resp) onSubmit(resp)
-      else onSubmit()
-    }
-  }
-
-  return (
-    <form className="mercoa-space-y-3 mercoa-text-left" onSubmit={handleSubmit((formOnlySubmit as any) || submitCheck)}>
-      {title || (
-        <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
-          Add Check Address
-        </h3>
-      )}
-      <AddCheckForm register={register} />
-      {actions || (
-        <button className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-indigo-600 mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2">
-          Add Check Address
-        </button>
-      )}
-    </form>
-  )
-}
-
-export function AddCheckForm({ register }: { register: Function }) {
-  return (
-    <div className="mercoa-mt-2">
-      <div className="mercoa-mt-1">
-        <input
-          {...register('payToTheOrderOf')}
-          type="text"
-          placeholder="Pay To The Order Of"
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-        />
-      </div>
-      <div className="mercoa-mt-1">
-        <input
-          {...register('addressLine1')}
-          type="text"
-          placeholder="Address Line 1"
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-        />
-      </div>
-      <div className="mercoa-mt-1">
-        <input
-          {...register('addressLine2')}
-          type="text"
-          placeholder="Address Line 2"
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-        />
-      </div>
-      <div className="mercoa-mt-1">
-        <input
-          {...register('city')}
-          type="text"
-          placeholder="City"
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-        />
-      </div>
-      <div className="mercoa-mt-1">
-        <input
-          {...register('stateOrProvince')}
-          type="text"
-          placeholder="State Or Province"
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-        />
-      </div>
-      <div className="mercoa-mt-1">
-        <input
-          {...register('postalCode')}
-          type="text"
-          placeholder="Postal Code"
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-        />
-      </div>
-    </div>
-  )
-}
+import { AddDialog, DefaultPaymentMethodIndicator, stopPropagate, useMercoaSession } from './index'
 
 export function CheckComponent({
   account,
@@ -128,7 +13,7 @@ export function CheckComponent({
   selected,
 }: {
   children?: Function
-  account?: Mercoa.CheckResponse
+  account?: Mercoa.PaymentMethodResponse.Check
   onSelect?: Function
   showEdit?: boolean
   selected?: boolean
@@ -217,4 +102,151 @@ export function CheckComponent({
       </div>
     )
   }
+}
+
+export function AddCheckDialog({ entityId, onSelect }: { entityId?: Mercoa.EntityId; onSelect?: Function }) {
+  const [showDialog, setShowDialog] = useState(false)
+
+  const onClose = (account?: Mercoa.PaymentMethodResponse) => {
+    setShowDialog(false)
+    if (onSelect && account) onSelect(account)
+  }
+
+  return (
+    <div className="mercoa-mt-2">
+      <AddDialog
+        show={showDialog}
+        onClose={onClose}
+        component={
+          <AddCheck
+            onSubmit={(data) => {
+              onClose(data)
+            }}
+            entityId={entityId}
+          />
+        }
+      />
+      <CheckComponent onSelect={() => setShowDialog(true)} />
+    </div>
+  )
+}
+
+export function AddCheck({
+  onSubmit,
+  title,
+  actions,
+  formOnlySubmit,
+  check,
+  entityId,
+}: {
+  onSubmit?: (data?: Mercoa.PaymentMethodResponse) => void
+  title?: ReactNode
+  actions?: ReactNode
+  formOnlySubmit?: Function
+  check?: Mercoa.CheckRequest
+  entityId?: Mercoa.EntityId
+}) {
+  const mercoaSession = useMercoaSession()
+
+  const schema = yup
+    .object({
+      payToTheOrderOf: yup.string().required(),
+      addressLine1: yup.string().required(),
+      city: yup.string().required(),
+      stateOrProvince: yup.string().required(),
+      postalCode: yup.string().required(),
+    })
+    .required()
+
+  const { register, handleSubmit } = useForm({
+    defaultValues: check,
+    resolver: yupResolver(schema),
+  })
+
+  async function submitCheck(check: Mercoa.CheckRequest) {
+    if (mercoaSession.entity?.id) {
+      check.country = 'US'
+      const resp = await mercoaSession.client?.entity.paymentMethod.create(entityId ?? mercoaSession.entity?.id, {
+        ...check,
+        type: 'check',
+      })
+      if (!onSubmit) return
+      if (resp) onSubmit(resp)
+      else onSubmit()
+    }
+  }
+
+  return (
+    <form
+      className="mercoa-space-y-3 mercoa-text-left"
+      onSubmit={stopPropagate(handleSubmit((formOnlySubmit as any) || submitCheck))}
+    >
+      {title || (
+        <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+          Add Check
+        </h3>
+      )}
+      <AddCheckForm register={register} />
+      {actions || (
+        <button className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-indigo-600 mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2">
+          Add Check
+        </button>
+      )}
+    </form>
+  )
+}
+
+export function AddCheckForm({ register }: { register: Function }) {
+  return (
+    <div className="mercoa-mt-2">
+      <div className="mercoa-mt-1">
+        <input
+          {...register('payToTheOrderOf')}
+          type="text"
+          placeholder="Pay To The Order Of"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+        />
+      </div>
+      <div className="mercoa-mt-1">
+        <input
+          {...register('addressLine1')}
+          type="text"
+          placeholder="Address Line 1"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+        />
+      </div>
+      <div className="mercoa-mt-1">
+        <input
+          {...register('addressLine2')}
+          type="text"
+          placeholder="Address Line 2"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+        />
+      </div>
+      <div className="mercoa-mt-1">
+        <input
+          {...register('city')}
+          type="text"
+          placeholder="City"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+        />
+      </div>
+      <div className="mercoa-mt-1">
+        <input
+          {...register('stateOrProvince')}
+          type="text"
+          placeholder="State Or Province"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+        />
+      </div>
+      <div className="mercoa-mt-1">
+        <input
+          {...register('postalCode')}
+          type="text"
+          placeholder="Postal Code"
+          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+        />
+      </div>
+    </div>
+  )
 }

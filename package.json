@@ -1,7 +1,7 @@
 {
   "name": "@mercoa/react",
   "description": "Mercoa React Component Library",
-  "version": "0.0.10-rc4",
+  "version": "0.0.11",
   "author": "Sandeep Dinesh <sandeep@mercoa.com>",
   "license": "MIT",
   "repository": {
@@ -12,11 +12,8 @@
   "module": "./dist/index.es.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc && vite build && tailwindcss -i ./src/tailwind.css -o ./dist/style.css --minify",
+    "build": "tsc && vite build && tailwindcss -i ./src/tailwind.css -o ./dist/mercoa.css --minify && cat ./dist/mercoa.css ./node_modules/react-datepicker/dist/react-datepicker.min.css ./node_modules/react-toastify/dist/ReactToastify.min.css > ./dist/style.css && cp ./src/tailwind.base.css ./dist/tailwind.base.css",
     "dev": "npm start",
-    "start": "storybook dev -p 6006",
-    "storybook": "npm start",
-    "build-docs": "storybook build -o docs && touch ./docs/.nojekyll",
     "lint": "eslint . --ext .ts,.tsx"
   },
   "peerDependencies": {
@@ -26,16 +23,10 @@
   "devDependencies": {
     "@originjs/vite-plugin-commonjs": "^1.0.3",
     "@rollup/plugin-replace": "^5.0.5",
-    "@storybook/addon-essentials": "^7.0.20",
-    "@storybook/addon-interactions": "^7.0.20",
-    "@storybook/addon-links": "^7.0.20",
-    "@storybook/blocks": "^7.0.20",
-    "@storybook/react": "^7.0.20",
-    "@storybook/react-vite": "^7.0.20",
-    "@storybook/testing-library": "^0.0.14-next.2",
     "@tailwindcss/forms": "^0.5.7",
     "@tailwindcss/typography": "^0.5.10",
     "@types/accounting": "^0.4.5",
+    "@types/lodash": "^4.14.202",
     "@types/node": "^20.3.0",
     "@types/papaparse": "^5.3.14",
     "@types/react": "^18.0.27",
@@ -51,8 +42,7 @@
     "eslint-plugin-jsx-a11y": "^6.7.1",
     "eslint-plugin-react": "^7.32.2",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "postcss": "^8.4.32",
-    "storybook": "^7.0.20",
+    "postcss": "^8.4.35",
     "tailwindcss": "^3.4.0",
     "typescript": "^4.9.3",
     "vite": "^4.1.0",
@@ -68,7 +58,7 @@
     "@headlessui/react": "^1.7.17",
     "@heroicons/react": "^2.1.1",
     "@hookform/resolvers": "^3.3.2",
-    "@mercoa/javascript": "^0.3.16",
+    "@mercoa/javascript": "^0.3.17",
     "@moovio/moov-js": "^0.0.14",
     "@react-hook/resize-observer": "^1.2.6",
     "accounting": "^0.4.1",
