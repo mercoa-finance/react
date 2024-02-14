@@ -824,52 +824,52 @@ export function EditInvoiceForm({
     }
 
     // Create new vendor payment method if needed
-    if (data.paymentMethodDestinationType && (!data.paymentDestinationId || data.paymentDestinationId === 'new')) {
-      const paymentMethodDestinationType = data.paymentMethodDestinationType
-      const type = data.paymentMethodDestinationType.startsWith('cpms_')
-        ? 'custom'
-        : (data.paymentMethodDestinationType as Mercoa.PaymentMethodType)
+    // if (data.paymentMethodDestinationType && (!data.paymentDestinationId || data.paymentDestinationId === 'new')) {
+    //   const paymentMethodDestinationType = data.paymentMethodDestinationType
+    //   const type = data.paymentMethodDestinationType.startsWith('cpms_')
+    //     ? 'custom'
+    //     : (data.paymentMethodDestinationType as Mercoa.PaymentMethodType)
 
-      let pm: Mercoa.PaymentMethodRequest | undefined
-      if (type === 'bankAccount') {
-        pm = {
-          type: type,
-          accountNumber: (data as Mercoa.BankAccountRequest).accountNumber,
-          routingNumber: (data as Mercoa.BankAccountRequest).routingNumber,
-          accountType: (data as Mercoa.BankAccountRequest).accountType,
-          bankName: (data as Mercoa.BankAccountRequest).bankName,
-        }
-      } else if (type === 'check') {
-        pm = {
-          type: type,
-          ...(data as Mercoa.CheckRequest),
-        }
-      } else if (type === 'custom') {
-        const filtered: Record<string, string> = {}
-        Object.entries(data as Mercoa.BankAccountRequest | Mercoa.CheckRequest | Record<string, string>).forEach(
-          ([key, value]) => {
-            if (key.startsWith('~cpm~~')) {
-              value.forEach((v: any) => {
-                filtered[v.name] = `${filtered[v.name] ?? v.value}`
-              })
-            }
-          },
-        )
-        pm = {
-          type: type,
-          foreignId: Math.random().toString(36).substring(7),
-          schemaId: paymentMethodDestinationType,
-          data: filtered,
-        }
-      }
+    //   let pm: Mercoa.PaymentMethodRequest | undefined
+    //   if (type === 'bankAccount') {
+    //     pm = {
+    //       type: type,
+    //       accountNumber: (data as Mercoa.BankAccountRequest).accountNumber,
+    //       routingNumber: (data as Mercoa.BankAccountRequest).routingNumber,
+    //       accountType: (data as Mercoa.BankAccountRequest).accountType,
+    //       bankName: (data as Mercoa.BankAccountRequest).bankName,
+    //     }
+    //   } else if (type === 'check') {
+    //     pm = {
+    //       type: type,
+    //       ...(data as Mercoa.CheckRequest),
+    //     }
+    //   } else if (type === 'custom') {
+    //     const filtered: Record<string, string> = {}
+    //     Object.entries(data as Mercoa.BankAccountRequest | Mercoa.CheckRequest | Record<string, string>).forEach(
+    //       ([key, value]) => {
+    //         if (key.startsWith('~cpm~~')) {
+    //           value.forEach((v: any) => {
+    //             filtered[v.name] = `${filtered[v.name] ?? v.value}`
+    //           })
+    //         }
+    //       },
+    //     )
+    //     pm = {
+    //       type: type,
+    //       foreignId: Math.random().toString(36).substring(7),
+    //       schemaId: paymentMethodDestinationType,
+    //       data: filtered,
+    //     }
+    //   }
 
-      if (pm) {
-        const resp = await mercoaSession.client?.entity.paymentMethod.create(data.vendorId, pm)
-        if (resp) {
-          invoiceData.paymentDestinationId = resp.id
-        }
-      }
-    }
+    //   if (pm) {
+    //     const resp = await mercoaSession.client?.entity.paymentMethod.create(data.vendorId, pm)
+    //     if (resp) {
+    //       invoiceData.paymentDestinationId = resp.id
+    //     }
+    //   }
+    // }
 
     if (invoiceData.status !== Mercoa.InvoiceStatus.Draft) {
       if (invoiceData.approvers?.length !== invoice?.approvers.length) {
