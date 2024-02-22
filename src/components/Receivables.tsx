@@ -28,6 +28,7 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
 
   useEffect(() => {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    let isCurrent = true
     mercoaSession.client?.entity.invoice
       .find(mercoaSession.entity.id, {
         search,
@@ -38,13 +39,16 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
         excludePayables: true,
       })
       .then((resp) => {
-        if (resp) {
+        if (resp && isCurrent) {
           setHasMore(resp.hasMore)
           setCount(resp.count)
           setInvoices(resp.data)
           setDataLoaded(true)
         }
       })
+    return () => {
+      isCurrent = false
+    }
   }, [
     mercoaSession.token,
     mercoaSession.entity,

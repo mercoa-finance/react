@@ -776,13 +776,21 @@ export function EditBankAccount({
     if (mercoaSession.entity?.id) {
       mercoaSession.client?.entity.paymentMethod
         .update(mercoaSession.entity?.id, account.id, {
-          ...data,
+          accountName: data.accountName,
+          checkOptions: {
+            enabled: data.checkOptions?.enabled,
+            initialCheckNumber: Number(data.checkOptions?.initialCheckNumber),
+            signatoryName: data.checkOptions?.signatoryName,
+          },
           type: Mercoa.PaymentMethodType.BankAccount,
         })
         .then(() => {
           toast.success('Bank account updated')
           if (onSubmit) onSubmit(data)
           mercoaSession.refresh()
+        })
+        .catch((err) => {
+          toast.error('There was an error updating your bank account')
         })
     }
   }

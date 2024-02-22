@@ -98,6 +98,7 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
 
   useEffect(() => {
     if (!mercoaSession.token || !mercoaSession.entity?.id || !mercoaSession.user?.id) return
+    let isCurrent = true
     mercoaSession.client?.entity.invoice
       .find(mercoaSession.entity.id, {
         status,
@@ -110,7 +111,7 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
         excludeReceivables: true,
       })
       .then((resp) => {
-        if (resp) {
+        if (resp && isCurrent) {
           const invoicesThatRequireReview = resp.data.filter((invoice) => {
             return invoice.approvers?.some(
               (approver) =>
@@ -123,6 +124,9 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
           setShowTable(invoicesThatRequireReview.length > 0)
         }
       })
+    return () => {
+      isCurrent = false
+    }
   }, [
     mercoaSession.token,
     mercoaSession.entity,
@@ -626,6 +630,7 @@ function InvoiceInboxTable({
 
   useEffect(() => {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    let isCurrent = true
     setSelectedInvoices([])
     setDataLoaded(false)
     mercoaSession.client?.entity.invoice
@@ -639,13 +644,16 @@ function InvoiceInboxTable({
         excludeReceivables: true,
       })
       .then((resp) => {
-        if (resp) {
+        if (resp && isCurrent) {
           setHasMore(resp.hasMore)
           setCount(resp.count)
           setInvoices(resp.data)
           setDataLoaded(true)
         }
       })
+    return () => {
+      isCurrent = false
+    }
   }, [
     mercoaSession.token,
     mercoaSession.entity,
@@ -985,7 +993,7 @@ export function InvoiceStatusPill({ invoice }: { invoice: Mercoa.InvoiceResponse
   } else if (invoice.status === Mercoa.InvoiceStatus.Refused) {
     backgroundColor = 'mercoa-bg-red-100'
     textColor = 'mercoa-text-red-800'
-    message = 'Refused'
+    message = 'Rejected'
   } else if (invoice.status === Mercoa.InvoiceStatus.Failed) {
     backgroundColor = 'mercoa-bg-red-100'
     textColor = 'mercoa-text-red-800'
@@ -1042,6 +1050,7 @@ export function InvoiceInbox({
       Mercoa.InvoiceStatus.Pending,
       Mercoa.InvoiceStatus.Paid,
       Mercoa.InvoiceStatus.Canceled,
+      Mercoa.InvoiceStatus.Refused,
       Mercoa.InvoiceStatus.Failed,
     ],
   )
@@ -1078,7 +1087,7 @@ export function InvoiceInbox({
     FAILED: 'Payment Failed',
     PAID: 'Paid',
     CANCELED: 'Canceled',
-    REFUSED: 'Refused',
+    REFUSED: 'Rejected',
     ARCHIVED: 'Archived',
   }
 

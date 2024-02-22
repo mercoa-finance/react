@@ -1,7 +1,14 @@
+import {
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  InformationCircleIcon,
+  XCircleIcon,
+} from '@heroicons/react/24/outline'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { Moov, loadMoov } from '@moovio/moov-js'
 import { jwtDecode } from 'jwt-decode'
 import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { ToastContainer } from 'react-toastify'
 import { TokenOptions } from '.'
 import { EntityPortal } from './index'
 
@@ -46,8 +53,18 @@ const sessionContext = createContext<MercoaContext>({
   googleMapsApiKey: undefined,
 })
 
-// Provider component that wraps your app and makes auth object ...
-// ... available to any child component that calls useSession().
+interface contextClassType {
+  [key: string]: string
+}
+const contextClass: contextClassType = {
+  success: 'mercoa-bg-green-50 mercoa-text-green-700',
+  error: 'mercoa-bg-red-50 mercoa-text-red-700',
+  info: 'mercoa-bg-blue-50 mercoa-text-blue-700',
+  warning: 'mercoa-bg-yellow-50 mercoa-text-yellow-700',
+  default: 'mercoa-bg-indigo-600 mercoa-text-white',
+  dark: 'mercoa-bg-white-600 mercoa-font-gray-300',
+}
+
 export function MercoaSession({
   children,
   entityId,
@@ -56,6 +73,7 @@ export function MercoaSession({
   endpoint,
   isAdmin,
   googleMapsApiKey,
+  disableToastContainer,
 }: {
   children?: ReactNode
   entityId?: Mercoa.EntityId
@@ -64,11 +82,64 @@ export function MercoaSession({
   endpoint?: string
   isAdmin?: boolean
   googleMapsApiKey?: string
+  disableToastContainer?: boolean
 }) {
   return (
     <sessionContext.Provider
       value={useProvideSession({ token, entityId, entityUserId, endpoint, isAdmin, googleMapsApiKey })}
     >
+      {disableToastContainer ? (
+        <></>
+      ) : (
+        <ToastContainer
+          toastClassName={(options) => {
+            const type = options?.type || 'default'
+            return (
+              contextClass[type] +
+              ' mercoa-relative mercoa-flex mercoa-p-1 mercoa-min-h-10 mercoa-rounded-md mercoa-justify-between mercoa-overflow-hidden mercoa-cursor-pointer '
+            )
+          }}
+          bodyClassName={() =>
+            'mercoa-text-sm mercoa-font-medium mercoa-p-3 mercoa-m-0 mercoa-flex mercoa-items-center'
+          }
+          position={'top-center'}
+          autoClose={3000}
+          hideProgressBar
+          icon={({ theme, type }) => {
+            switch (type) {
+              case 'error':
+                return (
+                  <div className="mercoa-flex-shrink-0">
+                    <XCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-red-400" aria-hidden="true" />
+                  </div>
+                )
+              case 'info':
+                return (
+                  <div className="mercoa-flex-shrink-0">
+                    <InformationCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-blue-400" aria-hidden="true" />
+                  </div>
+                )
+              case 'success':
+                return (
+                  <div className="mercoa-flex-shrink-0">
+                    <CheckCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-green-400" aria-hidden="true" />
+                  </div>
+                )
+              case 'warning':
+                return (
+                  <div className="mercoa-flex-shrink-0">
+                    <ExclamationTriangleIcon
+                      className="mercoa-h-5 mercoa-w-5 mercoa-text-yellow-400"
+                      aria-hidden="true"
+                    />
+                  </div>
+                )
+              case 'default':
+                return <div className="mercoa-flex-shrink-0"></div>
+            }
+          }}
+        />
+      )}
       {children || <EntityPortal token={token} />}
     </sessionContext.Provider>
   )

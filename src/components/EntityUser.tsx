@@ -53,18 +53,22 @@ export function EntityUserNotificationTable({
   })
 
   useEffect(() => {
+    let isCurrent = true
     mercoaSession.client?.entity.user.notifications
       .find(entityId, userId, {
         limit: resultsPerPage,
         startingAfter: startingAfter[startingAfter.length - 1],
       })
       .then((e) => {
-        if (e) {
+        if (e && isCurrent) {
           setHasMore(e.hasMore)
           setCount(e.count)
           setNotifications(e.data)
         }
       })
+    return () => {
+      isCurrent = false
+    }
   }, [mercoaSession.client, startingAfter, resultsPerPage])
 
   useEffect(() => {

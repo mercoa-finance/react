@@ -4,7 +4,7 @@ import { Mercoa } from '@mercoa/javascript'
 import { ReactNode, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import * as yup from 'yup'
-import { AddDialog, DefaultPaymentMethodIndicator, stopPropagate, useMercoaSession } from './index'
+import { AddDialog, DefaultPaymentMethodIndicator, MercoaButton, stopPropagate, useMercoaSession } from './index'
 
 export function CheckComponent({
   account,
@@ -183,15 +183,13 @@ export function AddCheck({
     >
       {title || (
         <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
-          Add Check
+          Add Check Address
         </h3>
       )}
       <AddCheckForm register={register} />
-      {actions || (
-        <button className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-indigo-600 mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2">
-          Add Check
-        </button>
-      )}
+      <div className="mercoa-flex mercoa-justify-end">
+        {actions || <MercoaButton isEmphasized>Add Check Address</MercoaButton>}
+      </div>
     </form>
   )
 }

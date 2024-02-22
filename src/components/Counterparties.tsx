@@ -35,7 +35,7 @@ const human = require('humanparser')
 const schema = yup
   .object({
     name: yup.string().required(),
-    email: yup.string().email(),
+    email: yup.string().email().required(),
     accountType: yup.string().required(),
     firstName: yup.string().required(),
     lastName: yup.string().required(),
@@ -331,6 +331,7 @@ function CounterpartyAddOrEdit({
     handleSubmit,
     setValue,
     watch,
+    setError,
     formState: { errors },
   } = useForm({
     resolver: yupResolver(schema),
@@ -389,6 +390,17 @@ function CounterpartyAddOrEdit({
         website: data.website,
         businessType: data.businessType,
         legalBusinessName: data.name,
+      }
+      if (!profile.business.website && !profile.business.description) {
+        setError('website', {
+          type: 'manual',
+          message: 'Website or description is required',
+        })
+        setError('description', {
+          type: 'manual',
+          message: 'Website or description is required',
+        })
+        return
       }
     }
 
@@ -481,6 +493,7 @@ function CounterpartyAddOrEdit({
           />
         </div>
       </div>
+      {errors?.email?.message && <p className="mercoa-text-sm mercoa-text-red-500">Please enter an email</p>}
 
       <div className="mercoa-mt-1 mercoa-mt-2 mercoa-flex mercoa-space-x-2">
         <button
@@ -562,6 +575,9 @@ function CounterpartyAddOrEdit({
               className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
               placeholder=""
             />
+            {errors?.description?.message && (
+              <p className="mercoa-text-sm mercoa-text-red-500">{errors?.description?.message}</p>
+            )}
           </div>
         </>
       )}
@@ -634,6 +650,7 @@ export function Counterparties({ type, admin }: { type: 'payor' | 'payee'; admin
 
   useEffect(() => {
     if (!mercoaSession.client || !mercoaSession.entityId) return
+    let isCurrent = true
     if (type === 'payor') {
       mercoaSession.client.entity.counterparty
         .findPayors(mercoaSession.entityId, {
@@ -643,9 +660,11 @@ export function Counterparties({ type, admin }: { type: 'payor' | 'payee'; admin
           paymentMethods: true,
         })
         .then((entities) => {
-          setEntities(entities.data)
-          setHasMore(entities.hasMore)
-          setCount(entities.count)
+          if (entities && isCurrent) {
+            setEntities(entities.data)
+            setHasMore(entities.hasMore)
+            setCount(entities.count)
+          }
         })
     } else {
       mercoaSession.client.entity.counterparty
@@ -656,11 +675,15 @@ export function Counterparties({ type, admin }: { type: 'payor' | 'payee'; admin
           paymentMethods: true,
         })
         .then((entities) => {
-          console.log(entities)
-          setEntities(entities.data)
-          setHasMore(entities.hasMore)
-          setCount(entities.count)
+          if (entities && isCurrent) {
+            setEntities(entities.data)
+            setHasMore(entities.hasMore)
+            setCount(entities.count)
+          }
         })
+    }
+    return () => {
+      isCurrent = false
     }
   }, [mercoaSession.client, mercoaSession.entityId, mercoaSession.refreshId, type, startingAfter])
 

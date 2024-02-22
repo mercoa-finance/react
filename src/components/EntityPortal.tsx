@@ -361,7 +361,6 @@ export function EntityPortal({ token }: { token: string }) {
       {screen === 'invoice' && (
         <InvoiceDetails
           invoice={invoice}
-          addPaymentMethodRedirect={() => setScreen('payments')}
           onRedirect={(invoice) => {
             if (!invoice) {
               setScreen('inbox')

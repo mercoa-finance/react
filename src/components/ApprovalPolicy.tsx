@@ -181,7 +181,7 @@ export function ApprovalPolicies() {
 
         try {
           let updatedPolicy: Mercoa.ApprovalPolicyResponse | undefined
-          if (data?.id && data?.id.indexOf('~') < 0) {
+          if (data?.id && data?.id.indexOf('~') < 0 && data?.id != 'fallback') {
             updatedPolicy = await mercoaSession.client?.entity.approvalPolicy.update(
               mercoaSession.entity.id,
               data.id,
@@ -204,6 +204,7 @@ export function ApprovalPolicies() {
       })
       mercoaSession.refresh()
     } else {
+      console.error(toasts)
       toast('Error Saving Some Approval Policies', {
         type: 'error',
       })

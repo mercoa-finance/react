@@ -220,6 +220,7 @@ export function TableNavigation({
   startingAfter,
   data,
   downloadAll,
+  pageSizes,
 }: {
   count: number
   resultsPerPage: number
@@ -231,7 +232,10 @@ export function TableNavigation({
   startingAfter: string[]
   data: Array<{ id: string }>
   downloadAll?: () => void
+  pageSizes?: number[]
 }) {
+  const pageOptions = pageSizes ?? [10, 20, 50, 100]
+
   function setResultsPerPageWrapper(value: number) {
     setResultsPerPage(value)
     setPage(1)
@@ -277,7 +281,7 @@ export function TableNavigation({
                   leaveTo="mercoa-opacity-0"
                 >
                   <Listbox.Options className="mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-md mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm">
-                    {[10, 20, 50, 100].map((num) => (
+                    {pageOptions.map((num) => (
                       <Listbox.Option
                         key={num}
                         className={({ active }) =>
