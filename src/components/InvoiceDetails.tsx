@@ -696,6 +696,7 @@ export function EditInvoiceForm({
         'lineItems',
         ocrResponse.invoice.lineItems.map((lineItem) => ({
           description: lineItem.description ?? '',
+          currency: lineItem.currency ?? 'USD',
           amount: lineItem.amount ?? 0,
           quantity: lineItem.quantity ?? 0,
           unitPrice: lineItem.unitPrice ?? 0,
