@@ -3,7 +3,6 @@ import {
   ChevronUpDownIcon,
   DevicePhoneMobileIcon,
   EnvelopeIcon,
-  ExclamationTriangleIcon,
   MapPinIcon,
   PencilSquareIcon,
   PlusIcon,
@@ -31,21 +30,6 @@ import {
   useMercoaSession,
 } from './index'
 const human = require('humanparser')
-
-const schema = yup
-  .object({
-    name: yup.string().required(),
-    email: yup.string().email().required(),
-    accountType: yup.string().required(),
-    firstName: yup.string().required(),
-    lastName: yup.string().required(),
-    middleName: yup.string(),
-    suffix: yup.string(),
-    businessType: yup.string(),
-    website: yup.string().url('Website must start with http:// or https:// and be a valid URL'),
-    description: yup.string(),
-  })
-  .required()
 
 export function CounterpartySearch({
   counterparty,
@@ -106,22 +90,6 @@ export function CounterpartySearch({
     }
   }, [mercoaSession.entity?.id, mercoaSession.token, mercoaSession.refreshId, search])
 
-  const isCompletedVendorProfile = !mercoaSession.iframeOptions?.options?.entity?.enableMercoaPayments
-    ? true
-    : !!selectedCounterparty?.email &&
-      ((selectedCounterparty?.accountType === 'business' &&
-        (selectedCounterparty?.profile.business?.website || selectedCounterparty?.profile.business?.description)) ||
-        selectedCounterparty?.accountType === 'individual')
-
-  let incompleteReason = ''
-  if (!isCompletedVendorProfile) {
-    if (!selectedCounterparty?.email) {
-      incompleteReason = 'email missing'
-    } else if (selectedCounterparty?.accountType === 'business') {
-      incompleteReason = 'website or description missing'
-    }
-  }
-
   function setSelection(counterparty: Mercoa.CounterpartyResponse | Mercoa.EntityResponse | undefined) {
     setSelectedCounterparty(counterparty)
     if (counterparty) {
@@ -170,15 +138,6 @@ export function CounterpartySearch({
             </div>
           </div>
         </div>
-        {!isCompletedVendorProfile && (
-          <div className="mercoa-flex mercoa-items-center mercoa-justify-center mercoa-bg-yellow-50">
-            <ExclamationTriangleIcon
-              className="mercoa-h-5 mercoa-w-5 mercoa-text-yellow-500 mercoa-mr-1"
-              aria-hidden="true"
-            />
-            <p className="mercoa-text-sm mercoa-text-yellow-900">Profile incomplete: {incompleteReason}</p>
-          </div>
-        )}
       </>
     )
   }
@@ -334,7 +293,21 @@ function CounterpartyAddOrEdit({
     setError,
     formState: { errors },
   } = useForm({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(
+      yup
+        .object({
+          name: yup.string().required(),
+          email: yup.string().email(),
+          accountType: yup.string().required(),
+          firstName: yup.string().required(),
+          lastName: yup.string().required(),
+          middleName: yup.string(),
+          suffix: yup.string(),
+          website: yup.string().url('Website must start with http:// or https:// and be a valid URL'),
+          description: yup.string(),
+        })
+        .required(),
+    ),
     defaultValues: {
       accountType: counterparty?.accountType,
       name: counterpartyName,
@@ -346,7 +319,6 @@ function CounterpartyAddOrEdit({
         counterparty?.accountType === 'business'
           ? counterparty?.profile?.business?.email
           : counterparty?.profile?.individual?.email,
-      businessType: counterparty?.profile?.business?.businessType,
       website: counterparty?.profile?.business?.website,
       description: counterparty?.profile?.business?.description,
     },
@@ -383,13 +355,34 @@ function CounterpartyAddOrEdit({
           suffix: data.suffix ?? '',
         },
       }
+
+      if (!profile.individual.name.firstName) {
+        setError('firstName', {
+          type: 'manual',
+          message: 'First Name is required',
+        })
+        return
+      }
+      if (!profile.individual.name.lastName) {
+        setError('lastName', {
+          type: 'manual',
+          message: 'Last Name is required',
+        })
+        return
+      }
     } else {
       profile.business = {
         email: data.email,
         description: data.description,
         website: data.website,
-        businessType: data.businessType,
         legalBusinessName: data.name,
+      }
+      if (!profile.business.legalBusinessName) {
+        setError('name', {
+          type: 'manual',
+          message: 'Name is required',
+        })
+        return
       }
       if (!profile.business.website && !profile.business.description) {
         setError('website', {
@@ -493,7 +486,7 @@ function CounterpartyAddOrEdit({
           />
         </div>
       </div>
-      {errors?.email?.message && <p className="mercoa-text-sm mercoa-text-red-500">Please enter an email</p>}
+      {errors?.email?.message && <p className="mercoa-text-sm mercoa-text-red-500">Please enter a valid email</p>}
 
       <div className="mercoa-mt-1 mercoa-mt-2 mercoa-flex mercoa-space-x-2">
         <button
@@ -520,31 +513,6 @@ function CounterpartyAddOrEdit({
 
       {accountType === 'business' && (
         <>
-          <div className="mercoa-mt-1">
-            <label
-              htmlFor="email"
-              className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
-            >
-              Business Type
-            </label>
-            <select
-              {...register('businessType')}
-              className="mercoa-mt-1 mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-py-2 mercoa-px-3 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-            >
-              <option value="" disabled>
-                Select an option
-              </option>
-              <option value="soleProprietorship">Sole proprietorship</option>
-              <option value="llc">LLC</option>
-              <option value="trust">Trust</option>
-              <option value="publicCorporation">Public Corporation</option>
-              <option value="privateCorporation">Private Corporation</option>
-              <option value="partnership">Partnership</option>
-              <option value="unincorporatedAssociation">Unincorporated association</option>
-              <option value="unincorporatedNonProfit">Unincorporated Non-Profit </option>
-              <option value="incorporatedNonProfit">Incorporated Non-Profit </option>
-            </select>
-          </div>
           <div className="mercoa-mt-1">
             <label
               htmlFor="email"

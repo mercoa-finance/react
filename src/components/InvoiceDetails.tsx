@@ -5,7 +5,6 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ExclamationCircleIcon,
-  PencilSquareIcon,
   PlusCircleIcon,
   XCircleIcon,
   XMarkIcon,
@@ -25,6 +24,7 @@ import { Document, Page } from 'react-pdf'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
+import { add } from '../lib/math'
 import { isWeekday } from '../lib/scheduling'
 import { CounterpartySearch } from './Counterparties'
 import { InvoiceStatusPill } from './Inbox'
@@ -564,7 +564,6 @@ export function EditInvoiceForm({
   const paymentSourceId = watch('paymentSourceId')
   const approvers = watch('approvers')
   const metadata = watch('metadata')
-  const lineItems = watch('lineItems')
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -573,46 +572,19 @@ export function EditInvoiceForm({
 
   // Auto-calculate line item amounts and total amount
 
-  function calculateTotalAmountFromLineItems() {
+  function calculateTotalAmountFromLineItems(lineItems: Mercoa.InvoiceLineItemRequest[]) {
     if (lineItems?.find((e) => isNaN(e.amount as number))) {
       setError('amount', { type: 'manual', message: 'Please enter a valid number' })
       return
     }
-    let amount =
-      lineItems?.reduce((acc, lineItem, index) => {
-        return acc + Number(lineItem.amount) ?? 0
-      }, 0) ?? 0
-    amount = Math.floor(amount * 100) / 100
+    let amount = 0
+    lineItems?.forEach((lineItem, index) => {
+      amount = add(amount, lineItem.amount)
+    })
     clearErrors('amount')
     setValue('amount', amount)
     setFocus('amount')
   }
-
-  // watch((data, { name, type }) => {
-  //   if (type != 'change') return
-  //   if (!name?.startsWith('lineItems')) return
-  //   if (name.endsWith('description') || name.endsWith('name')) return
-  //   let amount = 0
-  //   if (name.endsWith('amount')) {
-  //     const lineItems = data.lineItems as Mercoa.InvoiceLineItemRequest[]
-  //     if (lineItems.find((e) => isNaN(e.amount))) {
-  //       setError('amount', { type: 'manual', message: 'Please enter a valid number' })
-  //       return
-  //     }
-  //     amount = lineItems.reduce((acc, lineItem, index) => {
-  //       return acc + Number(lineItem.amount) ?? 0
-  //     }, 0)
-  //   } else {
-  //     const lineItems = data.lineItems as Mercoa.InvoiceLineItemRequest[]
-  //     amount = lineItems.reduce((acc, lineItem, index) => {
-  //       lineItem.amount = Math.floor((lineItem.quantity ?? 1) * (lineItem.unitPrice ?? 1) * 100) / 100
-  //       setValue(`lineItems.${index}.amount`, lineItem.amount)
-  //       return acc + lineItem.amount
-  //     }, 0)
-  //   }
-  //   amount = Math.floor(amount * 100) / 100
-  //   setValue('amount', amount)
-  // })
 
   // Get payment methods
   useEffect(() => {
@@ -757,16 +729,19 @@ export function EditInvoiceForm({
           delivery: 'MAIL',
         },
       }),
-      lineItems: data.lineItems.map((lineItem: any) => ({
-        ...(lineItem.id && { id: lineItem.id }),
-        description: lineItem.description,
-        amount: Number(lineItem.amount),
-        quantity: Number(lineItem.quantity),
-        unitPrice: Number(lineItem.unitPrice),
-        metadata: lineItem.metadata,
-        currency: data.currency ?? 'USD',
-        glAccountId: lineItem.glAccountId,
-      })),
+      lineItems: data.lineItems.map((lineItem: any) => {
+        const out: Mercoa.InvoiceLineItemRequest = {
+          ...(lineItem.id && { id: lineItem.id }),
+          description: lineItem.description,
+          amount: Number(lineItem.amount),
+          quantity: Number(lineItem.quantity),
+          unitPrice: Number(lineItem.unitPrice),
+          metadata: lineItem.metadata,
+          currency: data.currency ?? 'USD',
+          glAccountId: lineItem.glAccountId,
+        }
+        return out
+      }),
       metadata: JSON.parse(data.metadata) as Record<string, string>,
       uploadedImage: uploadedImage,
       creatorEntityId: mercoaSession.entity?.id,
@@ -783,10 +758,15 @@ export function EditInvoiceForm({
       }
 
       // Make sure line items amount is equal to invoice amount
-      if (!mercoaSession.iframeOptions?.options?.invoice?.disableLineItems && data.lineItems.length > 0) {
-        const lineItemsTotal = data.lineItems.reduce((acc: number, lineItem: any) => {
-          return acc + Number(lineItem.amount)
-        }, 0)
+      if (
+        !mercoaSession.iframeOptions?.options?.invoice?.disableLineItems &&
+        invoiceData.lineItems &&
+        invoiceData.lineItems.length > 0
+      ) {
+        let lineItemsTotal = 0
+        invoiceData.lineItems.forEach((lineItem, index) => {
+          lineItemsTotal = add(lineItemsTotal, lineItem.amount)
+        })
         if (lineItemsTotal !== Number(data.amount)) {
           setError('amount', { type: 'manual', message: 'Line item amounts do not match total amount' })
           setIsSaving(false)
@@ -2201,50 +2181,54 @@ function ApproverActionButtons({
   const mercoaSession = useMercoaSession()
   if (invoice?.status != Mercoa.InvoiceStatus.New) return <></>
   const approverSlot = invoice.approvers.find((e) => e.assignedUserId === mercoaSession.user?.id)
-  if (!approverSlot)
+  if (!approverSlot) {
     return (
       <span className="mercoa-text-center mercoa-text-gray-800 mercoa-font-medium mercoa-p-3 mercoa-rounded-md mercoa-bg-gray-50">
         Waiting for approval
       </span>
     )
-  const handleApprove = () => {
-    const approvalData: Mercoa.ApprovalRequest = {
-      userId: approverSlot.assignedUserId ?? '',
-    }
-    if (approvalData.userId) {
-      setIsSaving(true)
-      mercoaSession.client?.invoice.approval
-        .approve(invoice.id, approvalData)
-        .then(() => {
-          setIsSaving(false)
-          toast.success('Invoice approved')
-          refreshInvoice(invoice.id)
-        })
-        .catch((e) => {
-          setIsSaving(false)
-          console.log(e)
-          toast.error('There was an error approving this invoice. Please try again.')
-        })
-    }
   }
-  const handleReject = () => {
+
+  async function approveOrReject(action: 'approve' | 'reject') {
+    if (!invoice?.id) return
     const approvalData: Mercoa.ApprovalRequest = {
-      userId: approverSlot.assignedUserId ?? '',
+      userId: approverSlot?.assignedUserId ?? '',
     }
     if (approvalData.userId) {
       setIsSaving(true)
-      mercoaSession.client?.invoice.approval
-        .reject(invoice.id, approvalData)
-        .then(() => {
-          setIsSaving(false)
-          toast.success('Invoice rejected')
-          refreshInvoice(invoice.id)
-        })
-        .catch((e) => {
-          setIsSaving(false)
-          console.log(e)
-          toast.error('There was an error rejecting this invoice. Please try again.')
-        })
+      const resp = await mercoaSession.client?.invoice.get(invoice.id)
+      if (resp?.status != Mercoa.InvoiceStatus.New) {
+        refreshInvoice(invoice.id)
+        setIsSaving(false)
+        return
+      }
+      if (action === 'approve') {
+        mercoaSession.client?.invoice.approval
+          .approve(invoice.id, approvalData)
+          .then(() => {
+            setIsSaving(false)
+            toast.success('Invoice approved')
+            refreshInvoice(invoice.id)
+          })
+          .catch((e) => {
+            setIsSaving(false)
+            console.log(e)
+            toast.error('There was an error approving this invoice. Please try again.')
+          })
+      } else {
+        mercoaSession.client?.invoice.approval
+          .reject(invoice.id, approvalData)
+          .then(() => {
+            setIsSaving(false)
+            toast.success('Invoice rejected')
+            refreshInvoice(invoice.id)
+          })
+          .catch((e) => {
+            setIsSaving(false)
+            console.log(e)
+            toast.error('There was an error rejecting this invoice. Please try again.')
+          })
+      }
     }
   }
 
@@ -2254,7 +2238,7 @@ function ApproverActionButtons({
         disabled={approverSlot.action === Mercoa.ApproverAction.Reject}
         color="red"
         isEmphasized
-        onClick={handleReject}
+        onClick={() => approveOrReject('reject')}
         type="button"
       >
         Reject
@@ -2263,7 +2247,7 @@ function ApproverActionButtons({
         disabled={approverSlot.action === Mercoa.ApproverAction.Approve}
         color="green"
         isEmphasized
-        onClick={handleApprove}
+        onClick={() => approveOrReject('approve')}
         type="button"
       >
         Approve
@@ -2299,33 +2283,36 @@ export function MetadataSelection({
   lineItem?: boolean
   skipValidation?: boolean
 }) {
-  const [edit, setEdit] = useState(!value)
+  const [entityMetadataState, setEntityMetadataState] = useState<Mercoa.EntityMetadataResponse>()
 
   // Filter out empty values from metadata
-  if (entityMetadata) {
-    entityMetadata.value = entityMetadata.value.filter((e) => e)
+  useEffect(() => {
+    if (entityMetadata) {
+      entityMetadata.value = entityMetadata.value.filter((e) => e)
 
-    if (schema.type === Mercoa.MetadataType.KeyValue) {
-      entityMetadata.value = entityMetadata.value.filter((e) => {
-        try {
-          const parsedValue = dJSON.parse(e) as { key: string; value: string }
-          return parsedValue.key && parsedValue.value
-        } catch (e) {
-          console.error(e)
-        }
-        return false
-      })
+      if (schema.type === Mercoa.MetadataType.KeyValue) {
+        entityMetadata.value = entityMetadata.value.filter((e) => {
+          try {
+            const parsedValue = dJSON.parse(e) as { key: string; value: string }
+            return parsedValue.key && parsedValue.value
+          } catch (e) {
+            console.error(e)
+          }
+          return false
+        })
+      }
+      if (entityMetadata?.value.length === 0) {
+        entityMetadata = undefined
+      }
+      setEntityMetadataState(entityMetadata)
     }
-    if (entityMetadata?.value.length === 0) {
-      entityMetadata = undefined
-    }
-  }
+  }, [entityMetadata])
 
   if (
     !skipValidation &&
     !showMetadata({
       schema,
-      entityMetadata,
+      entityMetadata: entityMetadataState,
       hasDocument,
       hasNoLineItems,
       paymentDestination,
@@ -2341,7 +2328,7 @@ export function MetadataSelection({
       {(schema.type === Mercoa.MetadataType.String ||
         schema.type === Mercoa.MetadataType.Number ||
         schema.type === Mercoa.MetadataType.KeyValue) && (
-        <MetadataCombobox schema={schema} setValue={setValue} value={value} values={entityMetadata?.value ?? []} />
+        <MetadataCombobox schema={schema} setValue={setValue} value={value} values={entityMetadataState?.value ?? []} />
       )}
       {schema.type === Mercoa.MetadataType.Boolean && (
         <MetadataBoolean schema={schema} setValue={setValue} value={value} />
@@ -2355,12 +2342,6 @@ export function MetadataSelection({
   if (lineItem) {
     return metadataSelection
   }
-
-  // if (value && !edit) {
-  //   return (
-  //     <MetadataWell key={schema.key} schema={schema} value={value} setEdit={setEdit} entityMetadata={entityMetadata} />
-  //   )
-  // }
 
   return (
     <div className="mercoa-col-span-full">
@@ -2383,17 +2364,14 @@ function MetadataCombobox({
   value?: string
   values: string[]
 }) {
-  let comboboxValue: string | string[] | undefined = value
-  if (schema.allowMultiple) {
-    // Metadata is stored as a comma separated string, but comboboxes expect an array
-    if (Array.isArray(value)) comboboxValue = value
-    else comboboxValue = value?.split(',')
-  }
+  const [options, setOptions] = useState<Array<{ disabled: boolean; value: any }>>([])
+  const [valueState, setValueState] = useState<string | string[]>()
 
-  if (schema.type === Mercoa.MetadataType.KeyValue) {
-    return (
-      <MercoaCombobox
-        options={values.map((value) => {
+  // Get Options
+  useEffect(() => {
+    if (schema.type === Mercoa.MetadataType.KeyValue) {
+      setOptions(
+        values.map((value) => {
           let parsedValue = {
             key: '',
             value: '',
@@ -2406,12 +2384,22 @@ function MetadataCombobox({
             console.error(e)
           }
           return { value: parsedValue, disabled: false }
-        })}
-        onChange={(value) => {
-          setValue(value.key)
-        }}
-        displayIndex="value"
-        value={dJSON.parse(
+        }),
+      )
+    } else {
+      setOptions(
+        values.map((value) => {
+          return { value: value, disabled: false }
+        }),
+      )
+    }
+  }, [values])
+
+  // Get Value
+  useEffect(() => {
+    if (schema.type === Mercoa.MetadataType.KeyValue) {
+      setValueState(
+        dJSON.parse(
           values.find((e) => {
             let parsedValue = {
               key: '',
@@ -2426,20 +2414,39 @@ function MetadataCombobox({
             }
             return parsedValue?.key === `${value ?? ''}`
           }) ?? '{}',
-        )}
+        ),
+      )
+    } else {
+      let comboboxValue: string | string[] | undefined = value
+      if (schema.allowMultiple) {
+        // Metadata is stored as a comma separated string, but comboboxes expect an array
+        if (Array.isArray(value)) comboboxValue = value
+        else comboboxValue = value?.split(',')
+      }
+      setValueState(comboboxValue)
+    }
+  }, [value])
+
+  if (schema.type === Mercoa.MetadataType.KeyValue) {
+    return (
+      <MercoaCombobox
+        options={options}
+        onChange={(value) => {
+          setValue(value.key)
+        }}
+        displayIndex="value"
+        value={valueState}
         multiple={schema.allowMultiple}
       />
     )
   }
   return (
     <MercoaCombobox
-      options={values.map((value) => {
-        return { value: value, disabled: false }
-      })}
+      options={options}
       onChange={(value) => {
         setValue(value)
       }}
-      value={comboboxValue}
+      value={valueState}
       multiple={schema.allowMultiple}
       freeText
     />
@@ -2520,64 +2527,6 @@ function MetadataBoolean({
   )
 }
 
-function MetadataWell({
-  schema,
-  value,
-  setEdit,
-  entityMetadata,
-}: {
-  schema: Mercoa.MetadataSchema
-  value: string
-  setEdit: (e: any) => void
-  entityMetadata?: Mercoa.EntityMetadataResponse
-}) {
-  if (!schema) return <></>
-  if (schema.type === Mercoa.MetadataType.Date) {
-    if (dayjs(value).isValid()) value = dayjs(value).format('MMM DD, YYYY')
-  } else if (schema.type === Mercoa.MetadataType.Boolean) {
-    if (value === 'true') value = 'Yes'
-    if (value === 'false') value = 'No'
-  } else if (schema.type === Mercoa.MetadataType.KeyValue) {
-    entityMetadata?.value?.find((e: string) => {
-      let parsedValue = {
-        key: '',
-        value: '',
-      }
-      try {
-        parsedValue = dJSON.parse(e) as { key: string; value: string }
-        parsedValue.value = `${parsedValue.value}`
-        parsedValue.key = `${parsedValue.key}`
-      } catch (e) {
-        console.error(e)
-      }
-
-      if (parsedValue?.key === value) {
-        value = parsedValue.value
-        return true
-      }
-    })
-  }
-  return (
-    <div className="mercoa-flex mercoa-items-center">
-      <div className="mercoa-flex-auto">
-        <div className={'mercoa-flex mercoa-items-center mercoa-rounded-md'}>
-          <div className="mercoa-flex-auto mercoa-p-3">
-            <div className={'mercoa-text-sm mercoa-font-medium mercoa-text-grey-900'}>{schema.displayName}</div>
-            <div className="mercoa-text-sm mercoa-text-gray-500">{value}</div>
-          </div>
-          <button
-            type="button"
-            onClick={setEdit}
-            className="mercoa-mx-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75 mercoa-cursor-pointer "
-          >
-            <PencilSquareIcon className="mercoa-w-5 mercoa-h-5" />
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // End Metadata
 
 // Line Items
@@ -2608,9 +2557,10 @@ function LineItems({
   paymentSource?: Mercoa.PaymentMethodResponse
   hasDocument: boolean
   width: number
-  calculateTotalAmountFromLineItems: () => void
+  calculateTotalAmountFromLineItems: (lineItems: Mercoa.InvoiceLineItemRequest[]) => void
 }) {
   const mercoaSession = useMercoaSession()
+  const lineItemsWatch = watch('lineItems')
   return (
     <div className="mercoa-grid mercoa-grid-cols-1 mercoa-gap-x-6 mercoa-gap-y-4">
       {/* HEADER */}
@@ -2716,7 +2666,7 @@ function LineItems({
                       onClick={(e) => {
                         e.stopPropagation()
                         e.preventDefault()
-                        calculateTotalAmountFromLineItems()
+                        calculateTotalAmountFromLineItems(lineItemsWatch)
                       }}
                       type="button"
                     >

@@ -451,7 +451,7 @@ function InvoiceInboxTable({
   search,
   onClick,
 }: {
-  status: Mercoa.InvoiceStatus[]
+  status: Mercoa.InvoiceStatus
   search: string
   onClick?: (invoice: Mercoa.InvoiceResponse) => any
 }) {
@@ -463,6 +463,7 @@ function InvoiceInboxTable({
   const [hasMore, setHasMore] = useState<boolean>(true)
   const [count, setCount] = useState<number>(0)
   const [dataLoaded, setDataLoaded] = useState<boolean>(false)
+  const [currentStatus, setCurrentStatus] = useState<Mercoa.InvoiceStatus>(status)
 
   const [startingAfter, setStartingAfter] = useState<string[]>([])
   const [resultsPerPage, setResultsPerPage] = useState<number>(20)
@@ -635,7 +636,7 @@ function InvoiceInboxTable({
     setDataLoaded(false)
     mercoaSession.client?.entity.invoice
       .find(mercoaSession.entity.id, {
-        status,
+        status: currentStatus,
         search,
         orderBy,
         orderDirection,
@@ -658,7 +659,7 @@ function InvoiceInboxTable({
     mercoaSession.token,
     mercoaSession.entity,
     mercoaSession.refreshId,
-    status,
+    currentStatus,
     search,
     orderBy,
     orderDirection,
@@ -666,11 +667,14 @@ function InvoiceInboxTable({
     resultsPerPage,
   ])
   useEffect(() => {
-    // hack to avoid having to implement debounce for search feature
-    setDataLoaded(false)
-    setStartingAfter([])
-    setPage(1)
-    setCount(0)
+    if (status !== currentStatus) {
+      console.log('status changed', status)
+      setCurrentStatus(status)
+      setDataLoaded(false)
+      setStartingAfter([])
+      setPage(1)
+      setCount(0)
+    }
   }, [status])
 
   if (!dataLoaded) {
@@ -688,7 +692,7 @@ function InvoiceInboxTable({
           <div className="mercoa-min-h-[600px]">
             <div className="mercoa-relative">
               {/* ******** BULK ACTIONS ******** */}
-              {status.some((status) => status === Mercoa.InvoiceStatus.Approved) && selectedInvoices.length > 0 && (
+              {currentStatus === Mercoa.InvoiceStatus.Approved && selectedInvoices.length > 0 && (
                 <div className="mercoa-absolute mercoa-left-14 mercoa-top-0 mercoa-flex mercoa-h-12 mercoa-items-center mercoa-space-x-3 mercoa-bg-white sm:mercoa-left-12">
                   <button
                     type="button"
@@ -705,7 +709,7 @@ function InvoiceInboxTable({
                 <thead>
                   <tr>
                     {/* ******** CHECK BOX HEADER ******** */}
-                    {status.some((status) => status === Mercoa.InvoiceStatus.Approved) && (
+                    {currentStatus === Mercoa.InvoiceStatus.Approved && (
                       <th scope="col" className="mercoa-relative mercoa-px-7 sm:mercoa-w-12 sm:mercoa-px-6">
                         <input
                           type="checkbox"
@@ -778,12 +782,9 @@ function InvoiceInboxTable({
                     >
                       Status
                     </th>
-                    {status.some(
-                      (status) =>
-                        status === Mercoa.InvoiceStatus.Scheduled ||
-                        status === Mercoa.InvoiceStatus.Pending ||
-                        status === Mercoa.InvoiceStatus.Paid,
-                    ) && (
+                    {(currentStatus === Mercoa.InvoiceStatus.Scheduled ||
+                      currentStatus === Mercoa.InvoiceStatus.Pending ||
+                      currentStatus === Mercoa.InvoiceStatus.Paid) && (
                       <th
                         scope="col"
                         className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 group mercoa-inline-flex mercoa-items-center"
@@ -805,7 +806,7 @@ function InvoiceInboxTable({
                       )}
                     >
                       {/* ******** CHECK BOX ******** */}
-                      {status.some((status) => status === Mercoa.InvoiceStatus.Approved) && (
+                      {currentStatus === Mercoa.InvoiceStatus.Approved && (
                         <td className="mercoa-relative mercoa-px-7 sm:mercoa-w-12 sm:mercoa-px-6">
                           {selectedInvoices.includes(invoice) && (
                             <div className="mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-w-0.5 mercoa-bg-mercoa-primary" />
@@ -870,12 +871,9 @@ function InvoiceInboxTable({
                       >
                         <InvoiceStatusPill invoice={invoice} />
                       </td>
-                      {status.some(
-                        (status) =>
-                          status === Mercoa.InvoiceStatus.Scheduled ||
-                          status === Mercoa.InvoiceStatus.Pending ||
-                          status === Mercoa.InvoiceStatus.Paid,
-                      ) &&
+                      {(currentStatus === Mercoa.InvoiceStatus.Scheduled ||
+                        currentStatus === Mercoa.InvoiceStatus.Pending ||
+                        currentStatus === Mercoa.InvoiceStatus.Paid) &&
                         invoice.deductionDate && (
                           <td
                             className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-hidden lg:mercoa-table-cell"
@@ -1069,7 +1067,6 @@ export function InvoiceInbox({
 
   useEffect(() => {
     if (!Array.isArray(approvalPolicies)) return
-    console.log(approvalPolicies)
     if (statuses) {
       setTabs(statuses)
     } else if (!approvalPolicies || approvalPolicies?.length < 1) {
@@ -1229,7 +1226,7 @@ export function InvoiceInbox({
         />
       </div>
       {selectedTab === Mercoa.InvoiceStatus.New && <ApprovalsTable search={search} onClick={onSelectInvoice} />}
-      <InvoiceInboxTable status={[selectedTab]} search={search} onClick={onSelectInvoice} />
+      <InvoiceInboxTable status={selectedTab} search={search} onClick={onSelectInvoice} />
     </div>
   )
 }

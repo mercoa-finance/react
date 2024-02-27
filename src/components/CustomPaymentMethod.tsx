@@ -6,7 +6,7 @@ import { usePlacesWidget } from 'react-google-autocomplete'
 import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import InputMask from 'react-input-mask'
 import { capitalize } from '../lib/lib'
-import { DefaultPaymentMethodIndicator, LoadingSpinnerIcon, useMercoaSession } from './index'
+import { DefaultPaymentMethodIndicator, LoadingSpinnerIcon, PaymentMethodList, useMercoaSession } from './index'
 
 export function CustomPaymentMethod({
   children,
@@ -19,14 +19,14 @@ export function CustomPaymentMethod({
   showEdit?: boolean
   schema?: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
-  const [paymentMethods, setPaymentMethods] = useState<Array<Mercoa.CustomPaymentMethodResponse>>()
+  const [paymentMethods, setPaymentMethods] = useState<Array<Mercoa.PaymentMethodResponse.Custom>>()
   const [showDialog, setShowDialog] = useState(false)
 
   const mercoaSession = useMercoaSession()
   useEffect(() => {
     if (mercoaSession.token && mercoaSession.entity?.id) {
       mercoaSession.client?.entity.paymentMethod.getAll(mercoaSession.entity?.id, { type: 'custom' }).then((resp) => {
-        setPaymentMethods(resp.map((e) => e as Mercoa.CustomPaymentMethodResponse))
+        setPaymentMethods(resp.map((e) => e as Mercoa.PaymentMethodResponse.Custom))
       })
     }
   }, [mercoaSession.entity?.id, mercoaSession.token, showDialog, mercoaSession.refreshId])
@@ -45,12 +45,12 @@ export function CustomPaymentMethod({
             <LoadingSpinnerIcon />
           </div>
         )}
-        {paymentMethods &&
-          paymentMethods?.map((account) => (
-            <div className="mercoa-mt-2" key={account.id}>
-              <CustomPaymentMethodComponent account={account} onSelect={onSelect} schema={schema} showEdit={showEdit} />
-            </div>
-          ))}
+        <PaymentMethodList accounts={paymentMethods} showEdit={showEdit}>
+          {(account: Mercoa.PaymentMethodResponse.Custom) => (
+            <CustomPaymentMethodComponent account={account} onSelect={onSelect} schema={schema} showEdit={showEdit} />
+          )}
+        </PaymentMethodList>
+        {paymentMethods && paymentMethods?.map((account) => <div className="mercoa-mt-2" key={account.id}></div>)}
       </>
     )
   }
@@ -103,7 +103,7 @@ export function CustomPaymentMethodComponent({
           </div>
         </div>
         {showEdit && (
-          <div className="mercoa-flex mercoa-cursor-pointer ">
+          <div className="mercoa-flex">
             <DefaultPaymentMethodIndicator paymentMethod={account} />
           </div>
         )}

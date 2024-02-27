@@ -2,7 +2,13 @@ import { CreditCardIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
 import { ReactNode, useEffect, useState } from 'react'
 import { capitalize } from '../lib/lib'
-import { AddDialog, DefaultPaymentMethodIndicator, LoadingSpinnerIcon, useMercoaSession } from './index'
+import {
+  AddDialog,
+  DefaultPaymentMethodIndicator,
+  LoadingSpinnerIcon,
+  PaymentMethodList,
+  useMercoaSession,
+} from './index'
 
 const moovCssVariables: any = {
   '--moov-color-background': '#FFFFFF',
@@ -66,12 +72,11 @@ export function CreditCards({
             <LoadingSpinnerIcon />
           </div>
         )}
-        {cards &&
-          cards.map((account) => (
-            <div className="mercoa-mt-2" key={account.id}>
-              <CreditCardComponent account={account} onSelect={onSelect} showEdit={showEdit} />
-            </div>
-          ))}
+        <PaymentMethodList accounts={cards} showEdit={showEdit}>
+          {(account: Mercoa.PaymentMethodResponse.Card) => (
+            <CreditCardComponent account={account} onSelect={onSelect} showEdit={showEdit} />
+          )}
+        </PaymentMethodList>
         {cards && showAdd && (
           <div className="mercoa-mt-2">
             <AddDialog
@@ -222,7 +227,7 @@ export function CreditCardComponent({
           </div>
         </div>
         {showEdit && (
-          <div className="mercoa-flex mercoa-cursor-pointer ">
+          <div className="mercoa-flex">
             <DefaultPaymentMethodIndicator paymentMethod={account} />
           </div>
         )}

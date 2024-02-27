@@ -194,7 +194,10 @@ export function EntityPortal({ token }: { token: string }) {
             </>
           ) : (
             <MercoaButton
-              onClick={() => setScreen('inbox')}
+              onClick={() => {
+                mercoaSession.refresh()
+                setScreen('inbox')
+              }}
               type="button"
               isEmphasized={false}
               className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
@@ -280,7 +283,7 @@ export function EntityPortal({ token }: { token: string }) {
           )}
         </div>
       </div>
-      {screen === 'inbox' && (
+      <div className={screen === 'inbox' ? '' : 'mercoa-hidden'}>
         <InvoiceInbox
           statuses={tokenOptions?.invoice?.status}
           onSelectInvoice={(invoice) => {
@@ -288,7 +291,7 @@ export function EntityPortal({ token }: { token: string }) {
             setScreen('invoice')
           }}
         />
-      )}
+      </div>
       {screen === 'payments' && (
         <div>
           {mercoaSession.organization?.paymentMethods?.payerPayments?.find(
@@ -363,8 +366,8 @@ export function EntityPortal({ token }: { token: string }) {
           invoice={invoice}
           onRedirect={(invoice) => {
             if (!invoice) {
+              mercoaSession.refresh()
               setScreen('inbox')
-              return
             }
           }}
         />

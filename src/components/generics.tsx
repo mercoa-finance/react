@@ -1,9 +1,17 @@
 import { Combobox, Dialog, Listbox, Transition } from '@headlessui/react'
-import { CheckIcon, ChevronDownIcon, ChevronUpDownIcon, ChevronUpIcon, MinusIcon } from '@heroicons/react/24/outline'
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpDownIcon,
+  ChevronUpIcon,
+  MinusIcon,
+  TrashIcon,
+} from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
 import { jwtDecode } from 'jwt-decode'
 import debounce from 'lodash/debounce'
 import { Fragment, HTMLAttributes, ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import { toast } from 'react-toastify'
 import { TokenOptions } from '.'
 import { classNames, getEndpoint } from '../lib/lib'
 import { MercoaSession, useMercoaSession } from './Mercoa'
@@ -409,9 +417,11 @@ export function DefaultPaymentMethodIndicator({
   return (
     <>
       {paymentMethod?.isDefaultSource ? (
-        <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-green-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-green-800 mercoa-mr-2">
-          Default Payment Method
-        </span>
+        <Tooltip title="This is the default payment method for your account">
+          <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-green-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-green-800">
+            Default
+          </span>
+        </Tooltip>
       ) : (
         <MercoaButton
           isEmphasized={false}
@@ -432,6 +442,50 @@ export function DefaultPaymentMethodIndicator({
           Make Default
         </MercoaButton>
       )}
+    </>
+  )
+}
+
+export function PaymentMethodList({
+  accounts,
+  showEdit,
+  children,
+}: {
+  accounts?: Mercoa.PaymentMethodResponse[]
+  showEdit?: boolean
+  children: Function
+}) {
+  const mercoaSession = useMercoaSession()
+  return (
+    <>
+      {accounts &&
+        accounts.map((account) => (
+          <div className="mercoa-mt-2 mercoa-flex" key={account.id}>
+            <div className="mercoa-flex-grow">{children(account)}</div>
+            {showEdit && (
+              <button
+                onClick={() => {
+                  const del = confirm('Are you sure you want to remove this account? This action cannot be undone.')
+                  if (del && mercoaSession.token && mercoaSession.entity?.id && account.id) {
+                    try {
+                      mercoaSession.client?.entity.paymentMethod.delete(mercoaSession.entity?.id, account.id)
+                      toast.success('Account removed')
+                    } catch (e: any) {
+                      toast.error('Error removing account')
+                      console.error(e.body)
+                    }
+                    mercoaSession.refresh()
+                  }
+                }}
+                className="mercoa-ml-2 mercoa-text-red-500 hover:mercoa-text-red-700"
+              >
+                <Tooltip title="Remove Account">
+                  <TrashIcon className="mercoa-h-5 mercoa-w-5" />
+                </Tooltip>
+              </button>
+            )}
+          </div>
+        ))}
     </>
   )
 }
