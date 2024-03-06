@@ -435,7 +435,15 @@ export function BankAccountComponent({
   }
 }
 
-export function AddBankAccountDialog({ entityId, onSelect }: { entityId?: Mercoa.EntityId; onSelect?: Function }) {
+export function AddBankAccountDialog({
+  entityId,
+  onSelect,
+  bankAccount,
+}: {
+  entityId?: Mercoa.EntityId
+  onSelect?: Function
+  bankAccount?: Mercoa.BankAccountRequest
+}) {
   const [showDialog, setShowDialog] = useState(false)
 
   const onClose = (account?: Mercoa.PaymentMethodResponse) => {
@@ -454,6 +462,7 @@ export function AddBankAccountDialog({ entityId, onSelect }: { entityId?: Mercoa
               onClose(data)
             }}
             entityId={entityId}
+            bankAccount={bankAccount}
           />
         }
       />
@@ -467,11 +476,13 @@ export function AddBankViaPlaidOrManual({
   actions,
   onSubmit,
   entityId,
+  bankAccount,
 }: {
   title?: ReactNode
   actions?: ReactNode
   onSubmit: (data: Mercoa.PaymentMethodResponse) => void
   entityId?: Mercoa.EntityId
+  bankAccount?: Mercoa.BankAccountRequest
 }) {
   const mercoaSession = useMercoaSession()
   const [showManual, setShowManual] = useState(false)
@@ -536,7 +547,15 @@ export function AddBankViaPlaidOrManual({
   }, [linkToken, ready, open])
 
   if (showManual) {
-    return <AddBankAccount title={title} actions={actions} onSubmit={onSubmit} entityId={entityId} />
+    return (
+      <AddBankAccount
+        title={title}
+        actions={actions}
+        onSubmit={onSubmit}
+        entityId={entityId}
+        bankAccount={bankAccount}
+      />
+    )
   } else if (!linkToken || !ready) {
     return (
       <div className="mercoa-p-9 mercoa-text-center">

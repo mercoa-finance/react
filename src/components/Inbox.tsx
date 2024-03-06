@@ -3,17 +3,14 @@ import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import Papa from 'papaparse'
-import { ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import DatePicker from 'react-datepicker'
-import { pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
 import { TableNavigation, TableOrderHeader, useMercoaSession } from '.'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { classNames } from '../lib/lib'
 import { isWeekday } from '../lib/scheduling'
 import { DebouncedSearch, LoadingSpinner, MercoaButton, Skeleton, StatCard } from './index'
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
 
 function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoice: Mercoa.InvoiceResponse) => any }) {
   const mercoaSession = useMercoaSession()
@@ -381,79 +378,92 @@ function ApprovalsTable({ search, onClick }: { search: string; onClick?: (invoic
     </>
   )
 }
-
 function SchedulePaymentModal({
-  show,
-  closeModal,
+  open,
+  onClose,
   setDate,
 }: {
-  show: boolean
-  closeModal: () => void
-  setDate: Function
+  open: boolean
+  onClose: () => void
+  setDate: (date: Date) => void
 }) {
+  const [selectedDate, setSelectedDate] = useState<Date | null>()
+
   return (
-    <Dialog as="div" open={show} onClose={closeModal} className="mercoa-relative mercoa-z-10">
+    <Dialog as="div" open={open} onClose={onClose} className="mercoa-relative mercoa-z-10">
       {/* Backdrop */}
       <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-black/30" aria-hidden="true" />
       {/* Full-screen  mercoa-container to center the panel */}
       <div className="mercoa-fixed mercoa-inset-0 mercoa-overflow-y-auto">
         <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
-          <DatePickerPanel closeModal={closeModal} setDate={setDate} />
+          <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-shadow-xl mercoa-transition-all sm:mercoa-p-6">
+            <Dialog.Title className="mercoa-text-lg mercoa-font-semibold">
+              When should these payments be scheduled?
+            </Dialog.Title>
+            <div className="mercoa-flex mercoa-mt-5">
+              <DatePicker
+                className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+                placeholderText="Select Payment Date"
+                onChange={(date) => setSelectedDate(date)}
+                selected={selectedDate}
+                minDate={dayjs().add(1, 'day').toDate()}
+                filterDate={isWeekday}
+              />
+
+              <MercoaButton
+                type="button"
+                className="mercoa-ml-2"
+                isEmphasized
+                onClick={() => {
+                  if (selectedDate) setDate(selectedDate)
+                  onClose()
+                }}
+                disabled={!selectedDate}
+              >
+                Schedule Payments
+              </MercoaButton>
+            </div>
+          </Dialog.Panel>
         </div>
       </div>
     </Dialog>
   )
 }
 
-function DatePickerPanel({ closeModal, setDate }: { closeModal: () => void; setDate: Function }) {
-  const [selectedDate, setSelectedDate] = useState<Date | null>()
-
-  return (
-    <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pb-4 mercoa-pt-5 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-sm sm:mercoa-p-6">
-      <div>
-        <div className="mercoa-mt-3 mercoa-text-center sm:mercoa-mt-5">
-          <Dialog.Title as="h3" className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-900">
-            When should these payments be scheduled?
-          </Dialog.Title>
-          <div className="mercoa-mt-2">
-            <DatePicker
-              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-              placeholderText="Select deduction date"
-              onChange={(date) => setSelectedDate(date)}
-              selected={selectedDate}
-              minDate={dayjs().add(1, 'day').toDate()}
-              filterDate={isWeekday}
-            />
-          </div>
-        </div>
-      </div>
-      <div className="mercoa-mt-5 sm:mercoa-mt-6">
-        <MercoaButton
-          type="button"
-          className="mercoa-inline-flex mercoa-w-full mercoa-justify-center "
-          isEmphasized
-          onClick={() => {
-            closeModal()
-            console.log(selectedDate)
-            setDate(selectedDate)
-          }}
-          disabled={!selectedDate}
-        >
-          Schedule Payments
-        </MercoaButton>
-      </div>
-    </Dialog.Panel>
-  )
-}
-
-function InvoiceInboxTable({
-  status,
+export function InvoiceTable({
+  statuses,
   search,
   onClick,
+  children,
 }: {
-  status: Mercoa.InvoiceStatus
+  statuses: Mercoa.InvoiceStatus[]
   search: string
   onClick?: (invoice: Mercoa.InvoiceResponse) => any
+  children?: ({
+    dataLoaded,
+    invoices,
+    hasNext,
+    getNext,
+    hasPrevious,
+    getPrevious,
+    resultsPerPage,
+    setResultsPerPage,
+    selectedInvoiceStatuses,
+    setSelectedInvoiceStatues,
+    downloadCSV,
+  }: {
+    dataLoaded: boolean
+    invoices: Mercoa.InvoiceResponse[]
+    hasNext: boolean
+    getNext: () => void
+    hasPrevious: boolean
+    getPrevious: () => void
+    resultsPerPage: number
+    setResultsPerPage: (value: number) => void
+    selectedInvoiceStatuses: Mercoa.InvoiceStatus[]
+    setSelectedInvoiceStatues: (statuses: Mercoa.InvoiceStatus[]) => void
+    downloadCSV: () => void
+  }) => ReactElement | null
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -463,7 +473,7 @@ function InvoiceInboxTable({
   const [hasMore, setHasMore] = useState<boolean>(true)
   const [count, setCount] = useState<number>(0)
   const [dataLoaded, setDataLoaded] = useState<boolean>(false)
-  const [currentStatus, setCurrentStatus] = useState<Mercoa.InvoiceStatus>(status)
+  const [currentStatuses, setCurrentStatuses] = useState<Mercoa.InvoiceStatus[]>(statuses)
 
   const [startingAfter, setStartingAfter] = useState<string[]>([])
   const [resultsPerPage, setResultsPerPage] = useState<number>(20)
@@ -476,6 +486,8 @@ function InvoiceInboxTable({
 
   const [showBatchScheduleModal, setShowBatchScheduleModal] = useState(false)
 
+  const [showOnlyInvoicesThatUserNeedsToApprove, setShowOnlyInvoicesThatUserNeedsToApprove] = useState(false)
+
   useLayoutEffect(() => {
     const isIndeterminate = selectedInvoices.length > 0 && selectedInvoices.length < (invoices ? invoices.length : 0)
     setChecked(selectedInvoices.length === (invoices ? invoices.length : 0))
@@ -486,71 +498,22 @@ function InvoiceInboxTable({
   }, [selectedInvoices, invoices])
 
   function toggleAll() {
-    // Calm TS
-    if (!invoices) {
-      return
-    }
-    setSelectedInvoices(checked || indeterminate ? [] : invoices)
+    setSelectedInvoices(checked || indeterminate ? [] : invoices ?? [])
     setChecked(!checked && !indeterminate)
     setIndeterminate(false)
   }
 
-  const showModal = () => {
-    setShowBatchScheduleModal(true)
-  }
-  const closeModal = () => {
-    setShowBatchScheduleModal(false)
-  }
-
   async function handleSchedulePayment(deductionDate: Date) {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
-
-    function canInvoiceBeScheduled(invoice: Mercoa.InvoiceResponse) {
-      if (!invoice.vendor) {
-        return false
-      }
-      const vendor = invoice.vendor
-
-      let canInvoiceBeNew =
-        !!invoice.amount &&
-        !!invoice.dueDate &&
-        !!invoice.currency &&
-        !!invoice.vendorId &&
-        !!invoice.paymentSourceId &&
-        !!vendor.name
-
-      if (!mercoaSession.iframeOptions?.options?.vendors?.disableCreation) {
-        canInvoiceBeNew =
-          canInvoiceBeNew &&
-          !!vendor.email &&
-          !!(
-            vendor.accountType === Mercoa.AccountType.Individual ||
-            (vendor.accountType === Mercoa.AccountType.Business &&
-              (!!vendor.profile.business?.website || !!vendor.profile.business?.description))
-          )
-      }
-
-      const canInvoiceBeScheduled =
-        canInvoiceBeNew && invoice.status === Mercoa.InvoiceStatus.Approved && !!invoice.paymentDestinationId
-      return canInvoiceBeScheduled
-    }
-
     let anySuccessFlag = false
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
-          if (canInvoiceBeScheduled(invoice)) {
-            const invoiceData: Mercoa.InvoiceRequest = {
-              status: Mercoa.InvoiceStatus.Scheduled,
-              deductionDate: deductionDate,
-            }
-
-            await mercoaSession.client?.invoice.update(invoice.id, invoiceData)
-            anySuccessFlag = true
-          } else {
-            console.error('Invoice does not have all the information needed to schedule payment')
-            console.log('Invalid invoice:', { invoice })
-          }
+          await mercoaSession.client?.invoice.update(invoice.id, {
+            status: Mercoa.InvoiceStatus.Scheduled,
+            deductionDate: deductionDate,
+          })
+          anySuccessFlag = true
         } catch (e) {
           console.error('Error updating invoice: ', e)
           console.log('Errored invoice: ', { invoice })
@@ -561,6 +524,128 @@ function InvoiceInboxTable({
       toast.success('Payment Scheduled')
     } else {
       toast.error('Error scheduling payment')
+    }
+    mercoaSession.refresh()
+  }
+
+  async function handleDelete() {
+    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    let anySuccessFlag = false
+    await Promise.all(
+      selectedInvoices.map(async (invoice) => {
+        try {
+          await mercoaSession.client?.invoice.delete(invoice.id)
+          anySuccessFlag = true
+        } catch (e) {
+          console.error('Error deleting invoice: ', e)
+          console.log('Errored invoice: ', { invoice })
+        }
+      }),
+    )
+    if (anySuccessFlag) {
+      toast.success('Invoices Deleted')
+    } else {
+      toast.error('Error deleting invoices')
+    }
+    mercoaSession.refresh()
+  }
+
+  async function handleArchive() {
+    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    let anySuccessFlag = false
+    await Promise.all(
+      selectedInvoices.map(async (invoice) => {
+        try {
+          await mercoaSession.client?.invoice.update(invoice.id, {
+            status: Mercoa.InvoiceStatus.Archived,
+          })
+          anySuccessFlag = true
+        } catch (e) {
+          console.error('Error archiving invoice: ', e)
+          console.log('Errored invoice: ', { invoice })
+        }
+      }),
+    )
+    if (anySuccessFlag) {
+      toast.success('Invoices Archived')
+    } else {
+      toast.error('Error archiving invoices')
+    }
+    mercoaSession.refresh()
+  }
+
+  async function handleCancel() {
+    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    let anySuccessFlag = false
+    await Promise.all(
+      selectedInvoices.map(async (invoice) => {
+        try {
+          await mercoaSession.client?.invoice.update(invoice.id, {
+            status: Mercoa.InvoiceStatus.Canceled,
+          })
+          anySuccessFlag = true
+        } catch (e) {
+          console.error('Error cancelling invoice: ', e)
+          console.log('Errored invoice: ', { invoice })
+        }
+      }),
+    )
+    if (anySuccessFlag) {
+      toast.success('Payments Cancelled')
+    } else {
+      toast.error('Error cancelling payments')
+    }
+    mercoaSession.refresh()
+  }
+
+  async function handleApprove() {
+    if (!mercoaSession.token || !mercoaSession.entity?.id || !mercoaSession.user) return
+
+    let anySuccessFlag = false
+    await Promise.all(
+      selectedInvoices.map(async (invoice) => {
+        try {
+          const resp = await mercoaSession.client?.invoice.get(invoice.id)
+          if (resp?.status != Mercoa.InvoiceStatus.New) {
+            anySuccessFlag = true
+            return
+          }
+          await mercoaSession.client?.invoice.approval.approve(invoice.id, { userId: mercoaSession.user?.id! })
+          anySuccessFlag = true
+        } catch (e) {
+          console.error('Error approving invoice: ', e)
+          console.log('Errored invoice: ', { invoice })
+        }
+      }),
+    )
+    if (anySuccessFlag) {
+      toast.success('Approved')
+    }
+    mercoaSession.refresh()
+  }
+
+  async function handleReject() {
+    if (!mercoaSession.token || !mercoaSession.entity?.id || !mercoaSession.user) return
+
+    let anySuccessFlag = false
+    await Promise.all(
+      selectedInvoices.map(async (invoice) => {
+        try {
+          const resp = await mercoaSession.client?.invoice.get(invoice.id)
+          if (resp?.status != Mercoa.InvoiceStatus.New) {
+            anySuccessFlag = true
+            return
+          }
+          await mercoaSession.client?.invoice.approval.reject(invoice.id, { userId: mercoaSession.user?.id! })
+          anySuccessFlag = true
+        } catch (e) {
+          console.error('Error rejecting invoice: ', e)
+          console.log('Errored invoice: ', { invoice })
+        }
+      }),
+    )
+    if (anySuccessFlag) {
+      toast.success('Rejected')
     }
     mercoaSession.refresh()
   }
@@ -576,7 +661,7 @@ function InvoiceInboxTable({
       if (!mercoaSession.token || !mercoaSession.entity?.id) return
 
       const response = await mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, {
-        status,
+        status: currentStatuses,
         limit: 100,
         startingAfter,
         excludeReceivables: true,
@@ -629,6 +714,7 @@ function InvoiceInboxTable({
     }
   }
 
+  // Load invoices
   useEffect(() => {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
     let isCurrent = true
@@ -636,10 +722,13 @@ function InvoiceInboxTable({
     setDataLoaded(false)
     mercoaSession.client?.entity.invoice
       .find(mercoaSession.entity.id, {
-        status: currentStatus,
+        status: currentStatuses,
         search,
         orderBy,
         orderDirection,
+        ...(showOnlyInvoicesThatUserNeedsToApprove && {
+          approverId: mercoaSession.user?.id,
+        }),
         limit: resultsPerPage,
         startingAfter: startingAfter[startingAfter.length - 1],
         excludeReceivables: true,
@@ -659,23 +748,49 @@ function InvoiceInboxTable({
     mercoaSession.token,
     mercoaSession.entity,
     mercoaSession.refreshId,
-    currentStatus,
+    currentStatuses,
     search,
     orderBy,
     orderDirection,
     startingAfter,
     resultsPerPage,
+    showOnlyInvoicesThatUserNeedsToApprove,
   ])
+
+  // Refresh when selected statuses changes
   useEffect(() => {
-    if (status !== currentStatus) {
-      console.log('status changed', status)
-      setCurrentStatus(status)
+    if (statuses.some((status) => currentStatuses.indexOf(status) < 0)) {
+      setCurrentStatuses(statuses)
+      setShowOnlyInvoicesThatUserNeedsToApprove(false)
       setDataLoaded(false)
       setStartingAfter([])
       setPage(1)
       setCount(0)
     }
-  }, [status])
+  }, [statuses])
+
+  if (children) {
+    return children({
+      dataLoaded,
+      invoices: invoices || [],
+      hasNext: hasMore,
+      getNext: () => {
+        if (!invoices) return
+        setPage(page + 1)
+        setStartingAfter([...startingAfter, invoices[invoices.length - 1].id])
+      },
+      hasPrevious: page !== 1,
+      getPrevious: () => {
+        setPage(Math.max(1, page - 1))
+        setStartingAfter(startingAfter.slice(0, startingAfter.length - 1))
+      },
+      resultsPerPage,
+      setResultsPerPage,
+      selectedInvoiceStatuses: currentStatuses,
+      setSelectedInvoiceStatues: setCurrentStatuses,
+      downloadCSV: downloadAsCSV,
+    })
+  }
 
   if (!dataLoaded) {
     return (
@@ -690,39 +805,133 @@ function InvoiceInboxTable({
       {mercoaSession.entity && !!invoices ? (
         <>
           <div className="mercoa-min-h-[600px]">
+            {/* create checkbox that toggles invoices assigned to me */}
+            {currentStatuses.includes(Mercoa.InvoiceStatus.New) && (
+              <div className="mercoa-flex mercoa-items-center mercoa-justify-start mercoa-my-4">
+                <div className="mercoa-flex mercoa-items-center mercoa-font-semibold mercoa-text-gray-600">
+                  <input
+                    id="showOnlyInvoicesThatUserNeedsToApprove"
+                    type="checkbox"
+                    className="mercoa-mr-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 focus:mercoa-ring-mercoa-primary mercoa-text-mercoa-primary-text mercoa-cursor-pointer"
+                    checked={showOnlyInvoicesThatUserNeedsToApprove}
+                    onChange={() => setShowOnlyInvoicesThatUserNeedsToApprove(!showOnlyInvoicesThatUserNeedsToApprove)}
+                  />
+                  <label htmlFor="showOnlyInvoicesThatUserNeedsToApprove" className="mercoa-cursor-pointer">
+                    Only show invoices that need my approval
+                  </label>
+                </div>
+              </div>
+            )}
             <div className="mercoa-relative">
               {/* ******** BULK ACTIONS ******** */}
-              {currentStatus === Mercoa.InvoiceStatus.Approved && selectedInvoices.length > 0 && (
-                <div className="mercoa-absolute mercoa-left-14 mercoa-top-0 mercoa-flex mercoa-h-12 mercoa-items-center mercoa-space-x-3 mercoa-bg-white sm:mercoa-left-12">
+              <div className="mercoa-absolute mercoa-left-14 mercoa-top-0 mercoa-flex mercoa-h-12 mercoa-items-center mercoa-space-x-3 mercoa-bg-white sm:mercoa-left-12">
+                {currentStatuses.includes(Mercoa.InvoiceStatus.Approved) && selectedInvoices.length > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
+                      onClick={() => setShowBatchScheduleModal(true)}
+                    >
+                      Schedule Payment
+                    </button>
+                    <SchedulePaymentModal
+                      open={showBatchScheduleModal}
+                      onClose={() => setShowBatchScheduleModal(false)}
+                      setDate={handleSchedulePayment}
+                    />
+                  </>
+                )}
+                {currentStatuses.includes(Mercoa.InvoiceStatus.New) && selectedInvoices.length > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
+                      onClick={handleApprove}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
+                      onClick={handleReject}
+                    >
+                      Reject
+                    </button>
+                  </>
+                )}
+                {currentStatuses.includes(Mercoa.InvoiceStatus.Draft) && selectedInvoices.length > 0 && (
                   <button
                     type="button"
                     className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
-                    onClick={showModal}
+                    onClick={() => {
+                      if (confirm('Are you sure you want to delete these invoices? This action cannot be undone.')) {
+                        handleDelete()
+                      }
+                    }}
                   >
-                    Schedule Payment
+                    Delete
                   </button>
-                </div>
-              )}
+                )}
+                {currentStatuses.includes(Mercoa.InvoiceStatus.Scheduled) && selectedInvoices.length > 0 && (
+                  <button
+                    type="button"
+                    className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
+                    onClick={() => {
+                      if (confirm('Are you sure you want to cancel these payments? This action cannot be undone.')) {
+                        handleCancel()
+                      }
+                    }}
+                  >
+                    Cancel Payment
+                  </button>
+                )}
+                {currentStatuses.some((e) =>
+                  [
+                    Mercoa.InvoiceStatus.Pending,
+                    Mercoa.InvoiceStatus.Paid,
+                    Mercoa.InvoiceStatus.Canceled,
+                    Mercoa.InvoiceStatus.Refused,
+                    Mercoa.InvoiceStatus.Failed,
+                    Mercoa.InvoiceStatus.New,
+                    Mercoa.InvoiceStatus.Approved,
+                  ].includes(e as any),
+                ) &&
+                  selectedInvoices.length > 0 && (
+                    <button
+                      type="button"
+                      className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
+                      onClick={() => {
+                        if (confirm('Are you sure you want to archive these invoices? This action cannot be undone.')) {
+                          handleArchive()
+                        }
+                      }}
+                    >
+                      Archive
+                    </button>
+                  )}
+              </div>
+
               {/* ******** TABLE ******** */}
               <table className="mercoa-min-w-full table-mercoa-fixed mercoa-divide-y mercoa-divide-gray-300 mercoa-mt-5">
                 {/* ******** COLUMN HEADERS ******** */}
                 <thead>
                   <tr>
                     {/* ******** CHECK BOX HEADER ******** */}
-                    {currentStatus === Mercoa.InvoiceStatus.Approved && (
-                      <th scope="col" className="mercoa-relative mercoa-px-7 sm:mercoa-w-12 sm:mercoa-px-6">
-                        <input
-                          type="checkbox"
-                          className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
-                          ref={checkbox}
-                          checked={checked}
-                          onChange={toggleAll}
-                        />
-                      </th>
-                    )}
+                    <th scope="col" className="mercoa-relative mercoa-px-7 sm:mercoa-w-12 sm:mercoa-px-6">
+                      <input
+                        type="checkbox"
+                        className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
+                        ref={checkbox}
+                        checked={checked}
+                        onChange={toggleAll}
+                      />
+                    </th>
+
                     <th
                       scope="col"
-                      className="mercoa-min-w-[12rem] mercoa-py-3.5 mercoa-pl-4 mercoa-pr-3 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 sm:mercoa-pl-3"
+                      className={`mercoa-min-w-[12rem] mercoa-py-3.5 mercoa-pl-4 mercoa-pr-3 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 sm:mercoa-pl-3 ${
+                        selectedInvoices.length > 0 ? 'mercoa-invisible' : ''
+                      }`}
                     >
                       <TableOrderHeader
                         title="Vendor"
@@ -782,9 +991,9 @@ function InvoiceInboxTable({
                     >
                       Status
                     </th>
-                    {(currentStatus === Mercoa.InvoiceStatus.Scheduled ||
-                      currentStatus === Mercoa.InvoiceStatus.Pending ||
-                      currentStatus === Mercoa.InvoiceStatus.Paid) && (
+                    {(currentStatuses.includes(Mercoa.InvoiceStatus.Scheduled) ||
+                      currentStatuses.includes(Mercoa.InvoiceStatus.Pending) ||
+                      currentStatuses.includes(Mercoa.InvoiceStatus.Paid)) && (
                       <th
                         scope="col"
                         className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 group mercoa-inline-flex mercoa-items-center"
@@ -806,26 +1015,25 @@ function InvoiceInboxTable({
                       )}
                     >
                       {/* ******** CHECK BOX ******** */}
-                      {currentStatus === Mercoa.InvoiceStatus.Approved && (
-                        <td className="mercoa-relative mercoa-px-7 sm:mercoa-w-12 sm:mercoa-px-6">
-                          {selectedInvoices.includes(invoice) && (
-                            <div className="mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-w-0.5 mercoa-bg-mercoa-primary" />
-                          )}
-                          <input
-                            type="checkbox"
-                            className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
-                            value={invoice.id}
-                            checked={selectedInvoices.includes(invoice)}
-                            onChange={(e) =>
-                              setSelectedInvoices(
-                                e.target.checked
-                                  ? [...selectedInvoices, invoice]
-                                  : selectedInvoices.filter((inv) => inv !== invoice),
-                              )
-                            }
-                          />
-                        </td>
-                      )}
+
+                      <td className="mercoa-relative mercoa-px-7 sm:mercoa-w-12 sm:mercoa-px-6">
+                        {selectedInvoices.includes(invoice) && (
+                          <div className="mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-w-0.5 mercoa-bg-mercoa-primary" />
+                        )}
+                        <input
+                          type="checkbox"
+                          className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
+                          value={invoice.id}
+                          checked={selectedInvoices.includes(invoice)}
+                          onChange={(e) =>
+                            setSelectedInvoices(
+                              e.target.checked
+                                ? [...selectedInvoices, invoice]
+                                : selectedInvoices.filter((inv) => inv !== invoice),
+                            )
+                          }
+                        />
+                      </td>
                       <td
                         className={classNames(
                           'mercoa-whitespace-nowrap mercoa-py-3 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-3',
@@ -853,7 +1061,20 @@ function InvoiceInboxTable({
                           if (onClick) onClick(invoice)
                         }}
                       >
-                        {dayjs(invoice.dueDate).format('MMM DD, YYYY')}
+                        {dayjs(invoice.dueDate).isBefore(dayjs().subtract(1, 'day')) &&
+                        currentStatuses.some((e) =>
+                          [
+                            Mercoa.InvoiceStatus.Draft,
+                            Mercoa.InvoiceStatus.New,
+                            Mercoa.InvoiceStatus.Approved,
+                          ].includes(e as any),
+                        ) ? (
+                          <span className="mercoa-p-1 mercoa-bg-red-50 mercoa-text-red-600 mercoa-rounded-md">
+                            {dayjs(invoice.dueDate).format('MMM DD, YYYY')}
+                          </span>
+                        ) : (
+                          dayjs(invoice.dueDate).format('MMM DD, YYYY')
+                        )}
                       </td>
                       <td
                         className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-text-gray-900"
@@ -871,9 +1092,9 @@ function InvoiceInboxTable({
                       >
                         <InvoiceStatusPill invoice={invoice} />
                       </td>
-                      {(currentStatus === Mercoa.InvoiceStatus.Scheduled ||
-                        currentStatus === Mercoa.InvoiceStatus.Pending ||
-                        currentStatus === Mercoa.InvoiceStatus.Paid) &&
+                      {(currentStatuses.includes(Mercoa.InvoiceStatus.Scheduled) ||
+                        currentStatuses.includes(Mercoa.InvoiceStatus.Pending) ||
+                        currentStatuses.includes(Mercoa.InvoiceStatus.Paid)) &&
                         invoice.deductionDate && (
                           <td
                             className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-3 mercoa-text-sm mercoa-hidden lg:mercoa-table-cell"
@@ -902,7 +1123,6 @@ function InvoiceInboxTable({
             setResultsPerPage={setResultsPerPage}
             downloadAll={downloadAsCSV}
           />
-          <SchedulePaymentModal show={showBatchScheduleModal} closeModal={closeModal} setDate={handleSchedulePayment} />
         </>
       ) : (
         <LoadingSpinner />
@@ -1014,25 +1234,11 @@ export function InvoiceInbox({
   selectedStatus,
   onSelectInvoice,
   onTabChange,
-  children,
 }: {
   statuses?: Array<Mercoa.InvoiceStatus>
   selectedStatus?: Mercoa.InvoiceStatus
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
   onTabChange?: (status: Mercoa.InvoiceStatus) => any
-  children?: ({
-    metrics,
-    statuses,
-    selectedStatus,
-    setSelectedStatus,
-    invoices,
-  }: {
-    metrics: { [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse[] } | undefined
-    statuses: Array<Mercoa.InvoiceStatus>
-    selectedStatus: Mercoa.InvoiceStatus
-    setSelectedStatus: (status: Mercoa.InvoiceStatus) => void
-    invoices: Array<Mercoa.InvoiceResponse>
-  }) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1226,7 +1432,7 @@ export function InvoiceInbox({
         />
       </div>
       {selectedTab === Mercoa.InvoiceStatus.New && <ApprovalsTable search={search} onClick={onSelectInvoice} />}
-      <InvoiceInboxTable status={selectedTab} search={search} onClick={onSelectInvoice} />
+      <InvoiceTable statuses={[selectedTab]} search={search} onClick={onSelectInvoice} />
     </div>
   )
 }

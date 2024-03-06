@@ -104,7 +104,15 @@ export function CheckComponent({
   }
 }
 
-export function AddCheckDialog({ entityId, onSelect }: { entityId?: Mercoa.EntityId; onSelect?: Function }) {
+export function AddCheckDialog({
+  entityId,
+  onSelect,
+  check,
+}: {
+  entityId?: Mercoa.EntityId
+  onSelect?: Function
+  check?: Mercoa.CheckRequest
+}) {
   const [showDialog, setShowDialog] = useState(false)
 
   const onClose = (account?: Mercoa.PaymentMethodResponse) => {
@@ -123,6 +131,7 @@ export function AddCheckDialog({ entityId, onSelect }: { entityId?: Mercoa.Entit
               onClose(data)
             }}
             entityId={entityId}
+            check={check}
           />
         }
       />

@@ -1,9 +1,9 @@
 import {
   ArrowLeftIcon,
-  BriefcaseIcon,
   BuildingLibraryIcon,
   ClockIcon,
   EnvelopeIcon,
+  IdentificationIcon,
   LockClosedIcon,
   LockOpenIcon,
   PlusIcon,
@@ -230,17 +230,6 @@ export function EntityPortal({ token }: { token: string }) {
               <span className="mercoa-hidden md:mercoa-inline-block">Representatives</span>
             </MercoaButton>
           )}
-          {tokenOptions?.pages?.counterparties && screen !== 'counterparties' && screen !== 'invoice' && (
-            <MercoaButton
-              onClick={() => setScreen('counterparties')}
-              type="button"
-              isEmphasized={false}
-              className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
-            >
-              <BriefcaseIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
-              <span className="mercoa-hidden md:mercoa-inline-block">Vendors</span>
-            </MercoaButton>
-          )}
           {tokenOptions?.pages?.approvals && screen !== 'approvals' && screen !== 'invoice' && (
             <MercoaButton
               onClick={() => setScreen('approvals')}
@@ -264,6 +253,20 @@ export function EntityPortal({ token }: { token: string }) {
               >
                 <BuildingLibraryIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
                 <span className="mercoa-hidden md:mercoa-inline-block">Payment Methods</span>
+              </MercoaButton>
+            )}
+
+          {mercoaSession.iframeOptions?.options?.pages?.counterparties &&
+            screen !== 'counterparties' &&
+            screen !== 'invoice' && (
+              <MercoaButton
+                onClick={() => setScreen('counterparties')}
+                type="button"
+                isEmphasized={false}
+                className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
+              >
+                <IdentificationIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+                <span className="mercoa-hidden md:mercoa-inline-block">Vendors</span>
               </MercoaButton>
             )}
 

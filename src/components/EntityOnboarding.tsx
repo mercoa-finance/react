@@ -961,7 +961,7 @@ export async function createOrUpdateEntity({
   mercoaClient,
 }: {
   entityId?: string
-  onClose?: Function
+  onClose?: (entity: Mercoa.EntityResponse) => void
   data: OnboardingFormData
   isPayee: boolean
   isPayor: boolean
@@ -1066,7 +1066,7 @@ export async function createOrUpdateEntity({
     } else {
       resp = await mercoaClient?.entity.create(postData)
     }
-    if (onClose) onClose(postData)
+    if (onClose) onClose(resp)
   } catch (e: any) {
     toast.error(`There was an error saving your data.\n Error: ${e.body}`)
     console.error(e)
@@ -1088,19 +1088,14 @@ export function EntityOnboardingButton({
   className?: string
   buttonText?: string
   title?: string
-  onClose?: Function
+  onClose?: (entity: Mercoa.EntityResponse) => void
   isPayee: boolean
   isPayor: boolean
 }) {
-  const [showAdd, setShowAddLocal] = useState(false)
+  const [showAdd, setShowAdd] = useState(false)
   const mercoaSession = useMercoaSession()
 
-  function setShowAdd(state: boolean) {
-    setShowAddLocal(state)
-    if (!state && onClose) onClose()
-  }
-
-  const { register, handleSubmit, watch, formState } = useForm({
+  const { register, handleSubmit, watch, formState, reset } = useForm({
     defaultValues: {
       accountType: Mercoa.AccountType.Business,
       legalBusinessName: '',
@@ -1173,22 +1168,19 @@ export function EntityOnboardingButton({
                   <form
                     onSubmit={handleSubmit(async (data) => {
                       if (!mercoaSession.client) return
-                      const entity = await createOrUpdateEntity({
+                      await createOrUpdateEntity({
                         data,
-                        onClose: setShowAdd,
+                        onClose: (entity) => {
+                          reset()
+                          setShowAdd(false)
+                          if (onClose) {
+                            onClose(entity)
+                          }
+                        },
                         isPayee,
                         isPayor,
                         mercoaClient: mercoaSession.client,
                       })
-                      if (entity) {
-                        const onboard = confirm('Do you want to onboard the entity?')
-                        if (onboard) {
-                          const link = await mercoaSession.client.entity.getOnboardingLink(entity.id, {
-                            type: isPayee ? 'PAYEE' : 'PAYOR',
-                          })
-                          window.location.href = link
-                        }
-                      }
                     })}
                   >
                     <div>
@@ -1804,11 +1796,13 @@ export function EntityOnboarding({
   organization,
   type,
   setEntityData,
+  onCancel,
 }: {
   entity: Mercoa.EntityResponse
   organization: Mercoa.OrganizationResponse
   type?: string
   setEntityData: (data: OnboardingFormData) => void
+  onCancel?: () => void
 }) {
   const {
     register,
@@ -2049,7 +2043,13 @@ export function EntityOnboarding({
       </div>
       <div className="mercoa-mt-8 mercoa-flex">
         <div className="mercoa-flex-1" />
-        <MercoaButton isEmphasized>Next</MercoaButton>
+
+        {onCancel && (
+          <MercoaButton isEmphasized={false} color="red" className="mercoa-mr-2" type="button" onClick={onCancel}>
+            Cancel
+          </MercoaButton>
+        )}
+        <MercoaButton isEmphasized>{onCancel ? 'Update' : 'Next'}</MercoaButton>
       </div>
     </form>
   )

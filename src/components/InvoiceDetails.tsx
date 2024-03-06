@@ -503,6 +503,8 @@ export function EditInvoiceForm({
       paymentMethodSourceType: yup.string(),
       saveAsDraft: yup.boolean(),
       metadata: yup.mixed().nullable(),
+      newBankAccount: yup.mixed().nullable(),
+      newCheck: yup.mixed().nullable(),
     })
     .required()
 
@@ -542,6 +544,20 @@ export function EditInvoiceForm({
             assignedUserId: approver.assignedUserId,
           }))
         : [],
+      newBankAccount: {
+        routingNumber: '',
+        accountNumber: '',
+        bankName: '',
+      },
+      newCheck: {
+        payToTheOrderOf: '',
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: '',
+      },
     },
   })
 
@@ -655,14 +671,14 @@ export function EditInvoiceForm({
   useEffect(() => {
     if (!ocrResponse) return
     if (ocrResponse.invoice.amount) setValue('amount', ocrResponse.invoice.amount)
-    setValue('invoiceNumber', ocrResponse.invoice.invoiceNumber)
-    if (ocrResponse.invoice.invoiceDate) setValue('invoiceDate', ocrResponse.invoice.invoiceDate)
-    if (ocrResponse.invoice.dueDate) setValue('dueDate', ocrResponse.invoice.dueDate)
-    setValue('deductionDate', ocrResponse.invoice.deductionDate)
+    if (ocrResponse.invoice.invoiceNumber) setValue('invoiceNumber', ocrResponse.invoice.invoiceNumber)
+    if (ocrResponse.invoice.invoiceDate)
+      setValue('invoiceDate', dayjs(ocrResponse.invoice.invoiceDate.toDateString()).toDate())
+    if (ocrResponse.invoice.dueDate) setValue('dueDate', dayjs(ocrResponse.invoice.dueDate.toDateString()).toDate())
+    if (ocrResponse.invoice.deductionDate)
+      setValue('deductionDate', dayjs(ocrResponse.invoice.deductionDate.toDateString()).toDate())
     if (ocrResponse.invoice.currency) setValue('currency', ocrResponse.invoice.currency)
     if (ocrResponse.invoice.metadata) setValue('metadata', JSON.stringify(ocrResponse.invoice.metadata))
-    // setValue('vendorName', ocrResponse.vendor.name)
-    // setValue('vendorId', ocrResponse.vendor.id)
     if (ocrResponse.invoice.lineItems && !mercoaSession.iframeOptions?.options?.invoice?.disableLineItems) {
       setValue(
         'lineItems',
@@ -680,6 +696,26 @@ export function EditInvoiceForm({
           updatedAt: lineItem.updatedAt ?? new Date(),
         })),
       )
+    }
+
+    if (ocrResponse.bankAccount) {
+      setValue('newBankAccount', {
+        routingNumber: ocrResponse.bankAccount.routingNumber,
+        accountNumber: ocrResponse.bankAccount.accountNumber,
+        bankName: ocrResponse.bankAccount.bankName,
+      })
+    }
+
+    if (ocrResponse.check) {
+      setValue('newCheck', {
+        addressLine1: ocrResponse.check.addressLine1,
+        addressLine2: ocrResponse.check.addressLine2 ?? '',
+        city: ocrResponse.check.city,
+        state: ocrResponse.check.stateOrProvince,
+        postalCode: ocrResponse.check.postalCode,
+        country: ocrResponse.check.country,
+        payToTheOrderOf: ocrResponse.check.payToTheOrderOf,
+      })
     }
 
     if (!selectedVendor) {
@@ -709,7 +745,7 @@ export function EditInvoiceForm({
     }
 
     setIsSaving(true)
-    const invoiceData: Mercoa.InvoiceRequest = {
+    const invoiceData: Mercoa.InvoiceCreationRequest = {
       status: data.saveAsDraft ? invoice?.status ?? Mercoa.InvoiceStatus.Draft : nextInvoiceState,
       amount: Number(data.amount),
       currency: data.currency,
@@ -743,7 +779,7 @@ export function EditInvoiceForm({
         return out
       }),
       metadata: JSON.parse(data.metadata) as Record<string, string>,
-      uploadedImage: uploadedImage,
+      document: uploadedImage,
       creatorEntityId: mercoaSession.entity?.id,
     }
     console.log({ data, invoiceData })
@@ -835,10 +871,7 @@ export function EditInvoiceForm({
     console.log('invoiceData before API call: ', { invoiceData })
     if (invoice) {
       mercoaSession.client?.invoice
-        .update(invoice.id, {
-          ...invoiceData,
-          creatorUserId: invoice.creatorUser?.id ?? mercoaSession.user?.id,
-        })
+        .update(invoice.id, invoiceData)
         .then((resp) => {
           if (resp) {
             console.log('invoice/update API response: ', resp)
@@ -881,7 +914,7 @@ export function EditInvoiceForm({
 
   async function getVendorLink() {
     if (!invoice?.id) return
-    const url = await mercoaSession.client?.invoice.getVendorLink(invoice.id)
+    const url = await mercoaSession.client?.invoice.paymentLinks.getVendorLink(invoice.id)
     if (url) {
       navigator.clipboard.writeText(url).then(
         function () {
@@ -1497,12 +1530,25 @@ function ActionBar({
       isEmphasized
       onClick={async () => {
         if (!invoice?.id) return
-        const pdf = await mercoaSession.client?.invoice.generateCheckPdf(invoice.id)
+        setIsSaving(true)
+        if (invoice?.paymentDestinationOptions?.delivery === Mercoa.CheckDeliveryMethod.Print) {
+          if (confirm('Do you want to create a live check? This will mark the invoice as paid cannot be undone.')) {
+            const resp = await mercoaSession.client?.invoice.update(invoice?.id, { status: Mercoa.InvoiceStatus.Paid })
+            if (resp) {
+              toast.success('Invoice marked as paid. Live check created.')
+              refreshInvoice(resp.id)
+            }
+          } else {
+            toast.success('VOID check created')
+          }
+        }
+        const pdf = await mercoaSession.client?.invoice.document.generateCheckPdf(invoice.id)
         if (pdf) {
           window.open(pdf.uri, '_blank')
         } else {
           toast.error('There was an error generating the check PDF')
         }
+        setIsSaving(false)
       }}
     >
       {invoice?.paymentDestinationOptions?.delivery === Mercoa.CheckDeliveryMethod.Print
@@ -1875,6 +1921,12 @@ function SelectPaymentSource({
                     clearErrors(sourceOrDestination)
                   }, 100)
                 }}
+                bankAccount={{
+                  routingNumber: watch('newBankAccount.routingNumber') ?? '',
+                  accountNumber: watch('newBankAccount.accountNumber') ?? '',
+                  bankName: watch('newBankAccount.bankName') ?? '',
+                  accountType: 'CHECKING',
+                }}
               />
             )}
         </>
@@ -1911,6 +1963,15 @@ function SelectPaymentSource({
                       setValue(sourceOrDestination, paymentMethod.id)
                       clearErrors(sourceOrDestination)
                     }, 100)
+                  }}
+                  check={{
+                    payToTheOrderOf: watch('newCheck.payToTheOrderOf') ?? '',
+                    addressLine1: watch('newCheck.addressLine1') ?? '',
+                    addressLine2: watch('newCheck.addressLine2') ?? '',
+                    city: watch('newCheck.city') ?? '',
+                    stateOrProvince: watch('newCheck.state') ?? '',
+                    postalCode: watch('newCheck.postalCode') ?? '',
+                    country: watch('newCheck.country') ?? '',
                   }}
                 />
                 {/*<div className="mercoa-mt-2" />
