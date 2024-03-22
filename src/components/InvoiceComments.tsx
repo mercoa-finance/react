@@ -91,7 +91,9 @@ export function InvoiceComments({ invoice }: { invoice?: Mercoa.InvoiceResponse 
             </div>
             {comment.text && (
               <>
-                <UserIcon className="mercoa-h-8 mercoa-w-8 mercoa-text-gray-300 mercoa-mt-3 mercoa-text-gray-300 mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1 -mercoa-ml-1" />
+                <div className="mercoa-relative mercoa-flex mercoa-h-8 mercoa-w-8 mercoa-flex-none mercoa-items-center mercoa-justify-center ">
+                  <UserIcon className="mercoa-h-6 mercoa-w-6 mercoa-text-gray-300 mercoa-text-gray-300 mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1 -mercoa-ml-2" />
+                </div>
                 <div className="mercoa-flex-auto mercoa-rounded-md mercoa-p-3 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-200">
                   <div className="mercoa-flex mercoa-justify-between mercoa-gap-x-4">
                     <div className="mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">

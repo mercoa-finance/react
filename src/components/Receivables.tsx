@@ -3,12 +3,9 @@ import accounting from 'accounting'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { useEffect, useState } from 'react'
-import { pdfjs } from 'react-pdf'
 import { TableOrderHeader, useMercoaSession } from '.'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { DebouncedSearch, LoadingSpinner, Skeleton, StatCard, TableNavigation } from './generics'
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
 
 dayjs.extend(utc)
 

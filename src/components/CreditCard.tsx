@@ -6,6 +6,7 @@ import {
   AddDialog,
   DefaultPaymentMethodIndicator,
   LoadingSpinnerIcon,
+  MercoaButton,
   PaymentMethodList,
   useMercoaSession,
 } from './index'
@@ -58,7 +59,7 @@ export function CreditCards({
     }
   }, [mercoaSession.entity?.id, mercoaSession.token, showDialog, mercoaSession.refreshId])
 
-  const onClose = (account: Mercoa.PaymentMethodRequest) => {
+  const onClose = (account: Mercoa.PaymentMethodResponse) => {
     setShowDialog(false)
     if (onSelect && account) onSelect(account)
   }
@@ -84,7 +85,7 @@ export function CreditCards({
               onClose={onClose}
               component={
                 <AddCreditCard
-                  onSubmit={(data: Mercoa.PaymentMethodRequest) => {
+                  onSubmit={(data: Mercoa.PaymentMethodResponse) => {
                     onClose(data)
                   }}
                 />
@@ -103,7 +104,7 @@ export function AddCreditCard({
   title,
   actions,
 }: {
-  onSubmit?: Function
+  onSubmit: (data: Mercoa.PaymentMethodResponse) => void
   title?: ReactNode
   actions?: ReactNode
 }) {
@@ -128,7 +129,7 @@ export function AddCreditCard({
       expiration: { month: string; year: string }
       cardID: string
     }) => {
-      const resp = mercoaSession.client?.entity.paymentMethod.create(mercoaSession?.entityId ?? '', {
+      const resp = await mercoaSession.client?.entity.paymentMethod.create(mercoaSession?.entityId ?? '', {
         type: 'card',
         cardType: card.cardType,
         cardBrand: card.brand.replace(' ', '') as Mercoa.CardBrand,
@@ -137,9 +138,10 @@ export function AddCreditCard({
         expYear: card.expiration.year,
         token: card.cardID,
       })
-      if (!onSubmit) return
-      if (resp) onSubmit(resp)
-      else onSubmit()
+      if (!resp) {
+        throw new Error('Failed to create payment method')
+      }
+      onSubmit(resp)
     }
 
     // @ts-ignore
@@ -156,21 +158,18 @@ export function AddCreditCard({
       <div className="mercoa-flex mercoa-items-center mercoa-justify-center">
         {/* @ts-ignore */}
         <moov-card-link />
+        <MercoaButton
+          isEmphasized
+          onClick={() => {
+            const cardInput = document.querySelector('moov-card-link')
+            // @ts-ignore
+            cardInput.submit()
+          }}
+        >
+          Add
+        </MercoaButton>
       </div>
-      <div className="mercoa-flex mercoa-justify-between">
-        {actions || (
-          <button
-            className="mercoa-ml-3 mercoa-rounded-md mercoa-bg-indigo-600 mercoa-px-3 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2"
-            onClick={() => {
-              const cardInput = document.querySelector('moov-card-link')
-              // @ts-ignore
-              cardInput.submit()
-            }}
-          >
-            Add
-          </button>
-        )}
-      </div>
+      {actions && <div className="mercoa-flex mercoa-justify-between">{actions}</div>}
     </div>
   )
 }

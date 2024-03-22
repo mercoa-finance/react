@@ -13,6 +13,7 @@ import { PhotoIcon } from '@heroicons/react/24/solid'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
+import Big from 'big.js'
 import dayjs from 'dayjs'
 import minMax from 'dayjs/plugin/minMax'
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
@@ -20,11 +21,10 @@ import DatePicker from 'react-datepicker'
 import Draggable from 'react-draggable'
 import Dropzone from 'react-dropzone'
 import { Controller, FieldArrayWithId, FieldErrors, useFieldArray, useForm } from 'react-hook-form'
-import { Document, Page } from 'react-pdf'
+import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { add } from '../lib/math'
 import { isWeekday } from '../lib/scheduling'
 import { CounterpartySearch } from './Counterparties'
 import { InvoiceStatusPill } from './Inbox'
@@ -40,10 +40,13 @@ import {
   LoadingSpinnerIcon,
   MercoaButton,
   MercoaCombobox,
+  MercoaContext,
   Tooltip,
   useDebounce,
   useMercoaSession,
 } from './index'
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
 
 const dJSON = require('dirty-json')
 
@@ -102,8 +105,8 @@ export function InvoiceDetails({
     }
   }
 
-  async function onFileUpload(fileReaderObj: string, file: File) {
-    setUploadedFile({ fileReaderObj, mimeType: file.type })
+  async function onFileUpload(fileReaderObj: string, mimeType: string) {
+    setUploadedFile({ fileReaderObj, mimeType })
     setUploadedImage(fileReaderObj)
     // Run OCR on file upload
     setOcrProcessing(true)
@@ -112,7 +115,7 @@ export function InvoiceDetails({
       const ocrResponse = await mercoaSession.client?.ocr.runAsyncOcr({
         entityId: mercoaSession.entityId,
         image: fileReaderObj,
-        mimeType: file.type,
+        mimeType,
       })
       if (ocrResponse) {
         refreshOcrJob(ocrResponse?.jobId)
@@ -164,7 +167,12 @@ export function InvoiceDetails({
             <span className="mercoa-text-gray-800 mercoa-w-full"> Extracting Invoice Details </span>
             <ProgressBar />
           </div>
-          <InvoiceDocuments documents={new Array(uploadedFile)} height={height} />
+          <InvoiceDocuments
+            documents={new Array(uploadedFile)}
+            height={height}
+            onFileUpload={onFileUpload}
+            invoiceStatus={invoice?.status}
+          />
         </>
       ) : (
         <InvoiceDocumentsUpload onFileUpload={onFileUpload} />
@@ -220,7 +228,7 @@ export function InvoiceDetails({
   )
 }
 
-function InvoiceDocumentsUpload({ onFileUpload }: { onFileUpload: (fileReaderObj: string, file: File) => void }) {
+function InvoiceDocumentsUpload({ onFileUpload }: { onFileUpload: (fileReaderObj: string, mimeType: string) => void }) {
   const blobToDataUrl = (blob: Blob) =>
     new Promise<string>((resolve, reject) => {
       const reader = new FileReader()
@@ -233,7 +241,7 @@ function InvoiceDocumentsUpload({ onFileUpload }: { onFileUpload: (fileReaderObj
     <Dropzone
       onDropAccepted={(acceptedFiles) => {
         blobToDataUrl(acceptedFiles[0]).then((fileReaderObj) => {
-          onFileUpload(fileReaderObj, acceptedFiles[0])
+          onFileUpload(fileReaderObj, acceptedFiles[0].type)
         })
       }}
       onDropRejected={() => {
@@ -287,9 +295,13 @@ function InvoiceDocumentsUpload({ onFileUpload }: { onFileUpload: (fileReaderObj
 function InvoiceDocuments({
   documents,
   height,
+  onFileUpload,
+  invoiceStatus,
 }: {
   documents: Array<{ fileReaderObj: string; mimeType: string }>
   height: number
+  onFileUpload: (fileReaderObj: string, mimeType: string) => void
+  invoiceStatus?: Mercoa.InvoiceStatus
 }) {
   const [numPages, setNumPages] = useState<number>()
   const [pageNumber, setPageNumber] = useState<number>(1)
@@ -308,7 +320,7 @@ function InvoiceDocuments({
   })
 
   const documentNavigation = (
-    <div className="mercoa-flex mercoa-justify-center">
+    <div className="mercoa-flex mercoa-justify-center mercoa-mb-1">
       <nav
         className="mercoa-isolate mercoa-inline-flex -mercoa-space-x-px mercoa-rounded-md mercoa-shadow-sm"
         aria-label="Pagination"
@@ -373,6 +385,16 @@ function InvoiceDocuments({
                     file={document.fileReaderObj}
                     key={document.fileReaderObj}
                     onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                    error={
+                      <embed
+                        src={document.fileReaderObj}
+                        key={document.fileReaderObj}
+                        className="mercoa-mt-2"
+                        height={height}
+                        width={debouncedWidth - 5}
+                        type="application/pdf"
+                      />
+                    }
                   >
                     <Page
                       pageNumber={pageNumber}
@@ -391,7 +413,13 @@ function InvoiceDocuments({
                   />
                 )}
               </div>
-              <a href={document.fileReaderObj} target="_blank" rel="noreferrer" className="mercoa-mt-2" download>
+              <a
+                href={document.fileReaderObj}
+                target="_blank"
+                rel="noreferrer"
+                className="mercoa-mt-2 mercoa-mr-2"
+                download
+              >
                 <MercoaButton type="button" isEmphasized={false} className="mercoa-mt-2">
                   <span className="mercoa-hidden xl:mercoa-inline">
                     <ArrowDownTrayIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-h-5 mercoa-w-5" />{' '}
@@ -400,6 +428,27 @@ function InvoiceDocuments({
                   <span className="mercoa-inline xl:mercoa-hidden">Download</span>
                 </MercoaButton>
               </a>
+              {/* {(!invoiceStatus || invoiceStatus === Mercoa.InvoiceStatus.Draft) && (
+                <MercoaButton
+                  type="button"
+                  isEmphasized={false}
+                  onClick={(e) => {
+                    if (
+                      confirm(
+                        'Are you sure you want to reprocess this invoice? Any changes you have made may be overwritten.',
+                      )
+                    ) {
+                      onFileUpload(documents[0].fileReaderObj, documents[0].mimeType)
+                    }
+                  }}
+                >
+                  <span className="mercoa-hidden xl:mercoa-inline">
+                    <ArrowPathIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-h-5 mercoa-w-5" />{' '}
+                    Reprocess Invoice
+                  </span>
+                  <span className="mercoa-inline xl:mercoa-hidden">Reprocess Invoice</span>
+                </MercoaButton>
+              )} */}
             </div>
           ))}
         </div>
@@ -593,23 +642,28 @@ export function EditInvoiceForm({
       setError('amount', { type: 'manual', message: 'Please enter a valid number' })
       return
     }
-    let amount = 0
+    let amount = new Big(0)
     lineItems?.forEach((lineItem, index) => {
-      amount = add(amount, lineItem.amount)
+      amount = amount.add(Number(lineItem.amount))
     })
     clearErrors('amount')
-    setValue('amount', amount)
+    setValue('amount', amount.toNumber())
     setFocus('amount')
   }
 
   // Get payment methods
+
+  async function refreshPayerPaymentMethods() {
+    if (!mercoaSession.token || !mercoaSession.entity?.id || !mercoaSession.client) return
+    const resp = await mercoaSession.client?.entity.paymentMethod.getAll(mercoaSession.entity?.id)
+    if (resp) {
+      setSourcePaymentMethods(resp)
+    }
+  }
+
   useEffect(() => {
     if (!mercoaSession.token || !mercoaSession.entity?.id || !mercoaSession.client) return
-    mercoaSession.client?.entity.paymentMethod.getAll(mercoaSession.entity?.id).then((resp) => {
-      if (resp) {
-        setSourcePaymentMethods(resp)
-      }
-    })
+    refreshPayerPaymentMethods()
     mercoaSession.client?.customPaymentMethodSchema
       .getAll()
       .then((resp: Mercoa.CustomPaymentMethodSchemaResponse[]) => {
@@ -667,6 +721,27 @@ export function EditInvoiceForm({
     refreshVendorPaymentMethods()
   }, [mercoaSession.client, vendorId, mercoaSession.token])
 
+  // Offline Payment Source
+  const isPaymentSourceOffPlatform: boolean =
+    sourcePaymentMethods.find((e) => e.id === paymentSourceId)?.type === 'offPlatform'
+
+  useEffect(() => {
+    if (vendorId && isPaymentSourceOffPlatform) {
+      createOffPlatformPaymentMethod({
+        entityId: vendorId,
+        paymentMethods: destinationPaymentMethods,
+        sourceOrDestination: 'paymentDestinationId',
+        setValue,
+        clearErrors,
+        mercoaSession,
+        refreshPaymentMethods: async () => {
+          await refreshPayerPaymentMethods()
+          await refreshVendorPaymentMethods()
+        },
+      })
+    }
+  }, [vendorId, isPaymentSourceOffPlatform])
+
   // OCR Merge
   useEffect(() => {
     if (!ocrResponse) return
@@ -679,7 +754,10 @@ export function EditInvoiceForm({
       setValue('deductionDate', dayjs(ocrResponse.invoice.deductionDate.toDateString()).toDate())
     if (ocrResponse.invoice.currency) setValue('currency', ocrResponse.invoice.currency)
     if (ocrResponse.invoice.metadata) setValue('metadata', JSON.stringify(ocrResponse.invoice.metadata))
-    if (ocrResponse.invoice.lineItems && !mercoaSession.iframeOptions?.options?.invoice?.disableLineItems) {
+    if (
+      ocrResponse.invoice.lineItems &&
+      mercoaSession.iframeOptions?.options?.invoice?.lineItems != Mercoa.LineItemAvailabilities.Disabled
+    ) {
       setValue(
         'lineItems',
         ocrResponse.invoice.lineItems.map((lineItem) => ({
@@ -736,7 +814,7 @@ export function EditInvoiceForm({
       nextInvoiceState = Mercoa.InvoiceStatus.New
     } else if (invoice?.status === Mercoa.InvoiceStatus.New) {
       nextInvoiceState = Mercoa.InvoiceStatus.Approved
-    } else if (invoice?.status === Mercoa.InvoiceStatus.Approved) {
+    } else if (invoice?.status === Mercoa.InvoiceStatus.Approved || invoice?.status === Mercoa.InvoiceStatus.Failed) {
       nextInvoiceState = Mercoa.InvoiceStatus.Scheduled
     } else if (invoice?.id) {
       // Invoice is already scheduled, there is no next state
@@ -793,17 +871,27 @@ export function EditInvoiceForm({
         return
       }
 
+      // if line items are required, make sure at least one line item is set
+      if (
+        mercoaSession.iframeOptions?.options?.invoice?.lineItems === Mercoa.LineItemAvailabilities.Required &&
+        invoiceData.lineItems?.length === 0
+      ) {
+        setError('lineItems', { type: 'manual', message: 'At least one line item is required' })
+        setIsSaving(false)
+        return
+      }
+
       // Make sure line items amount is equal to invoice amount
       if (
-        !mercoaSession.iframeOptions?.options?.invoice?.disableLineItems &&
+        mercoaSession.iframeOptions?.options?.invoice?.lineItems != Mercoa.LineItemAvailabilities.Disabled &&
         invoiceData.lineItems &&
         invoiceData.lineItems.length > 0
       ) {
-        let lineItemsTotal = 0
+        let lineItemsTotal = new Big(0)
         invoiceData.lineItems.forEach((lineItem, index) => {
-          lineItemsTotal = add(lineItemsTotal, lineItem.amount)
+          lineItemsTotal = lineItemsTotal.add(Number(lineItem.amount))
         })
-        if (lineItemsTotal !== Number(data.amount)) {
+        if (lineItemsTotal.toNumber() !== Number(data.amount)) {
           setError('amount', { type: 'manual', message: 'Line item amounts do not match total amount' })
           setIsSaving(false)
           return
@@ -1153,7 +1241,7 @@ export function EditInvoiceForm({
         </div>
 
         {/*  LINE ITEMS */}
-        {!mercoaSession.iframeOptions?.options?.invoice?.disableLineItems && (
+        {mercoaSession.iframeOptions?.options?.invoice?.lineItems != Mercoa.LineItemAvailabilities.Disabled && (
           <>
             {/*  GRAY border  */}
             <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
@@ -1245,6 +1333,8 @@ export function EditInvoiceForm({
             watch={watch}
             setValue={setValue}
             clearErrors={clearErrors}
+            refreshVendorPaymentMethods={refreshVendorPaymentMethods}
+            refreshPayerPaymentMethods={refreshPayerPaymentMethods}
           />
           {errors.paymentSourceId?.message && (
             <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentSourceId?.message.toString()}</p>
@@ -1255,7 +1345,7 @@ export function EditInvoiceForm({
         <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
 
         {/*  PAYMENT DESTINATION  */}
-        {vendorName && (
+        {vendorName && !isPaymentSourceOffPlatform && (
           <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-16 mercoa-col-span-full">
             <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
               How does <span className="mercoa-text-gray-800 mercoa-underline">{vendorName}</span> want to get paid?
@@ -1270,6 +1360,7 @@ export function EditInvoiceForm({
               setValue={setValue}
               clearErrors={clearErrors}
               refreshVendorPaymentMethods={refreshVendorPaymentMethods}
+              refreshPayerPaymentMethods={refreshPayerPaymentMethods}
             />
             {/* {invoice?.id &&
               invoice?.status != Mercoa.InvoiceStatus.Canceled &&
@@ -1333,6 +1424,7 @@ export function EditInvoiceForm({
           clearErrors={clearErrors}
           setValue={setValue}
           approverSlots={approvers}
+          onRedirect={onRedirect}
         />
       </form>
 
@@ -1411,6 +1503,7 @@ function ActionBar({
   clearErrors,
   setValue,
   approverSlots,
+  onRedirect,
 }: {
   invoice?: Mercoa.InvoiceResponse
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
@@ -1420,6 +1513,7 @@ function ActionBar({
   clearErrors: Function
   setValue: Function
   approverSlots?: { approvalSlotId: string; assignedUserId: string | undefined }[]
+  onRedirect?: Function
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1437,8 +1531,8 @@ function ActionBar({
           .delete(invoice.id)
           .then(() => {
             toast.success('Invoice deleted')
-            refreshInvoice(invoice.id)
             setIsSaving(false)
+            if (onRedirect) onRedirect()
           })
           .catch((e) => {
             console.log(e.statusCode)
@@ -1466,7 +1560,7 @@ function ActionBar({
             if (resp) {
               console.log(resp)
               toast.success('Invoice archived')
-              refreshInvoice(resp.id)
+              if (onRedirect) onRedirect()
             }
             setIsSaving(false)
           })
@@ -1655,10 +1749,25 @@ function ActionBar({
           buttons.push(printCheck)
         }
         buttons.push(archiveButton)
-
         break
 
-      // Rejected / Cancelled / Failed
+      case Mercoa.InvoiceStatus.Failed:
+        buttons.push(
+          <MercoaButton
+            type="submit"
+            isEmphasized
+            onClick={() => {
+              setValue('saveAsDraft', false)
+              setValue('status', Mercoa.InvoiceStatus.Scheduled)
+            }}
+          >
+            Retry Payment
+          </MercoaButton>,
+        )
+        buttons.push(archiveButton)
+        break
+
+      // Rejected / Cancelled
       default:
         buttons.push(archiveButton)
         break
@@ -1686,6 +1795,46 @@ function ActionBar({
 }
 // Payment Source and Destination
 
+// Create Off-Platform Payment Method
+function createOffPlatformPaymentMethod({
+  entityId,
+  paymentMethods,
+  sourceOrDestination,
+  setValue,
+  clearErrors,
+  mercoaSession,
+  refreshPaymentMethods,
+}: {
+  entityId: Mercoa.EntityId
+  paymentMethods: Mercoa.PaymentMethodResponse[]
+  sourceOrDestination: 'paymentSourceId' | 'paymentDestinationId'
+  setValue: Function
+  clearErrors: Function
+  mercoaSession: MercoaContext
+  refreshPaymentMethods: Function
+}) {
+  const existingOffPlatformPaymentMethod = paymentMethods.find(
+    (paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.OffPlatform,
+  )
+  if (existingOffPlatformPaymentMethod) {
+    setValue(sourceOrDestination, existingOffPlatformPaymentMethod.id)
+    clearErrors(sourceOrDestination)
+  } else {
+    // if there is no off platform payment method, we need to create one
+    mercoaSession.client?.entity.paymentMethod
+      .create(entityId, {
+        type: Mercoa.PaymentMethodType.OffPlatform,
+      })
+      .then(async (resp) => {
+        if (resp) {
+          await refreshPaymentMethods()
+          setValue(sourceOrDestination, resp.id)
+          clearErrors(sourceOrDestination)
+        }
+      })
+  }
+}
+
 function SelectPaymentSource({
   paymentMethods,
   paymentMethodSchemas,
@@ -1696,6 +1845,7 @@ function SelectPaymentSource({
   vendorId,
   currentPaymentMethodId,
   refreshVendorPaymentMethods,
+  refreshPayerPaymentMethods,
   clearErrors,
 }: {
   paymentMethods: Array<Mercoa.PaymentMethodResponse>
@@ -1706,11 +1856,12 @@ function SelectPaymentSource({
   isDestination?: boolean
   vendorId?: string
   currentPaymentMethodId?: string
-  refreshVendorPaymentMethods?: Function
+  refreshVendorPaymentMethods: Function
+  refreshPayerPaymentMethods: Function
   clearErrors: Function
 }) {
   let paymentMethodTypeKey = 'paymentMethodSourceType'
-  let sourceOrDestination = 'paymentSourceId'
+  let sourceOrDestination: 'paymentSourceId' | 'paymentDestinationId' = 'paymentSourceId'
   if (isDestination) {
     paymentMethodTypeKey = 'paymentMethodDestinationType'
     sourceOrDestination = 'paymentDestinationId'
@@ -1760,6 +1911,15 @@ function SelectPaymentSource({
           value: paymentMethodSchemas.find((e) => e.id == backupDisbursement.name)?.name ?? 'Other',
         })
     })
+  } else {
+    // if not a destination, check if off platform payments are enabled and push that
+    const offPlatform = mercoaSession.organization?.paymentMethods?.payerPayments.find((e) => e.type === 'offPlatform')
+    if (offPlatform && offPlatform.active) {
+      availableTypes.push({
+        key: offPlatform.type,
+        value: offPlatform.name,
+      })
+    }
   }
 
   const selectedType = watch(paymentMethodTypeKey)
@@ -1853,29 +2013,23 @@ function SelectPaymentSource({
 
   // For offline payments, we need to set the correct payment method id automatically
   useEffect(() => {
-    if (!isDestination) return
-    if (!vendorId) return
     if (selectedType !== Mercoa.PaymentMethodType.OffPlatform) return
 
-    const existingOffPlatformPaymentMethod = paymentMethods.find(
-      (paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.OffPlatform,
-    )
-    if (existingOffPlatformPaymentMethod) {
-      setValue(sourceOrDestination, existingOffPlatformPaymentMethod.id)
-      clearErrors(sourceOrDestination)
-    } else {
-      // if there is no off platform payment method, we need to create one
-      mercoaSession.client?.entity.paymentMethod
-        .create(vendorId, {
-          type: Mercoa.PaymentMethodType.OffPlatform,
-        })
-        .then((resp) => {
-          if (resp) {
-            setValue(sourceOrDestination, resp.id)
-            clearErrors(sourceOrDestination)
-          }
-        })
-    }
+    let entityId = mercoaSession.entityId
+    if (isDestination) entityId = vendorId
+    if (!entityId) return
+    createOffPlatformPaymentMethod({
+      entityId,
+      paymentMethods,
+      sourceOrDestination,
+      setValue,
+      clearErrors,
+      mercoaSession,
+      refreshPaymentMethods: async () => {
+        await refreshPayerPaymentMethods()
+        await refreshVendorPaymentMethods()
+      },
+    })
   }, [isDestination, vendorId, selectedType])
 
   return (
@@ -2070,87 +2224,29 @@ function ApproversSelection({
 }) {
   const mercoaSession = useMercoaSession()
 
-  function filterApproverOptions(
-    approverSlotIndex: number,
-    eligibleRoles: string[],
-    eligibleUserIds: Mercoa.EntityUserId[],
-  ) {
-    if (!Array.isArray(eligibleRoles) && !Array.isArray(eligibleUserIds)) return []
-
-    const users: Mercoa.EntityUserResponse[] = mercoaSession.users.filter((user) => {
-      if (user.roles.some((role) => eligibleRoles.includes(role))) return true
-      if (eligibleUserIds.some((eligibleId) => user.id === eligibleId)) return true
-    })
-
-    const options = users.map((user) => {
-      let disabled: boolean = false
-      // if this user is already a selectedApprover elsewhere in a different approverSlot, they should not be selectable
-      if (
-        selectedApprovers.find((e) => e?.assignedUserId === user.id) &&
-        selectedApprovers[approverSlotIndex]?.assignedUserId !== user.id
-      ) {
-        disabled = true
-      }
-
-      return { user: user, disabled: disabled }
-    })
-
-    const enabledOptions = options.filter((option) => !option.disabled)
-    const disabledOptions = options.filter((option) => option.disabled)
-    return enabledOptions.concat(disabledOptions)
-  }
-
-  function isUpstreamPolicyAssigned(policyId: string) {
-    const policy = approvalPolicies.find((p) => p.id === policyId)
-    if (!policy) return true
-    const upstreamPolicy = approvalPolicies.find((p) => p.id === policy.upstreamPolicyId)
-    if (!upstreamPolicy) return true
-    const upstreamSlots = approverSlots.filter((slot) => slot.approvalPolicyId === upstreamPolicy.id)
-    if (upstreamSlots.length === 0) return true
-
-    const upstreamUsers = upstreamSlots.map((slot) => {
-      const approverSlot = selectedApprovers.find((e) => e?.approvalSlotId === slot.approvalSlotId)
-      return approverSlot?.assignedUserId
-    })
-
-    const currentSlot = selectedApprovers.find(
-      (e) => e?.approvalSlotId === approverSlots.find((e) => e.approvalPolicyId === policyId)?.approvalSlotId,
-    )
-
-    // The upstream slot has this assigned user
-    if (upstreamUsers.indexOf(currentSlot?.assignedUserId) > -1) return false
-
-    // if all upstream slots are assigned, this slot should be enabled
-    return upstreamUsers.every((e) => e)
-  }
-
-  // If an approver can fulfill a downstream policy, they should be assigned to that downstream policy
-  function propagateApprovalPolicy(userId: string, policyId: string) {
-    const downstreamPolicies = approvalPolicies.filter((p) => p.upstreamPolicyId === policyId)
-    downstreamPolicies.forEach((downstreamPolicy) => {
-      const downstreamSlot = approverSlots.find((slot) => slot.approvalPolicyId === downstreamPolicy.id)
-      if (!downstreamSlot) return
-      const filteredUsers = filterApproverOptions(
-        approverSlots.indexOf(downstreamSlot),
-        downstreamSlot.eligibleRoles,
-        downstreamSlot.eligibleUserIds,
-      )
-      if (!filteredUsers.find((e) => e.user.id === userId)) return
-      setValue(`approvers.${approverSlots.indexOf(downstreamSlot)}.assignedUserId`, userId)
-      propagateApprovalPolicy(userId, downstreamPolicy.id)
-    })
-  }
-
   return (
     <>
       {approverSlots.map((slot, index) => (
         <Fragment key={index}>
-          {isUpstreamPolicyAssigned(slot.approvalPolicyId) && (
+          {isUpstreamPolicyAssigned({
+            policyId: slot.approvalPolicyId,
+            approvalPolicies,
+            approverSlots,
+            selectedApprovers,
+          }) && (
             <MercoaCombobox
               label={'Assigned to'}
               onChange={(e) => {
                 setValue(`approvers.${index}.assignedUserId`, e.id)
-                propagateApprovalPolicy(e.id, slot.approvalPolicyId)
+                propagateApprovalPolicy({
+                  userId: e.id,
+                  policyId: slot.approvalPolicyId,
+                  approvalPolicies,
+                  approverSlots,
+                  setValue,
+                  users: mercoaSession.users,
+                  selectedApprovers,
+                })
               }}
               value={
                 mercoaSession.users.filter((user) => {
@@ -2159,7 +2255,13 @@ function ApproversSelection({
                 })[0] ?? ''
               }
               options={[
-                ...filterApproverOptions(index, slot.eligibleRoles, slot.eligibleUserIds).map((option) => {
+                ...filterApproverOptions({
+                  approverSlotIndex: index,
+                  eligibleRoles: slot.eligibleRoles,
+                  eligibleUserIds: slot.eligibleUserIds,
+                  users: mercoaSession.users,
+                  selectedApprovers,
+                }).map((option) => {
                   return { disabled: option.disabled, value: option.user }
                 }),
                 { disabled: false, value: { id: '', name: 'Reset Selection', email: '' } },
@@ -2167,6 +2269,7 @@ function ApproversSelection({
               displayIndex="name"
               secondaryDisplayIndex="email"
               disabledText="Already assigned"
+              displaySelectedAs="pill"
             />
           )}
         </Fragment>
@@ -2498,6 +2601,7 @@ function MetadataCombobox({
         displayIndex="value"
         value={valueState}
         multiple={schema.allowMultiple}
+        displaySelectedAs="pill"
       />
     )
   }
@@ -2509,7 +2613,8 @@ function MetadataCombobox({
       }}
       value={valueState}
       multiple={schema.allowMultiple}
-      freeText
+      freeText={!schema.allowMultiple}
+      displaySelectedAs="pill"
     />
   )
 }
@@ -2920,7 +3025,7 @@ const ProgressBar = () => {
     const interval = setInterval(() => {
       setProgressPercentage((prevProgressPercentage) => {
         if (prevProgressPercentage === 100) {
-          return 80
+          return 0
         } else {
           return prevProgressPercentage + 1
         }
@@ -2995,4 +3100,119 @@ function showMetadata({
   }
 
   return true
+}
+
+export function filterApproverOptions({
+  approverSlotIndex,
+  eligibleRoles,
+  eligibleUserIds,
+  users,
+  selectedApprovers,
+}: {
+  approverSlotIndex: number
+  eligibleRoles: string[]
+  eligibleUserIds: Mercoa.EntityUserId[]
+  users: Mercoa.EntityUserResponse[]
+  selectedApprovers: ({ approvalSlotId: string; assignedUserId: string | undefined } | undefined)[]
+}) {
+  if (!Array.isArray(eligibleRoles) && !Array.isArray(eligibleUserIds)) return []
+
+  const usersFiltered: Mercoa.EntityUserResponse[] = users.filter((user) => {
+    if (user.roles.some((role) => eligibleRoles.includes(role))) return true
+    if (eligibleUserIds.some((eligibleId) => user.id === eligibleId)) return true
+  })
+
+  const options = usersFiltered.map((user) => {
+    let disabled: boolean = false
+    // if this user is already a selectedApprover elsewhere in a different approverSlot, they should not be selectable
+    if (
+      selectedApprovers.find((e) => e?.assignedUserId === user.id) &&
+      selectedApprovers[approverSlotIndex]?.assignedUserId !== user.id
+    ) {
+      disabled = true
+    }
+
+    return { user: user, disabled: disabled }
+  })
+
+  const enabledOptions = options.filter((option) => !option.disabled)
+  const disabledOptions = options.filter((option) => option.disabled)
+  return enabledOptions.concat(disabledOptions)
+}
+
+export function isUpstreamPolicyAssigned({
+  policyId,
+  approvalPolicies,
+  approverSlots,
+  selectedApprovers,
+}: {
+  policyId: string
+  approvalPolicies: Mercoa.ApprovalPolicyResponse[]
+  approverSlots: Mercoa.ApprovalSlot[]
+  selectedApprovers: ({ approvalSlotId: string; assignedUserId: string | undefined } | undefined)[]
+}) {
+  const policy = approvalPolicies.find((p) => p.id === policyId)
+  if (!policy) return true
+  const upstreamPolicy = approvalPolicies.find((p) => p.id === policy.upstreamPolicyId)
+  if (!upstreamPolicy) return true
+  const upstreamSlots = approverSlots.filter((slot) => slot.approvalPolicyId === upstreamPolicy.id)
+  if (upstreamSlots.length === 0) return true
+
+  const upstreamUsers = upstreamSlots.map((slot) => {
+    const approverSlot = selectedApprovers.find((e) => e?.approvalSlotId === slot.approvalSlotId)
+    return approverSlot?.assignedUserId
+  })
+
+  const currentSlot = selectedApprovers.find(
+    (e) => e?.approvalSlotId === approverSlots.find((e) => e.approvalPolicyId === policyId)?.approvalSlotId,
+  )
+
+  // The upstream slot has this assigned user
+  if (upstreamUsers.indexOf(currentSlot?.assignedUserId) > -1) return false
+
+  // if all upstream slots are assigned, this slot should be enabled
+  return upstreamUsers.every((e) => e)
+}
+
+// If an approver can fulfill a downstream policy, they should be assigned to that downstream policy
+export function propagateApprovalPolicy({
+  userId,
+  policyId,
+  approvalPolicies,
+  approverSlots,
+  setValue,
+  users,
+  selectedApprovers,
+}: {
+  userId: string
+  policyId: string
+  approvalPolicies: Mercoa.ApprovalPolicyResponse[]
+  approverSlots: Mercoa.ApprovalSlot[]
+  setValue: Function
+  users: Mercoa.EntityUserResponse[]
+  selectedApprovers: ({ approvalSlotId: string; assignedUserId: string | undefined } | undefined)[]
+}) {
+  const downstreamPolicies = approvalPolicies.filter((p) => p.upstreamPolicyId === policyId)
+  downstreamPolicies.forEach((downstreamPolicy) => {
+    const downstreamSlot = approverSlots.find((slot) => slot.approvalPolicyId === downstreamPolicy.id)
+    if (!downstreamSlot) return
+    const filteredUsers = filterApproverOptions({
+      approverSlotIndex: approverSlots.indexOf(downstreamSlot),
+      eligibleRoles: downstreamSlot.eligibleRoles,
+      eligibleUserIds: downstreamSlot.eligibleUserIds,
+      users,
+      selectedApprovers,
+    })
+    if (!filteredUsers.find((e) => e.user.id === userId)) return
+    setValue(`approvers.${approverSlots.indexOf(downstreamSlot)}.assignedUserId`, userId)
+    propagateApprovalPolicy({
+      userId,
+      policyId: downstreamPolicy.id,
+      approvalPolicies,
+      approverSlots,
+      setValue,
+      users,
+      selectedApprovers,
+    })
+  })
 }

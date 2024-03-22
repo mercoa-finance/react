@@ -530,7 +530,7 @@ export function DebouncedSearch({ onSettle, placeholder }: { onSettle: (...args:
       onChange={(e) => setSearchTerm(e.target.value)}
       type="text"
       placeholder={placeholder}
-      className="mercoa-block mercoa-w-48 mercoa-flex-1 mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 sm:mercoa-text-sm sm:mercoa-leading-6"
+      className="mercoa-block mercoa-w-full mercoa-flex-1 mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 sm:mercoa-text-sm sm:mercoa-leading-6"
     />
   )
 }
@@ -564,30 +564,38 @@ export function MercoaCombobox({
   options,
   value,
   label,
+  placeholder,
   disabledText,
   displayIndex,
   secondaryDisplayIndex,
-  multiple,
   className,
   labelClassName,
   inputClassName,
+  multiple,
   freeText,
+  displaySelectedAs,
 }: {
   onChange: (val: any) => any
-  options: { value: any; disabled: boolean }[]
+  options: { value: any; disabled: boolean; color?: string }[]
   value: any
   label?: string
+  placeholder?: string
   displayIndex?: string
   secondaryDisplayIndex?: string | string[]
   disabledText?: string
-  multiple?: boolean
   className?: string
   labelClassName?: string
   inputClassName?: string
+  multiple?: boolean
   freeText?: boolean
+  displaySelectedAs?: 'input' | 'pill'
 }) {
   const [query, setQuery] = useState('')
   const [selectedValue, setSelectedValue] = useState(value)
+
+  if (!displaySelectedAs) {
+    displaySelectedAs = 'input'
+  }
 
   useEffect(() => {
     setSelectedValue(value)
@@ -612,7 +620,7 @@ export function MercoaCombobox({
 
   const filteredOptionsLimited = filteredOptions.slice(0, 100)
 
-  function displayValue(value: any) {
+  function displayInputValue(value: any) {
     if (multiple && Array.isArray(value)) {
       return value?.length > 0
         ? value
@@ -626,6 +634,35 @@ export function MercoaCombobox({
       const toDisplay = (displayIndex ? value?.[displayIndex] : value) ?? ''
       return toDisplay
     }
+  }
+
+  function displayPillValue(value: any) {
+    if (!Array.isArray(value)) {
+      value = [value]
+    }
+
+    if (!value[0] && placeholder) return placeholder
+
+    return value.map((value: any, index: number) => {
+      // find color
+      const option = options.find((option) => {
+        const optionValue = displayIndex ? option.value[displayIndex] : option.value
+        return optionValue === value
+      })
+      if (typeof value === 'object' && displayIndex) {
+        value = value[displayIndex]
+      }
+      if (!value) return <Fragment key={index}></Fragment>
+      return (
+        <span
+          key={index}
+          className="mercoa-m-0.5 mercoa-inline-flex mercoa-items-center mercoa-rounded-md mercoa-px-2 mercoa-py-1 mercoa-text-xs mercoa-font-medium mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-500/10"
+          style={{ backgroundColor: option?.color ?? '#E5E7EB' }}
+        >
+          {value}
+        </span>
+      )
+    })
   }
 
   function toString(value: string | string[]) {
@@ -649,25 +686,41 @@ export function MercoaCombobox({
       )}
       <div className={`mercoa-relative ${label ? 'mercoa-mt-2' : ''}`}>
         <Combobox.Button className="mercoa-relative mercoa-w-full">
-          {({ open }) => (
-            <>
-              <Combobox.Input
-                autoComplete="off"
-                className={
-                  'mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-12 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 ' +
-                  inputClassName
-                }
-                onChange={(event) => setQuery(event.target.value)}
-                displayValue={displayValue}
-                onClick={(e: any) => {
-                  if (open) e.stopPropagation()
-                }}
-              />
-              <div className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none">
-                <ChevronUpDownIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
-              </div>
-            </>
-          )}
+          {({ open }) => {
+            const showInput = displaySelectedAs === 'input' || freeText || (open && !multiple)
+            return (
+              <>
+                <div
+                  className={
+                    !showInput
+                      ? 'mercoa-min-h-[36px] mercoa-flex mercoa-flex-wrap mercoa-justify-start mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-12 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 ' +
+                        inputClassName
+                      : ' '
+                  }
+                >
+                  {!showInput && displayPillValue(selectedValue)}
+                  <Combobox.Input
+                    placeholder={placeholder}
+                    autoComplete="off"
+                    className={
+                      showInput
+                        ? 'mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-12 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 ' +
+                          inputClassName
+                        : 'mercoa-invisible mercoa-h-[0px] mercoa-p-0 '
+                    }
+                    onChange={(event) => setQuery(event.target.value)}
+                    displayValue={displayInputValue}
+                    onClick={(e: any) => {
+                      if (open) e.stopPropagation()
+                    }}
+                  />
+                </div>
+                <div className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none">
+                  <ChevronUpDownIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
+                </div>
+              </>
+            )
+          }}
         </Combobox.Button>
 
         {filteredOptionsLimited.length > 0 && (

@@ -313,6 +313,7 @@ export function EntityUsersTable({
                 }}
                 value={watch('roles').split(',')}
                 multiple
+                displaySelectedAs="pill"
               />
             </div>
             <button

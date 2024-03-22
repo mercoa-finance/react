@@ -607,6 +607,7 @@ function Trigger({
                   value={counterparties.filter((e) => triggerWatch[triggerIndex]?.vendorIds?.includes(e.id))}
                   displayIndex="name"
                   multiple
+                  displaySelectedAs="pill"
                 />
               </>
             )}
@@ -769,6 +770,7 @@ function Rule({
             }}
             value={watch(`policies.${index}.rule.identifierList.value`)}
             multiple
+            displaySelectedAs="pill"
           />
         ) : (
           <MercoaCombobox
@@ -792,6 +794,7 @@ function Rule({
             displayIndex="name"
             secondaryDisplayIndex="id"
             multiple
+            displaySelectedAs="pill"
           />
         )}
       </div>
