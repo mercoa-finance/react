@@ -4,9 +4,11 @@ import path from 'node:path'
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
+import vitePluginRequire from 'vite-plugin-require'
 
 export default defineConfig({
   plugins: [
+    vitePluginRequire(),
     react(),
     dts({
       insertTypesEntry: true,
