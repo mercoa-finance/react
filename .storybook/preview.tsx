@@ -1,17 +1,23 @@
 import type { Preview } from '@storybook/react'
-import { initialize, mswLoader } from 'msw-storybook-addon'
+import { InitializeOptions, initialize, mswLoader } from 'msw-storybook-addon'
 import { MercoaSession } from '../src/components/Mercoa'
 import { mockToken, mswHandlers } from '../src/stories/mockData'
 
 import '../src/tailwind.base.css'
 import '../src/tailwind.css'
 
-initialize(
-  {
-    onUnhandledRequest: 'bypass',
-  },
-  mswHandlers,
-)
+let options: InitializeOptions = {
+  onUnhandledRequest: 'bypass',
+}
+if (location.hostname === 'mercoa-finance.github.io') {
+  options = {
+    ...options,
+    serviceWorker: {
+      url: '/react/mockServiceWorker.js',
+    },
+  }
+}
+initialize(options, mswHandlers)
 
 const preview: Preview = {
   parameters: {
