@@ -32,4 +32,4 @@ export default function Index() {
 
 ### Components
 
-Please see the [Mercoa Documentation](https://docs.mercoa.com/guides/react) for more details
+Components are documented at [react.mercoa.com](https://react.mercoa.com)!
