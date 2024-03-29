@@ -112,7 +112,6 @@ export function EntityPortal({ token }: { token: string }) {
           </div>
           <EntityOnboarding
             entity={entity}
-            organization={mercoaSession.organization}
             type="payor"
             setEntityData={async (entityData) => {
               if (!entity) return

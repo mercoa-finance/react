@@ -8,9 +8,24 @@ import {
   TrashIcon,
 } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
+import useResizeObserver from '@react-hook/resize-observer'
 import { jwtDecode } from 'jwt-decode'
 import debounce from 'lodash/debounce'
-import { Fragment, HTMLAttributes, ReactNode, useCallback, useEffect, useRef, useState } from 'react'
+import {
+  ChangeEvent,
+  FocusEvent,
+  Fragment,
+  HTMLAttributes,
+  ReactNode,
+  Ref,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
+import DatePicker from 'react-datepicker'
+import { Control, Controller, FieldErrors, UseFormRegister } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { TokenOptions } from '.'
 import { classNames, getEndpoint } from '../lib/lib'
@@ -41,7 +56,7 @@ export function MercoaButton({
     mercoa-items-center mercoa-rounded-md mercoa-border 
     mercoa-font-medium 
     mercoa-shadow-sm  
-    focus:mercoa-outline-none focus:mercoa-ring-2 
+    focus:mercoa-outline-none focus:mercoa-ring-1 
     focus:mercoa-ring-offset-2`
 
   switch (size) {
@@ -274,7 +289,7 @@ export function TableNavigation({
                 Results per Page
               </Listbox.Label>
               <div className="mercoa-relative mercoa-mx-2">
-                <Listbox.Button className="mercoa-relative mercoa-w-24 mercoa-cursor-default mercoa-rounded-md mercoa-bg-white mercoa-py-1 mercoa-pl-3 mercoa-pr-10 mercoa-text-left mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6">
+                <Listbox.Button className="mercoa-relative mercoa-w-24 mercoa-cursor-default mercoa-rounded-md mercoa-bg-white mercoa-py-1 mercoa-pl-3 mercoa-pr-10 mercoa-text-left mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-outline-none focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6">
                   <span className="mercoa-block mercoa-truncate">{resultsPerPage}</span>
                   <span className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-pr-2">
                     <ChevronUpDownIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
@@ -399,7 +414,7 @@ export function Skeleton({ rows, height }: { rows?: number; height?: number }) {
     <div className="mercoa-flex mercoa-flex-col mercoa-space-y-2 mercoa-animate-pulse">
       {[...Array(rows)].map((key) => (
         <div
-          key={key}
+          key={Math.random()}
           className={`mercoa-w-full mercoa-rounded-md mercoa-bg-gray-200`}
           style={{ height: height + 'px' }}
         ></div>
@@ -517,7 +532,7 @@ export function Switch({
   )
 }
 
-export function DebouncedSearch({ onSettle, placeholder }: { onSettle: (...args: any) => any; placeholder: string }) {
+export function DebouncedSearch({ onSettle, placeholder }: { onSettle: (value: string) => void; placeholder: string }) {
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearch = useRef(debounce(onSettle, 200)).current
 
@@ -526,12 +541,9 @@ export function DebouncedSearch({ onSettle, placeholder }: { onSettle: (...args:
   }, [searchTerm])
 
   return (
-    <input
-      onChange={(e) => setSearchTerm(e.target.value)}
-      type="text"
-      placeholder={placeholder}
-      className="mercoa-block mercoa-w-full mercoa-flex-1 mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 sm:mercoa-text-sm sm:mercoa-leading-6"
-    />
+    <div className="mercoa-w-full">
+      <MercoaInput onChange={(e) => setSearchTerm(e.target.value)} type="text" placeholder={placeholder} />
+    </div>
   )
 }
 
@@ -693,7 +705,7 @@ export function MercoaCombobox({
                 <div
                   className={
                     !showInput
-                      ? 'mercoa-min-h-[36px] mercoa-flex mercoa-flex-wrap mercoa-justify-start mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-12 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 ' +
+                      ? 'mercoa-min-h-[36px] mercoa-flex mercoa-flex-wrap mercoa-justify-start mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-12 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 ' +
                         inputClassName
                       : ' '
                   }
@@ -704,7 +716,7 @@ export function MercoaCombobox({
                     autoComplete="off"
                     className={
                       showInput
-                        ? 'mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-12 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 ' +
+                        ? 'mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-12 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 ' +
                           inputClassName
                         : 'mercoa-invisible mercoa-h-[0px] mercoa-p-0 '
                     }
@@ -839,7 +851,12 @@ export function TokenVerification({
   children: (value: TokenOptions, rawToken: string) => React.ReactNode
 }) {
   // get query params from url
-  const url = typeof window !== 'undefined' ? window.location.search : ''
+  const [url, setUrl] = useState('')
+
+  useEffect(() => {
+    setUrl(window.location.search)
+  }, [])
+
   const urlParams = new URLSearchParams(url)
   const params = Object.fromEntries(urlParams.entries())
 
@@ -978,4 +995,200 @@ export function stopPropagate(callback: () => void) {
     e.preventDefault()
     callback()
   }
+}
+
+export function inputClassName({
+  leadingIcon,
+  trailingIcon,
+  leadingIconSize,
+  noBorder,
+}: {
+  leadingIcon?: boolean
+  leadingIconSize?: 'sm' | 'md'
+  trailingIcon?: boolean
+  noBorder?: boolean
+}) {
+  let pl = 'mercoa-pl-2'
+  if (leadingIcon) {
+    pl = 'mercoa-pl-5'
+    if (leadingIconSize === 'md') {
+      pl = 'mercoa-pl-10'
+    }
+  }
+  return `mercoa-block mercoa-w-full mercoa-flex-1 mercoa-rounded-md mercoa-py-1.5 ${pl} ${
+    trailingIcon ? 'mercoa-pr-[4.4rem]' : 'mercoa-pr-2'
+  } mercoa-text-gray-900 sm:mercoa-text-sm sm:mercoa-leading-6
+  mercoa-border-0 ${
+    noBorder ? 'mercoa-ring-0' : 'mercoa-ring-1'
+  } mercoa-ring-inset mercoa-ring-gray-300 :mercoa-border-0 mercoa-outline-0 
+  focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary focus:mercoa-border-0 focus:mercoa-outline-0`
+}
+
+export function MercoaInputLabel({ label, name }: { label: string; name?: string }) {
+  return (
+    <div className="mercoa-flex mercoa-justify-between">
+      <label
+        htmlFor={name}
+        className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-whitespace-nowrap"
+      >
+        {label}
+      </label>
+    </div>
+  )
+}
+
+export function MercoaInput({
+  type,
+  label,
+  onChange,
+  onBlur,
+  required,
+  readOnly,
+  ref,
+  register,
+  control,
+  disabled,
+  placeholder,
+  optional,
+  name,
+  className,
+  leadingIcon,
+  trailingIcon,
+  errors,
+  dateOptions,
+  min,
+  max,
+  step,
+  noBorder,
+}: {
+  type?: 'text' | 'password' | 'email' | 'number' | 'date'
+  label?: string
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void
+  onBlur?: (e: FocusEvent<HTMLInputElement>) => void
+  required?: boolean
+  readOnly?: boolean
+  ref?: Ref<any>
+  register?: UseFormRegister<any>
+  control?: Control<any>
+  disabled?: boolean
+  placeholder?: string
+  optional?: boolean
+  name?: string
+  className?: string
+  leadingIcon?: ReactNode
+  trailingIcon?: ReactNode
+  errors?: FieldErrors<any>
+  dateOptions?: {
+    minDate?: Date
+    maxDate?: Date
+    filterDate?: (date: Date) => boolean
+  }
+  min?: string | number
+  max?: string | number
+  step?: number
+  noBorder?: boolean
+}) {
+  const useWidth = (target: any) => {
+    const [width, setWidth] = useState<number>(0)
+
+    useLayoutEffect(() => {
+      setWidth(target?.current?.getBoundingClientRect()?.width ?? 0)
+    }, [target])
+
+    useResizeObserver(target, (entry) => setWidth(entry.contentRect.width))
+
+    return width
+  }
+
+  const leadingIconRef = useRef(null)
+  const leadingIconWidth = useWidth(leadingIconRef)
+
+  const inClassName = inputClassName({
+    leadingIcon: !!leadingIcon,
+    trailingIcon: !!trailingIcon,
+    noBorder: !!noBorder,
+    leadingIconSize: leadingIconWidth < 10 ? 'sm' : 'md',
+  })
+
+  let props = {
+    type,
+    placeholder,
+    disabled,
+    name,
+    onChange,
+    onBlur,
+    readOnly,
+    required,
+    ref,
+    className: inClassName,
+    min,
+    max,
+    step,
+  }
+
+  if (register && name) {
+    props = {
+      ...props,
+      ...register(name),
+    }
+  }
+
+  const input =
+    type === 'date' && control && name ? (
+      <Controller
+        control={control}
+        name={name}
+        render={({ field }) => (
+          <DatePicker
+            className={inClassName}
+            placeholderText={placeholder}
+            onChange={(date) => field.onChange(date)}
+            selected={field.value}
+            minDate={dateOptions?.minDate}
+            maxDate={dateOptions?.maxDate}
+            filterDate={dateOptions?.filterDate}
+            readOnly={readOnly}
+            required={required}
+          />
+        )}
+      />
+    ) : (
+      <input {...props} />
+    )
+
+  const inputContainer = (
+    <div className="mercoa-relative">
+      {leadingIcon && (
+        <div
+          className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-flex mercoa-items-center mercoa-pl-2"
+          ref={leadingIconRef}
+        >
+          {leadingIcon}
+        </div>
+      )}
+      {input}
+      {trailingIcon && (
+        <div className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center">
+          {trailingIcon}
+        </div>
+      )}
+    </div>
+  )
+
+  if (!label) {
+    if (className) {
+      return <div className={className}>{inputContainer}</div>
+    }
+    return inputContainer
+  }
+
+  return (
+    <div className={className}>
+      <MercoaInputLabel label={label} name={name} />
+      <div className="mercoa-mt-1">{inputContainer}</div>
+      {name && errors?.[name]?.message && (
+        <p className="mercoa-text-sm mercoa-text-red-500 mercoa-text-left">{errors?.[name]?.message?.toString()}</p>
+      )}
+    </div>
+  )
 }

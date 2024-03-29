@@ -9,7 +9,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
 import { Fragment, ReactNode, useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { UseFormRegister, useForm } from 'react-hook-form'
 import { PlaidLinkError, PlaidLinkOnExitMetadata, usePlaidLink } from 'react-plaid-link'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
@@ -19,8 +19,10 @@ import {
   DefaultPaymentMethodIndicator,
   LoadingSpinnerIcon,
   MercoaButton,
+  MercoaInput,
   PaymentMethodList,
   Tooltip,
+  inputClassName,
   stopPropagate,
   useMercoaSession,
 } from './index'
@@ -35,7 +37,7 @@ export function BankAccounts({
   verifiedOnly,
 }: {
   children?: Function
-  onSelect?: Function
+  onSelect?: (value?: Mercoa.PaymentMethodResponse.BankAccount) => void
   showAdd?: boolean
   showEdit?: boolean
   verifiedOnly?: boolean
@@ -107,7 +109,7 @@ export function BankAccountComponent({
 }: {
   children?: Function
   account?: Mercoa.PaymentMethodResponse.BankAccount
-  onSelect?: Function
+  onSelect?: (value?: Mercoa.PaymentMethodResponse.BankAccount) => void
   showEdit?: boolean
   selected?: boolean
 }) {
@@ -358,47 +360,31 @@ export function BankAccountComponent({
                                   <b>Test Mode:</b> use 0 and 0 to instantly verify this account.
                                 </p>
                               )}
-                              <div className="mercoa-mt-2">
-                                <label
-                                  htmlFor="md1"
-                                  className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
-                                >
-                                  Amount
-                                </label>
-                                <div className="mercoa-mt-1">
-                                  <input
-                                    {...register('md1')}
-                                    type="number"
-                                    placeholder="0.00"
-                                    step={0.01}
-                                    min={0}
-                                    max={0.99}
-                                    className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-                                  />
-                                </div>
-                              </div>
-                              <div className="mercoa-mt-2">
-                                <label
-                                  htmlFor="md2"
-                                  className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
-                                >
-                                  Amount
-                                </label>
-                                <div className="mercoa-mt-1">
-                                  <input
-                                    {...register('md2')}
-                                    type="number"
-                                    placeholder="0.00"
-                                    step={0.01}
-                                    min={0}
-                                    max={0.99}
-                                    className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-                                  />
-                                </div>
-                              </div>
-                              <button className="mercoa-mt-5 mercoa-inline-flex mercoa-w-full mercoa-justify-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-indigo-600 mercoa-px-4 mercoa-py-2 mercoa-text-base mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2 disabled:mercoa-bg-indigo-300 sm:mercoa-text-sm">
+                              <MercoaInput
+                                name="md1"
+                                label="Amount"
+                                type="number"
+                                placeholder="0.00"
+                                step={0.01}
+                                min={0}
+                                max={0.99}
+                                register={register}
+                                className="mercoa-mt-2"
+                              />
+                              <MercoaInput
+                                name="md2"
+                                label="Amount"
+                                type="number"
+                                placeholder="0.00"
+                                step={0.01}
+                                min={0}
+                                max={0.99}
+                                register={register}
+                                className="mercoa-mt-2"
+                              />
+                              <MercoaButton isEmphasized className="mercoa-mt-5">
                                 Verify Account
-                              </button>
+                              </MercoaButton>
                             </form>
                           )}
                         </Dialog.Panel>
@@ -660,9 +646,9 @@ export function AddBankAccount({
     .object({
       bankName: yup.string().required(),
       //@ts-ignore
-      routingNumber: yup.string().required(),
+      routingNumber: yup.string('Please enter a valid routing number').required('Please enter a valid routing number'),
       //@ts-ignore
-      accountNumber: yup.string().accountNumber().required(),
+      accountNumber: yup.string().accountNumber().required('Please enter a valid account number'),
     })
     .required()
 
@@ -737,7 +723,7 @@ export function AddBankAccountForm({
   setError,
   clearErrors,
 }: {
-  register: Function
+  register: UseFormRegister<any>
   errors: any
   watch: Function
   setValue: Function
@@ -758,95 +744,35 @@ export function AddBankAccountForm({
           setValue('bankName', bankNameResp.bankName)
           clearErrors('routingNumber')
         } else {
-          setError('routingNumber', { message: 'invalid' })
+          setError('routingNumber', { message: 'Please enter a valid routing number' })
         }
       })
     } else if (routingNumber) {
-      setError('routingNumber', { message: 'invalid' })
+      setError('routingNumber', { message: 'Please enter a valid routing number' })
     }
   }, [routingNumber])
   return (
     <>
-      <div>
-        <label htmlFor="routingNumber" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
-          Routing Number
-        </label>
-        <div className="mercoa-mt-1">
-          <input
-            {...register('routingNumber')}
-            className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-          />
-          {errors?.routingNumber?.message && (
-            <p className="mercoa-text-sm mercoa-text-red-500">Please enter a valid routing number</p>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <label htmlFor="accountNumber" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
-          Account Number
-        </label>
-        <div className="mercoa-mt-1">
-          <input
-            {...register('accountNumber')}
-            className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-          />
-          {errors?.accountNumber?.message && (
-            <p className="mercoa-text-sm mercoa-text-red-500">Please enter a valid account number</p>
-          )}
-        </div>
-      </div>
-
+      <MercoaInput
+        label={`Routing Number ${bankName ? ` - ${bankName}` : ''}`}
+        name="routingNumber"
+        register={register}
+        errors={errors}
+      />
+      <MercoaInput label="Account Number" name="accountNumber" register={register} errors={errors} />
       <div>
         <label htmlFor="accountType" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
           Account Type
         </label>
         <div className="mercoa-mt-1">
-          <select
-            {...register('accountType')}
-            className="mercoa-mt-1 mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-py-2 mercoa-px-3 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-          >
+          <select {...register('accountType')} className={inputClassName({})}>
             <option value="CHECKING">Checking</option>
             <option value="SAVINGS">Savings</option>
             <option value="UNKNOWN">Other</option>
           </select>
         </div>
       </div>
-
-      {bankName && (
-        <>
-          <div>
-            <label htmlFor="bankName" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
-              Bank Name
-            </label>
-            <div className="mercoa-mt-1">
-              <input
-                readOnly
-                disabled
-                {...register('bankName')}
-                className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-              />
-              {errors?.bankName?.message && (
-                <p className="mercoa-text-sm mercoa-text-red-500">Please enter the bank name</p>
-              )}
-            </div>
-          </div>
-          <div>
-            <label
-              htmlFor="accountName"
-              className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
-            >
-              Account Name
-            </label>
-            <div className="mercoa-mt-1">
-              <input
-                {...register('accountName')}
-                className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-              />
-            </div>
-          </div>
-        </>
-      )}
+      <MercoaInput label="Account Name" name="accountName" register={register} errors={errors} optional />
     </>
   )
 }
@@ -895,17 +821,7 @@ export function EditBankAccount({
 
   return (
     <form onSubmit={handleSubmit(onUpdate)}>
-      <div>
-        <label htmlFor="accountName" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
-          Account Name
-        </label>
-        <div className="mercoa-mt-1">
-          <input
-            {...register('accountName')}
-            className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-          />
-        </div>
-      </div>
+      <MercoaInput label="Account Name" name="accountName" register={register} optional />
       {account.accountType === 'CHECKING' && (
         <div className="mercoa-relative mercoa-mt-5 mercoa-flex mercoa-items-start mercoa-items-center">
           <div className="mercoa-flex mercoa-h-5 mercoa-items-center">
@@ -927,36 +843,16 @@ export function EditBankAccount({
         </div>
       )}
       {checkEnabled && (
-        <>
-          <div className="mercoa-mt-2">
-            <label
-              htmlFor="checkOptions.initialCheckNumber"
-              className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
-            >
-              Initial Check Number
-            </label>
-            <div className="mercoa-mt-1">
-              <input
-                {...register('checkOptions.initialCheckNumber')}
-                className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-              />
-            </div>
-          </div>
-          <div className="mercoa-mt-2">
-            <label
-              htmlFor="checkOptions.signatoryName"
-              className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
-            >
-              Signatory Name
-            </label>
-            <div className="mercoa-mt-1">
-              <input
-                {...register('checkOptions.signatoryName')}
-                className="mercoa-block mercoa-w-full mercoa-appearance-none mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-px-3 mercoa-py-2 mercoa-placeholder-gray-400 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-              />
-            </div>
-          </div>
-        </>
+        <div className="mercoa-bg-gray-100 mercoa-p-2 mercoa-rounded-md mercoa-mt-2">
+          <MercoaInput label="Signatory Name" name="checkOptions.signatoryName" register={register} />
+          <MercoaInput
+            label="Initial Check Number"
+            name="checkOptions.initialCheckNumber"
+            register={register}
+            optional
+            className="mercoa-mt-2"
+          />
+        </div>
       )}
       <MercoaButton
         size="sm"

@@ -206,13 +206,13 @@ export type InvoiceTableColumn = {
 export function InvoiceTable({
   statuses,
   search,
-  onClick,
+  onSelectInvoice,
   columns,
   children,
 }: {
   statuses: Mercoa.InvoiceStatus[]
   search: string
-  onClick?: (invoice: Mercoa.InvoiceResponse) => any
+  onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
   columns?: InvoiceTableColumn[]
   children?: ({
     dataLoaded,
@@ -671,7 +671,7 @@ export function InvoiceTable({
 
   if (!dataLoaded || !mercoaSession.entity || !invoices) {
     return (
-      <div className="mercoa-min-h-[710px]">
+      <div className="mercoa-min-h-[710px] mercoa-min-w-[710px]">
         <Skeleton rows={20} />
       </div>
     )
@@ -724,13 +724,15 @@ export function InvoiceTable({
       <tr>
         {/* ******** CHECK BOX HEADER ******** */}
         <th scope="col" className="mercoa-relative mercoa-px-7 sm:mercoa-w-12 sm:mercoa-px-6">
-          <input
-            type="checkbox"
-            className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
-            ref={checkbox}
-            checked={checked}
-            onChange={toggleAll}
-          />
+          {invoices.length > 0 && (
+            <input
+              type="checkbox"
+              className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
+              ref={checkbox}
+              checked={checked}
+              onChange={toggleAll}
+            />
+          )}
         </th>
         {(columns ?? defaultColumns).map((column, index) => {
           if (!columnHasData(column)) return null
@@ -825,7 +827,7 @@ export function InvoiceTable({
                   selectedInvoices.includes(invoice) ? 'mercoa-text-mercoa-primary-text' : 'mercoa-text-gray-900'
                 } ${index === 0 ? 'mercoa-font-medium' : ''}`}
                 onClick={() => {
-                  if (onClick) onClick(invoice)
+                  if (onSelectInvoice) onSelectInvoice(invoice)
                 }}
               >
                 {toDisplay}
@@ -1420,7 +1422,7 @@ export function InvoiceInbox({
         <StatusTabs statuses={statuses} search={search} onStatusChange={setSelectedStatuses} />
       )}
       <InvoiceMetrics statuses={selectedStatuses} search={search} />
-      <InvoiceTable statuses={selectedStatuses} search={search} onClick={onSelectInvoice} />
+      <InvoiceTable statuses={selectedStatuses} search={search} onSelectInvoice={onSelectInvoice} />
     </div>
   )
 }

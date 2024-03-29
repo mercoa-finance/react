@@ -7,7 +7,15 @@ import { Fragment, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { LoadingSpinnerIcon, MercoaButton, MercoaCombobox, TableNavigation, Tooltip, useMercoaSession } from './index'
+import {
+  LoadingSpinnerIcon,
+  MercoaButton,
+  MercoaCombobox,
+  MercoaInput,
+  TableNavigation,
+  Tooltip,
+  useMercoaSession,
+} from './index'
 
 const notificationTypeToText = {
   [Mercoa.NotificationType.InvoiceEmailed]: 'Invoice Email Received',
@@ -268,34 +276,13 @@ export function EntityUsersTable({
           mercoaSession.refresh()
         })}
       >
-        <div className="mercoa-mt-2 mercoa-w-96">
-          <label htmlFor="email" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
-            Email
-          </label>
-          <div className="mercoa-mt-1">
-            <input
-              {...register(`email`, { required: true })}
-              type="text"
-              placeholder="person@yourcustomer.com"
-              className="mercoa-w-full mercoa-border mercoa-border-gray-300 mercoa-rounded-md mercoa-shadow-sm focus:mercoa-ring-indigo-500 focus:mercoa-border-indigo-500 sm:mercoa-text-sm"
-            />
-          </div>
-        </div>
+        <MercoaInput label="Email" register={register} name="email" className="mercoa-mt-2" />
+        <MercoaInput label="Name" register={register} name="name" className="mercoa-mt-2" />
         <div className="mercoa-mt-2">
-          <label htmlFor="name" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
-            Name
-          </label>
-          <div className="mercoa-mt-1">
-            <input
-              {...register(`name`, { required: true })}
-              type="text"
-              placeholder="Your User's Full Name"
-              className="mercoa-w-full mercoa-border mercoa-border-gray-300 mercoa-rounded-md mercoa-shadow-sm focus:mercoa-ring-indigo-500 focus:mercoa-border-indigo-500 sm:mercoa-text-sm"
-            />
-          </div>
-        </div>
-        <div className="mercoa-mt-2">
-          <label htmlFor="roles" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
+          <label
+            htmlFor="roles"
+            className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-whitespace-nowrap"
+          >
             Roles
           </label>
           <div className="mercoa-mt-1 mercoa-flex mercoa-items-center mercoa-gap-x-1">
@@ -332,19 +319,13 @@ export function EntityUsersTable({
             </button>
           </div>
         </div>
-        <div className="mercoa-mt-2">
-          <label htmlFor="foreignId" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
-            Foreign ID
-          </label>
-          <div className="mercoa-mt-1">
-            <input
-              {...register(`foreignId`, { required: true })}
-              type="text"
-              placeholder="The ID of the user in your system"
-              className="mercoa-w-full mercoa-border mercoa-border-gray-300 mercoa-rounded-md mercoa-shadow-sm focus:mercoa-ring-indigo-500 focus:mercoa-border-indigo-500 sm:mercoa-text-sm"
-            />
-          </div>
-        </div>
+        <MercoaInput
+          label="Foreign ID"
+          register={register}
+          name="foreignId"
+          className="mercoa-mt-2"
+          placeholder="The ID of the user in your system"
+        />
         <MercoaButton isEmphasized={true} color="green" className="mercoa-mt-5 mercoa-w-full">
           Save
         </MercoaButton>

@@ -30,24 +30,22 @@ export function EntityStatus({ entity }: { entity?: Mercoa.EntityResponse }) {
           </span>
         </Tooltip>
       )}
-      {entity.status === 'pending' ||
-        (entity.status === 'review' && (
-          /* @ts-ignore:next-line */
-          <Tooltip title="Can only receive funds">
-            <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-yellow-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-yellow-800">
-              Pending
-            </span>
-          </Tooltip>
-        ))}
-      {entity.status === 'resubmit' ||
-        (entity.status === 'failed' && (
-          /* @ts-ignore:next-line */
-          <Tooltip title="Can only receive funds">
-            <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-red-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-red-800">
-              VERIFICATION FAILED
-            </span>
-          </Tooltip>
-        ))}
+      {(entity.status === 'pending' || entity.status === 'review') && (
+        /* @ts-ignore:next-line */
+        <Tooltip title="Can only receive funds">
+          <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-yellow-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-yellow-800">
+            Pending
+          </span>
+        </Tooltip>
+      )}
+      {(entity.status === 'resubmit' || entity.status === 'failed') && (
+        /* @ts-ignore:next-line */
+        <Tooltip title="Can only receive funds">
+          <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-red-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-red-800">
+            VERIFICATION FAILED
+          </span>
+        </Tooltip>
+      )}
     </>
   )
 }

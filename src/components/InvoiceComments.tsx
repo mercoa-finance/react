@@ -134,14 +134,14 @@ export function InvoiceComments({ invoice }: { invoice?: Mercoa.InvoiceResponse 
       {/* New comment form */}
       <div className="mercoa-mt-6 mercoa-flex mercoa-gap-x-3">
         <form onSubmit={handleSubmit(addComment)} className="mercoa-relative mercoa-flex-auto">
-          <div className="mercoa-overflow-hidden mercoa-rounded-lg mercoa-pb-12 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-600">
+          <div className="mercoa-overflow-hidden mercoa-rounded-lg mercoa-pb-12 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary focus:mercoa-border-0 focus:mercoa-outline-0">
             <label htmlFor="comment" className="mercoa-sr-only">
               Add your comment
             </label>
             <textarea
               rows={2}
               {...register('text')}
-              className="mercoa-block mercoa-w-full mercoa-resize-none mercoa-border-0 mercoa-bg-transparent mercoa-py-1.5 mercoa-text-gray-900 placeholder:mercoa-text-gray-400 focus:mercoa-ring-0 sm:mercoa-text-sm sm:mercoa-leading-6"
+              className="mercoa-block mercoa-w-full mercoa-resize-none mercoa-border-0 mercoa-bg-transparent mercoa-py-1.5 mercoa-px-2 mercoa-text-gray-900 placeholder:mercoa-text-gray-400 focus:mercoa-ring-0 sm:mercoa-text-sm sm:mercoa-leading-6 focus-visible:mercoa-outline-none"
               placeholder="Add your comment..."
             />
           </div>

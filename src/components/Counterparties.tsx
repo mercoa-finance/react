@@ -12,11 +12,11 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Mercoa } from '@mercoa/javascript'
 import debounce from 'lodash/debounce'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { capitalize, constructFullName } from '../lib/lib'
 import { CreditCardComponent } from './CreditCard'
@@ -28,9 +28,11 @@ import {
   EntityOnboarding,
   LoadingSpinnerIcon,
   MercoaButton,
+  MercoaInput,
   TableNavigation,
   Tooltip,
   createOrUpdateEntity,
+  inputClassName,
   useMercoaSession,
 } from './index'
 const human = require('humanparser')
@@ -39,10 +41,12 @@ export function CounterpartySearch({
   counterparty,
   onSelect,
   type,
+  network,
 }: {
   counterparty?: Mercoa.CounterpartyResponse | Mercoa.EntityResponse
   onSelect?: (counterparty: Mercoa.CounterpartyResponse | Mercoa.EntityResponse) => any
   type: 'payee' | 'payor'
+  network?: Mercoa.CounterpartyNetworkType[]
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -72,12 +76,16 @@ export function CounterpartySearch({
   // Get all counterparties
   useEffect(() => {
     if (!mercoaSession.entity?.id) return
-    const networkType: Mercoa.CounterpartyNetworkType[] = [Mercoa.CounterpartyNetworkType.Entity]
+    let networkType: Mercoa.CounterpartyNetworkType[] = [Mercoa.CounterpartyNetworkType.Entity]
     if (
       mercoaSession.iframeOptions?.options?.vendors?.network === 'platform' ||
       mercoaSession.iframeOptions?.options?.vendors?.network === 'all'
     ) {
       networkType.push(Mercoa.CounterpartyNetworkType.Network)
+    }
+    // of network is passed as a prop, over write the iframe options
+    if (network) {
+      networkType = [...network]
     }
     if (type === 'payee') {
       mercoaSession.client?.entity.counterparty
@@ -188,12 +196,7 @@ export function CounterpartySearch({
   if (!counterparties) {
     return (
       <div className="mercoa-relative mercoa-mt-2">
-        <input
-          className="mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-10 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-indigo-600 sm:mercoa-text-sm sm:mercoa-leading-6"
-          placeholder="Loading..."
-          value="Loading..."
-          readOnly
-        />
+        <input className={inputClassName({})} placeholder="Loading..." value="Loading..." readOnly />
         <button className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none">
           <ChevronUpDownIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
         </button>
@@ -300,8 +303,8 @@ function CounterpartyAddOrEdit({
     resolver: yupResolver(
       yup
         .object({
-          name: yup.string().required(),
-          email: yup.string().email(),
+          name: yup.string().required('Please enter a name'),
+          email: yup.string().email('Please enter a valid email'),
           accountType: yup.string().required(),
           firstName: yup.string().required(),
           lastName: yup.string().required(),
@@ -450,56 +453,33 @@ function CounterpartyAddOrEdit({
         <XMarkIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
         <span className="mercoa-sr-only">Close</span>
       </button>
-      <div className="mercoa-mt-1">
-        <label
-          htmlFor="name"
-          className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
-        >
-          Name
-        </label>
-        <div className="mercoa-relative mercoa-rounded-md mercoa-shadow-sm">
-          <div className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-flex mercoa-items-center mercoa-pl-3">
-            <UserIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
-          </div>
-          <input
-            type="text"
-            {...register('name')}
-            className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-pl-10 focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-            placeholder="Name"
-          />
-        </div>
-      </div>
-      {errors?.name?.message && <p className="mercoa-text-sm mercoa-text-red-500">Please enter a name</p>}
-
-      <div className="mercoa-mt-1">
-        <label
-          htmlFor="email"
-          className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
-        >
-          Email
-        </label>
-        <div className="mercoa-relative mercoa-rounded-md mercoa-shadow-sm">
-          <div className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-flex mercoa-items-center mercoa-pl-3">
-            <EnvelopeIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
-          </div>
-          <input
-            type="email"
-            {...register('email')}
-            className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-pl-10 focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-            placeholder="Email"
-          />
-        </div>
-      </div>
-      {errors?.email?.message && <p className="mercoa-text-sm mercoa-text-red-500">Please enter a valid email</p>}
+      <MercoaInput
+        label="Name"
+        name="name"
+        register={register}
+        placeholder="Name"
+        errors={errors}
+        leadingIcon={<UserIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />}
+        className="mercoa-mt-1"
+      />
+      <MercoaInput
+        label="Email"
+        name="email"
+        register={register}
+        placeholder="Email"
+        errors={errors}
+        leadingIcon={<EnvelopeIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />}
+        className="mercoa-mt-1"
+      />
 
       <div className="mercoa-mt-1 mercoa-mt-2 mercoa-flex mercoa-space-x-2">
         <button
           type="button"
           onClick={() => setValue('accountType', 'individual')}
           className={`mercoa-flex-grow mercoa-rounded-lg mercoa-border mercoa-border-gray-300 mercoa-text-center mercoa-text-gray-600
-            ${accountType === 'individual' ? 'mercoa-border-indigo-600 mercoa-text-gray-800' : ''} 
+            ${accountType === 'individual' ? 'mercoa-border-mercoa-primary mercoa-text-gray-800' : ''} 
             ${accountType === 'business' ? 'mercoa-text-gray-300' : ''} 
-          mercoa-cursor-pointer  mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm hover:mercoa-border-indigo-600 hover:mercoa-text-gray-800`}
+          mercoa-cursor-pointer mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm hover:mercoa-border-mercoa-primary hover:mercoa-text-gray-800`}
         >
           Individual
         </button>
@@ -507,9 +487,9 @@ function CounterpartyAddOrEdit({
           type="button"
           onClick={() => setValue('accountType', 'business')}
           className={`mercoa-flex-grow mercoa-rounded-lg mercoa-border mercoa-border-gray-300 mercoa-text-center mercoa-text-gray-600
-            ${accountType === 'business' ? 'mercoa-border-indigo-600 mercoa-text-gray-800' : ''} 
+            ${accountType === 'business' ? 'mercoa-border-mercoa-primary mercoa-text-gray-800' : ''} 
             ${accountType === 'individual' ? 'mercoa-text-gray-300' : ''} 
-          mercoa-cursor-pointer  mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm hover:mercoa-border-indigo-600 hover:mercoa-text-gray-800`}
+          mercoa-cursor-pointer  mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm hover:mercoa-border-mercoa-primary hover:mercoa-text-gray-800`}
         >
           Business
         </button>
@@ -517,40 +497,21 @@ function CounterpartyAddOrEdit({
 
       {accountType === 'business' && (
         <>
-          <div className="mercoa-mt-1">
-            <label
-              htmlFor="email"
-              className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
-            >
-              Business Website
-            </label>
-            <input
-              type="text"
-              {...register('website')}
-              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-              placeholder="https://www.example.com"
-            />
-            {errors?.website?.message && (
-              <p className="mercoa-text-sm mercoa-text-red-500">{errors?.website?.message}</p>
-            )}
-          </div>
-          <div className="mercoa-mt-1">
-            <label
-              htmlFor="email"
-              className="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
-            >
-              Business Description
-            </label>
-            <input
-              type="text"
-              {...register('description')}
-              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-              placeholder=""
-            />
-            {errors?.description?.message && (
-              <p className="mercoa-text-sm mercoa-text-red-500">{errors?.description?.message}</p>
-            )}
-          </div>
+          <MercoaInput
+            label="Business Website"
+            name="website"
+            register={register}
+            placeholder="https://www.example.com"
+            errors={errors}
+            className="mercoa-mt-1"
+          />
+          <MercoaInput
+            label="Business Description"
+            name="description"
+            register={register}
+            errors={errors}
+            className="mercoa-mt-1"
+          />
         </>
       )}
 
@@ -567,26 +528,23 @@ function CounterpartyAddOrEdit({
               type="text"
               {...register('firstName')}
               required
-              className="mercoa-col-span-2 mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+              className={`mercoa-col-span-2 ${inputClassName({})}`}
               placeholder="First Name"
             />
             <input
               type="text"
               {...register('middleName')}
-              className="mercoa-col-span-2 mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+              className={`mercoa-col-span-2 ${inputClassName({})}`}
               placeholder="Middle Name"
             />
             <input
               type="text"
               {...register('lastName')}
               required
-              className="mercoa-col-span-2 mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+              className={`mercoa-col-span-2 ${inputClassName({})}`}
               placeholder="Last Name"
             />
-            <select
-              {...register('suffix')}
-              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-py-2 mercoa-px-3 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-outline-none focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-            >
+            <select {...register('suffix')} className={inputClassName({})}>
               <option value=""></option>
               <option value="Sr.">Sr.</option>
               <option value="Jr.">Jr.</option>
@@ -946,7 +904,6 @@ export function CounterpartyDetails({
       <div className="mercoa-p-6 ">
         <EntityOnboarding
           entity={counterparty}
-          organization={mercoaSession.organization}
           type={type}
           setEntityData={async (entityData) => {
             if (!counterparty) return
@@ -1132,7 +1089,9 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterparty.paymentMethods
             .filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center  mercoa-border-t mercoa-border-gray-900/5 ">
           <dd className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
@@ -1142,14 +1101,18 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterparty.paymentMethods
             .filter((e) => e.type === Mercoa.PaymentMethodType.Check)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
 
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center mercoa-border-t mercoa-border-gray-900/5 " />
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterparty.paymentMethods
             .filter((e) => e.type === Mercoa.PaymentMethodType.Custom)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
       </div>
     )

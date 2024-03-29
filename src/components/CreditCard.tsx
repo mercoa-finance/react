@@ -37,7 +37,7 @@ export function CreditCards({
   showEdit,
 }: {
   children?: Function
-  onSelect?: Function
+  onSelect?: (value?: Mercoa.PaymentMethodResponse.Card) => void
   showAdd?: boolean
   showEdit?: boolean
 }) {
@@ -59,7 +59,7 @@ export function CreditCards({
     }
   }, [mercoaSession.entity?.id, mercoaSession.token, showDialog, mercoaSession.refreshId])
 
-  const onClose = (account: Mercoa.PaymentMethodResponse) => {
+  const onClose = (account: Mercoa.PaymentMethodResponse.Card) => {
     setShowDialog(false)
     if (onSelect && account) onSelect(account)
   }
@@ -85,7 +85,7 @@ export function CreditCards({
               onClose={onClose}
               component={
                 <AddCreditCard
-                  onSubmit={(data: Mercoa.PaymentMethodResponse) => {
+                  onSubmit={(data: Mercoa.PaymentMethodResponse.Card) => {
                     onClose(data)
                   }}
                 />
@@ -104,7 +104,7 @@ export function AddCreditCard({
   title,
   actions,
 }: {
-  onSubmit: (data: Mercoa.PaymentMethodResponse) => void
+  onSubmit: (data: Mercoa.PaymentMethodResponse.Card) => void
   title?: ReactNode
   actions?: ReactNode
 }) {
@@ -141,7 +141,7 @@ export function AddCreditCard({
       if (!resp) {
         throw new Error('Failed to create payment method')
       }
-      onSubmit(resp)
+      onSubmit(resp as Mercoa.PaymentMethodResponse.Card)
     }
 
     // @ts-ignore
@@ -183,7 +183,7 @@ export function CreditCardComponent({
 }: {
   children?: Function
   account?: Mercoa.PaymentMethodResponse.Card
-  onSelect?: Function
+  onSelect?: (value?: Mercoa.PaymentMethodResponse.Card) => void
   selected?: boolean
   showEdit?: boolean
 }) {

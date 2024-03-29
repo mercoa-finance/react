@@ -2,9 +2,16 @@ import { EnvelopeIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
 import { ReactNode, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { UseFormRegister, useForm } from 'react-hook-form'
 import * as yup from 'yup'
-import { AddDialog, DefaultPaymentMethodIndicator, MercoaButton, stopPropagate, useMercoaSession } from './index'
+import {
+  AddDialog,
+  DefaultPaymentMethodIndicator,
+  MercoaButton,
+  MercoaInput,
+  stopPropagate,
+  useMercoaSession,
+} from './index'
 
 export function CheckComponent({
   account,
@@ -14,7 +21,7 @@ export function CheckComponent({
 }: {
   children?: Function
   account?: Mercoa.PaymentMethodResponse.Check
-  onSelect?: Function
+  onSelect?: (value?: Mercoa.PaymentMethodResponse.Check) => void
   showEdit?: boolean
   selected?: boolean
 }) {
@@ -203,57 +210,20 @@ export function AddCheck({
   )
 }
 
-export function AddCheckForm({ register }: { register: Function }) {
+export function AddCheckForm({ register }: { register: UseFormRegister<any> }) {
   return (
     <div className="mercoa-mt-2">
-      <div className="mercoa-mt-1">
-        <input
-          {...register('payToTheOrderOf')}
-          type="text"
-          placeholder="Pay To The Order Of"
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-        />
-      </div>
-      <div className="mercoa-mt-1">
-        <input
-          {...register('addressLine1')}
-          type="text"
-          placeholder="Address Line 1"
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-        />
-      </div>
-      <div className="mercoa-mt-1">
-        <input
-          {...register('addressLine2')}
-          type="text"
-          placeholder="Address Line 2"
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-        />
-      </div>
-      <div className="mercoa-mt-1">
-        <input
-          {...register('city')}
-          type="text"
-          placeholder="City"
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-        />
-      </div>
-      <div className="mercoa-mt-1">
-        <input
-          {...register('stateOrProvince')}
-          type="text"
-          placeholder="State Or Province"
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-        />
-      </div>
-      <div className="mercoa-mt-1">
-        <input
-          {...register('postalCode')}
-          type="text"
-          placeholder="Postal Code"
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-        />
-      </div>
+      <MercoaInput
+        register={register}
+        name="payToTheOrderOf"
+        placeholder="Pay To The Order Of"
+        className="mercoa-mt-1"
+      />
+      <MercoaInput register={register} name="addressLine1" placeholder="Address Line 1" className="mercoa-mt-1" />
+      <MercoaInput register={register} name="addressLine2" placeholder="Address Line 2" className="mercoa-mt-1" />
+      <MercoaInput register={register} name="city" placeholder="City" className="mercoa-mt-1" />
+      <MercoaInput register={register} name="stateOrProvince" placeholder="State Or Province" className="mercoa-mt-1" />
+      <MercoaInput register={register} name="postalCode" placeholder="Postal Code" className="mercoa-mt-1" />
     </div>
   )
 }

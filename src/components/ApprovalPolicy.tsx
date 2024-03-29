@@ -13,7 +13,7 @@ import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { MetadataSelection } from './InvoiceDetails'
 import { useMercoaSession } from './Mercoa'
-import { MercoaButton, MercoaCombobox } from './generics'
+import { MercoaButton, MercoaCombobox, MercoaInput, inputClassName } from './generics'
 
 const nestedBg = [
   'mercoa-bg-white',
@@ -547,39 +547,32 @@ function Trigger({
                 <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2">
                   more than or equal to
                 </span>
-                <div className="mercoa-relative mercoa-rounded-md mercoa-shadow-sm mercoa-inline-block">
-                  <div className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-flex mercoa-items-center mercoa-pl-3">
+                <MercoaInput
+                  leadingIcon={
                     <span className="mercoa-text-gray-500 sm:mercoa-text-sm">
                       {currencyCodeToSymbol((triggerWatch[triggerIndex] as Mercoa.Trigger.Amount).currency)}
                     </span>
-                  </div>
-                  <input
-                    type="text"
-                    {...register(`policies.${index}.trigger.${triggerIndex}.amount`)}
-                    className={`mercoa-block mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-pr-[4.4rem] mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-primary sm:mercoa-text-sm sm:mercoa-leading-6
-                 ${
-                   currencyCodeToSymbol((triggerWatch[triggerIndex] as Mercoa.Trigger.Amount).currency).length > 1
-                     ? 'mercoa-pl-12'
-                     : 'mercoa-pl-6'
-                 }`}
-                    placeholder="0.00"
-                  />
-                  <div className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center">
-                    <label htmlFor="currency" className="mercoa-sr-only">
-                      Currency
-                    </label>
-                    <select
-                      {...register(`policies.${index}.trigger.${triggerIndex}.currency`)}
-                      className="mercoa-h-full mercoa-rounded-md mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-primary sm:mercoa-text-sm"
-                    >
-                      {Object.values(Mercoa.CurrencyCode).map((option: Mercoa.CurrencyCode, index: number) => (
-                        <option key={index} value={option}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                  }
+                  name={`policies.${index}.trigger.${triggerIndex}.amount`}
+                  register={register}
+                  trailingIcon={
+                    <>
+                      <label htmlFor="currency" className="mercoa-sr-only">
+                        Currency
+                      </label>
+                      <select
+                        {...register(`policies.${index}.trigger.${triggerIndex}.currency`)}
+                        className="mercoa-h-full mercoa-rounded-md mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+                      >
+                        {Object.values(Mercoa.CurrencyCode).map((option: Mercoa.CurrencyCode, index: number) => (
+                          <option key={index} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </>
+                  }
+                />
               </>
             )}
 
@@ -733,22 +726,26 @@ function Rule({
         <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-mr-2">
           Require
         </span>
-        <input
-          {...register(`policies.${index}.rule.numApprovers`, { required: true })}
-          min="1"
-          type="number"
-          className={`mercoa-block mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-primary sm:mercoa-text-sm sm:mercoa-leading-6 mercoa-w-[50px]`}
-        />
+        <div className="mercoa-w-[50px]">
+          <input
+            {...register(`policies.${index}.rule.numApprovers`, { required: true })}
+            min="1"
+            type="number"
+            className={`${inputClassName({})}`}
+          />
+        </div>
         <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2">
           approvals from the following
         </span>
-        <select
-          {...register(`policies.${index}.rule.identifierList.type`, { required: true })}
-          className={`mercoa-block mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-pr-[4.4rem] mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-primary sm:mercoa-text-sm sm:mercoa-leading-6`}
-        >
-          <option value={'rolesList'}>roles</option>
-          <option value={'userList'}>users</option>
-        </select>
+        <div className="mercoa-w-[100px]">
+          <select
+            {...register(`policies.${index}.rule.identifierList.type`, { required: true })}
+            className={`${inputClassName({})}`}
+          >
+            <option value={'rolesList'}>roles</option>
+            <option value={'userList'}>users</option>
+          </select>
+        </div>
       </div>
 
       <div className="mercoa-mt-1">

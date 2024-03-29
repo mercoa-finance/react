@@ -20,7 +20,7 @@ import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import Draggable from 'react-draggable'
 import Dropzone from 'react-dropzone'
-import { Controller, FieldArrayWithId, FieldErrors, useFieldArray, useForm } from 'react-hook-form'
+import { FieldArrayWithId, FieldErrors, UseFormRegister, useFieldArray, useForm } from 'react-hook-form'
 import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
@@ -41,6 +41,7 @@ import {
   MercoaButton,
   MercoaCombobox,
   MercoaContext,
+  MercoaInput,
   Tooltip,
   useDebounce,
   useMercoaSession,
@@ -271,7 +272,7 @@ function InvoiceDocumentsUpload({ onFileUpload }: { onFileUpload: (fileReaderObj
             <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm mercoa-text-gray-600">
               <label
                 htmlFor="file-upload"
-                className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-bg-white mercoa-font-semibold mercoa-text-mercoa-primary focus-within:mercoa-outline-none focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 hover:mercoa-text-indigo-500"
+                className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-bg-white mercoa-font-semibold mercoa-text-mercoa-primary focus-within:mercoa-outline-none focus-within:mercoa-ring-1 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 hover:mercoa-text-indigo-500"
               >
                 <span>Upload an invoice</span>
                 <input
@@ -1067,7 +1068,7 @@ export function EditInvoiceForm({
             : ''
         }
         ${formCols}
-        mercoa-mt-6 mercoa-grid mercoa-gap-x-6 mercoa-gap-y-4`}
+        mercoa-mt-6 mercoa-grid mercoa-gap-x-6 mercoa-gap-y-4 mercoa-p-0.5`}
       >
         <label
           htmlFor="vendor-name"
@@ -1077,53 +1078,31 @@ export function EditInvoiceForm({
         </label>
 
         {/*  INVOICE NUMBER */}
-        <div className="sm:mercoa-col-span-1">
-          <div className="mercoa-flex mercoa-justify-between">
-            <label
-              htmlFor="invoiceNumber"
-              className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-whitespace-nowrap"
-            >
-              Invoice #
-            </label>
-            <span className="mercoa-text-xs mercoa-leading-6 mercoa-text-gray-500 mercoa-ml-1">Optional</span>
-          </div>
-
-          <div className="mercoa-mt-2">
-            <input
-              type="text"
-              {...register('invoiceNumber')}
-              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
-              placeholder="#1024"
-            />
-          </div>
-        </div>
+        <MercoaInput
+          optional
+          register={register}
+          name="invoiceNumber"
+          label="Invoice #"
+          type="text"
+          className="sm:mercoa-col-span-1"
+        />
 
         {/*  INVOICE AMOUNT */}
-        <div className="sm:mercoa-col-span-1">
-          <label
-            htmlFor="amount"
-            className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
-          >
-            Amount
-          </label>
-          <div className="mercoa-relative mercoa-mt-2 mercoa-rounded-md mercoa-shadow-sm">
-            <div className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-flex mercoa-items-center mercoa-pl-3">
-              <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
-            </div>
-            <input
-              type="text"
-              {...register('amount')}
-              className={`mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-pr-[4.4rem] mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6
-                ${currencyCodeToSymbol(currency).length > 1 ? 'mercoa-pl-12' : 'mercoa-pl-6'}`}
-              placeholder="0.00"
-            />
-            <div className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center">
+        <MercoaInput
+          register={register}
+          name="amount"
+          label="Amount"
+          type="text"
+          className="sm:mercoa-col-span-1"
+          leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>}
+          trailingIcon={
+            <>
               <label htmlFor="currency" className="mercoa-sr-only">
                 Currency
               </label>
               <select
                 {...register('currency')}
-                className="mercoa-h-full mercoa-rounded-md mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+                className="mercoa-h-full mercoa-rounded-md mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
               >
                 {supportedCurrencies.map((option: Mercoa.CurrencyCode, index: number) => (
                   <option key={index} value={option}>
@@ -1131,95 +1110,47 @@ export function EditInvoiceForm({
                   </option>
                 ))}
               </select>
-            </div>
-          </div>
-          {errors.amount?.message && (
-            <p className="mercoa-text-sm mercoa-text-red-500">{errors.amount?.message.toString()}</p>
-          )}
-        </div>
+            </>
+          }
+          errors={errors}
+        />
 
         {/*  INVOICE DATE */}
-        <div className="mercoa-col-span-1">
-          <label
-            htmlFor="invoiceDate"
-            className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
-          >
-            Invoice Date
-          </label>
-          <div className="mercoa-relative mercoa-mt-2">
-            <Controller
-              control={control}
-              name="invoiceDate"
-              render={({ field }) => (
-                <DatePicker
-                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
-                  placeholderText="Select invoice date"
-                  onChange={(date) => field.onChange(date)}
-                  selected={field.value}
-                />
-              )}
-            />
-          </div>
-          {errors.invoiceDate?.message && (
-            <p className="mercoa-text-sm mercoa-text-red-500">{errors.invoiceDate?.message.toString()}</p>
-          )}
-        </div>
+        <MercoaInput
+          name="invoiceDate"
+          label="Invoice Date"
+          placeholder="Invoice Date"
+          type="date"
+          className="sm:mercoa-col-span-1"
+          control={control}
+          errors={errors}
+        />
 
         {/*  DUE DATE */}
-        <div className="mercoa-col-span-1">
-          <label
-            htmlFor="dueDate"
-            className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
-          >
-            Due Date
-          </label>
-          <div className="mercoa-relative mercoa-mt-2">
-            <Controller
-              control={control}
-              name="dueDate"
-              render={({ field }) => (
-                <DatePicker
-                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
-                  placeholderText="Select due date"
-                  onChange={(date) => field.onChange(date)}
-                  selected={field.value}
-                />
-              )}
-            />
-          </div>
-          {errors.dueDate?.message && (
-            <p className="mercoa-text-sm mercoa-text-red-500">{errors.dueDate?.message.toString()}</p>
-          )}
-        </div>
+        <MercoaInput
+          name="dueDate"
+          label="Due Date"
+          placeholder="Due Date"
+          type="date"
+          className="sm:mercoa-col-span-1"
+          control={control}
+          errors={errors}
+        />
 
         {/*  SCHEDULED PAYMENT DATE */}
-        <div className="mercoa-col-span-1">
-          <label
-            htmlFor="deductionDate"
-            className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-whitespace-nowrap"
-          >
-            Scheduled Payment Date
-          </label>
-          <div className="mercoa-relative mercoa-mt-2">
-            <Controller
-              control={control}
-              name="deductionDate"
-              render={({ field }) => (
-                <DatePicker
-                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
-                  placeholderText="Scheduled payment date"
-                  onChange={(date) => field.onChange(date)}
-                  selected={field.value}
-                  minDate={dayjs().toDate()}
-                  filterDate={isWeekday}
-                />
-              )}
-            />
-          </div>
-          {errors.deductionDate?.message && (
-            <p className="mercoa-text-sm mercoa-text-red-500">{errors.deductionDate?.message.toString()}</p>
-          )}
-        </div>
+        <MercoaInput
+          name="deductionDate"
+          label="Scheduled Payment Date"
+          placeholder="Schd Payment Date"
+          type="date"
+          className="sm:mercoa-col-span-1"
+          control={control}
+          errors={errors}
+          dateOptions={{
+            minDate: dayjs().toDate(),
+            filterDate: isWeekday,
+          }}
+        />
 
         {/*  DESCRIPTION */}
         <div className="mercoa-col-span-full">
@@ -1234,7 +1165,7 @@ export function EditInvoiceForm({
               id="description"
               {...register('description')}
               rows={3}
-              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
+              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
               defaultValue={''}
             />
           </div>
@@ -2630,7 +2561,9 @@ function MetadataDate({
 }) {
   return (
     <DatePicker
-      className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 sm:mercoa-text-sm"
+      className={`mercoa-block mercoa-w-full mercoa-flex-1 mercoa-rounded-md mercoa-py-1.5 mercoa-pl-2 mercoa-pr-2 mercoa-text-gray-900 sm:mercoa-text-sm sm:mercoa-leading-6
+      mercoa-border-0 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 :mercoa-border-0 mercoa-outline-0 
+      focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary focus:mercoa-border-0 focus:mercoa-outline-0`}
       placeholderText={`Select ${displayName}`}
       onChange={(date) => {
         if (date) {
@@ -2663,7 +2596,7 @@ function MetadataBoolean({
           type="radio"
           name={`true-false-${schema.key}`}
           defaultChecked={value === 'true'}
-          className="mercoa-h-4 mercoa-w-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary"
+          className="mercoa-h-4 mercoa-w-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary checked:mercoa-bg-mercoa-primary"
           onChange={() => setValue('true')}
         />
         <label
@@ -2679,7 +2612,7 @@ function MetadataBoolean({
           type="radio"
           name={`true-false-${schema.key}`}
           defaultChecked={value === 'false'}
-          className="mercoa-h-4 mercoa-w-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary"
+          className="mercoa-h-4 mercoa-w-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary checked:mercoa-bg-mercoa-primary"
           onChange={() => setValue('false')}
         />
         <label
@@ -2714,7 +2647,7 @@ function LineItems({
   lineItems?: FieldArrayWithId[]
   append: Function
   remove: Function
-  register: Function
+  register: UseFormRegister<any>
   currency: Mercoa.CurrencyCode
   watch: Function
   setValue: Function
@@ -2898,7 +2831,7 @@ function LineItemRow({
   currency: Mercoa.CurrencyCode
   index: number
   remove: Function
-  register: Function
+  register: UseFormRegister<any>
   watch: Function
   setValue: Function
   entityMetadata: Mercoa.EntityMetadataResponse[]
@@ -2910,29 +2843,16 @@ function LineItemRow({
   return (
     <tr className="mercoa-divide-x mercoa-divide-gray-200">
       <td className="mercoa-whitespace-nowrap mercoa-py-1 mercoa-pl-1 mercoa-pr-1 mercoa-text-sm mercoa-text-gray-500 sm:pr-0">
-        <div className="mercoa-relative">
-          <div className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-flex mercoa-items-center mercoa-pl-3">
-            <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
-          </div>
-          <input
-            type="text"
-            className={`mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 
-            mercoa-text-gray-900 
-            placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 mercoa-pl-6
-            ${currencyCodeToSymbol(currency).length > 1 ? 'mercoa-pl-12' : 'mercoa-pl-6'}`}
-            placeholder="0.00"
-            {...register(`lineItems.${index}.amount`)}
-          />
-        </div>
+        <MercoaInput
+          leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>}
+          name={`lineItems.${index}.amount`}
+          placeholder="0"
+          register={register}
+          noBorder
+        />
       </td>
       <td className="mercoa-whitespace-nowrap mercoa-p-1 mercoa-text-sm mercoa-text-gray-500">
-        {' '}
-        <input
-          type="text"
-          className="mercoa-block mercoa-w-full mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900
-           placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
-          {...register(`lineItems.${index}.description`)}
-        />
+        <MercoaInput name={`lineItems.${index}.description`} placeholder="Description" register={register} noBorder />
       </td>
       {mercoaSession.organization?.metadataSchema
         ?.filter((schema) => schema.lineItem)
@@ -2983,31 +2903,6 @@ function LineItemRow({
             </td>
           )
         })}
-      {/* <td className="mercoa-whitespace-nowrap mercoa-p-1 mercoa-text-sm mercoa-text-gray-500">
-        <input
-          type="text"
-          className={`mercoa-block mercoa-w-full mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 
-            placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6`}
-          placeholder="1"
-          {...register(`lineItems.${index}.quantity`)}
-        />
-      </td>
-      <td className="mercoa-whitespace-nowrap mercoa-p-1 mercoa-text-sm mercoa-text-gray-500">
-        <div className="mercoa-relative">
-          <div className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-left-0 mercoa-flex mercoa-items-center mercoa-pl-3">
-            <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
-          </div>
-          <input
-            type="text"
-            className={`mercoa-block mercoa-w-full mercoa-border-0 mercoa-py-1.5 
-            mercoa-text-gray-900 
-            placeholder:mercoa-text-gray-400 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 mercoa-pl-6
-            ${currencyCodeToSymbol(currency).length > 1 ? 'mercoa-pl-12' : 'mercoa-pl-6'}`}
-            placeholder="0.00"
-            {...register(`lineItems.${index}.unitPrice`)}
-          />
-        </div>
-      </td> */}
       <td className="mercoa-whitespace-nowrap mercoa-py-1 mercoa-pl-1 mercoa-pr-1 mercoa-text-sm mercoa-text-gray-500 sm:pr-0">
         <button type="button" onClick={() => remove(index)}>
           <XMarkIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
