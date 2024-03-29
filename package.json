@@ -16,7 +16,7 @@
     "dev": "npm start",
     "lint": "eslint . --ext .ts,.tsx",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build -s ./public"
   },
   "peerDependencies": {
     "react": "^18.2.0",
