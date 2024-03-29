@@ -1,5 +1,5 @@
 import type { Preview } from '@storybook/react'
-import { initialize, mswDecorator } from 'msw-storybook-addon'
+import { initialize, mswLoader } from 'msw-storybook-addon'
 import { MercoaSession } from '../src/components/Mercoa'
 import { mockToken, mswHandlers } from '../src/stories/mockData'
 
@@ -23,13 +23,13 @@ const preview: Preview = {
     },
   },
   decorators: [
-    mswDecorator,
     (Story) => (
       <MercoaSession token={mockToken}>
         <Story />
       </MercoaSession>
     ),
   ],
+  loaders: [mswLoader],
 }
 
 export default preview
