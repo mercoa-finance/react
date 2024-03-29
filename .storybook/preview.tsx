@@ -21,6 +21,11 @@ initialize(options, mswHandlers)
 
 const preview: Preview = {
   parameters: {
+    options: {
+      sortStory: {
+        order: ['Portal', 'Invoice Inbox', 'Invoice', 'Entity', 'Payment Methods', 'Vendors', 'Approvals', 'Utility'],
+      },
+    },
     controls: {
       matchers: {
         color: /(background|color)$/i,
