@@ -73,6 +73,7 @@ export function InvoiceDetails({
   }) => React.ReactNode
 }) {
   const mercoaSession = useMercoaSession()
+  const contentHeightOffset = heightOffset ?? mercoaSession.heightOffset
   const [uploadedFile, setUploadedFile] = useState<{ fileReaderObj: string; mimeType: string }>()
   const [ocrResponse, setOcrResponse] = useState<Mercoa.OcrResponse>()
   const [uploadedImage, setUploadedImage] = useState<string>()
@@ -80,7 +81,7 @@ export function InvoiceDetails({
   const [invoiceLocal, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>(invoice)
   const [documents, setDocuments] = useState<Mercoa.DocumentResponse[]>()
   const [height, setHeight] = useState<number>(
-    typeof window !== 'undefined' ? window.innerHeight - (heightOffset ?? mercoaSession.heightOffset) : 0,
+    typeof window !== 'undefined' ? window.innerHeight - contentHeightOffset : 0,
   )
   const [isViewingInvoiceMobile, setIsViewingInvoiceMobile] = useState<boolean>(false)
 
@@ -139,7 +140,7 @@ export function InvoiceDetails({
   }, [invoice, invoiceId, mercoaSession.token, mercoaSession.entity?.id])
 
   function handleResize() {
-    setHeight(window.innerHeight - (heightOffset ?? mercoaSession.heightOffset))
+    setHeight(window.innerHeight - contentHeightOffset)
   }
   useEffect(() => {
     handleResize()
@@ -147,7 +148,7 @@ export function InvoiceDetails({
     return () => {
       window.removeEventListener('resize', handleResize)
     }
-  }, [])
+  }, [contentHeightOffset])
 
   useEffect(() => {
     if (invoiceLocal && invoiceLocal.hasDocuments) {
