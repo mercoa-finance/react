@@ -31,6 +31,7 @@ export interface MercoaContext {
   setIframeOptions: Function
   getNewToken: Function
   googleMapsApiKey?: string
+  heightOffset: number
 }
 const sessionContext = createContext<MercoaContext>({
   token: '',
@@ -51,6 +52,7 @@ const sessionContext = createContext<MercoaContext>({
   setIframeOptions: () => {},
   getNewToken: (expiresIn?: string) => {},
   googleMapsApiKey: undefined,
+  heightOffset: 70,
 })
 
 interface contextClassType {
@@ -74,6 +76,7 @@ export function MercoaSession({
   isAdmin,
   googleMapsApiKey,
   disableToastContainer,
+  heightOffset,
 }: {
   children?: ReactNode
   entityId?: Mercoa.EntityId
@@ -83,10 +86,19 @@ export function MercoaSession({
   isAdmin?: boolean
   googleMapsApiKey?: string
   disableToastContainer?: boolean
+  heightOffset?: number
 }) {
   return (
     <sessionContext.Provider
-      value={useProvideSession({ token, entityId, entityUserId, endpoint, isAdmin, googleMapsApiKey })}
+      value={useProvideSession({
+        token,
+        entityId,
+        entityUserId,
+        endpoint,
+        isAdmin,
+        googleMapsApiKey,
+        heightOffset: heightOffset ?? 70,
+      })}
     >
       {disableToastContainer ? (
         <></>
@@ -159,6 +171,7 @@ function useProvideSession({
   endpoint,
   isAdmin,
   googleMapsApiKey,
+  heightOffset,
 }: {
   token: string
   entityId?: Mercoa.EntityId
@@ -166,6 +179,7 @@ function useProvideSession({
   endpoint?: string
   isAdmin?: boolean
   googleMapsApiKey?: string
+  heightOffset: number
 }) {
   const [entity, setEntity] = useState<Mercoa.EntityResponse>()
   const [user, setUser] = useState<Mercoa.EntityUserResponse>()
@@ -335,5 +349,6 @@ function useProvideSession({
     setIframeOptions,
     getNewToken,
     googleMapsApiKey,
+    heightOffset,
   }
 }

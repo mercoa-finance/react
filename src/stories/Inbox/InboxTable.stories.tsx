@@ -39,10 +39,12 @@ export const Column: Story = {
       {
         title: 'Merchant',
         field: 'vendor',
+        orderBy: Mercoa.InvoiceOrderByField.VendorName,
       },
       {
         title: 'Amount',
         field: 'amount',
+        orderBy: Mercoa.InvoiceOrderByField.Amount,
       },
       {
         title: 'Project ID',

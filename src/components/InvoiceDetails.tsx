@@ -80,7 +80,7 @@ export function InvoiceDetails({
   const [invoiceLocal, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>(invoice)
   const [documents, setDocuments] = useState<Mercoa.DocumentResponse[]>()
   const [height, setHeight] = useState<number>(
-    typeof window !== 'undefined' ? window.innerHeight - (heightOffset ?? 70) : 0,
+    typeof window !== 'undefined' ? window.innerHeight - (heightOffset ?? mercoaSession.heightOffset) : 0,
   )
   const [isViewingInvoiceMobile, setIsViewingInvoiceMobile] = useState<boolean>(false)
 
@@ -139,7 +139,7 @@ export function InvoiceDetails({
   }, [invoice, invoiceId, mercoaSession.token, mercoaSession.entity?.id])
 
   function handleResize() {
-    setHeight(window.innerHeight - (heightOffset ?? 70))
+    setHeight(window.innerHeight - (heightOffset ?? mercoaSession.heightOffset))
   }
   useEffect(() => {
     handleResize()

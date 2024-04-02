@@ -532,7 +532,15 @@ export function Switch({
   )
 }
 
-export function DebouncedSearch({ onSettle, placeholder }: { onSettle: (value: string) => void; placeholder: string }) {
+export function DebouncedSearch({
+  onSettle,
+  placeholder,
+  leadingIcon,
+}: {
+  onSettle: (value: string) => void
+  placeholder: string
+  leadingIcon?: ReactNode
+}) {
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearch = useRef(debounce(onSettle, 200)).current
 
@@ -542,7 +550,12 @@ export function DebouncedSearch({ onSettle, placeholder }: { onSettle: (value: s
 
   return (
     <div className="mercoa-w-full">
-      <MercoaInput onChange={(e) => setSearchTerm(e.target.value)} type="text" placeholder={placeholder} />
+      <MercoaInput
+        onChange={(e) => setSearchTerm(e.target.value)}
+        type="text"
+        placeholder={placeholder}
+        leadingIcon={leadingIcon}
+      />
     </div>
   )
 }

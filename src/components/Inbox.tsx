@@ -206,12 +206,16 @@ export type InvoiceTableColumn = {
 export function InvoiceTable({
   statuses,
   search,
+  startDate,
+  endDate,
   onSelectInvoice,
   columns,
   children,
 }: {
   statuses: Mercoa.InvoiceStatus[]
   search: string
+  startDate?: Date
+  endDate?: Date
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
   columns?: InvoiceTableColumn[]
   children?: ({
@@ -601,6 +605,8 @@ export function InvoiceTable({
       .find(mercoaSession.entity.id, {
         status: currentStatuses,
         search,
+        startDate,
+        endDate,
         orderBy,
         orderDirection,
         ...(showOnlyInvoicesThatUserNeedsToApprove && {
@@ -627,6 +633,8 @@ export function InvoiceTable({
     mercoaSession.refreshId,
     currentStatuses,
     search,
+    startDate,
+    endDate,
     orderBy,
     orderDirection,
     startingAfter,
@@ -644,7 +652,7 @@ export function InvoiceTable({
       setPage(1)
       setCount(0)
     }
-  }, [statuses])
+  }, [statuses, startDate, endDate])
 
   if (children) {
     return children({
