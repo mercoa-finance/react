@@ -32,6 +32,7 @@ export interface MercoaContext {
   getNewToken: Function
   googleMapsApiKey?: string
   heightOffset: number
+  setHeightOffset: Function
 }
 const sessionContext = createContext<MercoaContext>({
   token: '',
@@ -53,6 +54,7 @@ const sessionContext = createContext<MercoaContext>({
   getNewToken: (expiresIn?: string) => {},
   googleMapsApiKey: undefined,
   heightOffset: 70,
+  setHeightOffset: () => {},
 })
 
 interface contextClassType {
@@ -192,6 +194,7 @@ function useProvideSession({
   const [moovToken, setMoovToken] = useState<string>()
   const [tokenLocal, setToken] = useState<string>(token)
   const [iframeOptions, setIframeOptions] = useState<TokenOptions>()
+  const [heightOffsetLocal, setHeightOffset] = useState<number>(heightOffset)
 
   const client = useMemo(() => {
     return new MercoaClient({
@@ -349,6 +352,7 @@ function useProvideSession({
     setIframeOptions,
     getNewToken,
     googleMapsApiKey,
-    heightOffset,
+    setHeightOffset,
+    heightOffset: heightOffsetLocal,
   }
 }
