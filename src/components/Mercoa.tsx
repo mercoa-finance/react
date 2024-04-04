@@ -196,6 +196,10 @@ function useProvideSession({
   const [iframeOptions, setIframeOptions] = useState<TokenOptions>()
   const [heightOffsetLocal, setHeightOffset] = useState<number>(heightOffset)
 
+  useEffect(() => {
+    setHeightOffset(heightOffset)
+  }, [heightOffset])
+
   const client = useMemo(() => {
     return new MercoaClient({
       environment: endpoint ?? 'https://api.mercoa.com',

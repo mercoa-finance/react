@@ -19,7 +19,7 @@ import {
 import { currencyCodeToSymbol } from '../lib/currency'
 import { classNames } from '../lib/lib'
 import { isWeekday } from '../lib/scheduling'
-import { DebouncedSearch, LoadingSpinner, MercoaButton, Skeleton, StatCard } from './index'
+import { DebouncedSearch, MercoaButton, Skeleton, StatCard } from './index'
 
 function invoiceStatusToName(name: Mercoa.InvoiceStatus, approvalPolicies?: Mercoa.ApprovalPolicyResponse[]) {
   const out = {
@@ -1279,8 +1279,6 @@ export function StatusTabs({
       setMetrics: setInvoiceMetrics,
     })
   }, [search, tabs, mercoaSession.client, mercoaSession.entity, mercoaSession.refreshId])
-
-  if (Object.keys(invoiceMetrics ?? {}).length < 1) return <LoadingSpinner />
 
   return (
     <>

@@ -8,9 +8,10 @@ import {
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
-import { Fragment, ReactNode, useEffect, useState } from 'react'
+import { Fragment, ReactNode, useEffect, useRef, useState } from 'react'
 import { UseFormRegister, useForm } from 'react-hook-form'
 import { PlaidLinkError, PlaidLinkOnExitMetadata, usePlaidLink } from 'react-plaid-link'
+import SignatureCanvas from 'react-signature-canvas'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
@@ -644,7 +645,6 @@ export function AddBankAccount({
 
   const schema = yup
     .object({
-      bankName: yup.string().required(),
       //@ts-ignore
       routingNumber: yup.string('Please enter a valid routing number').required('Please enter a valid routing number'),
       //@ts-ignore
@@ -786,6 +786,7 @@ export function EditBankAccount({
 }) {
   const mercoaSession = useMercoaSession()
   const [showPlaid, setShowPlaid] = useState(false)
+  const sigRef = useRef<SignatureCanvas | null>(null)
 
   const { register, handleSubmit, watch } = useForm({
     defaultValues: {
@@ -795,6 +796,10 @@ export function EditBankAccount({
   })
 
   function onUpdate(data: Mercoa.BankAccountUpdateRequest) {
+    let signatureImage
+    if (data.checkOptions?.useSignatureImage) {
+      signatureImage = sigRef.current?.getTrimmedCanvas().toDataURL('image/png') ?? ''
+    }
     if (mercoaSession.entity?.id) {
       mercoaSession.client?.entity.paymentMethod
         .update(mercoaSession.entity?.id, account.id, {
@@ -802,7 +807,9 @@ export function EditBankAccount({
           checkOptions: {
             enabled: data.checkOptions?.enabled,
             initialCheckNumber: Number(data.checkOptions?.initialCheckNumber),
-            signatoryName: data.checkOptions?.signatoryName,
+            signatoryName: `${data.checkOptions?.signatoryName}`,
+            useSignatureImage: data.checkOptions?.useSignatureImage,
+            ...(signatureImage && { signatureImage }),
           },
           type: Mercoa.PaymentMethodType.BankAccount,
         })
@@ -818,6 +825,13 @@ export function EditBankAccount({
   }
 
   const checkEnabled = !!(account.accountType === 'CHECKING' && watch('checkOptions.enabled'))
+  const useSig = watch('checkOptions.useSignatureImage')
+
+  useEffect(() => {
+    if (account.checkOptions?.signatureImage && sigRef.current) {
+      sigRef.current?.fromDataURL('data:image/gif;base64,' + account.checkOptions?.signatureImage)
+    }
+  }, [account.checkOptions?.signatureImage, useSig])
 
   return (
     <form onSubmit={handleSubmit(onUpdate)}>
@@ -844,7 +858,6 @@ export function EditBankAccount({
       )}
       {checkEnabled && (
         <div className="mercoa-bg-gray-100 mercoa-p-2 mercoa-rounded-md mercoa-mt-2">
-          <MercoaInput label="Signatory Name" name="checkOptions.signatoryName" register={register} />
           <MercoaInput
             label="Initial Check Number"
             name="checkOptions.initialCheckNumber"
@@ -852,6 +865,41 @@ export function EditBankAccount({
             optional
             className="mercoa-mt-2"
           />
+          <MercoaInput
+            label="Signatory Name"
+            name="checkOptions.signatoryName"
+            register={register}
+            required
+            className="mercoa-mt-2"
+          />
+          <div className="mercoa-relative mercoa-mt-5 mercoa-flex mercoa-items-start mercoa-items-center">
+            <div className="mercoa-flex mercoa-h-5 mercoa-items-center">
+              <input
+                {...register('checkOptions.useSignatureImage')}
+                type="checkbox"
+                className="mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
+              />
+            </div>
+            <div className="mercoa-ml-3 mercoa-text-sm">
+              <label htmlFor="useSig" className="mercoa-font-medium mercoa-text-gray-700">
+                Use Custom Signature
+              </label>
+            </div>
+          </div>
+          {useSig && (
+            <div className="mercoa-mt-2 mercoa-bg-white">
+              <SignatureCanvas ref={sigRef} canvasProps={{ width: 500, height: 200 }} />
+              <MercoaButton
+                size="sm"
+                isEmphasized={false}
+                className="mercoa-mt-2"
+                type="button"
+                onClick={() => sigRef.current?.clear()}
+              >
+                Clear Signature
+              </MercoaButton>
+            </div>
+          )}
         </div>
       )}
       <MercoaButton

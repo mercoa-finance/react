@@ -74,6 +74,7 @@ export function InvoiceDetails({
 }) {
   const mercoaSession = useMercoaSession()
   const contentHeightOffset = heightOffset ?? mercoaSession.heightOffset
+
   const [uploadedFile, setUploadedFile] = useState<{ fileReaderObj: string; mimeType: string }>()
   const [ocrResponse, setOcrResponse] = useState<Mercoa.OcrResponse>()
   const [uploadedImage, setUploadedImage] = useState<string>()
