@@ -25,7 +25,7 @@ import {
   CheckComponent,
   CustomPaymentMethodComponent,
   DebouncedSearch,
-  EntityOnboarding,
+  EntityOnboardingForm,
   LoadingSpinnerIcon,
   MercoaButton,
   MercoaInput,
@@ -903,7 +903,7 @@ export function CounterpartyDetails({
   if (isEditing && mercoaSession.organization) {
     return (
       <div className="mercoa-p-6 ">
-        <EntityOnboarding
+        <EntityOnboardingForm
           entity={counterparty}
           type={type}
           onCancel={() => {

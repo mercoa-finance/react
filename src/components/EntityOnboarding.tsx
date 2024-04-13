@@ -1560,7 +1560,7 @@ export function AcceptTosForm({
   )
 }
 
-export function EntityOnboarding({
+export function EntityOnboardingForm({
   entity,
   type,
   onOnboardingSubmit,
@@ -1970,7 +1970,7 @@ export function entityDetailsForMercoaPaymentsCompleted(entity: Mercoa.EntityRes
   return true
 }
 
-export function EntityOnboardingPortal({
+export function EntityOnboarding({
   entityId,
   connectedEntityName,
   type,
@@ -2140,7 +2140,7 @@ export function EntityOnboardingPortal({
             {infoWell}
           </div>
         )}
-        <EntityOnboarding
+        <EntityOnboardingForm
           entity={entity}
           type={type}
           onOnboardingSubmit={(data) => {

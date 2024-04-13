@@ -18,7 +18,7 @@ import {
   BankAccounts,
   Counterparties,
   CustomPaymentMethod,
-  EntityOnboarding,
+  EntityOnboardingForm,
   EntityUserNotificationTable,
   MercoaButton,
   Representatives,
@@ -109,7 +109,7 @@ export function EntityPortal({ token }: { token: string }) {
               </p>
             </div>
           </div>
-          <EntityOnboarding entity={entity} type="payor" />
+          <EntityOnboardingForm entity={entity} type="payor" />
         </>
       )
     } else if (!entity?.profile?.business?.ownersProvided && entity.accountType === 'business') {
