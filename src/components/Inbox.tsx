@@ -8,12 +8,12 @@ import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from 'reac
 import DatePicker from 'react-datepicker'
 import { toast } from 'react-toastify'
 import {
+  CountPill,
   MercoaCombobox,
   MercoaContext,
   TableNavigation,
   TableOrderHeader,
   Tooltip,
-  filterApproverOptions,
   useMercoaSession,
 } from '.'
 import { currencyCodeToSymbol } from '../lib/currency'
@@ -42,11 +42,13 @@ async function getMetrics({
   search,
   mercoaSession,
   setMetrics,
+  returnByDate,
 }: {
   statuses: Mercoa.InvoiceStatus[]
   search?: string
   mercoaSession: MercoaContext
   setMetrics: (metrics: { [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse }) => void
+  returnByDate?: Mercoa.InvoiceMetricsPerDateGroupBy
 }) {
   const results = (
     await Promise.all(
@@ -55,6 +57,7 @@ async function getMetrics({
         const metrics = await mercoaSession.client?.entity.invoice.metrics(mercoaSession.entity.id, {
           search,
           status,
+          returnByDate,
           excludeReceivables: true,
         })
         return [status as string, metrics?.[0] ?? { totalAmount: 0, totalInvoices: 0, totalCount: 0, currency: 'USD' }]
@@ -200,7 +203,7 @@ export type InvoiceTableColumn = {
   title: string
   field: keyof Mercoa.InvoiceResponse | `${'metadata.'}${string}`
   orderBy?: Mercoa.InvoiceOrderByField
-  format?: (value: string | number | Date, invoice: Mercoa.InvoiceResponse) => string | ReactElement
+  format?: (value: string | number | Date, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
 }
 
 export function InvoiceTable({
@@ -247,6 +250,7 @@ export function InvoiceTable({
   const mercoaSession = useMercoaSession()
 
   const [invoices, setInvoices] = useState<Array<Mercoa.InvoiceResponse>>()
+  const [invoicesThatNeedMyApprovalCount, setInvoicesThatNeedMyApprovalCount] = useState<number>(0)
   const [orderBy, setOrderBy] = useState<Mercoa.InvoiceOrderByField>(Mercoa.InvoiceOrderByField.CreatedAt)
   const [orderDirection, setOrderDirection] = useState<Mercoa.OrderDirection>(Mercoa.OrderDirection.Asc)
   const [hasMore, setHasMore] = useState<boolean>(true)
@@ -317,45 +321,13 @@ export function InvoiceTable({
     setDataLoaded(false)
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
-        const approvalPolicies = invoice.approvalPolicy
-        const approvalSlots = invoice.approvers
-
-        let slotId = ''
-
-        if (approvalPolicies && approvalSlots) {
-          approvalSlots.forEach((slot, index) => {
-            if (slotId) return
-            // Find a slot this user is eligible for
-            const eligibleUsers = filterApproverOptions({
-              approverSlotIndex: index,
-              eligibleRoles: slot.eligibleRoles,
-              eligibleUserIds: slot.eligibleUserIds,
-              users: mercoaSession.users,
-              selectedApprovers: approvalSlots.map((e) => ({
-                approvalSlotId: e.approvalSlotId,
-                assignedUserId: e.assignedUserId,
-              })),
-            }).map((e) => e.user)
-            console.log(eligibleUsers)
-            if (eligibleUsers.find((e) => e.id === approverId)) {
-              console.log('found a slot for this user')
-              slotId = slot.approvalSlotId
-            }
-          })
-        }
-
         try {
-          await mercoaSession.client?.invoice.update(invoice.id, {
-            approvers: [
-              {
-                approvalSlotId: slotId,
-                assignedUserId: approverId,
-              },
-            ],
+          await mercoaSession.client?.invoice.approval.addApprover(invoice.id, {
+            userId: approverId,
           })
           anySuccessFlag = true
         } catch (e) {
-          console.error('Error updating invoice: ', e)
+          console.error('Error adding approver to invoice ', e)
           console.log('Errored invoice: ', { invoice })
         }
       }),
@@ -601,29 +573,44 @@ export function InvoiceTable({
     let isCurrent = true
     setSelectedInvoices([])
     setDataLoaded(false)
-    mercoaSession.client?.entity.invoice
-      .find(mercoaSession.entity.id, {
-        status: currentStatuses,
-        search,
-        startDate,
-        endDate,
-        orderBy,
-        orderDirection,
-        ...(showOnlyInvoicesThatUserNeedsToApprove && {
+
+    const filter = {
+      status: currentStatuses,
+      search,
+      startDate,
+      endDate,
+      orderBy,
+      orderDirection,
+      ...(showOnlyInvoicesThatUserNeedsToApprove && {
+        approverId: mercoaSession.user?.id,
+        approverAction: Mercoa.ApproverAction.None,
+      }),
+      limit: resultsPerPage,
+      startingAfter: startingAfter[startingAfter.length - 1],
+      excludeReceivables: true,
+    }
+
+    mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, filter).then((resp) => {
+      if (resp && isCurrent) {
+        setHasMore(resp.hasMore)
+        setCount(resp.count)
+        setInvoices(resp.data)
+        setDataLoaded(true)
+      }
+    })
+    if (currentStatuses.includes(Mercoa.InvoiceStatus.New)) {
+      mercoaSession.client?.entity.invoice
+        .find(mercoaSession.entity.id, {
+          ...filter,
           approverId: mercoaSession.user?.id,
-        }),
-        limit: resultsPerPage,
-        startingAfter: startingAfter[startingAfter.length - 1],
-        excludeReceivables: true,
-      })
-      .then((resp) => {
-        if (resp && isCurrent) {
-          setHasMore(resp.hasMore)
-          setCount(resp.count)
-          setInvoices(resp.data)
-          setDataLoaded(true)
-        }
-      })
+          approverAction: Mercoa.ApproverAction.None,
+        })
+        .then((resp) => {
+          if (resp && isCurrent) {
+            setInvoicesThatNeedMyApprovalCount(resp.count)
+          }
+        })
+    }
     return () => {
       isCurrent = false
     }
@@ -641,6 +628,12 @@ export function InvoiceTable({
     resultsPerPage,
     showOnlyInvoicesThatUserNeedsToApprove,
   ])
+
+  // Reset pagination on search
+  useEffect(() => {
+    setPage(1)
+    setStartingAfter([])
+  }, [search])
 
   // Refresh when selected statuses changes
   useEffect(() => {
@@ -707,6 +700,41 @@ export function InvoiceTable({
       orderBy: Mercoa.InvoiceOrderByField.Amount,
     },
     {
+      title: 'Approvers',
+      field: 'approvers',
+      format: (_, invoice) => {
+        if (invoice.approvers.every((approver) => !approver.assignedUserId)) {
+          return null
+        }
+        return (
+          <div className="mercoa-gap-1 mercoa-grid">
+            {invoice.approvers?.map((approver) => {
+              if (!approver.assignedUserId) return null
+              const user = mercoaSession.users.find((e) => e.id === approver.assignedUserId)
+              return (
+                <Tooltip title={user?.email} key={approver.approvalSlotId}>
+                  <div
+                    key={approver.approvalSlotId}
+                    className={`mercoa-flex mercoa-items-center mercoa-rounded-md mercoa-text-xs ${
+                      approver.action === Mercoa.ApproverAction.Approve
+                        ? 'mercoa-bg-green-100 mercoa-text-green-800'
+                        : ''
+                    } ${
+                      approver.action === Mercoa.ApproverAction.Reject ? 'mercoa-bg-red-100 mercoa-text-red-800' : ''
+                    } ${
+                      approver.action === Mercoa.ApproverAction.None ? 'mercoa-bg-gray-50 mercoa-text-gray-800' : ''
+                    } mercoa-py-1 mercoa-px-2`}
+                  >
+                    {user?.name}
+                  </div>
+                </Tooltip>
+              )
+            })}
+          </div>
+        )
+      },
+    },
+    {
       title: 'Status',
       field: 'status',
       format: (_, invoice) => {
@@ -723,6 +751,9 @@ export function InvoiceTable({
     if (!invoices) return false
     return invoices.some((invoice) => {
       if (column.field.startsWith('metadata.')) return true
+      if (invoice[`${column.field}` as keyof Mercoa.InvoiceResponse] && column.format) {
+        return column.format(invoice[`${column.field}` as keyof Mercoa.InvoiceResponse] as any, invoice)
+      }
       return invoice[`${column.field}` as keyof Mercoa.InvoiceResponse]
     })
   }
@@ -852,8 +883,8 @@ export function InvoiceTable({
       <div className="mercoa-min-h-[600px]">
         {/* create checkbox that toggles invoices assigned to me */}
         {currentStatuses.includes(Mercoa.InvoiceStatus.New) && (
-          <div className="mercoa-flex mercoa-items-center mercoa-justify-start mercoa-my-4">
-            <div className="mercoa-flex mercoa-items-center mercoa-font-semibold mercoa-text-gray-600">
+          <div className="mercoa-flex mercoa-items-center mercoa-justify-start mercoa-my-4 mercoa-ml-4">
+            <div className="mercoa-flex mercoa-items-center mercoa-font-bold mercoa-font-xl mercoa-text-gray-600">
               <input
                 id="showOnlyInvoicesThatUserNeedsToApprove"
                 type="checkbox"
@@ -862,39 +893,41 @@ export function InvoiceTable({
                 onChange={() => setShowOnlyInvoicesThatUserNeedsToApprove(!showOnlyInvoicesThatUserNeedsToApprove)}
               />
               <label htmlFor="showOnlyInvoicesThatUserNeedsToApprove" className="mercoa-cursor-pointer">
-                Only show invoices that need my approval
+                Only show invoices that need my approval <CountPill count={invoicesThatNeedMyApprovalCount} selected />
               </label>
             </div>
           </div>
         )}
-        <div className="mercoa-relative">
+        <div
+          className="mercoa-relative mercoa-grid"
+          style={{
+            gridTemplateColumns: 'repeat(1, minmax(0, 1fr))',
+            overflow: 'auto',
+            whiteSpace: 'normal',
+          }}
+        >
           {/* ******** BULK ACTIONS ******** */}
-          <div className="mercoa-absolute mercoa-left-14 mercoa-top-0 mercoa-flex mercoa-h-12 mercoa-items-center mercoa-space-x-3 mercoa-bg-white sm:mercoa-left-12">
+          <div className="mercoa-absolute mercoa-left-14 mercoa-top-6 mercoa-flex mercoa-h-12 mercoa-items-center mercoa-space-x-3 mercoa-bg-white sm:mercoa-left-12">
             {currentStatuses.includes(Mercoa.InvoiceStatus.Draft) && selectedInvoices.length > 0 && (
               <>
-                {
-                  /* DOES NOT WORK IF MULTIPLE INVOICES WITH DIFFERENT APPROVAL POLICIES ARE SELECTED  */
-                  // getNewOrApprovedStatus(selectedInvoices[0]) === Mercoa.InvoiceStatus.New && (
-                  //   <button
-                  //     type="button"
-                  //     className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
-                  //     onClick={() => setShowAddApproverModal(true)}
-                  //   >
-                  //     Add Approver
-                  //   </button>
-                  // )
-                }
-                {/* <button
-                      type="button"
-                      className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
-                      onClick={handleSubmitNew}
-                    >
-                      {
-                        getNewOrApprovedStatus(selectedInvoices[0]) === Mercoa.InvoiceStatus.New
-                          ? 'Submit for Approval'
-                          : 'Approve'
-                      }
-                    </button> */}
+                {getNewOrApprovedStatus(selectedInvoices[0]) === Mercoa.InvoiceStatus.New && (
+                  <button
+                    type="button"
+                    className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
+                    onClick={() => setShowAddApproverModal(true)}
+                  >
+                    Add Approver
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
+                  onClick={handleSubmitNew}
+                >
+                  {getNewOrApprovedStatus(selectedInvoices[0]) === Mercoa.InvoiceStatus.New
+                    ? 'Submit for Approval'
+                    : 'Approve'}
+                </button>
                 <AddApproverModal
                   open={showAddApproverModal}
                   onClose={() => setShowAddApproverModal(false)}
@@ -1003,7 +1036,7 @@ export function InvoiceTable({
           </div>
 
           {/* ******** TABLE ******** */}
-          <table className="mercoa-min-w-full table-mercoa-fixed mercoa-divide-y mercoa-divide-gray-300 mercoa-mt-5">
+          <table className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300 mercoa-mt-5">
             {headers}
             {body}
           </table>
@@ -1125,14 +1158,20 @@ export function InvoiceStatusPill({ invoice }: { invoice: Mercoa.InvoiceResponse
 
 export function InvoiceMetrics({
   statuses,
-  metrics,
   search,
+  returnByDate,
+  children,
 }: {
   statuses: Mercoa.InvoiceStatus[]
-  metrics?: {
-    [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse
-  }
   search?: string
+  returnByDate?: Mercoa.InvoiceMetricsPerDateGroupBy
+  children?: ({
+    metrics,
+  }: {
+    metrics?: {
+      [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse
+    }
+  }) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1181,18 +1220,17 @@ export function InvoiceMetrics({
 
   useEffect(() => {
     setInvoiceMetrics(undefined)
-    if (metrics) {
-      setInvoiceMetrics(metrics)
-    } else {
-      if (!mercoaSession.token || !mercoaSession.entity?.id) return
-      getMetrics({
-        statuses,
-        search,
-        mercoaSession,
-        setMetrics: setInvoiceMetrics,
-      })
-    }
-  }, [metrics, search, statuses, mercoaSession.token, mercoaSession.entity, mercoaSession.refreshId])
+    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    getMetrics({
+      statuses,
+      search,
+      mercoaSession,
+      setMetrics: setInvoiceMetrics,
+      returnByDate,
+    })
+  }, [search, statuses, mercoaSession.token, mercoaSession.entity, mercoaSession.refreshId])
+
+  if (children) return children({ metrics: invoiceMetrics })
 
   return (
     <div className="mercoa-grid mercoa-grid-cols-3 mercoa-space-x-3 mercoa-mt-2 mercoa-mb-1 mercoa-min-h-[60px]">
@@ -1324,16 +1362,7 @@ export function StatusTabs({
               aria-current={invoiceStatusToName(status, approvalPolicies) == selectedStatuses[0] ? 'page' : undefined}
             >
               {invoiceStatusToName(status, approvalPolicies)}{' '}
-              <span
-                className={`${
-                  status == selectedStatuses[0]
-                    ? 'mercoa-bg-mercoa-primary mercoa-text-mercoa-primary-text-invert'
-                    : 'mercoa-bg-gray-100 mercoa-text-gray-800'
-                } mercoa-inline-flex mercoa-items-center mercoa-rounded-full  mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium`}
-              >
-                {' '}
-                {invoiceMetrics?.[status]?.totalCount}
-              </span>
+              <CountPill count={invoiceMetrics?.[status]?.totalCount ?? 0} selected={status == selectedStatuses[0]} />
             </a>
           ))}
         </nav>
@@ -1345,9 +1374,15 @@ export function StatusTabs({
 export function StatusDropdown({
   statuses,
   onStatusChange,
+  placeholder,
+  label,
+  className,
 }: {
   statuses?: Array<Mercoa.InvoiceStatus>
   onStatusChange?: (status: Mercoa.InvoiceStatus[]) => any
+  placeholder?: string
+  label?: string
+  className?: string
 }) {
   const [selectedStatuses, setSelectedStatuses] = useState<Mercoa.InvoiceStatus[]>([Mercoa.InvoiceStatus.Draft])
   const tabs = statuses ?? [
@@ -1392,7 +1427,9 @@ export function StatusDropdown({
         value={selectedStatuses}
         multiple
         displaySelectedAs="pill"
-        placeholder="All Invoices"
+        placeholder={placeholder ?? 'All Invoices'}
+        label={label}
+        inputClassName={className}
       />
     </>
   )

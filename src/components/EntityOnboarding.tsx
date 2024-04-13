@@ -1563,12 +1563,12 @@ export function AcceptTosForm({
 export function EntityOnboarding({
   entity,
   type,
-  setEntityData,
+  onOnboardingSubmit,
   onCancel,
 }: {
   entity: Mercoa.EntityResponse
-  type: string
-  setEntityData: (data: OnboardingFormData) => void
+  type: 'payee' | 'payor'
+  onOnboardingSubmit?: (data: OnboardingFormData) => void
   onCancel?: () => void
 }) {
   const mercoaSession = useMercoaSession()
@@ -1659,8 +1659,22 @@ export function EntityOnboarding({
 
   return (
     <form
-      onSubmit={handleSubmit(async (data) => {
-        setEntityData(data)
+      onSubmit={handleSubmit(async (entityData) => {
+        if (onOnboardingSubmit) {
+          onOnboardingSubmit(entityData)
+        } else {
+          if (!entity) return
+          if (!entityData) return
+          if (!mercoaSession.client) return
+          await createOrUpdateEntity({
+            data: entityData,
+            entityId: entity.id,
+            mercoaClient: mercoaSession.client,
+            isPayee: type === 'payee',
+            isPayor: type === 'payor',
+          })
+          mercoaSession.refresh()
+        }
       })}
     >
       <div className="sm:mercoa-grid sm:mercoa-grid-cols-2 mercoa-gap-3">
@@ -1961,7 +1975,7 @@ export function EntityOnboardingPortal({
   connectedEntityName,
   type,
 }: {
-  type: string
+  type: 'payee' | 'payor'
   connectedEntityName?: string
   entityId?: Mercoa.EntityId
 }) {
@@ -2128,8 +2142,8 @@ export function EntityOnboardingPortal({
         )}
         <EntityOnboarding
           entity={entity}
-          type={`${type}`}
-          setEntityData={(data) => {
+          type={type}
+          onOnboardingSubmit={(data) => {
             setEntityData(data)
             setFormState('representatives')
           }}

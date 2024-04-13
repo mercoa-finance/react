@@ -274,16 +274,10 @@ function InvoiceDocumentsUpload({ onFileUpload }: { onFileUpload: (fileReaderObj
             <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm mercoa-text-gray-600">
               <label
                 htmlFor="file-upload"
-                className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-bg-white mercoa-font-semibold mercoa-text-mercoa-primary focus-within:mercoa-outline-none focus-within:mercoa-ring-1 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 hover:mercoa-text-indigo-500"
+                className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-font-semibold mercoa-text-mercoa-primary focus-within:mercoa-outline-none focus-within:mercoa-ring-1 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2"
               >
                 <span>Upload an invoice</span>
-                <input
-                  {...getInputProps()}
-                  id="file-upload"
-                  name="file-upload"
-                  type="file"
-                  className="mercoa-sr-only"
-                />
+                <input {...getInputProps()} />
               </label>
               <p className="mercoa-pl-1">or drag and drop</p>
             </div>
@@ -2760,7 +2754,7 @@ function LineItems({
             {(lineItems?.length ?? 0) > 0 && (
               <>
                 <tr>
-                  <td colSpan={3} className="mercoa-py-1">
+                  <td colSpan={3} className="mercoa-py-1 mercoa-bg-none">
                     <MercoaButton
                       size="sm"
                       isEmphasized={false}

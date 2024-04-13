@@ -24,7 +24,6 @@ import {
   Representatives,
   TokenOptions,
   VerifyOwnersButton,
-  createOrUpdateEntity,
   entityDetailsForMercoaPaymentsCompleted,
 } from '.'
 import { CreditCards } from './CreditCard'
@@ -110,23 +109,7 @@ export function EntityPortal({ token }: { token: string }) {
               </p>
             </div>
           </div>
-          <EntityOnboarding
-            entity={entity}
-            type="payor"
-            setEntityData={async (entityData) => {
-              if (!entity) return
-              if (!entityData) return
-              if (!mercoaSession.client) return
-              await createOrUpdateEntity({
-                data: entityData,
-                entityId: entity.id,
-                mercoaClient: mercoaSession.client,
-                isPayee: false,
-                isPayor: true,
-              })
-              mercoaSession.refresh()
-            }}
-          />
+          <EntityOnboarding entity={entity} type="payor" />
         </>
       )
     } else if (!entity?.profile?.business?.ownersProvided && entity.accountType === 'business') {

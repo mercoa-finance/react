@@ -787,6 +787,7 @@ export function EditBankAccount({
   const mercoaSession = useMercoaSession()
   const [showPlaid, setShowPlaid] = useState(false)
   const sigRef = useRef<SignatureCanvas | null>(null)
+  const inputFile = useRef<HTMLInputElement | null>(null)
 
   const { register, handleSubmit, watch } = useForm({
     defaultValues: {
@@ -887,18 +888,34 @@ export function EditBankAccount({
             </div>
           </div>
           {useSig && (
-            <div className="mercoa-mt-2 mercoa-bg-white">
-              <SignatureCanvas ref={sigRef} canvasProps={{ width: 500, height: 200 }} />
-              <MercoaButton
-                size="sm"
-                isEmphasized={false}
-                className="mercoa-mt-2"
-                type="button"
-                onClick={() => sigRef.current?.clear()}
-              >
-                Clear Signature
-              </MercoaButton>
-            </div>
+            <>
+              <div className="mercoa-mt-2 mercoa-bg-white">
+                <SignatureCanvas ref={sigRef} canvasProps={{ width: 375, height: 150 }} />
+              </div>
+              <div className="mercoa-mt-2 mercoa-flex mercoa-gap-x-2">
+                <input
+                  type="file"
+                  ref={inputFile}
+                  style={{ display: 'none' }}
+                  accept="image/*"
+                  onChange={(e) => {
+                    e.target.files && sigRef.current?.fromDataURL(URL.createObjectURL(e.target.files[0]))
+                  }}
+                />
+                <MercoaButton size="sm" isEmphasized={false} type="button" onClick={() => inputFile?.current?.click()}>
+                  Upload Image
+                </MercoaButton>
+                <MercoaButton
+                  color="red"
+                  size="sm"
+                  isEmphasized={false}
+                  type="button"
+                  onClick={() => sigRef.current?.clear()}
+                >
+                  Clear Signature
+                </MercoaButton>
+              </div>
+            </>
           )}
         </div>
       )}

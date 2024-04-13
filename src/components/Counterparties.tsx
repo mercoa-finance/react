@@ -31,7 +31,6 @@ import {
   MercoaInput,
   TableNavigation,
   Tooltip,
-  createOrUpdateEntity,
   inputClassName,
   useMercoaSession,
 } from './index'
@@ -717,7 +716,9 @@ export function Counterparties({ type, admin }: { type: 'payor' | 'payee'; admin
             }}
           >
             <PlusIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
-            <span className="mercoa-hidden md:mercoa-inline-block">Add {type === 'payee' ? 'Vendor' : 'Customer'}</span>
+            <span className="mercoa-hidden md:mercoa-inline-block mercoa-whitespace-nowrap">
+              Add {type === 'payee' ? 'Vendor' : 'Customer'}
+            </span>
           </MercoaButton>
         )}
       </div>
@@ -905,19 +906,6 @@ export function CounterpartyDetails({
         <EntityOnboarding
           entity={counterparty}
           type={type}
-          setEntityData={async (entityData) => {
-            if (!counterparty) return
-            if (!entityData) return
-            if (!mercoaSession.client) return
-            await createOrUpdateEntity({
-              data: entityData,
-              entityId: counterparty.id,
-              mercoaClient: mercoaSession.client,
-              isPayee: type === 'payee',
-              isPayor: type === 'payor',
-            })
-            mercoaSession.refresh()
-          }}
           onCancel={() => {
             setIsEditing(false)
           }}

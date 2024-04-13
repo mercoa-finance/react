@@ -27,7 +27,7 @@ export const Payor: Story = {
   args: {
     entity: payerEntity,
     type: 'payor',
-    setEntityData: (e) => {
+    onOnboardingSubmit: (e) => {
       alert(JSON.stringify(e))
     },
   },
@@ -38,7 +38,7 @@ export const Payee: Story = {
   args: {
     entity: vendorEntities[0],
     type: 'payee',
-    setEntityData: (e) => {
+    onOnboardingSubmit: (e) => {
       alert(JSON.stringify(e))
     },
   },

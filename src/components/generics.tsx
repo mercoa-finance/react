@@ -536,10 +536,12 @@ export function DebouncedSearch({
   onSettle,
   placeholder,
   leadingIcon,
+  children,
 }: {
   onSettle: (value: string) => void
-  placeholder: string
+  placeholder?: string
   leadingIcon?: ReactNode
+  children?: ({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => JSX.Element
 }) {
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearch = useRef(debounce(onSettle, 200)).current
@@ -547,6 +549,10 @@ export function DebouncedSearch({
   useEffect(() => {
     debouncedSearch(searchTerm)
   }, [searchTerm])
+
+  if (children) {
+    return children({ onChange: (e) => setSearchTerm(e.target.value) })
+  }
 
   return (
     <div className="mercoa-w-full">
@@ -595,7 +601,7 @@ export function MercoaCombobox({
   secondaryDisplayIndex,
   className,
   labelClassName,
-  inputClassName,
+  inputClassName: suppliedInputClassName,
   multiple,
   freeText,
   displaySelectedAs,
@@ -698,6 +704,8 @@ export function MercoaCombobox({
     }
   }
 
+  const inputBoxClass = suppliedInputClassName ?? inputClassName({ align: 'left' })
+
   const children = (
     <>
       {label && (
@@ -710,28 +718,24 @@ export function MercoaCombobox({
         </Combobox.Label>
       )}
       <div className={`mercoa-relative ${label ? 'mercoa-mt-2' : ''}`}>
-        <Combobox.Button className="mercoa-relative mercoa-w-full">
+        <Combobox.Button className="mercoa-relative mercoa-w-full mercoa-bg-white">
           {({ open }) => {
             const showInput = displaySelectedAs === 'input' || freeText || (open && !multiple)
             return (
               <>
-                <div
-                  className={
-                    !showInput
-                      ? 'mercoa-min-h-[36px] mercoa-flex mercoa-flex-wrap mercoa-justify-start mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-12 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 ' +
-                        inputClassName
-                      : ' '
-                  }
-                >
+                <div className={!showInput ? inputBoxClass : ' '}>
                   {!showInput && displayPillValue(selectedValue)}
                   <Combobox.Input
                     placeholder={placeholder}
                     autoComplete="off"
                     className={
                       showInput
-                        ? 'mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-12 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6 ' +
-                          inputClassName
-                        : 'mercoa-invisible mercoa-h-[0px] mercoa-p-0 '
+                        ? inputBoxClass
+                        : `${
+                            selectedValue && suppliedInputClassName
+                              ? 'mercoa-hidden'
+                              : 'mercoa-invisible mercoa-h-[0px] mercoa-p-0'
+                          }`
                     }
                     onChange={(event) => setQuery(event.target.value)}
                     displayValue={displayInputValue}
@@ -1015,11 +1019,13 @@ export function inputClassName({
   trailingIcon,
   leadingIconSize,
   noBorder,
+  align,
 }: {
   leadingIcon?: boolean
   leadingIconSize?: 'sm' | 'md'
   trailingIcon?: boolean
   noBorder?: boolean
+  align?: 'left' | 'center' | 'right'
 }) {
   let pl = 'mercoa-pl-2'
   if (leadingIcon) {
@@ -1031,9 +1037,11 @@ export function inputClassName({
   return `mercoa-block mercoa-w-full mercoa-flex-1 mercoa-rounded-md mercoa-py-1.5 ${pl} ${
     trailingIcon ? 'mercoa-pr-[4.4rem]' : 'mercoa-pr-2'
   } mercoa-text-gray-900 sm:mercoa-text-sm sm:mercoa-leading-6
-  mercoa-border-0 ${
-    noBorder ? 'mercoa-ring-0' : 'mercoa-ring-1'
-  } mercoa-ring-inset mercoa-ring-gray-300 :mercoa-border-0 mercoa-outline-0 
+  ${noBorder ? 'mercoa-ring-0' : 'mercoa-ring-1'}
+  ${align === 'left' ? 'mercoa-text-left' : ''}
+  ${align === 'right' ? 'mercoa-text-right' : ''}
+  ${align === 'center' ? 'mercoa-text-center' : ''}
+  mercoa-ring-inset mercoa-ring-gray-300 mercoa-border-0 mercoa-outline-0
   focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary focus:mercoa-border-0 focus:mercoa-outline-0`
 }
 
@@ -1203,5 +1211,20 @@ export function MercoaInput({
         <p className="mercoa-text-sm mercoa-text-red-500 mercoa-text-left">{errors?.[name]?.message?.toString()}</p>
       )}
     </div>
+  )
+}
+
+export function CountPill({ count, selected }: { count: number; selected: boolean }) {
+  return (
+    <span
+      className={`${
+        selected
+          ? 'mercoa-bg-mercoa-primary mercoa-text-mercoa-primary-text-invert'
+          : 'mercoa-bg-gray-100 mercoa-text-gray-800'
+      } mercoa-inline-flex mercoa-items-center mercoa-rounded-full  mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium`}
+    >
+      {' '}
+      {count}
+    </span>
   )
 }

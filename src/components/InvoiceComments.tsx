@@ -45,7 +45,7 @@ export function InvoiceComments({ invoice }: { invoice?: Mercoa.InvoiceResponse 
 
   function getApprovalIcon(action: Mercoa.AssociatedApprovalAction) {
     let approvalIcon = (
-      <div className="mercoa-h-1.5 mercoa-w-1.5 mercoa-rounded-full mercoa-bg-gray-100 mercoa-ring-1 mercoa-ring-gray-300" />
+      <div className="mercoa-h-1.5 mercoa-w-1.5 mercoa-rounded-full mercoa-bg-gray-100 mercoa-ring-1 mercoa-ring-mercoa-primary" />
     )
     if (action.action === 'APPROVE') {
       approvalIcon = <CheckCircleIcon className="mercoa-h-6 mercoa-w-6 mercoa-text-green-600" aria-hidden="true" />
@@ -92,9 +92,9 @@ export function InvoiceComments({ invoice }: { invoice?: Mercoa.InvoiceResponse 
             {comment.text && (
               <>
                 <div className="mercoa-relative mercoa-flex mercoa-h-8 mercoa-w-8 mercoa-flex-none mercoa-items-center mercoa-justify-center ">
-                  <UserIcon className="mercoa-h-6 mercoa-w-6 mercoa-text-gray-300 mercoa-text-gray-300 mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1 -mercoa-ml-2" />
+                  <UserIcon className="mercoa-h-6 mercoa-w-6 mercoa-text-mercoa-primary mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1 -mercoa-ml-2" />
                 </div>
-                <div className="mercoa-flex-auto mercoa-rounded-md mercoa-p-3 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-200">
+                <div className="mercoa-flex-auto mercoa-rounded-md mercoa-p-3 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-200 mercoa-bg-white">
                   <div className="mercoa-flex mercoa-justify-between mercoa-gap-x-4">
                     <div className="mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
                       <span className="mercoa-font-medium mercoa-text-gray-900">{comment.user?.name}</span> commented
@@ -112,7 +112,7 @@ export function InvoiceComments({ invoice }: { invoice?: Mercoa.InvoiceResponse 
             )}
             {comment.associatedApprovalAction && (
               <>
-                <div className="mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center mercoa-bg-white">
+                <div className="mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center">
                   {getApprovalIcon(comment.associatedApprovalAction)}
                 </div>
                 <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
@@ -134,7 +134,7 @@ export function InvoiceComments({ invoice }: { invoice?: Mercoa.InvoiceResponse 
       {/* New comment form */}
       <div className="mercoa-mt-6 mercoa-flex mercoa-gap-x-3">
         <form onSubmit={handleSubmit(addComment)} className="mercoa-relative mercoa-flex-auto">
-          <div className="mercoa-overflow-hidden mercoa-rounded-lg mercoa-pb-12 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary focus:mercoa-border-0 focus:mercoa-outline-0">
+          <div className="mercoa-bg-white mercoa-overflow-hidden mercoa-rounded-lg mercoa-pb-12 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary focus:mercoa-border-0 focus:mercoa-outline-0">
             <label htmlFor="comment" className="mercoa-sr-only">
               Add your comment
             </label>
