@@ -1372,20 +1372,26 @@ export function StatusTabs({
 }
 
 export function StatusDropdown({
-  statuses,
+  availableStatuses,
+  currentStatuses,
   onStatusChange,
   placeholder,
   label,
   className,
+  multiple,
 }: {
-  statuses?: Array<Mercoa.InvoiceStatus>
+  availableStatuses?: Array<Mercoa.InvoiceStatus>
+  currentStatuses?: Array<Mercoa.InvoiceStatus>
   onStatusChange?: (status: Mercoa.InvoiceStatus[]) => any
   placeholder?: string
   label?: string
   className?: string
+  multiple?: boolean
 }) {
-  const [selectedStatuses, setSelectedStatuses] = useState<Mercoa.InvoiceStatus[]>([Mercoa.InvoiceStatus.Draft])
-  const tabs = statuses ?? [
+  const [selectedStatuses, setSelectedStatuses] = useState<Mercoa.InvoiceStatus[] | Mercoa.InvoiceStatus>(
+    currentStatuses ?? [Mercoa.InvoiceStatus.Draft],
+  )
+  const tabs = availableStatuses ?? [
     Mercoa.InvoiceStatus.Draft,
     Mercoa.InvoiceStatus.New,
     Mercoa.InvoiceStatus.Approved,
@@ -1411,7 +1417,13 @@ export function StatusDropdown({
   }
 
   useEffect(() => {
-    if (onStatusChange) onStatusChange(selectedStatuses)
+    if (onStatusChange) {
+      if (Array.isArray(selectedStatuses)) {
+        onStatusChange(selectedStatuses)
+      } else {
+        onStatusChange([selectedStatuses])
+      }
+    }
   }, [selectedStatuses])
   return (
     <>
@@ -1425,7 +1437,7 @@ export function StatusDropdown({
           setSelectedStatuses(e)
         }}
         value={selectedStatuses}
-        multiple
+        multiple={multiple}
         displaySelectedAs="pill"
         placeholder={placeholder ?? 'All Invoices'}
         label={label}
@@ -1453,7 +1465,7 @@ export function InvoiceInbox({
         <div className="mercoa-hidden md:mercoa-block md:mercoa-col-span-2">
           {statusSelectionStyle == 'dropdown' && (
             <div className="mercoa-grid mercoa-grid-cols-2">
-              <StatusDropdown statuses={statuses} onStatusChange={setSelectedStatuses} />
+              <StatusDropdown availableStatuses={statuses} onStatusChange={setSelectedStatuses} multiple />
             </div>
           )}
         </div>

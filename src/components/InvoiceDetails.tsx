@@ -27,7 +27,7 @@ import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { isWeekday } from '../lib/scheduling'
 import { CounterpartySearch } from './Counterparties'
-import { InvoiceStatusPill } from './Inbox'
+import { InvoiceStatusPill, StatusDropdown } from './Inbox'
 import { InvoiceComments } from './InvoiceComments'
 import {
   AddBankAccountDialog,
@@ -59,6 +59,7 @@ export function InvoiceDetails({
   onRedirect,
   children,
   heightOffset,
+  admin,
 }: {
   invoiceId?: Mercoa.InvoiceId
   invoice?: Mercoa.InvoiceResponse
@@ -71,6 +72,7 @@ export function InvoiceDetails({
     invoice: Mercoa.InvoiceResponse | undefined
     documents: Mercoa.DocumentResponse[] | undefined
   }) => React.ReactNode
+  admin?: boolean
 }) {
   const mercoaSession = useMercoaSession()
   const contentHeightOffset = heightOffset ?? mercoaSession.heightOffset
@@ -224,6 +226,7 @@ export function InvoiceDetails({
             onRedirect={onRedirect}
             refreshInvoice={refreshInvoice}
             height={height}
+            admin={admin}
           />
         )}
       </Section>
@@ -469,6 +472,7 @@ export function EditInvoiceForm({
   onRedirect,
   refreshInvoice,
   height,
+  admin,
 }: {
   invoice?: Mercoa.InvoiceResponse
   ocrResponse?: Mercoa.OcrResponse
@@ -477,6 +481,7 @@ export function EditInvoiceForm({
   onRedirect: (invoice: Mercoa.InvoiceResponse | undefined) => void
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
   height: number
+  admin?: boolean
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -521,6 +526,7 @@ export function EditInvoiceForm({
 
   const schema = yup
     .object({
+      status: yup.string(),
       amount: yup.number().positive().required().typeError('Please enter a valid number'),
       invoiceNumber: yup.string(),
       description: yup.string(),
@@ -548,6 +554,7 @@ export function EditInvoiceForm({
       paymentSourceId: yup.string(),
       paymentMethodSourceType: yup.string(),
       saveAsDraft: yup.boolean(),
+      saveAsAdmin: yup.boolean(),
       metadata: yup.mixed().nullable(),
       newBankAccount: yup.mixed().nullable(),
       newCheck: yup.mixed().nullable(),
@@ -567,6 +574,7 @@ export function EditInvoiceForm({
   } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
+      status: invoice?.status,
       invoiceNumber: invoice?.invoiceNumber,
       amount: invoice?.amount,
       currency: invoice?.currency ?? 'USD',
@@ -583,6 +591,7 @@ export function EditInvoiceForm({
       paymentMethodSourceType: '',
       description: invoice?.noteToSelf ?? '',
       saveAsDraft: false,
+      saveAsAdmin: false,
       metadata: JSON.stringify(invoice?.metadata ?? {}),
       approvers: invoice?.approvers
         ? invoice.approvers.map((approver) => ({
@@ -807,7 +816,10 @@ export function EditInvoiceForm({
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
 
     let nextInvoiceState: Mercoa.InvoiceStatus = Mercoa.InvoiceStatus.Draft
-    if (invoice?.status === Mercoa.InvoiceStatus.Draft) {
+
+    if (admin && data.saveAsAdmin) {
+      nextInvoiceState = data.status
+    } else if (invoice?.status === Mercoa.InvoiceStatus.Draft) {
       nextInvoiceState = Mercoa.InvoiceStatus.New
     } else if (invoice?.status === Mercoa.InvoiceStatus.New) {
       nextInvoiceState = Mercoa.InvoiceStatus.Approved
@@ -1072,6 +1084,18 @@ export function EditInvoiceForm({
         >
           Invoice Details
         </label>
+
+        {admin && (
+          <div className="mercoa-col-span-3">
+            <StatusDropdown
+              currentStatuses={invoice?.status ? [invoice.status] : undefined}
+              onStatusChange={([status]) => {
+                console.log(status)
+                setValue('status', status)
+              }}
+            />
+          </div>
+        )}
 
         {/*  INVOICE NUMBER */}
         <MercoaInput
@@ -1352,6 +1376,7 @@ export function EditInvoiceForm({
           setValue={setValue}
           approverSlots={approvers}
           onRedirect={onRedirect}
+          admin={admin}
         />
       </form>
 
@@ -1431,6 +1456,7 @@ function ActionBar({
   setValue,
   approverSlots,
   onRedirect,
+  admin,
 }: {
   invoice?: Mercoa.InvoiceResponse
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
@@ -1441,6 +1467,7 @@ function ActionBar({
   setValue: Function
   approverSlots?: { approvalSlotId: string; assignedUserId: string | undefined }[]
   onRedirect?: Function
+  admin?: boolean
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1698,6 +1725,21 @@ function ActionBar({
       default:
         buttons.push(archiveButton)
         break
+    }
+
+    if (admin) {
+      buttons.push(
+        <MercoaButton
+          type="submit"
+          isEmphasized
+          onClick={() => {
+            setValue('saveAsDraft', false)
+            setValue('saveAsAdmin', true)
+          }}
+        >
+          SAVE AS ADMIN
+        </MercoaButton>,
+      )
     }
   }
 
