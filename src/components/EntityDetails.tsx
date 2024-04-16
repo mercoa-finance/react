@@ -1,4 +1,6 @@
+import { Square2StackIcon } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
+import { toast } from 'react-toastify'
 import { useMercoaSession } from './Mercoa'
 import { Tooltip } from './index'
 
@@ -47,5 +49,25 @@ export function EntityStatus({ entity }: { entity?: Mercoa.EntityResponse }) {
         </Tooltip>
       )}
     </>
+  )
+}
+
+export function EntityInboxEmail({ entity }: { entity?: Mercoa.EntityResponse }) {
+  const mercoaSession = useMercoaSession()
+  const entitySelected = entity || mercoaSession.entity
+  return (
+    <button
+      className="mercoa-flex mercoa-gap-1 mercoa-items-center mercoa-text-gray-600"
+      onClick={() => {
+        // copy email address to clipboard
+        navigator.clipboard.writeText(
+          `${entitySelected?.emailTo ?? ''}@${mercoaSession.organization?.emailProvider?.inboxDomain}`,
+        )
+        toast.success('Email address copied')
+      }}
+    >
+      <Square2StackIcon className="mercoa-w-5 mercoa-h-5" />
+      {entitySelected?.emailTo ?? ''}@{mercoaSession.organization?.emailProvider?.inboxDomain}
+    </button>
   )
 }

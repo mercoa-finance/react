@@ -18,6 +18,7 @@ import {
   BankAccounts,
   Counterparties,
   CustomPaymentMethod,
+  EntityInboxEmail,
   EntityOnboardingForm,
   EntityUserNotificationTable,
   MercoaButton,
@@ -168,9 +169,7 @@ export function EntityPortal({ token }: { token: string }) {
               {organization?.emailProvider?.inboxDomain && (
                 <>
                   Forward invoices to: <br />
-                  <b>
-                    {entity?.emailTo}@{organization?.emailProvider?.inboxDomain}
-                  </b>
+                  <EntityInboxEmail />
                 </>
               )}
             </>

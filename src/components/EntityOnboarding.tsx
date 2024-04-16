@@ -1983,6 +1983,7 @@ export function EntityOnboarding({
   const [representatives, setRepresentatives] = useState<Mercoa.RepresentativeResponse[]>([])
   const [entityData, setEntityData] = useState<OnboardingFormData>()
   const [formState, setFormState] = useState<'entity' | 'representatives' | 'payments' | 'tos' | 'complete'>('entity')
+  const [loading, setLoading] = useState(false)
 
   const mercoaSession = useMercoaSession()
 
@@ -2099,7 +2100,7 @@ export function EntityOnboarding({
     setFormState('complete')
   }
 
-  if (!entity || !mercoaSession.organization || !mercoaSession.client) return <LoadingSpinner />
+  if (loading || !entity || !mercoaSession.organization || !mercoaSession.client) return <LoadingSpinner />
 
   const infoWell = (
     <div className="mercoa-p-4 mercoa-text-sm mercoa-rounded-md mercoa-bg-gray-100 mercoa-my-4 mercoa-grid mercoa-grid-cols-12 mercoa-gap-3 mercoa-items-center">
@@ -2224,6 +2225,7 @@ export function EntityOnboarding({
         <AcceptTosForm
           entity={entity}
           onComplete={async () => {
+            setLoading(true)
             await new Promise((resolve) => setTimeout(resolve, 100))
             if (entity.accountType === 'business') {
               try {
@@ -2232,8 +2234,9 @@ export function EntityOnboarding({
                 console.error(e)
               }
             }
+            await new Promise((resolve) => setTimeout(resolve, 500))
             await mercoaSession.refresh()
-            await new Promise((resolve) => setTimeout(resolve, 100))
+            setLoading(false)
             setFormState('complete')
           }}
         />
