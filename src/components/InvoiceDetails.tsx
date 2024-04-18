@@ -106,7 +106,7 @@ export function InvoiceDetails({
       toast.error('OCR failed')
       setOcrProcessing(false)
     } else {
-      setTimeout(() => refreshOcrJob(ocrJobId), 5000)
+      setTimeout(() => refreshOcrJob(ocrJobId), 2500)
     }
   }
 
@@ -123,7 +123,7 @@ export function InvoiceDetails({
         mimeType,
       })
       if (ocrResponse) {
-        refreshOcrJob(ocrResponse?.jobId)
+        refreshOcrJob(ocrResponse.jobId)
       } else {
         toast.error('OCR failed')
         setOcrProcessing(false)

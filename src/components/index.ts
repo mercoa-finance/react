@@ -15,6 +15,7 @@ export * from './Inbox'
 export * from './InvoiceComments'
 export * from './InvoiceDetails'
 export * from './Mercoa'
+export * from './PaymentMethods'
 export * from './Receivables'
 export * from './generics'
 

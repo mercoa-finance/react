@@ -7,12 +7,12 @@ import {
   PlusIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Mercoa } from '@mercoa/javascript'
 import { Fragment, ReactNode, useEffect, useRef, useState } from 'react'
 import { UseFormRegister, useForm } from 'react-hook-form'
 import { PlaidLinkError, PlaidLinkOnExitMetadata, usePlaidLink } from 'react-plaid-link'
 import SignatureCanvas from 'react-signature-canvas'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
 import {

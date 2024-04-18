@@ -15,19 +15,17 @@ import { useEffect, useState } from 'react'
 import {
   AcceptToSButton,
   ApprovalPolicies,
-  BankAccounts,
   Counterparties,
-  CustomPaymentMethod,
   EntityInboxEmail,
   EntityOnboardingForm,
   EntityUserNotificationTable,
   MercoaButton,
+  PaymentMethods,
   Representatives,
   TokenOptions,
   VerifyOwnersButton,
   entityDetailsForMercoaPaymentsCompleted,
 } from '.'
-import { CreditCards } from './CreditCard'
 import { InvoiceInbox } from './Inbox'
 import { InvoiceDetails } from './InvoiceDetails'
 import { LoadingSpinner, useMercoaSession } from './index'
@@ -276,34 +274,7 @@ export function EntityPortal({ token }: { token: string }) {
           }}
         />
       </div>
-      {screen === 'payments' && (
-        <div>
-          {mercoaSession.organization?.paymentMethods?.payerPayments?.find(
-            (e) => e.type === Mercoa.PaymentMethodType.BankAccount && e.active,
-          ) && (
-            <>
-              <h3 className="mercoa-mt-8">Bank Accounts</h3>
-              <BankAccounts showEdit showAdd />
-            </>
-          )}
-          {mercoaSession.organization?.paymentMethods?.payerPayments?.find(
-            (e) => e.type === Mercoa.PaymentMethodType.Card && e.active,
-          ) && (
-            <>
-              <h3 className="mercoa-mt-8">Cards</h3>
-              <CreditCards showEdit showAdd />
-            </>
-          )}
-          {mercoaSession.organization?.paymentMethods?.payerPayments?.find(
-            (e) => e.type === Mercoa.PaymentMethodType.Custom && e.active,
-          ) && (
-            <>
-              <h3 className="mercoa-mt-8"></h3>
-              <CustomPaymentMethod showEdit />
-            </>
-          )}
-        </div>
-      )}
+      {screen === 'payments' && <PaymentMethods />}
       {user && screen === 'notifications' && (
         <div>
           <h3 className="mercoa-mt-8">Notifications</h3>
