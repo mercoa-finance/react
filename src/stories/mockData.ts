@@ -678,7 +678,7 @@ export const inv_draft_ready: Mercoa.InvoiceResponse = {
   dueDate: new Date(),
   amount: 100,
   metadata: {
-    projectId: 'proj_123_' + Math.floor(Math.random() * 100),
+    projectId: 'proj_456',
   },
 }
 
@@ -689,7 +689,7 @@ export const inv_new_incomplete: Mercoa.InvoiceResponse = {
   vendor: vendorEntities[2],
   status: Mercoa.InvoiceStatus.New,
   metadata: {
-    projectId: 'proj_123_' + Math.floor(Math.random() * 100),
+    projectId: 'proj_789',
   },
 }
 
@@ -703,7 +703,7 @@ export const inv_new_ready: Mercoa.InvoiceResponse = {
   paymentDestinationId: vendorPaymentMethods[3].id,
   paymentDestination: vendorPaymentMethods[3],
   metadata: {
-    projectId: 'proj_123_' + Math.floor(Math.random() * 100),
+    projectId: 'proj_101',
   },
   approvers: [
     {
@@ -727,7 +727,7 @@ export const inv_approved: Mercoa.InvoiceResponse = {
   paymentDestinationId: vendorPaymentMethods[4].id,
   paymentDestination: vendorPaymentMethods[4],
   metadata: {
-    projectId: 'proj_123_' + Math.floor(Math.random() * 100),
+    projectId: 'proj_012',
   },
   approvers: [
     {
@@ -952,11 +952,14 @@ export const mswHandlers = [
 
 // Invoice Filters
 function getFilteredInvoices({ req }: { req: RestRequest<any> }) {
+  console.log(JSON.stringify(req.url))
   const statues = req.url.searchParams.getAll('status')
   const search = req.url.searchParams.get('search')
+  const metadata = req.url.toString().includes('metadata')
   const filteredInvoices = invoices.filter((invoice) => {
     if (!statues.includes(invoice.status)) return false
     if (search && !invoice.vendor?.name.startsWith(search)) return false
+    if (metadata && invoice.metadata?.projectId != 'proj_456') return false
     return true
   })
   return filteredInvoices

@@ -70,6 +70,43 @@ export const Search: Story = {
   },
 }
 
+export const CustomFields: Story = {
+  name: 'Custom Fields Search Filter',
+  args: {
+    statuses: Object.values(Mercoa.InvoiceStatus),
+    metadata: [
+      {
+        key: 'projectId',
+        value: 'proj_456',
+      },
+    ],
+    columns: [
+      {
+        title: 'Merchant',
+        field: 'vendor',
+        orderBy: Mercoa.InvoiceOrderByField.VendorName,
+      },
+      {
+        title: 'Amount',
+        field: 'amount',
+        orderBy: Mercoa.InvoiceOrderByField.Amount,
+      },
+      {
+        title: 'Project ID',
+        field: 'metadata.projectId',
+        format: (value) => {
+          const v = JSON.parse(value as string) as any
+          return (
+            <a href={`https://acme.com/projects/${v}`} className="hover:mercoa-underline">
+              {v}
+            </a>
+          )
+        },
+      },
+    ],
+  },
+}
+
 /** This is a description of the foo function. */
 export const Custom: Story = {
   name: 'Custom Design',

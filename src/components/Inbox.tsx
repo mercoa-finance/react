@@ -209,6 +209,7 @@ export type InvoiceTableColumn = {
 export function InvoiceTable({
   statuses,
   search,
+  metadata,
   startDate,
   endDate,
   onSelectInvoice,
@@ -216,7 +217,8 @@ export function InvoiceTable({
   children,
 }: {
   statuses: Mercoa.InvoiceStatus[]
-  search: string
+  search?: string
+  metadata?: Mercoa.InvoiceMetadataFilter[]
   startDate?: Date
   endDate?: Date
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
@@ -315,7 +317,6 @@ export function InvoiceTable({
   }
 
   async function handleSetApprover(approverId: Mercoa.EntityUserId) {
-    console.log(approverId)
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
     let anySuccessFlag = false
     setDataLoaded(false)
@@ -509,12 +510,24 @@ export function InvoiceTable({
     async function getNextPage() {
       if (!mercoaSession.token || !mercoaSession.entity?.id) return
 
-      const response = await mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, {
+      const filter = {
         status: currentStatuses,
+        search,
+        startDate,
+        endDate,
+        orderBy,
+        orderDirection,
+        ...(showOnlyInvoicesThatUserNeedsToApprove && {
+          approverId: mercoaSession.user?.id,
+          approverAction: Mercoa.ApproverAction.None,
+        }),
         limit: 100,
         startingAfter,
         excludeReceivables: true,
-      })
+        metadata,
+      }
+
+      const response = await mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, filter)
 
       if (response) {
         if (response.data.length > 0) {
@@ -588,6 +601,7 @@ export function InvoiceTable({
       limit: resultsPerPage,
       startingAfter: startingAfter[startingAfter.length - 1],
       excludeReceivables: true,
+      metadata,
     }
 
     mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, filter).then((resp) => {
@@ -622,6 +636,7 @@ export function InvoiceTable({
     search,
     startDate,
     endDate,
+    metadata,
     orderBy,
     orderDirection,
     startingAfter,
@@ -1470,7 +1485,7 @@ export function InvoiceInbox({
           )}
         </div>
         <div className="mercoa-flex mercoa-w-full mercoa-rounded-md mercoa-shadow-sm mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1">
-          <DebouncedSearch placeholder="Search Vendors" onSettle={setSearch} />
+          <DebouncedSearch placeholder="Search Vendors, Invoice #, Amount" onSettle={setSearch} />
         </div>
       </div>
       {statusSelectionStyle != 'dropdown' && (
