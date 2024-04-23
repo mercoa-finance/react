@@ -524,7 +524,7 @@ export function InvoiceTable({
         limit: 100,
         startingAfter,
         excludeReceivables: true,
-        metadata,
+        metadata: metadata as any,
       }
 
       const response = await mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, filter)
@@ -601,7 +601,7 @@ export function InvoiceTable({
       limit: resultsPerPage,
       startingAfter: startingAfter[startingAfter.length - 1],
       excludeReceivables: true,
-      metadata,
+      metadata: metadata as any,
     }
 
     mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, filter).then((resp) => {
