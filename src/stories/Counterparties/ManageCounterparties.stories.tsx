@@ -78,7 +78,7 @@ export const Custom: Story = {
                   {counterparty.name}
                 </td>
                 <td className="mercoa-px-5 mercoa-py-5 mercoa-border-b mercoa-border-gray-200 mercoa-text-sm">
-                  {counterparty.invoiceMetrics?.totalInvoices}
+                  {counterparty.invoiceMetrics?.totalCount}
                 </td>
                 <td className="mercoa-px-5 mercoa-py-5 mercoa-border-b mercoa-border-gray-200 mercoa-text-sm">
                   $ {counterparty.invoiceMetrics?.totalAmount}
