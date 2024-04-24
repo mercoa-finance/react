@@ -826,7 +826,7 @@ export function InvoiceTable({
         <tr
           key={invoice.id}
           className={classNames(
-            'mercoa-cursor-pointer  hover:mercoa-bg-gray-100',
+            'mercoa-cursor-pointer hover:mercoa-bg-gray-100',
             selectedInvoices.includes(invoice) ? 'mercoa-bg-gray-50' : undefined,
           )}
         >

@@ -12,11 +12,11 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import debounce from 'lodash/debounce'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { capitalize, constructFullName } from '../lib/lib'
 import { CreditCardComponent } from './CreditCard'
@@ -564,7 +564,35 @@ function CounterpartyAddOrEdit({
   )
 }
 
-export function Counterparties({ type, admin }: { type: 'payor' | 'payee'; admin?: boolean }) {
+export function Counterparties({
+  type,
+  admin,
+  children,
+}: {
+  type: 'payor' | 'payee'
+  admin?: boolean
+  children?: ({
+    setSearch,
+    dataLoaded,
+    hasNext,
+    getNext,
+    hasPrevious,
+    getPrevious,
+    resultsPerPage,
+    setResultsPerPage,
+    counterparties,
+  }: {
+    setSearch: (search: string) => void
+    dataLoaded: boolean
+    hasNext: boolean
+    getNext: () => void
+    hasPrevious: boolean
+    getPrevious: () => void
+    resultsPerPage: number
+    setResultsPerPage: (value: number) => void
+    counterparties: Mercoa.CounterpartyResponse[]
+  }) => JSX.Element
+}) {
   const mercoaSession = useMercoaSession()
   const [entities, setEntities] = useState<Mercoa.CounterpartyResponse[] | undefined>(undefined)
   const [addCounterparty, setAddCounterparty] = useState(false)
@@ -587,6 +615,7 @@ export function Counterparties({ type, admin }: { type: 'payor' | 'payee'; admin
           startingAfter: startingAfter[startingAfter.length - 1],
           ...(name && { name }),
           paymentMethods: true,
+          invoiceMetrics: true,
         })
         .then((entities) => {
           if (entities && isCurrent) {
@@ -602,6 +631,7 @@ export function Counterparties({ type, admin }: { type: 'payor' | 'payee'; admin
           startingAfter: startingAfter[startingAfter.length - 1],
           ...(name && { name }),
           paymentMethods: true,
+          invoiceMetrics: true,
         })
         .then((entities) => {
           if (entities && isCurrent) {
@@ -614,7 +644,32 @@ export function Counterparties({ type, admin }: { type: 'payor' | 'payee'; admin
     return () => {
       isCurrent = false
     }
-  }, [mercoaSession.client, mercoaSession.entityId, mercoaSession.refreshId, type, startingAfter])
+  }, [mercoaSession.client, mercoaSession.entityId, mercoaSession.refreshId, type, startingAfter, name])
+
+  if (children) {
+    return children({
+      setSearch: (e) => {
+        setName(e)
+        setPage(1)
+        setStartingAfter([])
+      },
+      dataLoaded: !!entities,
+      hasNext: hasMore,
+      getNext: () => {
+        if (!entities) return
+        setPage(page + 1)
+        setStartingAfter([...startingAfter, entities[entities.length - 1].id])
+      },
+      hasPrevious: page !== 1,
+      getPrevious: () => {
+        setPage(Math.max(1, page - 1))
+        setStartingAfter(startingAfter.slice(0, startingAfter.length - 1))
+      },
+      resultsPerPage,
+      setResultsPerPage,
+      counterparties: entities ?? [],
+    })
+  }
 
   function CounterpartyRow({
     entity,
@@ -856,22 +911,100 @@ export function AddCounterpartyModal({
 
 export function CounterpartyDetails({
   counterparty,
+  counterpartyId,
   admin,
   type,
+  children,
 }: {
-  counterparty: Mercoa.CounterpartyResponse
+  counterparty?: Mercoa.CounterpartyResponse
+  counterpartyId?: Mercoa.EntityId
   admin?: boolean
   type: 'payor' | 'payee'
+  children?: ({
+    counterparty,
+    invoices,
+  }: {
+    counterparty?: Mercoa.CounterpartyResponse
+    invoices?: Mercoa.InvoiceResponse[]
+  }) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 
   const [isEditing, setIsEditing] = useState<boolean>(false)
 
-  const phoneNumber = counterparty.profile?.business?.phone?.number ?? counterparty.profile?.individual?.phone?.number
+  const [invoiceHistory, setInvoiceHistory] = useState<Mercoa.InvoiceResponse[] | undefined>(undefined)
+  const [counterpartyLocal, setCounterparty] = useState<Mercoa.CounterpartyResponse | undefined>(counterparty)
+
+  // If counterparty ID is passed in, get counterparty
+  useEffect(() => {
+    if (!mercoaSession.client || !mercoaSession.entityId || !counterpartyId) return
+    if (counterparty || counterpartyLocal) return
+    let isCurrent = true
+    if (type === 'payee') {
+      mercoaSession.client.entity.counterparty
+        .findPayees(mercoaSession.entityId, {
+          counterpartyId,
+        })
+        .then((resp) => {
+          if (resp && resp.data[0] && isCurrent) {
+            setCounterparty(resp.data[0])
+            isCurrent = false
+          }
+        })
+    } else {
+      mercoaSession.client.entity.counterparty
+        .findPayors(mercoaSession.entityId, {
+          counterpartyId,
+        })
+        .then((resp) => {
+          if (resp && resp.data[0] && isCurrent) {
+            setCounterparty(resp.data[0])
+            isCurrent = false
+          }
+        })
+    }
+  }, [
+    mercoaSession.client,
+    mercoaSession.entityId,
+    mercoaSession.refreshId,
+    counterpartyId,
+    counterparty,
+    counterpartyLocal,
+  ])
+
+  // get historical invoices
+  useEffect(() => {
+    if (!mercoaSession.client || !mercoaSession.entityId || !counterpartyLocal) return
+    let isCurrent = true
+    mercoaSession.client.entity.invoice
+      .find(mercoaSession.entityId, {
+        excludePayables: type == 'payor',
+        excludeReceivables: type == 'payee',
+        vendorId: counterpartyLocal.id,
+        limit: 100, // TODO: pagination
+      })
+      .then((invoices) => {
+        if (invoices && isCurrent) {
+          setInvoiceHistory(invoices.data)
+          isCurrent = false
+        }
+      })
+  }, [mercoaSession.client, mercoaSession.entityId, mercoaSession.refreshId, counterpartyLocal, type])
+
+  if (children) {
+    return children({ counterparty: counterpartyLocal, invoices: invoiceHistory ?? [] })
+  }
+
+  if (!counterpartyLocal) return <LoadingSpinnerIcon />
+
+  const phoneNumber =
+    counterpartyLocal.profile?.business?.phone?.number ?? counterpartyLocal.profile?.individual?.phone?.number
   const countryCode =
-    counterparty.profile?.business?.phone?.countryCode ?? counterparty.profile?.individual?.phone?.countryCode ?? '1'
+    counterpartyLocal.profile?.business?.phone?.countryCode ??
+    counterpartyLocal.profile?.individual?.phone?.countryCode ??
+    '1'
   const phone = `+${countryCode} ${phoneNumber}`
-  const address = counterparty.profile?.business?.address ?? counterparty.profile?.individual?.address
+  const address = counterpartyLocal.profile?.business?.address ?? counterpartyLocal.profile?.individual?.address
   const addressString = `${address?.addressLine1 ?? ''} ${address?.addressLine2 ?? ''}, ${address?.city ?? ''}, ${
     address?.stateOrProvince ?? ''
   } ${address?.postalCode ?? ''}`
@@ -904,7 +1037,7 @@ export function CounterpartyDetails({
     return (
       <div className="mercoa-p-6 ">
         <EntityOnboardingForm
-          entity={counterparty}
+          entity={counterpartyLocal}
           type={type}
           onCancel={() => {
             setIsEditing(false)
@@ -919,18 +1052,18 @@ export function CounterpartyDetails({
           <dt className="mercoa-sr-only"> {type === 'payor' ? 'Customer' : 'Vendor'} Name</dt>
           <div>
             <dd className="mercoa-text-2xl mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-900 mercoa-inline">
-              {counterparty.profile?.business && counterparty?.profile.business?.legalBusinessName}
-              {counterparty.profile?.individual &&
+              {counterpartyLocal.profile?.business && counterparty?.profile.business?.legalBusinessName}
+              {counterpartyLocal.profile?.individual &&
                 `${constructFullName(
-                  counterparty.profile?.individual?.name?.firstName,
-                  counterparty.profile?.individual?.name?.lastName,
-                  counterparty.profile?.individual?.name?.middleName,
-                  counterparty.profile?.individual?.name?.suffix,
+                  counterpartyLocal.profile?.individual?.name?.firstName,
+                  counterpartyLocal.profile?.individual?.name?.lastName,
+                  counterpartyLocal.profile?.individual?.name?.middleName,
+                  counterpartyLocal.profile?.individual?.name?.suffix,
                 )}`}
             </dd>
             {admin && (
               <div className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-400 mercoa-select-all">
-                {counterparty.id}
+                {counterpartyLocal.id}
               </div>
             )}
           </div>
@@ -946,12 +1079,12 @@ export function CounterpartyDetails({
                 if (!mercoaSession.entityId) return
                 let url
                 if (type === 'payor') {
-                  url = await mercoaSession.client?.entity.getOnboardingLink(counterparty.id, {
+                  url = await mercoaSession.client?.entity.getOnboardingLink(counterpartyLocal.id, {
                     expiresIn: '30d',
                     type: Mercoa.EntityOnboardingLinkType.Payor,
                   })
                 } else {
-                  url = await mercoaSession.client?.entity.getOnboardingLink(counterparty.id, {
+                  url = await mercoaSession.client?.entity.getOnboardingLink(counterpartyLocal.id, {
                     expiresIn: '30d',
                     type: Mercoa.EntityOnboardingLinkType.Payee,
                   })
@@ -982,7 +1115,7 @@ export function CounterpartyDetails({
             {type === 'payor' ? 'Customer' : 'Vendor'} Details
           </dd>
         </div>
-        {counterparty.email && (
+        {counterpartyLocal.email && (
           <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-border-t mercoa-border-gray-900/5 mercoa-mt-3 mercoa-pt-2">
             <dt className="mercoa-flex-none">
               <span className="mercoa-sr-only">Email</span>
@@ -991,9 +1124,9 @@ export function CounterpartyDetails({
             <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700 mercoa-select-all">
               <a
                 className="mercoa-text-sm mercoa-font-medium mercoa-leading-3 mercoa-text-blue-400"
-                href={`mailto:${counterparty.email}`}
+                href={`mailto:${counterpartyLocal.email}`}
               >
-                {counterparty.email}
+                {counterpartyLocal.email}
               </a>
             </dd>
           </div>
@@ -1075,11 +1208,9 @@ export function CounterpartyDetails({
           </dd>
         </div>
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
-          {counterparty.paymentMethods
+          {counterpartyLocal.paymentMethods
             .filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
-            ?.map((method) => (
-              <PaymentMethodCard method={method} key={method.id} />
-            ))}
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
         </div>
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center  mercoa-border-t mercoa-border-gray-900/5 ">
           <dd className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
@@ -1087,20 +1218,16 @@ export function CounterpartyDetails({
           </dd>
         </div>
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
-          {counterparty.paymentMethods
+          {counterpartyLocal.paymentMethods
             .filter((e) => e.type === Mercoa.PaymentMethodType.Check)
-            ?.map((method) => (
-              <PaymentMethodCard method={method} key={method.id} />
-            ))}
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
         </div>
 
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center mercoa-border-t mercoa-border-gray-900/5 " />
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
-          {counterparty.paymentMethods
+          {counterpartyLocal.paymentMethods
             .filter((e) => e.type === Mercoa.PaymentMethodType.Custom)
-            ?.map((method) => (
-              <PaymentMethodCard method={method} key={method.id} />
-            ))}
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
         </div>
       </div>
     )

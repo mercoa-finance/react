@@ -931,6 +931,11 @@ export const mswHandlers = [
         data: filteredVendors.map((entity, index) => ({
           ...entity,
           paymentMethods: [vendorPaymentMethods[index]],
+          invoiceMetrics: {
+            totalAmount: 1000,
+            totalInvoices: 10,
+            statuses: [],
+          },
           counterpartyType: [Mercoa.CounterpartyNetworkType.Entity],
         })),
       }),
