@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@mercoa/javascript": "^0.3.26",
-    "@mercoa/react": "^0.0.32",
+    "@mercoa/javascript": "^0.3.33",
+    "@mercoa/react": "^0.0.33",
     "next": "14.1.4",
     "react": "^18",
     "react-dom": "^18"

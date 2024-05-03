@@ -651,6 +651,7 @@ export const inv_draft_incomplete: Mercoa.InvoiceResponse = {
   status: Mercoa.InvoiceStatus.Draft,
   paymentDestinationConfirmed: false,
   hasDocuments: false,
+  hasSourceEmail: false,
   approvers: [
     {
       eligibleUserIds: [user.id],

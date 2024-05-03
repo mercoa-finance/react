@@ -2,8 +2,8 @@ import { Bar, Container, Section } from '@column-resizer/react'
 import {
   ArrowDownTrayIcon,
   CheckCircleIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
+  DocumentIcon,
+  EnvelopeIcon,
   ExclamationCircleIcon,
   PlusCircleIcon,
   XCircleIcon,
@@ -21,7 +21,6 @@ import DatePicker from 'react-datepicker'
 import Draggable from 'react-draggable'
 import Dropzone from 'react-dropzone'
 import { FieldArrayWithId, FieldErrors, UseFormRegister, useFieldArray, useForm } from 'react-hook-form'
-import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
@@ -43,11 +42,8 @@ import {
   MercoaContext,
   MercoaInput,
   Tooltip,
-  useDebounce,
   useMercoaSession,
 } from './index'
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
 
 const dJSON = require('dirty-json')
 
@@ -57,22 +53,16 @@ export function InvoiceDetails({
   invoiceId,
   invoice,
   onRedirect,
-  children,
   heightOffset,
   admin,
+  layout = 'left',
 }: {
   invoiceId?: Mercoa.InvoiceId
   invoice?: Mercoa.InvoiceResponse
   onRedirect: (invoice: Mercoa.InvoiceResponse | undefined) => void
   heightOffset?: number
-  children?: ({
-    invoice,
-    documents,
-  }: {
-    invoice: Mercoa.InvoiceResponse | undefined
-    documents: Mercoa.DocumentResponse[] | undefined
-  }) => React.ReactNode
   admin?: boolean
+  layout?: 'right' | 'left'
 }) {
   const mercoaSession = useMercoaSession()
   const contentHeightOffset = heightOffset ?? mercoaSession.heightOffset
@@ -82,7 +72,6 @@ export function InvoiceDetails({
   const [uploadedImage, setUploadedImage] = useState<string>()
   const [ocrProcessing, setOcrProcessing] = useState<boolean>(false)
   const [invoiceLocal, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>(invoice)
-  const [documents, setDocuments] = useState<Mercoa.DocumentResponse[]>()
   const [height, setHeight] = useState<number>(
     typeof window !== 'undefined' ? window.innerHeight - contentHeightOffset : 0,
   )
@@ -153,30 +142,23 @@ export function InvoiceDetails({
     }
   }, [contentHeightOffset])
 
-  useEffect(() => {
-    if (invoiceLocal && invoiceLocal.hasDocuments) {
-      mercoaSession.client?.invoice.document.getAll(invoiceLocal.id).then((documents) => {
-        if (documents && documents.length > 0) {
-          setDocuments(documents)
-          setUploadedFile({ fileReaderObj: documents?.[0]?.uri, mimeType: documents?.[0]?.mimeType })
-        }
-      })
-    }
-  }, [invoiceLocal])
-
   const document = (
-    <div className="mercoa-min-w-[300px] mercoa-mr-5">
-      {uploadedFile ? (
+    <div
+      className={`mercoa-min-w-[300px] ${
+        uploadedFile || invoiceLocal?.hasDocuments ? 'mercoa-bg-gray-50' : ''
+      } mercoa-p-5 mercoa-rounded-md`}
+    >
+      {uploadedFile || invoiceLocal?.hasDocuments ? (
         <>
           <div className={`mercoa-text-center ${ocrProcessing ? 'mercoa-block mercoa-mb-5' : 'mercoa-hidden'}`}>
             <span className="mercoa-text-gray-800 mercoa-w-full"> Extracting Invoice Details </span>
             <ProgressBar />
           </div>
           <InvoiceDocuments
-            documents={new Array(uploadedFile)}
+            documents={uploadedFile ? new Array(uploadedFile) : undefined}
+            invoice={invoiceLocal}
             height={height}
-            onFileUpload={onFileUpload}
-            invoiceStatus={invoice?.status}
+            showSourceEmail
           />
         </>
       ) : (
@@ -185,51 +167,50 @@ export function InvoiceDetails({
     </div>
   )
 
-  if (children) return <>{children({ invoice: invoiceLocal, documents })}</>
-
   if (!invoiceLocal && invoiceId) {
     return <LoadingSpinner />
   }
 
+  const invoiceUpload = <Section minSize={0}>{document}</Section>
+  const invoiceDetails = (
+    <Section className={`mercoa-relative ${layout === 'left' ? 'mercoa-pl-5' : 'mercoa-pr-5'}`} minSize={400}>
+      <div className="mercoa-flex mercoa-w-full mercoa-flex-row-reverse mercoa-visible min-[450px]:mercoa-invisible mercoa-absolute mercoa-top-2">
+        <MercoaButton
+          isEmphasized
+          size="sm"
+          type="button"
+          onClick={() => {
+            setIsViewingInvoiceMobile(!isViewingInvoiceMobile)
+          }}
+          className="mercoa-mr-7 mercoa-z-20"
+        >
+          View {isViewingInvoiceMobile ? 'Form' : 'Invoice'}
+        </MercoaButton>
+      </div>
+      {isViewingInvoiceMobile ? (
+        <div className="mercoa-mt-20">{document}</div>
+      ) : (
+        <EditInvoiceForm
+          invoice={invoiceLocal}
+          ocrResponse={ocrResponse}
+          uploadedImage={uploadedImage}
+          setUploadedImage={setUploadedImage}
+          onRedirect={onRedirect}
+          refreshInvoice={refreshInvoice}
+          height={height}
+          admin={admin}
+        />
+      )}
+    </Section>
+  )
+
   return (
     <Container>
-      {/* ********* INVOICE UPLOAD FIELD */}
-      <Section minSize={0}>{document}</Section>
-
-      <Bar size={5} className="mercoa-bg-gray-200 mercoa-cursor-ew-resize mercoa-invisible min-[450px]:mercoa-visible">
+      {layout === 'left' ? invoiceUpload : invoiceDetails}
+      <Bar size={10} className="mercoa-bg-gray-200 mercoa-cursor-ew-resize mercoa-invisible min-[450px]:mercoa-visible">
         <div className="mercoa-w-3 mercoa-h-10 mercoa-bg-gray-500 mercoa-absolute mercoa-top-1/2 mercoa-left-1/2 mercoa-transform -mercoa-translate-x-1/2 -mercoa-translate-y-1/2" />
       </Bar>
-
-      {/* EDIT INVOICE FORM */}
-      <Section className="mercoa-pl-5 mercoa-relative" minSize={400}>
-        <div className="mercoa-flex mercoa-w-full mercoa-flex-row-reverse mercoa-visible min-[450px]:mercoa-invisible mercoa-absolute mercoa-top-2">
-          <MercoaButton
-            isEmphasized
-            size="sm"
-            type="button"
-            onClick={() => {
-              setIsViewingInvoiceMobile(!isViewingInvoiceMobile)
-            }}
-            className="mercoa-mr-7 mercoa-z-20"
-          >
-            View {isViewingInvoiceMobile ? 'Form' : 'Invoice'}
-          </MercoaButton>
-        </div>
-        {isViewingInvoiceMobile ? (
-          <div className="mercoa-mt-20">{document}</div>
-        ) : (
-          <EditInvoiceForm
-            invoice={invoiceLocal}
-            ocrResponse={ocrResponse}
-            uploadedImage={uploadedImage}
-            setUploadedImage={setUploadedImage}
-            onRedirect={onRedirect}
-            refreshInvoice={refreshInvoice}
-            height={height}
-            admin={admin}
-          />
-        )}
-      </Section>
+      {layout === 'right' ? invoiceUpload : invoiceDetails}
     </Container>
   )
 }
@@ -292,143 +273,71 @@ function InvoiceDocumentsUpload({ onFileUpload }: { onFileUpload: (fileReaderObj
   )
 }
 
-function InvoiceDocuments({
+export function InvoiceDocuments({
   documents,
+  invoice,
   height,
-  onFileUpload,
-  invoiceStatus,
+  showSourceEmail,
 }: {
-  documents: Array<{ fileReaderObj: string; mimeType: string }>
+  documents?: Array<{ fileReaderObj: string; mimeType: string }>
+  invoice?: Mercoa.InvoiceResponse
   height: number
-  onFileUpload: (fileReaderObj: string, mimeType: string) => void
-  invoiceStatus?: Mercoa.InvoiceStatus
+  showSourceEmail?: boolean
 }) {
-  const [numPages, setNumPages] = useState<number>()
-  const [pageNumber, setPageNumber] = useState<number>(1)
-  const [debouncedWidth, setDebouncedWidth] = useDebounce(0, 20)
-
-  const wrapperDiv = useRef(null)
-
-  useLayoutEffect(() => {
-    if (wrapperDiv.current === null) return
-    setDebouncedWidth((wrapperDiv.current as any).getBoundingClientRect().width)
-  }, [wrapperDiv])
-
-  useResizeObserver(wrapperDiv, (entry) => {
-    if (debouncedWidth && Math.abs(debouncedWidth - entry.contentRect.width) < 20) return
-    setDebouncedWidth(entry.contentRect.width)
-  })
-
-  const documentNavigation = (
-    <div className="mercoa-flex mercoa-justify-center mercoa-mb-1">
-      <nav
-        className="mercoa-isolate mercoa-inline-flex -mercoa-space-x-px mercoa-rounded-md mercoa-shadow-sm"
-        aria-label="Pagination"
-      >
-        <button
-          type="button"
-          onClick={() => setPageNumber(Math.max(pageNumber - 1, 1))}
-          className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-l-md mercoa-px-2 mercoa-py-2 mercoa-text-gray-400 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 focus:mercoa-z-20 focus:mercoa-outline-offset-0"
-        >
-          <span className="mercoa-sr-only">Previous</span>
-          <ChevronLeftIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
-        </button>
-
-        {Array.from(new Array(numPages), (el, index) => (
-          <button
-            key={index}
-            type="button"
-            onClick={() => setPageNumber(index + 1)}
-            aria-current={pageNumber != index + 1 ? 'false' : 'page'}
-            className={
-              pageNumber != index + 1
-                ? 'mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 focus:mercoa-z-20 focus:mercoa-outline-offset-0'
-                : 'mercoa-relative mercoa-z-10 mercoa-inline-flex mercoa-items-center mercoa-bg-mercoa-primary mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-white focus:mercoa-z-20 focus-visible:outline focus-visible:mercoa-outline-2 focus-visible:mercoa-outline-offset-2 focus-visible:mercoa-outline-mercoa-primary'
-            }
-          >
-            {index + 1}
-          </button>
-        ))}
-
-        <button
-          type="button"
-          onClick={() => setPageNumber(Math.min(pageNumber + 1, numPages ?? 1))}
-          className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 mercoa-py-2 mercoa-text-gray-400 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 focus:mercoa-z-20 focus:mercoa-outline-offset-0"
-        >
-          <span className="mercoa-sr-only">Next</span>
-          <ChevronRightIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
-        </button>
-      </nav>
-    </div>
+  const mercoaSession = useMercoaSession()
+  const [localDocuments, setLocalDocuments] = useState<Array<{ fileReaderObj: string; mimeType: string }> | undefined>(
+    documents,
   )
+  const [sourceEmail, setSourceEmail] = useState<Mercoa.SourceEmailResponse>()
+  const [view, setView] = useState<'document' | 'email'>('document')
 
-  const documentView = (
-    <div>
-      {documents && documents.length > 0 && (
-        <div ref={wrapperDiv}>
-          {documents.map((document, i) => (
+  useEffect(() => {
+    if (invoice && invoice.hasDocuments) {
+      mercoaSession.client?.invoice.document.getAll(invoice.id).then((documents) => {
+        if (documents && documents.length > 0) {
+          setLocalDocuments(documents.map((document) => ({ fileReaderObj: document.uri, mimeType: document.mimeType })))
+        }
+      })
+    }
+    if (invoice && invoice.hasSourceEmail) {
+      mercoaSession.client?.invoice.document.getSourceEmail(invoice.id).then((sourceEmail) => {
+        if (sourceEmail) {
+          setSourceEmail(sourceEmail)
+        }
+      })
+    }
+  }, [invoice])
+
+  return (
+    <div className="mercoa-overflow-y-auto mercoa-overflow-x-hidden" style={{ height: `${height}px` }}>
+      {view === 'document' && localDocuments && localDocuments.length > 0 && (
+        <div className="mercoa-w-full">
+          {localDocuments.map((document, i) => (
             <div key={i}>
-              <div
-                className="mercoa-rounded-md mercoa-border mercoa-shadow-lg"
-                style={{ width: `${debouncedWidth}px` }}
-              >
-                {document.mimeType === 'application/pdf' ? (
-                  <Document
-                    loading={
-                      <div
-                        className="mercoa-mt-2 mercoa-flex mercoa-w-full mercoa-items-center mercoa-justify-center"
-                        style={{ height: '700px' }}
-                      >
-                        <LoadingSpinnerIcon />
-                      </div>
-                    }
-                    file={document.fileReaderObj}
-                    key={document.fileReaderObj}
-                    onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-                    error={
-                      <embed
-                        src={document.fileReaderObj}
-                        key={document.fileReaderObj}
-                        className="mercoa-mt-2"
-                        height={height}
-                        width={debouncedWidth - 5}
-                        type="application/pdf"
-                      />
-                    }
-                  >
-                    <Page
-                      pageNumber={pageNumber}
-                      className="mercoa-m-0 mercoa-w-full mercoa-p-0 mercoa-mt-2"
-                      renderTextLayer={false}
-                      renderAnnotationLayer={false}
-                      width={debouncedWidth - 5}
-                    />
-                  </Document>
-                ) : (
-                  <img
-                    src={document.fileReaderObj}
-                    key={document.fileReaderObj}
-                    onLoad={() => setNumPages(1)}
+              <div className="mercoa-flex mercoa-flex-row-reverse mercoa-gap-4 mercoa-mb-4">
+                {showSourceEmail && sourceEmail && (
+                  <MercoaButton
+                    type="button"
+                    isEmphasized={false}
                     className="mercoa-mt-2"
-                  />
+                    onClick={() => setView('email')}
+                  >
+                    <span className="mercoa-hidden xl:mercoa-inline">
+                      <EnvelopeIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-h-5 mercoa-w-5" />{' '}
+                      View Email
+                    </span>
+                  </MercoaButton>
                 )}
-              </div>
-              <a
-                href={document.fileReaderObj}
-                target="_blank"
-                rel="noreferrer"
-                className="mercoa-mt-2 mercoa-mr-2"
-                download
-              >
-                <MercoaButton type="button" isEmphasized={false} className="mercoa-mt-2">
-                  <span className="mercoa-hidden xl:mercoa-inline">
-                    <ArrowDownTrayIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-h-5 mercoa-w-5" />{' '}
-                    Download Invoice
-                  </span>
-                  <span className="mercoa-inline xl:mercoa-hidden">Download</span>
-                </MercoaButton>
-              </a>
-              {/* {(!invoiceStatus || invoiceStatus === Mercoa.InvoiceStatus.Draft) && (
+                <a href={document.fileReaderObj} target="_blank" rel="noreferrer" download>
+                  <MercoaButton type="button" isEmphasized={false} className="mercoa-mt-2">
+                    <span className="mercoa-hidden xl:mercoa-inline">
+                      <ArrowDownTrayIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-h-5 mercoa-w-5" />{' '}
+                      Download Invoice
+                    </span>
+                    <span className="mercoa-inline xl:mercoa-hidden">Download</span>
+                  </MercoaButton>
+                </a>
+                {/* {(!invoiceStatus || invoiceStatus === Mercoa.InvoiceStatus.Draft) && (
                 <MercoaButton
                   type="button"
                   isEmphasized={false}
@@ -449,17 +358,51 @@ function InvoiceDocuments({
                   <span className="mercoa-inline xl:mercoa-hidden">Reprocess Invoice</span>
                 </MercoaButton>
               )} */}
+              </div>
+
+              <div className="mercoa-rounded-md mercoa-border mercoa-shadow-lg mercoa-w-full">
+                {document.mimeType === 'application/pdf' ? (
+                  <embed
+                    src={document.fileReaderObj}
+                    key={document.fileReaderObj}
+                    height={height - 90}
+                    className="mercoa-object-contain mercoa-object-top mercoa-w-full"
+                    type="application/pdf"
+                  />
+                ) : (
+                  <img src={document.fileReaderObj} className="mercoa-object-contain mercoa-object-top mercoa-w-full" />
+                )}
+              </div>
             </div>
           ))}
         </div>
       )}
-    </div>
-  )
-
-  return (
-    <div className="mercoa-overflow-auto" style={{ height: `${height}px` }}>
-      {documentNavigation}
-      {documentView}
+      {view === 'email' && sourceEmail && (
+        <div>
+          <div className="mercoa-flex mercoa-flex-row-reverse mercoa-w-full">
+            <MercoaButton
+              type="button"
+              isEmphasized={false}
+              className="mercoa-mb-2"
+              onClick={() => setView('document')}
+            >
+              <span className="mercoa-hidden xl:mercoa-inline">
+                <DocumentIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-h-5 mercoa-w-5" />
+                View Invoice Document
+              </span>
+            </MercoaButton>
+          </div>
+          <div className="mercoa-w-full mercoa-flex mercoa-justify-center">
+            <div className="mercoa-rounded-md mercoa-border mercoa-shadow-lg">
+              <div className="mercoa-space-y-2 mercoa-text-gray-800 mercoa-p-5 mercoa-bg-white">
+                <div className="mercoa-font-medium">From: {sourceEmail.from}</div>
+                <div className="mercoa-font-medium">Subject: {sourceEmail.subject}</div>
+                <div className="mercoa-text-gray-600" dangerouslySetInnerHTML={{ __html: sourceEmail.htmlBody }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1086,7 +1029,7 @@ export function EditInvoiceForm({
         </label>
 
         {admin && (
-          <div className="mercoa-col-span-3">
+          <div className="mercoa-col-span-full">
             <StatusDropdown
               currentStatuses={invoice?.status ? [invoice.status] : undefined}
               onStatusChange={([status]) => {

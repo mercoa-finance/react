@@ -1,7 +1,7 @@
 {
   "name": "@mercoa/react",
   "description": "Mercoa React Component Library",
-  "version": "0.0.32",
+  "version": "0.0.33",
   "author": "Sandeep Dinesh <sandeep@mercoa.com>",
   "license": "MIT",
   "repository": {
@@ -12,7 +12,7 @@
   "module": "./dist/index.es.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "tsc && vite build && tailwindcss -i ./src/tailwind.css -o ./dist/mercoa.css --minify && cat ./dist/mercoa.css ./node_modules/react-datepicker/dist/react-datepicker.min.css ./node_modules/react-toastify/dist/ReactToastify.min.css > ./dist/style.css && cp ./src/tailwind.base.css ./dist/tailwind.base.css",
+    "build": "tsc && vite build && rm ./dist/mockServiceWorker.js && tailwindcss -i ./src/tailwind.css -o ./dist/mercoa.css --minify && cat ./dist/mercoa.css ./node_modules/react-datepicker/dist/react-datepicker.min.css ./node_modules/react-toastify/dist/ReactToastify.min.css > ./dist/style.css && cp ./src/tailwind.base.css ./dist/tailwind.base.css",
     "dev": "npm start",
     "lint": "eslint . --ext .ts,.tsx",
     "storybook": "storybook dev -p 6006",
@@ -93,11 +93,9 @@
     "react-google-autocomplete": "^2.7.3",
     "react-hook-form": "^7.49.2",
     "react-input-mask": "^2.0.4",
-    "react-pdf": "^7.6.0",
     "react-plaid-link": "^3.5.1",
     "react-signature-canvas": "^1.0.6",
     "react-toastify": "^9.1.3",
-    "us-bank-account-validator": "^1.0.0",
     "yup": "^1.3.3"
   },
   "publishConfig": {

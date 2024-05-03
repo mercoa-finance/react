@@ -978,9 +978,8 @@ export function CounterpartyDetails({
     let isCurrent = true
     mercoaSession.client.entity.invoice
       .find(mercoaSession.entityId, {
-        excludePayables: type == 'payor',
-        excludeReceivables: type == 'payee',
-        vendorId: counterpartyLocal.id,
+        vendorId: type == 'payee' ? counterpartyLocal.id : undefined,
+        payerId: type == 'payor' ? counterpartyLocal.id : undefined,
         limit: 100, // TODO: pagination
       })
       .then((invoices) => {

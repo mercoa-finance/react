@@ -35,7 +35,7 @@ export interface MercoaButtonProps extends HTMLAttributes<HTMLButtonElement> {
   isEmphasized: boolean
   tooltip?: string
   className?: string
-  color?: 'red' | 'green' | 'blue' | 'indigo' | 'yellow'
+  color?: 'red' | 'green' | 'blue' | 'indigo' | 'yellow' | 'gray'
   size?: 'sm' | 'md' | 'lg'
   children: ReactNode
   [x: string]: any
@@ -167,6 +167,22 @@ export function MercoaButton({
       mercoa-border-transparent
       hover:mercoa-bg-yellow-700
       focus:mercoa-ring-yellow-500
+    `
+  } else if (color === 'gray') {
+    colorOverride = `
+      mercoa-bg-white
+      mercoa-text-gray-600
+      mercoa-border-gray-600
+      hover:mercoa-text-gray-700
+      hover:mercoa-border-gray-700
+      focus:mercoa-ring-gray-500
+    `
+    colorOverrideIsEmphasized = `
+      mercoa-bg-gray-600
+      mercoa-text-white
+      mercoa-border-transparent
+      hover:mercoa-bg-gray-700
+      focus:mercoa-ring-gray-500
     `
   }
 

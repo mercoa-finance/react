@@ -7,12 +7,12 @@ import {
   PlusIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import { Fragment, ReactNode, useEffect, useRef, useState } from 'react'
 import { UseFormRegister, useForm } from 'react-hook-form'
 import { PlaidLinkError, PlaidLinkOnExitMetadata, usePlaidLink } from 'react-plaid-link'
 import SignatureCanvas from 'react-signature-canvas'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
 import {
@@ -27,8 +27,6 @@ import {
   stopPropagate,
   useMercoaSession,
 } from './index'
-
-const validBankAccount = require('us-bank-account-validator')
 
 export function BankAccounts({
   children,
@@ -630,7 +628,9 @@ export function AddBankAccount({
       name: 'accountNumber',
       exclusive: true,
       message: message || 'Invalid Account Number', // expect an i18n message to be passed in,
-      test: (value) => value && validBankAccount.accountNumber(value).isPotentiallyValid,
+      test: (value) => {
+        return !!value && Number(value) > 0
+      },
     })
   })
 
@@ -639,7 +639,9 @@ export function AddBankAccount({
       name: 'routingNumber',
       exclusive: true,
       message: message || 'Invalid Routing Number', // expect an i18n message to be passed in,
-      test: (value) => value && validBankAccount.routingNumber(value).isPotentiallyValid,
+      test: (value) => {
+        return !!value && value.length == 9 && Number(value) > 0
+      },
     })
   })
 

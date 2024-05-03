@@ -25,6 +25,7 @@ import * as yup from 'yup'
 import {
   DisbursementMethods,
   LoadingSpinner,
+  LoadingSpinnerIcon,
   MercoaButton,
   MercoaCombobox,
   MercoaInput,
@@ -1992,7 +1993,7 @@ export function EntityOnboarding({
     mercoaSession.client.entity.get(entityId).then((resp) => {
       setEntity(resp)
     })
-  }, [mercoaSession.client, entityId])
+  }, [mercoaSession.client, entityId, mercoaSession.refreshId])
 
   useEffect(() => {
     if (!mercoaSession.organization) return
@@ -2100,7 +2101,12 @@ export function EntityOnboarding({
     setFormState('complete')
   }
 
-  if (loading || !entity || !mercoaSession.organization || !mercoaSession.client) return <LoadingSpinner />
+  if (loading || !entity || !mercoaSession.organization || !mercoaSession.client)
+    return (
+      <div className="mercoa-text-center mercoa-pt-20 mercoa-w-full">
+        <LoadingSpinnerIcon />
+      </div>
+    )
 
   const infoWell = (
     <div className="mercoa-p-4 mercoa-text-sm mercoa-rounded-md mercoa-bg-gray-100 mercoa-my-4 mercoa-grid mercoa-grid-cols-12 mercoa-gap-3 mercoa-items-center">
@@ -2234,8 +2240,8 @@ export function EntityOnboarding({
                 console.error(e)
               }
             }
-            await new Promise((resolve) => setTimeout(resolve, 500))
             await mercoaSession.refresh()
+            await new Promise((resolve) => setTimeout(resolve, 100))
             setLoading(false)
             setFormState('complete')
           }}

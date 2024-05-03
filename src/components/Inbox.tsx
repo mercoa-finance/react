@@ -789,7 +789,7 @@ export function InvoiceTable({
           )}
         </th>
         {(columns ?? defaultColumns).map((column, index) => {
-          if (!columnHasData(column)) return null
+          if (!columnHasData(column) && invoices.length > 0) return null
           return (
             <th
               key={index}
@@ -897,7 +897,7 @@ export function InvoiceTable({
     <>
       <div className="mercoa-min-h-[600px]">
         {/* create checkbox that toggles invoices assigned to me */}
-        {currentStatuses.includes(Mercoa.InvoiceStatus.New) && (
+        {currentStatuses.includes(Mercoa.InvoiceStatus.New) && invoicesThatNeedMyApprovalCount > 0 && (
           <div className="mercoa-flex mercoa-items-center mercoa-justify-start mercoa-my-4 mercoa-ml-4">
             <div className="mercoa-flex mercoa-items-center mercoa-font-bold mercoa-font-xl mercoa-text-gray-600">
               <input
