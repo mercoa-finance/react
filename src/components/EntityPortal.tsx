@@ -4,6 +4,7 @@ import {
   ClockIcon,
   EnvelopeIcon,
   IdentificationIcon,
+  InboxArrowDownIcon,
   LockClosedIcon,
   LockOpenIcon,
   PlusIcon,
@@ -16,6 +17,7 @@ import {
   AcceptToSButton,
   ApprovalPolicies,
   Counterparties,
+  EntityEmailLogs,
   EntityInboxEmail,
   EntityOnboardingForm,
   EntityUserNotificationTable,
@@ -99,12 +101,12 @@ export function EntityPortal({ token }: { token: string }) {
             </p>
             <div className="mercoa-p-4 mercoa-text-sm mercoa-rounded-md mercoa-bg-gray-100 mercoa-my-4 mercoa-grid mercoa-gap-3">
               <p className="mercoa-flex mercoa-items-center">
-                <LockClosedIcon className="mercoa-w-5 mercoa-h-5 mercoa-mr-5" /> Your information is used for
-                verification purposes and isn&apos;t used for third-party marketing. We take your privacy seriously.
+                <LockClosedIcon className="mercoa-size-5 mercoa-mr-5" /> Your information is used for verification
+                purposes and isn&apos;t used for third-party marketing. We take your privacy seriously.
               </p>
               <p className="mercoa-flex mercoa-items-center">
-                <ClockIcon className="mercoa-w-4 mercoa-h-4 mercoa-mr-5" /> This process should take approximately 5
-                minutes to complete.
+                <ClockIcon className="mercoa-size-4 mercoa-mr-5" /> This process should take approximately 5 minutes to
+                complete.
               </p>
             </div>
           </div>
@@ -181,7 +183,7 @@ export function EntityPortal({ token }: { token: string }) {
               isEmphasized={false}
               className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
             >
-              <ArrowLeftIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+              <ArrowLeftIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-size-5 md:mercoa-mr-2" />{' '}
               <span className="mercoa-hidden md:mercoa-inline-block">Back</span>
             </MercoaButton>
           )}
@@ -194,7 +196,7 @@ export function EntityPortal({ token }: { token: string }) {
               isEmphasized={false}
               className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
             >
-              <EnvelopeIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+              <EnvelopeIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-size-5 md:mercoa-mr-2" />{' '}
               <span className="mercoa-hidden md:mercoa-inline-block">Notifications</span>
             </MercoaButton>
           )}
@@ -205,7 +207,7 @@ export function EntityPortal({ token }: { token: string }) {
               isEmphasized={false}
               className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
             >
-              <UsersIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+              <UsersIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-size-5 md:mercoa-mr-2" />{' '}
               <span className="mercoa-hidden md:mercoa-inline-block">Representatives</span>
             </MercoaButton>
           )}
@@ -216,7 +218,7 @@ export function EntityPortal({ token }: { token: string }) {
               isEmphasized={false}
               className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
             >
-              <LockOpenIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+              <LockOpenIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-size-5 md:mercoa-mr-2" />{' '}
               <span className="mercoa-hidden md:mercoa-inline-block">Approval Rules</span>
             </MercoaButton>
           )}
@@ -230,7 +232,7 @@ export function EntityPortal({ token }: { token: string }) {
                 isEmphasized={false}
                 className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
               >
-                <BuildingLibraryIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+                <BuildingLibraryIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-size-5 md:mercoa-mr-2" />{' '}
                 <span className="mercoa-hidden md:mercoa-inline-block">Payment Methods</span>
               </MercoaButton>
             )}
@@ -244,10 +246,22 @@ export function EntityPortal({ token }: { token: string }) {
                 isEmphasized={false}
                 className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
               >
-                <IdentificationIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+                <IdentificationIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-size-5 md:mercoa-mr-2" />{' '}
                 <span className="mercoa-hidden md:mercoa-inline-block">Vendors</span>
               </MercoaButton>
             )}
+
+          {tokenOptions?.pages?.emailLog && screen === 'inbox' && (
+            <MercoaButton
+              onClick={() => setScreen('emailLog')}
+              type="button"
+              isEmphasized={false}
+              className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
+            >
+              <InboxArrowDownIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-size-5 md:mercoa-mr-2" />{' '}
+              <span className="mercoa-hidden md:mercoa-inline-block">Email Log</span>
+            </MercoaButton>
+          )}
 
           {screen !== 'invoice' && screen !== 'counterparties' && (
             <MercoaButton
@@ -259,7 +273,7 @@ export function EntityPortal({ token }: { token: string }) {
                 setInvoice(undefined)
               }}
             >
-              <PlusIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+              <PlusIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-size-5 md:mercoa-mr-2" />{' '}
               <span className="mercoa-hidden md:mercoa-inline-block">New Invoice</span>
             </MercoaButton>
           )}
@@ -286,6 +300,16 @@ export function EntityPortal({ token }: { token: string }) {
           <h3 className="mercoa-my-8">Approval Rules</h3>
           <ApprovalPolicies />
         </div>
+      )}
+      {screen === 'emailLog' && (
+        <EntityEmailLogs
+          onClick={(invoiceId) => {
+            mercoaSession.client?.invoice.get(invoiceId).then((resp) => {
+              setInvoice(resp)
+              setScreen('invoice')
+            })
+          }}
+        />
       )}
       {screen === 'counterparties' && <Counterparties type="payee" />}
       {screen === 'representatives' && (

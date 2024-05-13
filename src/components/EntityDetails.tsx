@@ -1,8 +1,10 @@
 import { Square2StackIcon } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
+import dayjs from 'dayjs'
+import { ReactElement, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { useMercoaSession } from './Mercoa'
-import { Tooltip } from './index'
+import { TableNavigation, Tooltip } from './index'
 
 export function EntityDetails({ children }: { children: Function }) {
   const mercoaSession = useMercoaSession()
@@ -66,8 +68,159 @@ export function EntityInboxEmail({ entity }: { entity?: Mercoa.EntityResponse })
         toast.success('Email address copied')
       }}
     >
-      <Square2StackIcon className="mercoa-w-5 mercoa-h-5" />
+      <Square2StackIcon className="mercoa-size-5" />
       {entitySelected?.emailTo ?? ''}@{mercoaSession.organization?.emailProvider?.inboxDomain}
     </button>
+  )
+}
+
+export function EntityEmailLogs({
+  entity,
+  onClick,
+  children,
+}: {
+  entity?: Mercoa.EntityResponse
+  onClick?: (invoiceId: string) => void
+  children?: ({
+    dataLoaded,
+    emails,
+    hasNext,
+    getNext,
+    hasPrevious,
+    getPrevious,
+    resultsPerPage,
+    setResultsPerPage,
+  }: {
+    dataLoaded: boolean
+    emails: Mercoa.EmailLog[]
+    hasNext: boolean
+    getNext: () => void
+    hasPrevious: boolean
+    getPrevious: () => void
+    resultsPerPage: number
+    setResultsPerPage: (value: number) => void
+  }) => ReactElement | null
+}) {
+  const mercoaSession = useMercoaSession()
+  const entitySelected = entity || mercoaSession.entity
+
+  const [emailLogs, setEmailLogs] = useState<Mercoa.EmailLog[]>()
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(false)
+  const [startingAfter, setStartingAfter] = useState<string[]>([]) // startingAfter is the id of the last email log in the previous page
+  const [count, setCount] = useState(0)
+  const [resultsPerPage, setResultsPerPage] = useState(10)
+
+  useEffect(() => {
+    if (!mercoaSession.client || !entitySelected?.id) return
+    let isCurrent = true
+    mercoaSession.client.entity.emailLog
+      .find(entitySelected.id, {
+        limit: resultsPerPage,
+        startingAfter: startingAfter[startingAfter.length - 1],
+      })
+      .then((entities) => {
+        if (entities && isCurrent) {
+          setEmailLogs(entities.data)
+          setHasMore(entities.hasMore)
+          setCount(entities.count)
+        }
+      })
+    return () => {
+      isCurrent = false
+    }
+  }, [mercoaSession.client, entitySelected, mercoaSession.refreshId, startingAfter])
+
+  if (children)
+    return children({
+      dataLoaded: !!mercoaSession.client && !!entitySelected?.id && !!emailLogs,
+      emails: emailLogs ?? [],
+      hasNext: hasMore,
+      getNext: () => {
+        if (hasMore) {
+          setPage(page + 1)
+          if (emailLogs) {
+            setStartingAfter([...startingAfter, emailLogs[emailLogs.length - 1].id])
+          } else {
+            setStartingAfter([])
+          }
+        }
+      },
+      hasPrevious: page > 1,
+      getPrevious: () => {
+        if (page > 1) {
+          setPage(page - 1)
+          setStartingAfter(startingAfter.slice(0, startingAfter.length - 1))
+        }
+      },
+      resultsPerPage,
+      setResultsPerPage,
+    })
+
+  return (
+    <>
+      {/* ******** TABLE ******** */}
+      <table className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300 mercoa-mt-5">
+        <thead>
+          <tr>
+            {['From', 'Subject', 'Date'].map((column, index) => {
+              return (
+                <th
+                  key={index}
+                  scope="col"
+                  className={`mercoa-min-w-[12rem] mercoa-py-3.5 mercoa-pl-4 mercoa-pr-3 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 sm:mercoa-pl-3`}
+                >
+                  {column}
+                </th>
+              )
+            })}
+          </tr>
+        </thead>
+        <tbody className="mercoa-bg-white mercoa-divide-y mercoa-divide-gray-200">
+          {emailLogs?.map((log) => (
+            <tr
+              key={log.id}
+              className="mercoa-bg-white hover:mercoa-bg-gray-100"
+              onClick={() => {
+                if (onClick && log.invoiceId) onClick(log.invoiceId)
+              }}
+            >
+              <td
+                className={`mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900 ${
+                  onClick && log.invoiceId ? 'mercoa-cursor-pointer' : ''
+                }`}
+              >
+                {log.from}
+              </td>
+              <td
+                className={`mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900 ${
+                  onClick && log.invoiceId ? 'mercoa-cursor-pointer' : ''
+                }`}
+              >
+                {log.subject}
+              </td>
+              <td
+                className={`mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900 ${
+                  onClick && log.invoiceId ? 'mercoa-cursor-pointer' : ''
+                }`}
+              >
+                {dayjs(log.createdAt).format('MMM DD')}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <TableNavigation
+        data={emailLogs ?? []}
+        page={page}
+        setPage={setPage}
+        hasMore={hasMore}
+        startingAfter={startingAfter}
+        setStartingAfter={setStartingAfter}
+        count={count}
+        resultsPerPage={resultsPerPage}
+        setResultsPerPage={setResultsPerPage}
+      />
+    </>
   )
 }

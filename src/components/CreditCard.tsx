@@ -1,6 +1,6 @@
 import { CreditCardIcon, PlusIcon } from '@heroicons/react/24/outline'
-import { ReactNode, useEffect, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
+import { ReactNode, useEffect, useState } from 'react'
 import { capitalize } from '../lib/lib'
 import {
   AddDialog,
@@ -215,7 +215,7 @@ export function CreditCardComponent({
               : 'mercoa-bg-gray-200 mercoa-text-gray-600'
           }`}
         >
-          <CreditCardIcon className="mercoa-h-5 mercoa-w-5" />
+          <CreditCardIcon className="mercoa-size-5" />
         </div>
         <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
           <div>
@@ -249,7 +249,7 @@ export function CreditCardComponent({
               : 'mercoa-bg-gray-200 mercoa-text-gray-600'
           }`}
         >
-          <PlusIcon className="mercoa-h-5 mercoa-w-5" />
+          <PlusIcon className="mercoa-size-5" />
         </div>
         <div className="mercoa-min-w-0 mercoa-flex-1">
           <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />

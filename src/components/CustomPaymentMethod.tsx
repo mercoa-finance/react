@@ -92,7 +92,7 @@ export function CustomPaymentMethodComponent({
               : 'mercoa-bg-gray-200 mercoa-text-gray-600'
           }`}
         >
-          <BuildingLibraryIcon className="mercoa-h-5 mercoa-w-5" />
+          <BuildingLibraryIcon className="mercoa-size-5" />
         </div>
         <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
           <div>
@@ -128,7 +128,7 @@ export function CustomPaymentMethodComponent({
               : 'mercoa-bg-gray-200 mercoa-text-gray-600'
           }`}
         >
-          <BuildingLibraryIcon className="mercoa-h-5 mercoa-w-5" />
+          <BuildingLibraryIcon className="mercoa-size-5" />
         </div>
         <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
           <div>

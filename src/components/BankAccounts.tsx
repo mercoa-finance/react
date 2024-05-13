@@ -146,7 +146,7 @@ export function BankAccountComponent({
               : 'mercoa-bg-gray-200 mercoa-text-gray-600'
           }`}
         >
-          <BuildingLibraryIcon className="mercoa-h-5 mercoa-w-5" />
+          <BuildingLibraryIcon className="mercoa-size-5" />
         </div>
         <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between mercoa-group">
           <div className="mercoa-flex">
@@ -247,13 +247,13 @@ export function BankAccountComponent({
                 {account.checkOptions?.enabled ? (
                   <Tooltip title="Can send checks">
                     <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-green-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-green-800">
-                      _<EnvelopeIcon className="mercoa-h-4 mercoa-w-4" />
+                      _<EnvelopeIcon className="mercoa-size-4" />
                     </span>
                   </Tooltip>
                 ) : (
                   <Tooltip title="Check send disabled">
                     <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-gray-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-gray-800">
-                      _<EnvelopeIcon className="mercoa-h-4 mercoa-w-4" />
+                      _<EnvelopeIcon className="mercoa-size-4" />
                     </span>
                   </Tooltip>
                 )}
@@ -265,7 +265,7 @@ export function BankAccountComponent({
                 onClick={() => setShowNameEdit(true)}
               >
                 <Tooltip title="Edit">
-                  <PencilIcon className="mercoa-h-4 mercoa-w-4" />
+                  <PencilIcon className="mercoa-size-4" />
                 </Tooltip>
               </MercoaButton>
               <Transition.Root show={!!verify} as={Fragment}>
@@ -414,7 +414,7 @@ export function BankAccountComponent({
               : 'mercoa-bg-gray-200 mercoa-text-gray-600'
           }`}
         >
-          <PlusIcon className="mercoa-h-5 mercoa-w-5" />
+          <PlusIcon className="mercoa-size-5" />
         </div>
         <div className="mercoa-min-w-0 mercoa-flex-1">
           <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
@@ -845,7 +845,7 @@ export function EditBankAccount({
             <input
               {...register('checkOptions.enabled')}
               type="checkbox"
-              className="mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
+              className="mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
             />
           </div>
           <div className="mercoa-ml-3 mercoa-text-sm">
@@ -853,7 +853,7 @@ export function EditBankAccount({
             <Tooltip title="If enabled, checks can be printed with the account and routing number of this account.">
               <label htmlFor="checkOptions.enabled" className="mercoa-font-medium mercoa-text-gray-700">
                 Enable Check Payments
-                <InformationCircleIcon className="mercoa-inline mercoa-h-5 mercoa-w-5" />
+                <InformationCircleIcon className="mercoa-inline mercoa-size-5" />
               </label>
             </Tooltip>
           </div>
@@ -880,7 +880,7 @@ export function EditBankAccount({
               <input
                 {...register('checkOptions.useSignatureImage')}
                 type="checkbox"
-                className="mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
+                className="mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
               />
             </div>
             <div className="mercoa-ml-3 mercoa-text-sm">

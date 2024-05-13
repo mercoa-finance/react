@@ -288,7 +288,7 @@ export function InvoiceDocuments({
   const [localDocuments, setLocalDocuments] = useState<Array<{ fileReaderObj: string; mimeType: string }> | undefined>(
     documents,
   )
-  const [sourceEmail, setSourceEmail] = useState<Mercoa.SourceEmailResponse>()
+  const [sourceEmails, setSourceEmail] = useState<Mercoa.EmailLog[]>()
   const [view, setView] = useState<'document' | 'email'>('document')
 
   useEffect(() => {
@@ -302,7 +302,7 @@ export function InvoiceDocuments({
     if (invoice && invoice.hasSourceEmail) {
       mercoaSession.client?.invoice.document.getSourceEmail(invoice.id).then((sourceEmail) => {
         if (sourceEmail) {
-          setSourceEmail(sourceEmail)
+          setSourceEmail(sourceEmail.data)
         }
       })
     }
@@ -315,7 +315,7 @@ export function InvoiceDocuments({
           {localDocuments.map((document, i) => (
             <div key={i}>
               <div className="mercoa-flex mercoa-flex-row-reverse mercoa-gap-4 mercoa-mb-4">
-                {showSourceEmail && sourceEmail && (
+                {showSourceEmail && sourceEmails && (
                   <MercoaButton
                     type="button"
                     isEmphasized={false}
@@ -323,15 +323,14 @@ export function InvoiceDocuments({
                     onClick={() => setView('email')}
                   >
                     <span className="mercoa-hidden xl:mercoa-inline">
-                      <EnvelopeIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-h-5 mercoa-w-5" />{' '}
-                      View Email
+                      <EnvelopeIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-size-5" /> View Email
                     </span>
                   </MercoaButton>
                 )}
                 <a href={document.fileReaderObj} target="_blank" rel="noreferrer" download>
                   <MercoaButton type="button" isEmphasized={false} className="mercoa-mt-2">
                     <span className="mercoa-hidden xl:mercoa-inline">
-                      <ArrowDownTrayIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-h-5 mercoa-w-5" />{' '}
+                      <ArrowDownTrayIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-size-5" />{' '}
                       Download Invoice
                     </span>
                     <span className="mercoa-inline xl:mercoa-hidden">Download</span>
@@ -352,7 +351,7 @@ export function InvoiceDocuments({
                   }}
                 >
                   <span className="mercoa-hidden xl:mercoa-inline">
-                    <ArrowPathIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-h-5 mercoa-w-5" />{' '}
+                    <ArrowPathIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-size-5" />{' '}
                     Reprocess Invoice
                   </span>
                   <span className="mercoa-inline xl:mercoa-hidden">Reprocess Invoice</span>
@@ -377,7 +376,7 @@ export function InvoiceDocuments({
           ))}
         </div>
       )}
-      {view === 'email' && sourceEmail && (
+      {view === 'email' && sourceEmails && sourceEmails.length > 0 && (
         <div>
           <div className="mercoa-flex mercoa-flex-row-reverse mercoa-w-full">
             <MercoaButton
@@ -387,19 +386,24 @@ export function InvoiceDocuments({
               onClick={() => setView('document')}
             >
               <span className="mercoa-hidden xl:mercoa-inline">
-                <DocumentIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-h-5 mercoa-w-5" />
+                <DocumentIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-size-5" />
                 View Invoice Document
               </span>
             </MercoaButton>
           </div>
-          <div className="mercoa-w-full mercoa-flex mercoa-justify-center">
-            <div className="mercoa-rounded-md mercoa-border mercoa-shadow-lg">
-              <div className="mercoa-space-y-2 mercoa-text-gray-800 mercoa-p-5 mercoa-bg-white">
-                <div className="mercoa-font-medium">From: {sourceEmail.from}</div>
-                <div className="mercoa-font-medium">Subject: {sourceEmail.subject}</div>
-                <div className="mercoa-text-gray-600" dangerouslySetInnerHTML={{ __html: sourceEmail.htmlBody }} />
+          <div className="mercoa-w-full mercoa-justify-center">
+            {sourceEmails.map((sourceEmail, i) => (
+              <div className="mercoa-rounded-md mercoa-border mercoa-shadow-lg mercoa-mb-5" key={i}>
+                <div className="mercoa-space-y-2 mercoa-text-gray-800 mercoa-p-5 mercoa-bg-white">
+                  <div className="mercoa-font-medium">From: {sourceEmail.from}</div>
+                  <div className="mercoa-font-medium">Subject: {sourceEmail.subject}</div>
+                  <div className="mercoa-font-medium">
+                    Date: {dayjs(sourceEmail.createdAt).format('MMM DD, hh:mm a')}
+                  </div>
+                  <div className="mercoa-text-gray-600" dangerouslySetInnerHTML={{ __html: sourceEmail.htmlBody }} />
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       )}
@@ -1266,7 +1270,7 @@ export function EditInvoiceForm({
                   className="mercoa-inline-flex mercoa-text-sm mercoa-float-right mercoa-mt-3"
                   type="button"
                 >
-                  <DocumentDuplicateIcon className="mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+                  <DocumentDuplicateIcon className="mercoa-size-5 md:mercoa-mr-2" />{' '}
                   <span className="mercoa-hidden md:mercoa-inline-block">Get Payment Acceptance Link</span>
                 </MercoaButton>
               )} */}
@@ -1365,11 +1369,11 @@ function ErrorOverview({ errors, clearErrors }: { errors: FieldErrors; clearErro
         onClick={() => clearErrors()}
       >
         <span className="mercoa-sr-only">Close</span>
-        <XMarkIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
+        <XMarkIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
       </button>
       <div className="mercoa-flex">
         <div className="mercoa-flex-shrink-0">
-          <ExclamationCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-red-400" aria-hidden="true" />
+          <ExclamationCircleIcon className="mercoa-size-5 mercoa-text-red-400" aria-hidden="true" />
         </div>
         <div className="mercoa-ml-3">
           <h3 className="mercoa-text-sm mercoa-font-medium mercoa-text-red-800">
@@ -2577,7 +2581,7 @@ function MetadataBoolean({
           type="radio"
           name={`true-false-${schema.key}`}
           defaultChecked={value === 'true'}
-          className="mercoa-h-4 mercoa-w-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary checked:mercoa-bg-mercoa-primary"
+          className="mercoa-size-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary checked:mercoa-bg-mercoa-primary"
           onChange={() => setValue('true')}
         />
         <label
@@ -2593,7 +2597,7 @@ function MetadataBoolean({
           type="radio"
           name={`true-false-${schema.key}`}
           defaultChecked={value === 'false'}
-          className="mercoa-h-4 mercoa-w-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary checked:mercoa-bg-mercoa-primary"
+          className="mercoa-size-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary checked:mercoa-bg-mercoa-primary"
           onChange={() => setValue('false')}
         />
         <label
@@ -2662,10 +2666,7 @@ function LineItems({
           className="mercoa-ml-4 mercoa-flex-shrink-0 mercoa-col-span-1"
         >
           <Tooltip title="Add line item">
-            <PlusCircleIcon
-              className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400 hover:mercoa-opacity-75"
-              aria-hidden="true"
-            />
+            <PlusCircleIcon className="mercoa-size-5 mercoa-text-gray-400 hover:mercoa-opacity-75" aria-hidden="true" />
           </Tooltip>
           <span className="mercoa-sr-only">Add line item</span>
         </button>
@@ -2886,7 +2887,7 @@ function LineItemRow({
         })}
       <td className="mercoa-whitespace-nowrap mercoa-py-1 mercoa-pl-1 mercoa-pr-1 mercoa-text-sm mercoa-text-gray-500 sm:pr-0">
         <button type="button" onClick={() => remove(index)}>
-          <XMarkIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
+          <XMarkIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
           <span className="mercoa-sr-only">Remove line item</span>
         </button>
       </td>

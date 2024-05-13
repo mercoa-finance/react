@@ -111,13 +111,13 @@ export function DisbursementMethods({
   )
 
   function DisbursementMethod({ method }: { method: Mercoa.PaymentRailResponse }) {
-    let icon = <BuildingLibraryIcon className="mercoa-h-5 mercoa-w-5" />
+    let icon = <BuildingLibraryIcon className="mercoa-size-5" />
     if (method.type === Mercoa.PaymentMethodType.BankAccount) {
-      icon = <BuildingLibraryIcon className="mercoa-h-5 mercoa-w-5" />
+      icon = <BuildingLibraryIcon className="mercoa-size-5" />
     } else if (method.type === Mercoa.PaymentMethodType.Check) {
-      icon = <EnvelopeIcon className="mercoa-h-5 mercoa-w-5" />
+      icon = <EnvelopeIcon className="mercoa-size-5" />
     } else if (method.type === Mercoa.PaymentMethodType.VirtualCard) {
-      icon = <CreditCardIcon className="mercoa-h-5 mercoa-w-5" />
+      icon = <CreditCardIcon className="mercoa-size-5" />
     }
 
     return (

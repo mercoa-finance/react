@@ -278,7 +278,7 @@ function Level({
           <div
             className={`mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center ${nestedBg[level]}`}
           >
-            <RocketLaunchIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-300" aria-hidden="true" />
+            <RocketLaunchIcon className="mercoa-size-5 mercoa-text-gray-300" aria-hidden="true" />
           </div>
         )}
         <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
@@ -300,7 +300,7 @@ function Level({
             <div
               className={`mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center ${nestedBg[level]}`}
             >
-              <SparklesIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-300" aria-hidden="true" />
+              <SparklesIcon className="mercoa-size-5 mercoa-text-gray-300" aria-hidden="true" />
             </div>
             <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
               <div
@@ -315,7 +315,7 @@ function Level({
                     onClick={() => remove(fields.findIndex((e) => e.id == policy.id))}
                   >
                     <span className="mercoa-sr-only">Remove</span>
-                    <XMarkIcon className="mercoa-h-5 mercoa-w-5" />
+                    <XMarkIcon className="mercoa-size-5" />
                   </button>
 
                   <Trigger
@@ -390,7 +390,7 @@ function Level({
                 <div className="mercoa-w-px mercoa-bg-gray-200" />
               </div>
               <div className="mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center mercoa-bg-white">
-                <ExclamationTriangleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-300" aria-hidden="true" />
+                <ExclamationTriangleIcon className="mercoa-size-5 mercoa-text-gray-300" aria-hidden="true" />
               </div>
               <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500 mercoa-ml-4">
                 <span className="mercoa-font-medium mercoa-text-gray-900 ">
@@ -430,7 +430,7 @@ function Level({
             <div
               className={`mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center ${nestedBg[level]}`}
             >
-              <CheckCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-green-400" aria-hidden="true" />
+              <CheckCircleIcon className="mercoa-size-5 mercoa-text-green-400" aria-hidden="true" />
             </div>
             <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
               <span className="mercoa-font-medium mercoa-text-gray-900"> Approve Invoice</span>
@@ -639,7 +639,7 @@ function Trigger({
                 className="mercoa-ml-2 mercoa-text-gray-400 hover:mercoa-text-gray-500"
               >
                 <span className="mercoa-sr-only">Remove</span>
-                <XMarkIcon className="mercoa-h-5 mercoa-w-5" />
+                <XMarkIcon className="mercoa-size-5" />
               </button>
             )}
           </div>
@@ -669,7 +669,7 @@ function Trigger({
             }
           }}
         >
-          <PlusIcon className="mercoa-h-4 mercoa-w-4 mercoa-mr-1" /> Add Condition
+          <PlusIcon className="mercoa-size-4 mercoa-mr-1" /> Add Condition
         </MercoaButton>
       </div>
     </>
@@ -717,7 +717,7 @@ function Rule({
           onClick={remove}
         >
           <span className="mercoa-sr-only">Remove</span>
-          <XMarkIcon className="mercoa-h-5 mercoa-w-5" />
+          <XMarkIcon className="mercoa-size-5" />
         </button>
       ) : (
         <div className="mercoa-font-medium mercoa-text-gray-700">Then:</div>
@@ -832,7 +832,7 @@ function AddRule({
         })
       }}
     >
-      <PlusIcon className="mercoa-h-4 mercoa-w-4 mercoa-mr-1" /> Add Rule
+      <PlusIcon className="mercoa-size-4 mercoa-mr-1" /> Add Rule
     </MercoaButton>
   )
 }

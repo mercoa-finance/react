@@ -131,7 +131,7 @@ export function CounterpartySearch({
                 type="button"
                 className="mercoa-ml-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75"
               >
-                <XCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
+                <XCircleIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
                 <span className="mercoa-sr-only">Clear</span>
               </button>
               {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && (
@@ -142,7 +142,7 @@ export function CounterpartySearch({
                   type="button"
                   className="mercoa-ml-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75"
                 >
-                  <PencilSquareIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
+                  <PencilSquareIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
                   <span className="mercoa-sr-only">Edit</span>
                 </button>
               )}
@@ -197,7 +197,7 @@ export function CounterpartySearch({
       <div className="mercoa-relative mercoa-mt-2">
         <input className={inputClassName({})} placeholder="Loading..." value="Loading..." readOnly />
         <button className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none">
-          <ChevronUpDownIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
+          <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
         </button>
       </div>
     )
@@ -226,7 +226,7 @@ export function CounterpartySearch({
             className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none"
             ref={buttonRef}
           >
-            <ChevronUpDownIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
+            <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
           </Combobox.Button>
 
           <Combobox.Options className="mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-md mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm">
@@ -251,7 +251,7 @@ export function CounterpartySearch({
                       active ? 'mercoa-bg-indigo-600 mercoa-text-white' : 'mercoa-text-gray-900'
                     }`}
                   >
-                    <PlusIcon className="mercoa-w-5 mercoa-h-5 mercoa-pr-1" />
+                    <PlusIcon className="mercoa-size-5 mercoa-pr-1" />
                     Add New
                   </div>
                 )}
@@ -449,7 +449,7 @@ function CounterpartyAddOrEdit({
           }
         }}
       >
-        <XMarkIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
+        <XMarkIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
         <span className="mercoa-sr-only">Close</span>
       </button>
       <MercoaInput
@@ -458,7 +458,7 @@ function CounterpartyAddOrEdit({
         register={register}
         placeholder="Name"
         errors={errors}
-        leadingIcon={<UserIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />}
+        leadingIcon={<UserIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />}
         className="mercoa-mt-1"
       />
       <MercoaInput
@@ -467,7 +467,7 @@ function CounterpartyAddOrEdit({
         register={register}
         placeholder="Email"
         errors={errors}
-        leadingIcon={<EnvelopeIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />}
+        leadingIcon={<EnvelopeIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />}
         className="mercoa-mt-1"
       />
 
@@ -770,7 +770,7 @@ export function Counterparties({
               setAddCounterparty(true)
             }}
           >
-            <PlusIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-h-5 mercoa-w-5 md:mercoa-mr-2" />{' '}
+            <PlusIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-size-5 md:mercoa-mr-2" />{' '}
             <span className="mercoa-hidden md:mercoa-inline-block mercoa-whitespace-nowrap">
               Add {type === 'payee' ? 'Vendor' : 'Customer'}
             </span>
