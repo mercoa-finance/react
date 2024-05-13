@@ -1,8 +1,8 @@
 import { EnvelopeIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import { ReactNode, useState } from 'react'
 import { UseFormRegister, useForm } from 'react-hook-form'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import {
   AddDialog,
@@ -54,7 +54,7 @@ export function CheckComponent({
               : 'mercoa-bg-gray-200 mercoa-text-gray-600'
           }`}
         >
-          <EnvelopeIcon className="mercoa-h-5 mercoa-w-5" />
+          <EnvelopeIcon className="mercoa-size-5" />
         </div>
         <div className="mercoa-min-w-0 mercoa-flex-1">
           {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
@@ -76,7 +76,7 @@ export function CheckComponent({
               onClick={() => deleteAccount()}
             >
               {' '}
-              <TrashIcon className="mercoa-h-5 mercoa-w-5" />
+              <TrashIcon className="mercoa-size-5" />
             </button>
           </div>
         )}
@@ -99,7 +99,7 @@ export function CheckComponent({
               : 'mercoa-bg-gray-200 mercoa-text-gray-600'
           }`}
         >
-          <PlusIcon className="mercoa-h-5 mercoa-w-5" />
+          <PlusIcon className="mercoa-size-5" />
         </div>
         <div className="mercoa-min-w-0 mercoa-flex-1">
           <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />

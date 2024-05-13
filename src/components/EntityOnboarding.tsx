@@ -1113,7 +1113,7 @@ export function RepresentativeOnboardingForm({
             </h3>
             <div className="mercoa-flex-1" />
             <XMarkIcon
-              className="mercoa-h-5 mercoa-w-5 mercoa-cursor-pointer  mercoa-rounded-md mercoa-p-0.5 hover:mercoa-bg-gray-100"
+              className="mercoa-size-5 mercoa-cursor-pointer mercoa-rounded-md mercoa-p-0.5 hover:mercoa-bg-gray-100"
               type="button"
               onClick={() => {
                 if (onClose) onClose()
@@ -1155,7 +1155,7 @@ export function RepresentativeOnboardingForm({
                 <input
                   {...register('isController')}
                   type="checkbox"
-                  className="mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
+                  className="mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
                 />
               </div>
               <div className="mercoa-ml-3 mercoa-text-sm">
@@ -1163,7 +1163,7 @@ export function RepresentativeOnboardingForm({
                 <Tooltip title="Every business requires a controller. Examples include the CEO, COO, Treasurer, President, Vice President, or Managing Partner.">
                   <label htmlFor="isController" className="mercoa-font-medium mercoa-text-gray-700">
                     This person is a company controller{' '}
-                    <InformationCircleIcon className="mercoa-inline mercoa-h-5 mercoa-w-5" />
+                    <InformationCircleIcon className="mercoa-inline mercoa-size-5" />
                   </label>
                 </Tooltip>
               </div>
@@ -1236,12 +1236,12 @@ export function Representatives({
         <div className="mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-mt-5">
           {reps?.some((e) => e.responsibilities.isController) ? (
             <>
-              <CheckCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-green-400" />
+              <CheckCircleIcon className="mercoa-size-5 mercoa-text-green-400" />
               <p className="mercoa-font-gray-700 mercoa-text-sm">At least one controller is added</p>
             </>
           ) : (
             <>
-              <XCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-red-400" />
+              <XCircleIcon className="mercoa-size-5 mercoa-text-red-400" />
               <p className="mercoa-font-gray-700 mercoa-text-sm">At least one controller needs to be added</p>
             </>
           )}
@@ -1249,12 +1249,12 @@ export function Representatives({
         <div className="mercoa-flex mercoa-items-center mercoa-space-x-3">
           {reps && reps?.length > 0 ? (
             <>
-              <CheckCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-green-400" />
+              <CheckCircleIcon className="mercoa-size-5 mercoa-text-green-400" />
               <p className="mercoa-font-gray-700 mercoa-text-sm">At least one representative is added</p>
             </>
           ) : (
             <>
-              <XCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-red-400" />
+              <XCircleIcon className="mercoa-size-5 mercoa-text-red-400" />
               <p className="mercoa-font-gray-700 mercoa-text-sm">At least one representative needs to be added</p>
             </>
           )}
@@ -1310,7 +1310,7 @@ export function RepresentativeComponent({
               : 'mercoa-bg-gray-200 mercoa-text-gray-600'
           }`}
         >
-          <UserIcon className="mercoa-h-5 mercoa-w-5" />
+          <UserIcon className="mercoa-size-5" />
         </div>
         <div className="mercoa-min-w-0 mercoa-flex-1">
           {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
@@ -1335,7 +1335,7 @@ export function RepresentativeComponent({
               onClick={() => deleteAccount()}
             >
               {' '}
-              <TrashIcon className="mercoa-h-5 mercoa-w-5" />
+              <TrashIcon className="mercoa-size-5" />
             </button>
           </div>
         )}
@@ -1358,7 +1358,7 @@ export function RepresentativeComponent({
               : 'mercoa-bg-gray-200 mercoa-text-gray-600'
           }`}
         >
-          <PlusIcon className="mercoa-h-5 mercoa-w-5" />
+          <PlusIcon className="mercoa-size-5" />
         </div>
         <div className="mercoa-min-w-0 mercoa-flex-1">
           <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
@@ -1536,7 +1536,7 @@ export function AcceptTosForm({
           <input
             {...register('mercoa')}
             type="checkbox"
-            className="mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
+            className="mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
           />
         </div>
         <div className="mercoa-ml-3 mercoa-text-sm">

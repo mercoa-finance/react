@@ -236,12 +236,12 @@ export function TableOrderHeader({
       >
         {isSelected ? (
           orderDirection === Mercoa.OrderDirection.Asc ? (
-            <ChevronDownIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
+            <ChevronDownIcon className="mercoa-size-5" aria-hidden="true" />
           ) : (
-            <ChevronUpIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
+            <ChevronUpIcon className="mercoa-size-5" aria-hidden="true" />
           )
         ) : (
-          <MinusIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
+          <MinusIcon className="mercoa-size-5" aria-hidden="true" />
         )}
       </span>
     </button>
@@ -308,7 +308,7 @@ export function TableNavigation({
                 <Listbox.Button className="mercoa-relative mercoa-w-24 mercoa-cursor-default mercoa-rounded-md mercoa-bg-white mercoa-py-1 mercoa-pl-3 mercoa-pr-10 mercoa-text-left mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-outline-none focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6">
                   <span className="mercoa-block mercoa-truncate">{resultsPerPage}</span>
                   <span className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-pr-2">
-                    <ChevronUpDownIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
+                    <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
                   </span>
                 </Listbox.Button>
 
@@ -346,7 +346,7 @@ export function TableNavigation({
                                   active ? 'mercoa-text-white' : 'mercoa-text-mercoa-primary-text'
                                 } mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-pr-4`}
                               >
-                                <CheckIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
+                                <CheckIcon className="mercoa-size-5" aria-hidden="true" />
                               </span>
                             ) : null}
                           </>
@@ -511,7 +511,7 @@ export function PaymentMethodList({
                 className="mercoa-ml-2 mercoa-text-red-500 hover:mercoa-text-red-700"
               >
                 <Tooltip title="Remove Account">
-                  <TrashIcon className="mercoa-h-5 mercoa-w-5" />
+                  <TrashIcon className="mercoa-size-5" />
                 </Tooltip>
               </button>
             )}
@@ -761,7 +761,7 @@ export function MercoaCombobox({
                   />
                 </div>
                 <div className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none">
-                  <ChevronUpDownIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" aria-hidden="true" />
+                  <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
                 </div>
               </>
             )
@@ -821,7 +821,7 @@ export function MercoaCombobox({
                             active ? 'mercoa-text-mercoa-primary-text-invert' : 'mercoa-text-mercoa-primary',
                           )}
                         >
-                          <CheckIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
+                          <CheckIcon className="mercoa-size-5" aria-hidden="true" />
                         </span>
                       )}
                     </>

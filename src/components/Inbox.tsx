@@ -160,7 +160,7 @@ function AddApproverModal({
             <Tooltip title="User will be added to the first available approval slot they are eligible for">
               <Dialog.Title className="mercoa-text-lg mercoa-font-semibold mercoa-flex mercoa-items-center mercoa-justify-center">
                 Select Approver To Add
-                <QuestionMarkCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-ml-2" />
+                <QuestionMarkCircleIcon className="mercoa-size-5 mercoa-ml-2" />
               </Dialog.Title>
             </Tooltip>
             <div className="mercoa-flex mercoa-mt-5">
@@ -781,7 +781,7 @@ export function InvoiceTable({
           {invoices.length > 0 && (
             <input
               type="checkbox"
-              className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
+              className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
               ref={checkbox}
               checked={checked}
               onChange={toggleAll}
@@ -838,7 +838,7 @@ export function InvoiceTable({
             )}
             <input
               type="checkbox"
-              className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
+              className="mercoa-absolute mercoa-left-4 mercoa-top-1/2 -mercoa-mt-2 mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
               value={invoice.id}
               checked={selectedInvoices.includes(invoice)}
               onChange={(e) =>
@@ -903,7 +903,7 @@ export function InvoiceTable({
               <input
                 id="showOnlyInvoicesThatUserNeedsToApprove"
                 type="checkbox"
-                className="mercoa-mr-2 mercoa-h-4 mercoa-w-4 mercoa-rounded mercoa-border-gray-300 focus:mercoa-ring-mercoa-primary mercoa-text-mercoa-primary-text mercoa-cursor-pointer"
+                className="mercoa-mr-2 mercoa-size-4 mercoa-rounded mercoa-border-gray-300 focus:mercoa-ring-mercoa-primary mercoa-text-mercoa-primary-text mercoa-cursor-pointer"
                 checked={showOnlyInvoicesThatUserNeedsToApprove}
                 onChange={() => setShowOnlyInvoicesThatUserNeedsToApprove(!showOnlyInvoicesThatUserNeedsToApprove)}
               />

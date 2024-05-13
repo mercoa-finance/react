@@ -7,6 +7,9 @@ import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import vitePluginRequire from 'vite-plugin-require'
 
 export default defineConfig({
+  define: {
+    'process.env.NODE_ENV': '"production"',
+  },
   plugins: [
     vitePluginRequire(),
     react(),
