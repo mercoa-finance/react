@@ -1,4 +1,4 @@
-import { InvoiceDetails, MercoaButton } from '@mercoa/react'
+import { MercoaButton, PayableDetails } from '@mercoa/react'
 import { useRouter } from 'next/router'
 
 export default function Bills() {
@@ -26,7 +26,7 @@ export default function Bills() {
       >
         Back
       </MercoaButton>
-      <InvoiceDetails
+      <PayableDetails
         invoiceId={invoiceId}
         onRedirect={(invoice) => {
           if (invoice) router.push(`/bills/${invoice.id}`)

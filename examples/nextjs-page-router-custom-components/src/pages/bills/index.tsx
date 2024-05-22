@@ -3,8 +3,8 @@ import {
   DebouncedSearch,
   EntityInboxEmail,
   InvoiceMetrics,
-  InvoiceTable,
   MercoaButton,
+  PayablesTable,
   StatusTabs,
 } from '@mercoa/react'
 import { useRouter } from 'next/router'
@@ -41,7 +41,7 @@ export default function Bills() {
         <div className="mercoa-grid mercoa-grid-cols-2 mercoa-mt-2">
           <DebouncedSearch placeholder="Search Vendors, Invoice #, Amount" onSettle={setSearch} />
         </div>
-        <InvoiceTable
+        <PayablesTable
           statuses={selectedStatuses}
           search={search}
           onSelectInvoice={(invoice) => {
