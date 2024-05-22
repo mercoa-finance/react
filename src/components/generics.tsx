@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
+import Big from 'big.js'
 import { jwtDecode } from 'jwt-decode'
 import debounce from 'lodash/debounce'
 import {
@@ -26,10 +27,10 @@ import {
 } from 'react'
 import DatePicker from 'react-datepicker'
 import { Control, Controller, FieldErrors, UseFormRegister } from 'react-hook-form'
+import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
-import { TokenOptions } from '.'
 import { classNames, getEndpoint } from '../lib/lib'
-import { MercoaSession, useMercoaSession } from './Mercoa'
+import { MercoaSession, TokenOptions, useMercoaSession } from './index'
 
 export interface MercoaButtonProps extends HTMLAttributes<HTMLButtonElement> {
   isEmphasized: boolean
@@ -621,6 +622,7 @@ export function MercoaCombobox({
   multiple,
   freeText,
   displaySelectedAs,
+  readOnly,
 }: {
   onChange: (val: any) => any
   options: { value: any; disabled: boolean; color?: string }[]
@@ -636,6 +638,7 @@ export function MercoaCombobox({
   multiple?: boolean
   freeText?: boolean
   displaySelectedAs?: 'input' | 'pill'
+  readOnly?: boolean
 }) {
   const [query, setQuery] = useState('')
   const [selectedValue, setSelectedValue] = useState(value)
@@ -760,9 +763,11 @@ export function MercoaCombobox({
                     }}
                   />
                 </div>
-                <div className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none">
-                  <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
-                </div>
+                {!readOnly && (
+                  <div className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none">
+                    <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
+                  </div>
+                )}
               </>
             )
           }}
@@ -850,6 +855,7 @@ export function MercoaCombobox({
 
   return multiple ? (
     <Combobox
+      disabled={readOnly}
       as="div"
       value={selectedValue}
       onChange={(value: any) => {
@@ -863,6 +869,7 @@ export function MercoaCombobox({
     </Combobox>
   ) : (
     <Combobox
+      disabled={readOnly}
       as="div"
       value={selectedValue}
       onChange={(value: any) => {
@@ -1097,8 +1104,9 @@ export function MercoaInput({
   max,
   step,
   noBorder,
+  inputMask,
 }: {
-  type?: 'text' | 'password' | 'email' | 'number' | 'date'
+  type?: 'text' | 'password' | 'email' | 'number' | 'date' | 'currency'
   label?: string
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void
   onBlur?: (e: FocusEvent<HTMLInputElement>) => void
@@ -1124,6 +1132,7 @@ export function MercoaInput({
   max?: string | number
   step?: number
   noBorder?: boolean
+  inputMask?: string
 }) {
   const useWidth = (target: any) => {
     const [width, setWidth] = useState<number>(0)
@@ -1166,12 +1175,16 @@ export function MercoaInput({
   if (register && name) {
     props = {
       ...props,
-      ...register(name),
+      ...register(name, {
+        setValueAs: (value?: string) => (value?.trim ? value.trim() : value),
+      }),
     }
   }
 
-  const input =
-    type === 'date' && control && name ? (
+  let input = <input {...props} />
+
+  if (type === 'date' && control && name) {
+    input = (
       <Controller
         control={control}
         name={name}
@@ -1189,9 +1202,47 @@ export function MercoaInput({
           />
         )}
       />
-    ) : (
-      <input {...props} />
     )
+  } else if (inputMask && control && name) {
+    input = (
+      <Controller
+        control={control}
+        name={name}
+        render={({ field: { onChange, name, value } }) => (
+          <PatternFormat
+            format={inputMask}
+            allowEmptyFormatting
+            mask="_"
+            name={name}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            className={inClassName}
+          />
+        )}
+      />
+    )
+  } else if (type === 'currency' && control && name) {
+    input = (
+      <Controller
+        control={control}
+        name={name}
+        render={({ field: { onChange, name, value } }) => (
+          <NumericFormat
+            decimalScale={2}
+            fixedDecimalScale
+            name={name}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            className={inClassName}
+          />
+        )}
+      />
+    )
+  } else if (type === 'currency') {
+    type = 'text'
+  }
 
   const inputContainer = (
     <div className="mercoa-relative">
@@ -1243,4 +1294,13 @@ export function CountPill({ count, selected }: { count: number; selected: boolea
       {count}
     </span>
   )
+}
+
+function formatCurrencyAmount(value: string) {
+  console.log(value)
+  try {
+    return Big(value).toFixed(2)
+  } catch (e) {
+    return value
+  }
 }

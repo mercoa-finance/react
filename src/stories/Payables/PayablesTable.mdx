@@ -1,8 +1,8 @@
 import { Canvas, Meta, Source, Markdown } from '@storybook/blocks'
 
-import * as InboxTable from './InboxTable.stories'
+import * as PayablesTable from './PayablesTable.stories'
 
-<Meta of={InboxTable} />
+<Meta of={PayablesTable} />
 
 # Invoice Table
 
@@ -10,18 +10,18 @@ The invoice table renders a list of invoices that can be selected or actioned on
 
 ## Default Table Layout
 
-<Canvas of={InboxTable.Default} />
+<Canvas of={PayablesTable.Default} />
 
 ## Custom Columns
 
-<Canvas of={InboxTable.Column} />
+<Canvas of={PayablesTable.Column} />
 
 ## Custom Design
 
-<Canvas of={InboxTable.Custom} />
+<Canvas of={PayablesTable.Custom} />
 
-```jsx
-  <InvoiceTable {...params}>
+`````jsx
+  <PayablesTable {...params}>
   ({ invoices, hasNext, getNext, hasPrevious, getPrevious, setResultsPerPage }) => {
       return (
         <div style={{ maxWidth: '800px', margin: 'auto' }}>
@@ -55,4 +55,8 @@ The invoice table renders a list of invoices that can be selected or actioned on
       )
     }
   </InvoiceTable>
-```
+```import { Canvas, Markdown, Meta, Source } from '@storybook/blocks'
+
+````import { Canvas, Markdown, Meta, Source } from '@storybook/blocks'
+
+`````

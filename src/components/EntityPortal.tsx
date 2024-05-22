@@ -21,16 +21,17 @@ import {
   EntityInboxEmail,
   EntityOnboardingForm,
   EntityUserNotificationTable,
+  LoadingSpinner,
   MercoaButton,
+  PayableDetails,
+  Payables,
   PaymentMethods,
   Representatives,
   TokenOptions,
   VerifyOwnersButton,
   entityDetailsForMercoaPaymentsCompleted,
-} from '.'
-import { InvoiceInbox } from './Inbox'
-import { InvoiceDetails } from './InvoiceDetails'
-import { LoadingSpinner, useMercoaSession } from './index'
+  useMercoaSession,
+} from './index'
 
 export function EntityPortal({ token }: { token: string }) {
   const mercoaSession = useMercoaSession()
@@ -280,7 +281,7 @@ export function EntityPortal({ token }: { token: string }) {
         </div>
       </div>
       <div className={screen === 'inbox' ? '' : 'mercoa-hidden'}>
-        <InvoiceInbox
+        <Payables
           statuses={tokenOptions?.invoice?.status}
           onSelectInvoice={(invoice) => {
             setInvoice(invoice)
@@ -341,7 +342,7 @@ export function EntityPortal({ token }: { token: string }) {
         </div>
       )}
       {screen === 'invoice' && (
-        <InvoiceDetails
+        <PayableDetails
           invoice={invoice}
           onRedirect={(invoice) => {
             if (!invoice) {

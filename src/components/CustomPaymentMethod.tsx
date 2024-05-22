@@ -1,12 +1,18 @@
 import { BuildingLibraryIcon } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
 import { ReactNode, useEffect, useState } from 'react'
-import ReactDatePicker from 'react-datepicker'
 import { usePlacesWidget } from 'react-google-autocomplete'
-import { Controller, useFieldArray, useForm } from 'react-hook-form'
-import InputMask from 'react-input-mask'
+import { Controller, UseFormRegister, useFieldArray, useForm } from 'react-hook-form'
 import { capitalize } from '../lib/lib'
-import { DefaultPaymentMethodIndicator, LoadingSpinnerIcon, PaymentMethodList, useMercoaSession } from './index'
+import {
+  DefaultPaymentMethodIndicator,
+  LoadingSpinnerIcon,
+  MercoaInput,
+  MercoaInputLabel,
+  PaymentMethodList,
+  inputClassName,
+  useMercoaSession,
+} from './index'
 
 export function CustomPaymentMethod({
   children,
@@ -211,7 +217,7 @@ export function AddCustomPaymentMethodForm({
   control,
   schema,
 }: {
-  register: Function
+  register: UseFormRegister<any>
   control: any
   schema: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
@@ -241,19 +247,14 @@ export function AddCustomPaymentMethodForm({
     <div className="mercoa-mt-2">
       {fields?.map((field, index) => (
         <div className="mercoa-mt-1" key={field.id}>
-          <label
-            htmlFor={`~cpm~~.${index}.value`}
-            className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700"
-          >
-            {schemaFields?.[index]?.displayName || schemaFields?.[index]?.name}
-          </label>
+          <MercoaInputLabel label={schemaFields?.[index]?.displayName || schemaFields?.[index]?.name || ''} />
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Text && (
             <input
               {...register(`~cpm~~.${index}.value`)}
               type="text"
               required={schemaFields?.[index]?.optional ? false : true}
               placeholder={`${schemaFields?.[index]?.displayName || schemaFields?.[index]?.name}`}
-              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+              className={inputClassName({})}
             />
           )}
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Url && (
@@ -269,7 +270,7 @@ export function AddCustomPaymentMethodForm({
               type="text"
               required={schemaFields?.[index]?.optional ? false : true}
               placeholder={`https://example.com`}
-              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+              className={inputClassName({})}
             />
           )}
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Email && (
@@ -286,24 +287,24 @@ export function AddCustomPaymentMethodForm({
                 type="text"
                 required={schemaFields?.[index]?.optional ? false : true}
                 placeholder={`name@example.com`}
-                className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+                className={inputClassName({})}
               />
             </>
           )}
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Number && (
-            <input
-              {...register(`~cpm~~.${index}.value`)}
+            <MercoaInput
               type="number"
               required={schemaFields?.[index]?.optional ? false : true}
               placeholder={`${schemaFields?.[index]?.displayName || schemaFields?.[index]?.name}`}
-              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+              name={`~cpm~~.${index}.value`}
+              register={register}
             />
           )}
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Select && (
             <select
               {...register(`~cpm~~.${index}.value`)}
               required={schemaFields?.[index]?.optional ? false : true}
-              className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+              className={inputClassName({})}
             >
               {schemaFields?.[index]?.options?.map((option, index) => (
                 <option key={index} value={option}>
@@ -313,43 +314,20 @@ export function AddCustomPaymentMethodForm({
             </select>
           )}
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Date && (
-            <Controller
+            <MercoaInput
               control={control}
               name={`~cpm~~.${index}.value`}
-              render={({ field }) => (
-                <ReactDatePicker
-                  className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
-                  onChange={(date) => field.onChange(date)}
-                  selected={field.value}
-                  required={schemaFields?.[index]?.optional ? false : true}
-                  placeholderText="Select a date"
-                />
-              )}
+              type="date"
+              placeholder="Select a date"
+              required={schemaFields?.[index]?.optional ? false : true}
             />
           )}
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Phone && (
-            <Controller
+            <MercoaInput
               control={control}
               name={`~cpm~~.${index}.value`}
-              render={({ field }) => (
-                <InputMask
-                  mask="(999) 999-9999"
-                  value={field.value}
-                  onChange={field.onChange}
-                  required={schemaFields?.[index]?.optional ? false : true}
-                >
-                  {
-                    ((inputProps: any) => (
-                      <input
-                        {...inputProps}
-                        type="text"
-                        className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
-                        placeholder="(777) 777-7777"
-                      />
-                    )) as any
-                  }
-                </InputMask>
-              )}
+              inputMask={'(###) ###-####'}
+              required={schemaFields?.[index]?.optional ? false : true}
             />
           )}
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Address && (

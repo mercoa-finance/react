@@ -2,14 +2,67 @@ import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
-import { useEffect, useState } from 'react'
-import { TableOrderHeader, useMercoaSession } from '.'
+import Papa from 'papaparse'
+import { ReactElement, useEffect, useState } from 'react'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { DebouncedSearch, LoadingSpinner, Skeleton, StatCard, TableNavigation } from './generics'
+import {
+  DebouncedSearch,
+  InvoiceMetrics,
+  InvoiceTableColumn,
+  LoadingSpinner,
+  Skeleton,
+  StatusDropdown,
+  StatusTabs,
+  TableNavigation,
+  TableOrderHeader,
+  useMercoaSession,
+} from './index'
 
 dayjs.extend(utc)
 
-function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invoice: Mercoa.InvoiceResponse) => any }) {
+function ReceivablesTable({
+  statuses,
+  search,
+  metadata,
+  startDate,
+  endDate,
+  onSelectInvoice,
+  columns,
+  children,
+}: {
+  statuses: Mercoa.InvoiceStatus[]
+  search?: string
+  metadata?: Mercoa.InvoiceMetadataFilter[]
+  startDate?: Date
+  endDate?: Date
+  onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
+  columns?: InvoiceTableColumn[]
+  children?: ({
+    dataLoaded,
+    invoices,
+    hasNext,
+    getNext,
+    hasPrevious,
+    getPrevious,
+    resultsPerPage,
+    setResultsPerPage,
+    selectedInvoiceStatuses,
+    setSelectedInvoiceStatues,
+    downloadCSV,
+  }: {
+    dataLoaded: boolean
+    invoices: Mercoa.InvoiceResponse[]
+    hasNext: boolean
+    getNext: () => void
+    hasPrevious: boolean
+    getPrevious: () => void
+    resultsPerPage: number
+    setResultsPerPage: (value: number) => void
+    selectedInvoiceStatuses: Mercoa.InvoiceStatus[]
+    setSelectedInvoiceStatues: (statuses: Mercoa.InvoiceStatus[]) => void
+    downloadCSV: () => void
+  }) => ReactElement | null
+}) {
   const mercoaSession = useMercoaSession()
 
   const [invoices, setInvoices] = useState<Array<Mercoa.InvoiceResponse>>()
@@ -18,31 +71,117 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
   const [hasMore, setHasMore] = useState<boolean>(true)
   const [count, setCount] = useState<number>(0)
   const [dataLoaded, setDataLoaded] = useState<boolean>(false)
+  const [currentStatuses, setCurrentStatuses] = useState<Mercoa.InvoiceStatus[]>(statuses)
+  const [selectedInvoices, setSelectedInvoices] = useState<Array<Mercoa.InvoiceResponse>>([])
 
   const [startingAfter, setStartingAfter] = useState<string[]>([])
   const [resultsPerPage, setResultsPerPage] = useState<number>(20)
   const [page, setPage] = useState<number>(1)
 
+  async function downloadAsCSV() {
+    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    let startingAfter = ''
+    let invoices: Mercoa.InvoiceResponse[] = []
+
+    getNextPage()
+
+    async function getNextPage() {
+      if (!mercoaSession.token || !mercoaSession.entity?.id) return
+
+      const filter = {
+        status: currentStatuses,
+        search,
+        startDate,
+        endDate,
+        orderBy,
+        orderDirection,
+        limit: 100,
+        startingAfter,
+        excludePayables: true,
+        metadata: metadata as any,
+      }
+
+      const response = await mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, filter)
+
+      if (response) {
+        if (response.data.length > 0) {
+          startingAfter = response.data[response.data.length - 1].id
+          invoices = [...invoices, ...response.data]
+          await getNextPage()
+        } else {
+          const csv = Papa.unparse(
+            invoices.map((invoice) => {
+              return {
+                'Invoice ID': invoice.id,
+                'Invoice Number': invoice.invoiceNumber,
+                Status: invoice.status,
+                Amount: invoice.amount,
+                Currency: invoice.currency,
+                Note: invoice.noteToSelf,
+
+                'Payer ID': invoice.payer?.id,
+                'Payer Email': invoice.payer?.email,
+                'Payer Name': invoice.payer?.name,
+                'Vendor ID': invoice.vendor?.id,
+                'Vendor Email': invoice.vendor?.email,
+                'Vendor Name': invoice.vendor?.name,
+
+                Metadata: JSON.stringify(invoice.metadata),
+
+                'Due Date': dayjs(invoice.dueDate),
+                'Deduction Date': dayjs(invoice.deductionDate),
+                'Processed At': dayjs(invoice.processedAt),
+                'Created At': dayjs(invoice.createdAt),
+                'Updated At': dayjs(invoice.updatedAt),
+              }
+            }),
+          )
+          const blob = new Blob([csv], { type: 'text/csv' })
+          const url = window.URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.setAttribute('mercoa-hidden', '')
+          a.setAttribute('href', url)
+          a.setAttribute('download', `mercoa-invoice-export-${dayjs().format('YYYY-MM-DD')}.csv`)
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+        }
+      }
+    }
+  }
+
+  useEffect(() => {
+    setCurrentStatuses(statuses)
+  }, [statuses])
+
+  // Load invoices
   useEffect(() => {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
     let isCurrent = true
-    mercoaSession.client?.entity.invoice
-      .find(mercoaSession.entity.id, {
-        search,
-        orderBy,
-        orderDirection,
-        limit: resultsPerPage,
-        startingAfter: startingAfter[startingAfter.length - 1],
-        excludePayables: true,
-      })
-      .then((resp) => {
-        if (resp && isCurrent) {
-          setHasMore(resp.hasMore)
-          setCount(resp.count)
-          setInvoices(resp.data)
-          setDataLoaded(true)
-        }
-      })
+    setSelectedInvoices([])
+    setDataLoaded(false)
+
+    const filter = {
+      status: currentStatuses,
+      search,
+      startDate,
+      endDate,
+      orderBy,
+      orderDirection,
+      limit: resultsPerPage,
+      startingAfter: startingAfter[startingAfter.length - 1],
+      excludePayables: true,
+      metadata: metadata as any,
+    }
+
+    mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, filter).then((resp) => {
+      if (resp && isCurrent) {
+        setHasMore(resp.hasMore)
+        setCount(resp.count)
+        setInvoices(resp.data)
+        setDataLoaded(true)
+      }
+    })
     return () => {
       isCurrent = false
     }
@@ -50,12 +189,56 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
     mercoaSession.token,
     mercoaSession.entity,
     mercoaSession.refreshId,
+    currentStatuses,
     search,
+    startDate,
+    endDate,
+    metadata,
     orderBy,
     orderDirection,
     startingAfter,
     resultsPerPage,
   ])
+
+  // Reset pagination on search
+  useEffect(() => {
+    setPage(1)
+    setStartingAfter([])
+  }, [search])
+
+  // Refresh when selected statuses changes
+  useEffect(() => {
+    if (statuses.some((status) => currentStatuses.indexOf(status) < 0)) {
+      setCurrentStatuses(statuses)
+      setDataLoaded(false)
+      setStartingAfter([])
+      setPage(1)
+      setCount(0)
+    }
+  }, [statuses, startDate, endDate])
+
+  if (children) {
+    return children({
+      dataLoaded,
+      invoices: invoices || [],
+      hasNext: hasMore,
+      getNext: () => {
+        if (!invoices) return
+        setPage(page + 1)
+        setStartingAfter([...startingAfter, invoices[invoices.length - 1].id])
+      },
+      hasPrevious: page !== 1,
+      getPrevious: () => {
+        setPage(Math.max(1, page - 1))
+        setStartingAfter(startingAfter.slice(0, startingAfter.length - 1))
+      },
+      resultsPerPage,
+      setResultsPerPage,
+      selectedInvoiceStatuses: currentStatuses,
+      setSelectedInvoiceStatues: setCurrentStatuses,
+      downloadCSV: downloadAsCSV,
+    })
+  }
 
   if (!dataLoaded) {
     return (
@@ -144,7 +327,7 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
                     key={invoice.id}
                     className="mercoa-cursor-pointer  hover:mercoa-bg-gray-100"
                     onClick={() => {
-                      if (onClick) onClick(invoice)
+                      if (onSelectInvoice) onSelectInvoice(invoice)
                     }}
                   >
                     <td className="mercoa-whitespace-nowrap mercoa-py-3 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-3">
@@ -186,64 +369,44 @@ function ReceivablesTable({ search, onClick }: { search: string; onClick?: (invo
   )
 }
 
-export function Receivables({ onSelectInvoice }: { onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any }) {
-  const mercoaSession = useMercoaSession()
+export function Receivables({
+  statuses,
+  onSelectInvoice,
+  statusSelectionStyle,
+}: {
+  statuses?: Array<Mercoa.InvoiceStatus>
+  onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
+  statusSelectionStyle?: 'tabs' | 'dropdown'
+}) {
+  const [selectedStatuses, setSelectedStatuses] = useState<Mercoa.InvoiceStatus[]>([Mercoa.InvoiceStatus.Draft])
   const [search, setSearch] = useState<string>('')
 
-  const [invoiceMetrics, setInvoiceMetrics] = useState<Mercoa.InvoiceMetricsResponse[]>([])
-
-  function sumTotalCount(metrics: Mercoa.InvoiceMetricsResponse[]) {
-    return metrics.reduce((acc, e) => {
-      acc += e.totalCount
-      return acc
-    }, 0)
-  }
-
-  function formatCurrencyMetrics(metrics: Mercoa.InvoiceMetricsResponse[], key: 'totalAmount' | 'averageAmount') {
-    if (!metrics || metrics.length < 1) return accounting.formatMoney(0, currencyCodeToSymbol('USD'))
-    if (metrics.length < 2)
-      return accounting.formatMoney(metrics[0][key] ?? 0 ?? '', currencyCodeToSymbol(metrics[0].currency))
-    return (
-      <div>
-        {metrics.map((metric) => (
-          <p key={metric.currency}>
-            <span>{accounting.formatMoney(metric[key] ?? 0 ?? '', currencyCodeToSymbol(metric.currency))}</span>
-            <span className="mercoa-text-gray-500 mercoa-text-xs"> {metric.currency}</span>
-          </p>
-        ))}
-      </div>
-    )
-  }
-
-  useEffect(() => {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
-
-    mercoaSession.client?.entity.invoice
-      .metrics(mercoaSession.entity.id, {
-        search,
-        excludePayables: true,
-      })
-      .then((metrics) => {
-        setInvoiceMetrics(metrics)
-      })
-  }, [search, mercoaSession.client, mercoaSession.entity, mercoaSession.refreshId])
+  const defaultStatuses = statuses ?? [
+    Mercoa.InvoiceStatus.Draft,
+    Mercoa.InvoiceStatus.Approved,
+    Mercoa.InvoiceStatus.Pending,
+    Mercoa.InvoiceStatus.Paid,
+  ]
 
   return (
     <div className="mercoa-mt-8">
       <div className="mercoa-grid mercoa-items-center mercoa-grid-cols-3">
-        <div className="mercoa-hidden md:mercoa-block md:mercoa-col-span-2" />
-        <div className="mercoa-mt-2 mercoa-flex mercoa-w-full mercoa-rounded-md mercoa-shadow-sm mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1">
-          <DebouncedSearch placeholder="Search Payers" onSettle={setSearch} />
+        <div className="mercoa-hidden md:mercoa-block md:mercoa-col-span-2">
+          {statusSelectionStyle == 'dropdown' && (
+            <div className="mercoa-grid mercoa-grid-cols-2">
+              <StatusDropdown availableStatuses={defaultStatuses} onStatusChange={setSelectedStatuses} multiple />
+            </div>
+          )}
+        </div>
+        <div className="mercoa-flex mercoa-w-full mercoa-rounded-md mercoa-shadow-sm mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1">
+          <DebouncedSearch placeholder="Search Customers, Invoice #, Amount" onSettle={setSearch} />
         </div>
       </div>
-
-      <div className="mercoa-grid mercoa-grid-cols-3 mercoa-space-x-3 mercoa-mt-2">
-        <StatCard size="sm" title={`Total  Invoices`} value={sumTotalCount(invoiceMetrics) ?? 0} />
-        <StatCard size="sm" title={`Total Amount`} value={formatCurrencyMetrics(invoiceMetrics, 'totalAmount')} />
-        <StatCard size="sm" title={`Average Amount`} value={formatCurrencyMetrics(invoiceMetrics, 'averageAmount')} />
-      </div>
-
-      <ReceivablesTable search={search} onClick={onSelectInvoice} />
+      {statusSelectionStyle != 'dropdown' && (
+        <StatusTabs statuses={defaultStatuses} search={search} onStatusChange={setSelectedStatuses} excludePayables />
+      )}
+      <InvoiceMetrics statuses={selectedStatuses} search={search} excludePayables />
+      <ReceivablesTable statuses={selectedStatuses} search={search} onSelectInvoice={onSelectInvoice} />
     </div>
   )
 }

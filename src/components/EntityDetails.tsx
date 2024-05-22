@@ -3,8 +3,7 @@ import { Mercoa } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { ReactElement, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
-import { useMercoaSession } from './Mercoa'
-import { TableNavigation, Tooltip } from './index'
+import { TableNavigation, Tooltip, useMercoaSession } from './index'
 
 export function EntityDetails({ children }: { children: Function }) {
   const mercoaSession = useMercoaSession()

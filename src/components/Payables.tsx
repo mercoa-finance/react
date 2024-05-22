@@ -7,28 +7,53 @@ import Papa from 'papaparse'
 import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import { toast } from 'react-toastify'
-import { currencyCodeToSymbol } from '../lib/currency'
-import { classNames } from '../lib/lib'
-import { isWeekday } from '../lib/scheduling'
 import {
   CountPill,
-  DebouncedSearch,
-  MercoaButton,
   MercoaCombobox,
   MercoaContext,
-  Skeleton,
-  StatCard,
   TableNavigation,
   TableOrderHeader,
   Tooltip,
   useMercoaSession,
-} from './index'
+} from '.'
+import { currencyCodeToSymbol } from '../lib/currency'
+import { classNames } from '../lib/lib'
+import { isWeekday } from '../lib/scheduling'
+import { DebouncedSearch, MercoaButton, Skeleton, StatCard } from './index'
 
-function invoiceStatusToName(name: Mercoa.InvoiceStatus, approvalPolicies?: Mercoa.ApprovalPolicyResponse[]) {
+function invoiceStatusToName(
+  name: Mercoa.InvoiceStatus,
+  approvalPolicies?: Mercoa.ApprovalPolicyResponse[],
+  excludePayables?: boolean,
+) {
+  if (excludePayables) {
+    return invoiceStatusToReceivableName(name, approvalPolicies)
+  } else {
+    return invoiceStatusToPayableName(name, approvalPolicies)
+  }
+}
+
+function invoiceStatusToPayableName(name: Mercoa.InvoiceStatus, approvalPolicies?: Mercoa.ApprovalPolicyResponse[]) {
   const out = {
     DRAFT: 'Inbox',
     NEW: 'Ready for Review',
     APPROVED: approvalPolicies?.length ? 'Approved' : 'Ready for Payment',
+    SCHEDULED: 'Payment Scheduled',
+    PENDING: 'Payment Processing',
+    FAILED: 'Payment Failed',
+    PAID: 'Paid',
+    CANCELED: 'Canceled',
+    REFUSED: 'Rejected',
+    ARCHIVED: 'Archived',
+  }
+  return out[name]
+}
+
+function invoiceStatusToReceivableName(name: Mercoa.InvoiceStatus, approvalPolicies?: Mercoa.ApprovalPolicyResponse[]) {
+  const out = {
+    DRAFT: 'Draft',
+    NEW: 'Ready for Review',
+    APPROVED: 'Awaiting Payment',
     SCHEDULED: 'Payment Scheduled',
     PENDING: 'Payment Processing',
     FAILED: 'Payment Failed',
@@ -46,12 +71,16 @@ async function getMetrics({
   mercoaSession,
   setMetrics,
   returnByDate,
+  excludeReceivables,
+  excludePayables,
 }: {
   statuses: Mercoa.InvoiceStatus[]
   search?: string
   mercoaSession: MercoaContext
   setMetrics: (metrics: { [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse }) => void
   returnByDate?: Mercoa.InvoiceMetricsPerDateGroupBy
+  excludeReceivables: boolean
+  excludePayables: boolean
 }) {
   const results = (
     await Promise.all(
@@ -61,7 +90,8 @@ async function getMetrics({
           search,
           status,
           returnByDate,
-          excludeReceivables: true,
+          excludeReceivables,
+          excludePayables,
         })
         return [status as string, metrics?.[0] ?? { totalAmount: 0, totalInvoices: 0, totalCount: 0, currency: 'USD' }]
       }),
@@ -209,7 +239,7 @@ export type InvoiceTableColumn = {
   format?: (value: string | number | Date, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
 }
 
-export function InvoiceTable({
+export function PayablesTable({
   statuses,
   search,
   metadata,
@@ -1178,11 +1208,15 @@ export function InvoiceMetrics({
   statuses,
   search,
   returnByDate,
+  excludePayables,
+  excludeReceivables,
   children,
 }: {
   statuses: Mercoa.InvoiceStatus[]
   search?: string
   returnByDate?: Mercoa.InvoiceMetricsPerDateGroupBy
+  excludePayables?: boolean
+  excludeReceivables?: boolean
   children?: ({
     metrics,
   }: {
@@ -1245,6 +1279,8 @@ export function InvoiceMetrics({
       mercoaSession,
       setMetrics: setInvoiceMetrics,
       returnByDate,
+      excludePayables: excludePayables ?? false,
+      excludeReceivables: excludeReceivables ?? false,
     })
   }, [search, statuses, mercoaSession.token, mercoaSession.entity, mercoaSession.refreshId])
 
@@ -1274,11 +1310,15 @@ export function StatusTabs({
   selectedStatus,
   search,
   onStatusChange,
+  excludePayables,
+  excludeReceivables,
 }: {
   statuses?: Array<Mercoa.InvoiceStatus>
   selectedStatus?: Mercoa.InvoiceStatus
   search?: string
   onStatusChange?: (status: Mercoa.InvoiceStatus[]) => any
+  excludePayables?: boolean
+  excludeReceivables?: boolean
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1333,6 +1373,8 @@ export function StatusTabs({
       search,
       mercoaSession,
       setMetrics: setInvoiceMetrics,
+      excludePayables: excludePayables ?? false,
+      excludeReceivables: excludeReceivables ?? false,
     })
   }, [search, tabs, mercoaSession.client, mercoaSession.entity, mercoaSession.refreshId])
 
@@ -1355,7 +1397,7 @@ export function StatusTabs({
         >
           {tabs.map((status) => (
             <option key={status} value={status}>
-              {invoiceStatusToName(status, approvalPolicies)}
+              {invoiceStatusToName(status, approvalPolicies, excludePayables)}
             </option>
           ))}
         </select>
@@ -1377,9 +1419,13 @@ export function StatusTabs({
                   ? 'mercoa-text-mercoa-primary sm:mercoa-border-mercoa-primary'
                   : 'mercoa-border-transparent mercoa-text-gray-500 hover:mercoa-border-gray-300 hover:mercoa-text-gray-700'
               } mercoa-mr-2 mercoa-whitespace-nowrap mercoa-py-4 mercoa-px-1 mercoa-text-sm mercoa-font-medium sm:mercoa-mr-0 sm:mercoa-border-b-2`}
-              aria-current={invoiceStatusToName(status, approvalPolicies) == selectedStatuses[0] ? 'page' : undefined}
+              aria-current={
+                invoiceStatusToName(status, approvalPolicies, excludePayables) == selectedStatuses[0]
+                  ? 'page'
+                  : undefined
+              }
             >
-              {invoiceStatusToName(status, approvalPolicies)}{' '}
+              {invoiceStatusToName(status, approvalPolicies, excludePayables)}{' '}
               <CountPill count={invoiceMetrics?.[status]?.totalCount ?? 0} selected={status == selectedStatuses[0]} />
             </a>
           ))}
@@ -1465,7 +1511,7 @@ export function StatusDropdown({
   )
 }
 
-export function InvoiceInbox({
+export function Payables({
   statuses,
   onSelectInvoice,
   statusSelectionStyle,
@@ -1492,10 +1538,10 @@ export function InvoiceInbox({
         </div>
       </div>
       {statusSelectionStyle != 'dropdown' && (
-        <StatusTabs statuses={statuses} search={search} onStatusChange={setSelectedStatuses} />
+        <StatusTabs statuses={statuses} search={search} onStatusChange={setSelectedStatuses} excludeReceivables />
       )}
-      <InvoiceMetrics statuses={selectedStatuses} search={search} />
-      <InvoiceTable statuses={selectedStatuses} search={search} onSelectInvoice={onSelectInvoice} />
+      <InvoiceMetrics statuses={selectedStatuses} search={search} excludeReceivables />
+      <PayablesTable statuses={selectedStatuses} search={search} onSelectInvoice={onSelectInvoice} />
     </div>
   )
 }

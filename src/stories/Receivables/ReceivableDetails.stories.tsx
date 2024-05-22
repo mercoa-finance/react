@@ -1,11 +1,11 @@
-import { Mercoa } from '@mercoa/javascript'
 import type { Meta, StoryObj } from '@storybook/react'
-import { InvoiceMetrics } from '../../components/Inbox'
+import { ReceivableDetails } from '../../components'
+import { inv_new_ready } from '../mockData'
 
 // More on how to set up stories at: https://storybook.js.org/docs/writing-stories#default-export
 const meta = {
-  title: 'Invoice Inbox/Metrics',
-  component: InvoiceMetrics,
+  title: 'Receivables/Invoice Form',
+  component: ReceivableDetails,
   parameters: {
     // Optional parameter to center the component in the Canvas. More info: https://storybook.js.org/docs/configure/story-layout
     layout: 'centered',
@@ -16,7 +16,7 @@ const meta = {
   argTypes: {},
   // Use `fn` to spy on the onClick arg, which will appear in the actions panel once invoked: https://storybook.js.org/docs/essentials/actions#action-args
   args: {},
-} satisfies Meta<typeof InvoiceMetrics>
+} satisfies Meta<typeof ReceivableDetails>
 
 export default meta
 type Story = StoryObj<typeof meta>
@@ -24,23 +24,30 @@ type Story = StoryObj<typeof meta>
 // More on writing stories with args: https://storybook.js.org/docs/writing-stories/args
 
 export const Default: Story = {
-  name: 'Single Status',
+  name: 'Existing Invoice',
   args: {
-    statuses: [Mercoa.InvoiceStatus.New],
+    invoice: inv_new_ready,
+    onRedirect: (invoice) => {
+      console.log(invoice)
+    },
   },
 }
 
-export const Multi: Story = {
-  name: 'Multiple Statuses',
+export const ID: Story = {
+  name: 'Existing Invoice By ID',
   args: {
-    statuses: Object.values(Mercoa.InvoiceStatus),
+    invoiceId: inv_new_ready.id,
+    onRedirect: (invoice) => {
+      console.log(invoice)
+    },
   },
 }
 
-export const Search: Story = {
-  name: 'Vendor Search Filter',
+export const New: Story = {
+  name: 'Create New Invoice',
   args: {
-    statuses: Object.values(Mercoa.InvoiceStatus),
-    search: 'Umb',
+    onRedirect: (invoice) => {
+      console.log(invoice)
+    },
   },
 }
