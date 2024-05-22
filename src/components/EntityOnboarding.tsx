@@ -22,7 +22,10 @@ import { Control, Controller, UseFormRegister, useForm } from 'react-hook-form'
 import InputMask from 'react-input-mask'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
+import { capitalize } from '../lib/lib'
+import { postalCodeRegex, usaStates } from '../lib/locations'
 import {
+  AddDialog,
   DisbursementMethods,
   LoadingSpinner,
   LoadingSpinnerIcon,
@@ -33,10 +36,7 @@ import {
   Tooltip,
   inputClassName,
   useMercoaSession,
-} from '.'
-import { capitalize } from '../lib/lib'
-import { postalCodeRegex, usaStates } from '../lib/locations'
-import { AddDialog } from './index'
+} from './index'
 
 export type OnboardingFormData = {
   email: string

@@ -27,9 +27,8 @@ import {
 import DatePicker from 'react-datepicker'
 import { Control, Controller, FieldErrors, UseFormRegister } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { TokenOptions } from '.'
 import { classNames, getEndpoint } from '../lib/lib'
-import { MercoaSession, useMercoaSession } from './Mercoa'
+import { MercoaSession, TokenOptions, useMercoaSession } from './index'
 
 export interface MercoaButtonProps extends HTMLAttributes<HTMLButtonElement> {
   isEmphasized: boolean

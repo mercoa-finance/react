@@ -1,5 +1,5 @@
 import { Mercoa } from '@mercoa/javascript'
-import { RestRequest, rest } from 'msw'
+import { DefaultBodyType, HttpResponse, StrictRequest, http } from 'msw'
 const sign = require('jwt-encode')
 
 const basePath = 'https://api.mercoa.com'
@@ -861,107 +861,101 @@ export const invoices: Mercoa.InvoiceResponse[] = [
 
 export const mswHandlers = [
   // Org
-  rest.get(`${basePath}/organization`, (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json(organization))
+  http.get(`${basePath}/organization`, () => {
+    return HttpResponse.json(organization)
   }),
   // Entity
-  rest.get(`${basePath}/entity`, (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json(findEntity))
+  http.get(`${basePath}/entity`, () => {
+    return HttpResponse.json(findEntity)
   }),
-  rest.get(`${basePath}/entity/${payerEntity.id}`, (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json(payerEntity))
+  http.get(`${basePath}/entity/${payerEntity.id}`, () => {
+    return HttpResponse.json(payerEntity)
   }),
-  rest.get(`${basePath}/entity/${vendorEntities[0].id}`, (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json(vendorEntities[0]))
+  http.get(`${basePath}/entity/${vendorEntities[0].id}`, () => {
+    return HttpResponse.json(vendorEntities[0])
   }),
-  rest.get(`${basePath}/entity/${payerEntity.id}/invoices`, (req, res, ctx) => {
-    const filteredInvoices = getFilteredInvoices({ req })
-    return res(
-      ctx.status(200),
-      ctx.json({
-        hasMore: false,
-        count: filteredInvoices.length,
-        data: filteredInvoices,
-      }),
-    )
+  http.get(`${basePath}/entity/${payerEntity.id}/invoices`, ({ request }) => {
+    const filteredInvoices = getFilteredInvoices({ request })
+    return HttpResponse.json({
+      hasMore: false,
+      count: filteredInvoices.length,
+      data: filteredInvoices,
+    })
   }),
-  rest.post(`${basePath}/entity/${payerEntity.id}/token`, (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json(mockToken))
+  http.post(`${basePath}/entity/${payerEntity.id}/token`, () => {
+    return HttpResponse.json(mockToken)
   }),
-  rest.get(`${basePath}/entity/${payerEntity.id}/approval-policies`, (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json([approvalPolicy]))
+  http.get(`${basePath}/entity/${payerEntity.id}/approval-policies`, () => {
+    return HttpResponse.json([approvalPolicy])
   }),
-  rest.get(`${basePath}/entity/${payerEntity.id}/invoice-metrics`, (req, res, ctx) => {
-    const filteredInvoice = getFilteredInvoices({ req })?.[0]
+  http.get(`${basePath}/entity/${payerEntity.id}/invoice-metrics`, ({ request }) => {
+    const filteredInvoice = getFilteredInvoices({ request })?.[0]
     if (filteredInvoice?.id) {
-      return res(
-        ctx.status(200),
-        ctx.json([
-          {
-            averageAmount: filteredInvoice.amount ?? 0,
-            totalAmount: filteredInvoice.amount ?? 0,
-            totalCount: 1,
-            currency: 'USD',
-          },
-        ]),
-      )
+      return HttpResponse.json([
+        {
+          averageAmount: filteredInvoice.amount ?? 0,
+          totalAmount: filteredInvoice.amount ?? 0,
+          totalCount: 1,
+          currency: 'USD',
+        },
+      ])
     } else {
-      return res(ctx.status(200), ctx.json([]))
+      return HttpResponse.json([])
     }
   }),
-  rest.get(`${basePath}/entity/${payerEntity.id}/paymentMethods`, (req, res, ctx) => {
-    if (req.url.searchParams.get('type') === Mercoa.PaymentMethodType.BankAccount) {
-      return res(ctx.status(200), ctx.json([payerBankAccount, payerBankAccount2]))
-    } else if (req.url.searchParams.get('type') === Mercoa.PaymentMethodType.Card) {
-      return res(ctx.status(200), ctx.json([payerCreditCard, payerCreditCard2]))
-    } else if (req.url.searchParams.get('type') === Mercoa.PaymentMethodType.Check) {
-      return res(ctx.status(200), ctx.json([vendorCheck, vendorCheck2]))
+  http.get(`${basePath}/entity/${payerEntity.id}/paymentMethods`, ({ request }) => {
+    const url = new URL(request.url)
+    if (url.searchParams.get('type') === Mercoa.PaymentMethodType.BankAccount) {
+      return HttpResponse.json([payerBankAccount, payerBankAccount2])
+    } else if (url.searchParams.get('type') === Mercoa.PaymentMethodType.Card) {
+      return HttpResponse.json([payerCreditCard, payerCreditCard2])
+    } else if (url.searchParams.get('type') === Mercoa.PaymentMethodType.Check) {
+      return HttpResponse.json([vendorCheck, vendorCheck2])
     }
   }),
-  rest.get(`${basePath}/entity/${payerEntity.id}/counterparties/payees`, (req, res, ctx) => {
-    const search = req.url.searchParams.get('name')?.toLocaleLowerCase()
+  http.get(`${basePath}/entity/${payerEntity.id}/counterparties/payees`, ({ request }) => {
+    const url = new URL(request.url)
+    const search = url.searchParams.get('name')?.toLocaleLowerCase()
     const filteredVendors = vendorEntities.filter((entity) => {
       if (search && !entity?.name.toLocaleLowerCase().startsWith(search)) return false
       return true
     })
-    return res(
-      ctx.status(200),
-      ctx.json({
-        hasMore: false,
-        count: filteredVendors.length,
-        data: filteredVendors.map((entity, index) => ({
-          ...entity,
-          paymentMethods: [vendorPaymentMethods[index]],
-          invoiceMetrics: {
-            totalAmount: 1000,
-            totalInvoices: 10,
-            statuses: [],
-          },
-          counterpartyType: [Mercoa.CounterpartyNetworkType.Entity],
-        })),
-      }),
-    )
+    return HttpResponse.json({
+      hasMore: false,
+      count: filteredVendors.length,
+      data: filteredVendors.map((entity, index) => ({
+        ...entity,
+        paymentMethods: [vendorPaymentMethods[index]],
+        invoiceMetrics: {
+          totalAmount: 1000,
+          totalInvoices: 10,
+          statuses: [],
+        },
+        counterpartyType: [Mercoa.CounterpartyNetworkType.Entity],
+      })),
+    })
   }),
-  rest.get(`${basePath}/entity/${payerEntity.id}/users`, (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json([user]))
+  http.get(`${basePath}/entity/${payerEntity.id}/users`, () => {
+    return HttpResponse.json([user])
   }),
-  rest.get(`${basePath}/entity/${payerEntity.id}/user/${user.id}`, (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json(user))
+  http.get(`${basePath}/entity/${payerEntity.id}/user/${user.id}`, () => {
+    return HttpResponse.json(user)
   }),
   // Invoice
-  rest.get(`${basePath}/invoice/*`, (req, res, ctx) => {
-    return res(ctx.status(200), ctx.json(inv_new_ready))
+  http.get(`${basePath}/invoice/*`, () => {
+    return HttpResponse.json(inv_new_ready)
   }),
 ]
 
 // helper functions
 
 // Invoice Filters
-function getFilteredInvoices({ req }: { req: RestRequest<any> }) {
-  console.log(JSON.stringify(req.url))
-  const statues = req.url.searchParams.getAll('status')
-  const search = req.url.searchParams.get('search')
-  const metadata = req.url.toString().includes('metadata')
+function getFilteredInvoices({ request }: { request: StrictRequest<DefaultBodyType> }) {
+  console.log(JSON.stringify(request.url))
+  const url = new URL(request.url)
+  const statues = url.searchParams.getAll('status')
+  const search = url.searchParams.get('search')
+  const metadata = request.url.toString().includes('metadata')
   const filteredInvoices = invoices.filter((invoice) => {
     if (!statues.includes(invoice.status)) return false
     if (search && !invoice.vendor?.name.startsWith(search)) return false

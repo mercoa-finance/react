@@ -9,8 +9,7 @@ import { Moov, loadMoov } from '@moovio/moov-js'
 import { jwtDecode } from 'jwt-decode'
 import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { ToastContainer } from 'react-toastify'
-import { TokenOptions } from '.'
-import { EntityPortal } from './index'
+import { EntityPortal, TokenOptions } from './index'
 
 export interface MercoaContext {
   token?: string

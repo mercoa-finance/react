@@ -11,9 +11,7 @@ import { useEffect, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { MetadataSelection } from './InvoiceDetails'
-import { useMercoaSession } from './Mercoa'
-import { MercoaButton, MercoaCombobox, MercoaInput, inputClassName } from './generics'
+import { MercoaButton, MercoaCombobox, MercoaInput, MetadataSelection, inputClassName, useMercoaSession } from './index'
 
 const nestedBg = [
   'mercoa-bg-white',

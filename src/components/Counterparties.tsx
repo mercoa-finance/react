@@ -203,6 +203,8 @@ export function CounterpartySearch({
     )
   }
 
+  console.log(selectedCounterparty)
+
   // Search for a counterparty
   return (
     <Combobox as="div" value={selectedCounterparty} onChange={setSelection} nullable className="mercoa-w-full">
