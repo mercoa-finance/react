@@ -1,6 +1,7 @@
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
+  PencilSquareIcon,
   PlusIcon,
   RocketLaunchIcon,
   SparklesIcon,
@@ -11,7 +12,15 @@ import { useEffect, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { MercoaButton, MercoaCombobox, MercoaInput, MetadataSelection, inputClassName, useMercoaSession } from './index'
+import {
+  MercoaButton,
+  MercoaCombobox,
+  MercoaInput,
+  MetadataSelection,
+  Tooltip,
+  inputClassName,
+  useMercoaSession,
+} from './index'
 
 const nestedBg = [
   'mercoa-bg-white',
@@ -38,6 +47,7 @@ export function ApprovalPolicies() {
   const [roles, setRoles] = useState<string[]>([])
   const [counterparties, setCounterparties] = useState<Mercoa.CounterpartyResponse[]>([])
   const [metadata, setMetadata] = useState<Mercoa.EntityMetadataResponse[]>([])
+  const [isEditing, setIsEditing] = useState(false)
 
   const { register, handleSubmit, watch, setValue, control, reset } = useForm({
     defaultValues: {
@@ -200,6 +210,7 @@ export function ApprovalPolicies() {
       toast('Approval Policies Saved', {
         type: 'success',
       })
+      setIsEditing(false)
       mercoaSession.refresh()
     } else {
       console.error(toasts)
@@ -210,7 +221,19 @@ export function ApprovalPolicies() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={handleSubmit(onSubmit)} className="mercoa-relative mercoa-max-w-[820px]">
+      {!isEditing && (
+        <div className="mercoa-absolute mercoa-top-0 mercoa-right-0 mercoa-mt-2 mercoa-mr-2 ">
+          <Tooltip title="Edit Rules">
+            <PencilSquareIcon
+              className="mercoa-size-5 mercoa-text-gray-500 mercoa-cursor-pointer hover:mercoa-text-gray-700"
+              onClick={() => {
+                setIsEditing(true)
+              }}
+            />
+          </Tooltip>
+        </div>
+      )}
       <Level
         level={0}
         fields={formPolicies}
@@ -226,10 +249,13 @@ export function ApprovalPolicies() {
         metadata={metadata}
         formPolicies={formPolicies}
         upstreamPolicyId="root"
+        isEditing={isEditing}
       />
-      <MercoaButton isEmphasized size="md" className="mercoa-mt-5">
-        Save Rules
-      </MercoaButton>
+      {isEditing && (
+        <MercoaButton isEmphasized size="md" className="mercoa-mt-5">
+          Save Rules
+        </MercoaButton>
+      )}
     </form>
   )
 }
@@ -249,6 +275,7 @@ function Level({
   counterparties,
   metadata,
   formPolicies,
+  isEditing,
 }: {
   level: number
   upstreamPolicyId: string
@@ -264,14 +291,17 @@ function Level({
   counterparties: Mercoa.CounterpartyResponse[]
   metadata: Mercoa.EntityMetadataResponse[]
   formPolicies: Mercoa.ApprovalPolicyResponse[]
+  isEditing: boolean
 }) {
   const policies = fields.filter((e) => e.upstreamPolicyId === upstreamPolicyId)
   return (
     <ul role="list" className={`mercoa-space-y-6 mercoa-max-w-[800px] ${nestedBg[level]}`}>
       <li className={`mercoa-relative mercoa-flex mercoa-gap-x-4 ${upstreamPolicyId === 'root' ? '' : 'mercoa-mt-1'}`}>
-        <div className="-mercoa-bottom-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center">
-          <div className="mercoa-w-px mercoa-bg-gray-200" />
-        </div>
+        {(isEditing || policies.length > 0) && (
+          <div className="a -mercoa-bottom-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center">
+            <div className="mercoa-w-px mercoa-bg-gray-200" />
+          </div>
+        )}
         {upstreamPolicyId === 'root' && (
           <div
             className={`mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center ${nestedBg[level]}`}
@@ -290,11 +320,13 @@ function Level({
         if (policy.trigger.length === 0) return <></>
         return (
           <li key={index} className="mercoa-relative mercoa-flex mercoa-gap-x-4">
-            <div
-              className={`-mercoa-bottom-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center`}
-            >
-              <div className="mercoa-w-px mercoa-bg-gray-200" />
-            </div>
+            {isEditing && (
+              <div
+                className={`-mercoa-bottom-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center`}
+              >
+                <div className="mercoa-w-px mercoa-bg-gray-200" />
+              </div>
+            )}
             <div
               className={`mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center ${nestedBg[level]}`}
             >
@@ -307,14 +339,16 @@ function Level({
                 }`}
               >
                 <div className="mercoa-grid mercoa-grid-cols-4 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-md mercoa-relative mercoa-bg-white">
-                  <button
-                    className="mercoa-absolute mercoa-top-2 mercoa-right-2 mercoa-text-gray-400 hover:mercoa-text-gray-500"
-                    type="button"
-                    onClick={() => remove(fields.findIndex((e) => e.id == policy.id))}
-                  >
-                    <span className="mercoa-sr-only">Remove</span>
-                    <XMarkIcon className="mercoa-size-5" />
-                  </button>
+                  {isEditing && (
+                    <button
+                      className="mercoa-absolute mercoa-top-2 mercoa-right-2 mercoa-text-gray-400 hover:mercoa-text-gray-500"
+                      type="button"
+                      onClick={() => remove(fields.findIndex((e) => e.id == policy.id))}
+                    >
+                      <span className="mercoa-sr-only">Remove</span>
+                      <XMarkIcon className="mercoa-size-5" />
+                    </button>
+                  )}
 
                   <Trigger
                     control={control}
@@ -324,6 +358,7 @@ function Level({
                     counterparties={counterparties}
                     index={fields.findIndex((e) => e.id == policy.id)}
                     metadata={metadata}
+                    isEditing={isEditing}
                   />
                 </div>
                 <Rule
@@ -334,6 +369,7 @@ function Level({
                   roles={roles}
                   index={fields.findIndex((e) => e.id == policy.id)}
                   remove={() => remove(fields.findIndex((e) => e.id == policy.id))}
+                  isEditing={isEditing}
                 />
                 <div className="mercoa-ml-10">
                   <Level
@@ -351,6 +387,7 @@ function Level({
                     metadata={metadata}
                     formPolicies={formPolicies}
                     upstreamPolicyId={policy.id}
+                    isEditing={isEditing}
                   />
                 </div>
               </div>
@@ -359,26 +396,28 @@ function Level({
         )
       })}
 
-      <li className="mercoa-relative mercoa-flex mercoa-gap-x-4">
-        {upstreamPolicyId === 'root' && (
-          <div className="-mercoa-bottom-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center">
-            <div className="mercoa-w-px mercoa-bg-gray-200" />
+      {isEditing && (
+        <li className="mercoa-relative mercoa-flex mercoa-gap-x-4">
+          {upstreamPolicyId === 'root' && (
+            <div className="-mercoa-bottom-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center">
+              <div className="mercoa-w-px mercoa-bg-gray-200" />
+            </div>
+          )}
+          <div
+            className={`mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center ${nestedBg[level]}`}
+          >
+            <div className="mercoa-h-1.5 mercoa-w-1.5 mercoa-rounded-full mercoa-bg-gray-100 mercoa-ring-1 mercoa-ring-gray-300" />
           </div>
-        )}
-        <div
-          className={`mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center ${nestedBg[level]}`}
-        >
-          <div className="mercoa-h-1.5 mercoa-w-1.5 mercoa-rounded-full mercoa-bg-gray-100 mercoa-ring-1 mercoa-ring-gray-300" />
-        </div>
-        <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
-          <AddRule
-            id={upstreamPolicyId + '~' + policies.length}
-            upstreamPolicyId={upstreamPolicyId}
-            append={append}
-            trigger={[{ type: 'amount', amount: 100, currency: Mercoa.CurrencyCode.Usd }]}
-          />
-        </p>
-      </li>
+          <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
+            <AddRule
+              id={upstreamPolicyId + '~' + policies.length}
+              upstreamPolicyId={upstreamPolicyId}
+              append={append}
+              trigger={[{ type: 'amount', amount: 100, currency: Mercoa.CurrencyCode.Usd }]}
+            />
+          </p>
+        </li>
+      )}
 
       {upstreamPolicyId === 'root' && (
         <>
@@ -415,6 +454,7 @@ function Level({
                     index={fields.findIndex((e) => e.id == policy.id)}
                     noTrigger
                     remove={() => remove(fields.findIndex((e) => e.id == policy.id))}
+                    isEditing={isEditing}
                   />
                 </div>
               )
@@ -448,6 +488,7 @@ function Trigger({
   counterparties,
   index,
   metadata,
+  isEditing,
 }: {
   control: any
   watch: any
@@ -456,6 +497,7 @@ function Trigger({
   counterparties: Mercoa.CounterpartyResponse[]
   index: number
   metadata: Mercoa.EntityMetadataResponse[]
+  isEditing: boolean
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -482,6 +524,7 @@ function Trigger({
               {triggerIndex > 0 ? 'And' : 'If'}
             </span>
             <MercoaCombobox
+              readOnly={!isEditing}
               options={[
                 ...(previousTriggers.every((e) => e != 'amount')
                   ? [
@@ -580,6 +623,7 @@ function Trigger({
                   is one of
                 </span>
                 <MercoaCombobox
+                  readOnly={!isEditing}
                   className="mercoa-w-full"
                   options={counterparties?.map((e) => ({
                     disabled: false,
@@ -630,7 +674,7 @@ function Trigger({
                 />
               </>
             )}
-            {triggerIndex !== 0 && (
+            {triggerIndex !== 0 && isEditing && (
               <button
                 type="button"
                 onClick={() => remove(triggerIndex)}
@@ -643,33 +687,35 @@ function Trigger({
           </div>
         )
       })}
-      <div className="mercoa-col-span-4">
-        <MercoaButton
-          isEmphasized={false}
-          size="sm"
-          type="button"
-          className="mercoa-flex"
-          onClick={() => {
-            console.log({ triggerWatch })
-            if (triggerWatch.every((e: { type: string }) => e.type != 'amount')) {
-              append({
-                type: 'amount',
-                amount: 100,
-                currency: Mercoa.CurrencyCode.Usd,
-              })
-            } else if (triggerWatch.every((e: { type: string }) => e.type != 'vendor')) {
-              append({
-                type: 'vendor',
-                vendorIds: [],
-              })
-            } else {
-              append({})
-            }
-          }}
-        >
-          <PlusIcon className="mercoa-size-4 mercoa-mr-1" /> Add Condition
-        </MercoaButton>
-      </div>
+      {isEditing && (
+        <div className="mercoa-col-span-4">
+          <MercoaButton
+            isEmphasized={false}
+            size="sm"
+            type="button"
+            className="mercoa-flex"
+            onClick={() => {
+              console.log({ triggerWatch })
+              if (triggerWatch.every((e: { type: string }) => e.type != 'amount')) {
+                append({
+                  type: 'amount',
+                  amount: 100,
+                  currency: Mercoa.CurrencyCode.Usd,
+                })
+              } else if (triggerWatch.every((e: { type: string }) => e.type != 'vendor')) {
+                append({
+                  type: 'vendor',
+                  vendorIds: [],
+                })
+              } else {
+                append({})
+              }
+            }}
+          >
+            <PlusIcon className="mercoa-size-4 mercoa-mr-1" /> Add Condition
+          </MercoaButton>
+        </div>
+      )}
     </>
   )
 }
@@ -683,6 +729,7 @@ function Rule({
   index,
   remove,
   noTrigger,
+  isEditing,
 }: {
   watch: any
   register: any
@@ -692,6 +739,7 @@ function Rule({
   index: number
   remove: () => void
   noTrigger?: boolean
+  isEditing: boolean
 }) {
   const [firstRender, setFirstRender] = useState(true)
 
@@ -708,7 +756,7 @@ function Rule({
   return (
     <div className="mercoa-grid mercoa-grid-cols-1 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-md mercoa-relative mercoa-mt-5 mercoa-ml-10 mercoa-bg-white">
       <ArrowDownLeftIcon className="mercoa-w-7 mercoa-h-7 mercoa-absolute -mercoa-top-2 -mercoa-left-10" />
-      {noTrigger ? (
+      {noTrigger && isEditing ? (
         <button
           className="mercoa-absolute mercoa-top-2 mercoa-right-2 mercoa-text-gray-400 hover:mercoa-text-gray-500"
           type="button"
@@ -730,6 +778,7 @@ function Rule({
             min="1"
             type="number"
             className={`${inputClassName({})}`}
+            readOnly={!isEditing}
           />
         </div>
         <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2">
@@ -739,6 +788,7 @@ function Rule({
           <select
             {...register(`policies.${index}.rule.identifierList.type`, { required: true })}
             className={`${inputClassName({})}`}
+            readOnly={!isEditing}
           >
             <option value={'rolesList'}>roles</option>
             <option value={'userList'}>users</option>
@@ -749,6 +799,7 @@ function Rule({
       <div className="mercoa-mt-1">
         {ruleIdType === 'rolesList' ? (
           <MercoaCombobox
+            readOnly={!isEditing}
             options={roles.map((e) => ({
               disabled: false,
               value: e,
@@ -769,6 +820,7 @@ function Rule({
           />
         ) : (
           <MercoaCombobox
+            readOnly={!isEditing}
             options={users.map((e) => ({
               disabled: false,
               value: e,

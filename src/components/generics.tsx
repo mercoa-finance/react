@@ -622,6 +622,7 @@ export function MercoaCombobox({
   multiple,
   freeText,
   displaySelectedAs,
+  readOnly,
 }: {
   onChange: (val: any) => any
   options: { value: any; disabled: boolean; color?: string }[]
@@ -637,6 +638,7 @@ export function MercoaCombobox({
   multiple?: boolean
   freeText?: boolean
   displaySelectedAs?: 'input' | 'pill'
+  readOnly?: boolean
 }) {
   const [query, setQuery] = useState('')
   const [selectedValue, setSelectedValue] = useState(value)
@@ -761,9 +763,11 @@ export function MercoaCombobox({
                     }}
                   />
                 </div>
-                <div className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none">
-                  <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
-                </div>
+                {!readOnly && (
+                  <div className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none">
+                    <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
+                  </div>
+                )}
               </>
             )
           }}
@@ -851,6 +855,7 @@ export function MercoaCombobox({
 
   return multiple ? (
     <Combobox
+      disabled={readOnly}
       as="div"
       value={selectedValue}
       onChange={(value: any) => {
@@ -864,6 +869,7 @@ export function MercoaCombobox({
     </Combobox>
   ) : (
     <Combobox
+      disabled={readOnly}
       as="div"
       value={selectedValue}
       onChange={(value: any) => {
