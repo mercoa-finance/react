@@ -5,7 +5,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { useMercoaSession } from './Mercoa'
+import { useMercoaSession } from './index'
 dayjs.extend(relativeTime)
 
 export function InvoiceComments({ invoice }: { invoice?: Mercoa.InvoiceResponse }) {

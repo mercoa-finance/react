@@ -19,10 +19,10 @@ import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { capitalize, constructFullName } from '../lib/lib'
-import { CreditCardComponent } from './CreditCard'
 import {
   BankAccountComponent,
   CheckComponent,
+  CreditCardComponent,
   CustomPaymentMethodComponent,
   DebouncedSearch,
   EntityOnboardingForm,

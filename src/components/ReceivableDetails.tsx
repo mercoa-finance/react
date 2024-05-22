@@ -456,9 +456,9 @@ export function ReceivableDetails({
                     <MercoaInput
                       name={`lineItems.${index}.unitPrice`}
                       errors={errors}
-                      register={register}
+                      control={control}
                       placeholder="Unit Price"
-                      type="number"
+                      type="currency"
                       leadingIcon={
                         <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
                       }
@@ -469,9 +469,13 @@ export function ReceivableDetails({
                     <MercoaInput
                       name={`lineItems.${index}.amount`}
                       errors={errors}
-                      register={register}
+                      control={control}
                       placeholder="Description"
                       readOnly
+                      type="currency"
+                      leadingIcon={
+                        <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
+                      }
                     />
                   </td>
                   <td>
@@ -514,10 +518,10 @@ export function ReceivableDetails({
           <MercoaInput
             name="amount"
             label="Invoice Total Amount"
-            type="number"
+            type="currency"
             readOnly
             errors={errors}
-            register={register}
+            control={control}
             leadingIcon={
               <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
             }

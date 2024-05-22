@@ -20,7 +20,7 @@ import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import Draggable from 'react-draggable'
 import Dropzone from 'react-dropzone'
-import { FieldArrayWithId, FieldErrors, UseFormRegister, useFieldArray, useForm } from 'react-hook-form'
+import { Control, FieldArrayWithId, FieldErrors, UseFormRegister, useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
@@ -1075,10 +1075,10 @@ export function EditPayableForm({
 
         {/*  INVOICE AMOUNT */}
         <MercoaInput
-          register={register}
+          control={control}
           name="amount"
           label="Amount"
-          type="text"
+          type="currency"
           className="sm:mercoa-col-span-1"
           leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>}
           trailingIcon={
@@ -1169,6 +1169,7 @@ export function EditPayableForm({
                 append={append}
                 remove={remove}
                 register={register}
+                control={control}
                 currency={currency as Mercoa.CurrencyCode}
                 watch={watch}
                 hasDocument={!!uploadedImage || !!invoice?.hasDocuments}
@@ -2662,6 +2663,7 @@ function LineItems({
   append,
   remove,
   register,
+  control,
   currency,
   watch,
   setValue,
@@ -2676,6 +2678,7 @@ function LineItems({
   append: Function
   remove: Function
   register: UseFormRegister<any>
+  control: Control<any>
   currency: Mercoa.CurrencyCode
   watch: Function
   setValue: Function
@@ -2771,6 +2774,7 @@ function LineItems({
                 index={index}
                 remove={remove}
                 register={register}
+                control={control}
                 key={field.id}
                 watch={watch}
                 setValue={setValue}
@@ -2846,6 +2850,7 @@ function LineItemRow({
   index,
   remove,
   register,
+  control,
   watch,
   setValue,
   entityMetadata,
@@ -2857,6 +2862,7 @@ function LineItemRow({
   index: number
   remove: Function
   register: UseFormRegister<any>
+  control: Control<any>
   watch: Function
   setValue: Function
   entityMetadata: Mercoa.EntityMetadataResponse[]
@@ -2872,6 +2878,8 @@ function LineItemRow({
           leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>}
           name={`lineItems.${index}.amount`}
           placeholder="0"
+          control={control}
+          type="currency"
           register={register}
           noBorder
         />

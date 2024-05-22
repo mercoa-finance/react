@@ -7,22 +7,19 @@ import Papa from 'papaparse'
 import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import { toast } from 'react-toastify'
-import { currencyCodeToSymbol } from '../lib/currency'
-import { classNames } from '../lib/lib'
-import { isWeekday } from '../lib/scheduling'
 import {
   CountPill,
-  DebouncedSearch,
-  MercoaButton,
   MercoaCombobox,
   MercoaContext,
-  Skeleton,
-  StatCard,
   TableNavigation,
   TableOrderHeader,
   Tooltip,
   useMercoaSession,
-} from './index'
+} from '.'
+import { currencyCodeToSymbol } from '../lib/currency'
+import { classNames } from '../lib/lib'
+import { isWeekday } from '../lib/scheduling'
+import { DebouncedSearch, MercoaButton, Skeleton, StatCard } from './index'
 
 function invoiceStatusToName(
   name: Mercoa.InvoiceStatus,

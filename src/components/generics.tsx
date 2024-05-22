@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
+import Big from 'big.js'
 import { jwtDecode } from 'jwt-decode'
 import debounce from 'lodash/debounce'
 import {
@@ -26,6 +27,7 @@ import {
 } from 'react'
 import DatePicker from 'react-datepicker'
 import { Control, Controller, FieldErrors, UseFormRegister } from 'react-hook-form'
+import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import { classNames, getEndpoint } from '../lib/lib'
 import { MercoaSession, TokenOptions, useMercoaSession } from './index'
@@ -1096,8 +1098,9 @@ export function MercoaInput({
   max,
   step,
   noBorder,
+  inputMask,
 }: {
-  type?: 'text' | 'password' | 'email' | 'number' | 'date'
+  type?: 'text' | 'password' | 'email' | 'number' | 'date' | 'currency'
   label?: string
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void
   onBlur?: (e: FocusEvent<HTMLInputElement>) => void
@@ -1123,6 +1126,7 @@ export function MercoaInput({
   max?: string | number
   step?: number
   noBorder?: boolean
+  inputMask?: string
 }) {
   const useWidth = (target: any) => {
     const [width, setWidth] = useState<number>(0)
@@ -1165,12 +1169,16 @@ export function MercoaInput({
   if (register && name) {
     props = {
       ...props,
-      ...register(name),
+      ...register(name, {
+        setValueAs: (value?: string) => (value?.trim ? value.trim() : value),
+      }),
     }
   }
 
-  const input =
-    type === 'date' && control && name ? (
+  let input = <input {...props} />
+
+  if (type === 'date' && control && name) {
+    input = (
       <Controller
         control={control}
         name={name}
@@ -1188,9 +1196,47 @@ export function MercoaInput({
           />
         )}
       />
-    ) : (
-      <input {...props} />
     )
+  } else if (inputMask && control && name) {
+    input = (
+      <Controller
+        control={control}
+        name={name}
+        render={({ field: { onChange, name, value } }) => (
+          <PatternFormat
+            format={inputMask}
+            allowEmptyFormatting
+            mask="_"
+            name={name}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            className={inClassName}
+          />
+        )}
+      />
+    )
+  } else if (type === 'currency' && control && name) {
+    input = (
+      <Controller
+        control={control}
+        name={name}
+        render={({ field: { onChange, name, value } }) => (
+          <NumericFormat
+            decimalScale={2}
+            fixedDecimalScale
+            name={name}
+            value={value}
+            onChange={onChange}
+            placeholder={placeholder}
+            className={inClassName}
+          />
+        )}
+      />
+    )
+  } else if (type === 'currency') {
+    type = 'text'
+  }
 
   const inputContainer = (
     <div className="mercoa-relative">
@@ -1242,4 +1288,13 @@ export function CountPill({ count, selected }: { count: number; selected: boolea
       {count}
     </span>
   )
+}
+
+function formatCurrencyAmount(value: string) {
+  console.log(value)
+  try {
+    return Big(value).toFixed(2)
+  } catch (e) {
+    return value
+  }
 }

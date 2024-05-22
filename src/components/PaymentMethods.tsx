@@ -1,8 +1,5 @@
 import { Mercoa } from '@mercoa/javascript'
-import { BankAccounts } from './BankAccounts'
-import { CreditCards } from './CreditCard'
-import { CustomPaymentMethod } from './CustomPaymentMethod'
-import { useMercoaSession } from './Mercoa'
+import { BankAccounts, CreditCards, CustomPaymentMethod, useMercoaSession } from './index'
 
 export function PaymentMethods() {
   const mercoaSession = useMercoaSession()

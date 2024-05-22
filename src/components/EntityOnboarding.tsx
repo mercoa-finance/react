@@ -19,7 +19,7 @@ import dayjs from 'dayjs'
 import { Fragment, useEffect, useState } from 'react'
 import { usePlacesWidget } from 'react-google-autocomplete'
 import { Control, Controller, UseFormRegister, useForm } from 'react-hook-form'
-import InputMask from 'react-input-mask'
+import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
@@ -360,19 +360,17 @@ export function SSNBlock({
               )
             } else {
               return (
-                <InputMask
-                  mask="999-99-9999"
+                <PatternFormat
+                  format={'###-##-####'}
+                  allowEmptyFormatting
+                  mask="_"
                   value={field.value}
                   onChange={field.onChange}
                   readOnly={readOnly}
                   required={required}
-                >
-                  {
-                    ((inputProps: any) => (
-                      <input {...inputProps} type="text" placeholder="123-45-6789" className={inputClassName({})} />
-                    )) as any
-                  }
-                </InputMask>
+                  placeholder="123-45-6789"
+                  className={inputClassName({})}
+                />
               )
             }
           }}
@@ -431,33 +429,15 @@ export function PhoneBlock({
   required?: boolean
 }) {
   return (
-    <div>
-      <MercoaInputLabel label="Phone" name="phoneNumber" />
-      <div className="mercoa-mt-1">
-        <Controller
-          control={control}
-          name="phoneNumber"
-          render={({ field }) => (
-            <InputMask
-              mask="(999) 999-9999"
-              value={field.value}
-              onChange={field.onChange}
-              readOnly={readOnly}
-              required={required}
-            >
-              {
-                ((inputProps: any) => (
-                  <input {...inputProps} type="text" className={inputClassName({})} placeholder="(777) 777-7777" />
-                )) as any
-              }
-            </InputMask>
-          )}
-        />
-      </div>
-      {errors.phoneNumber?.message && (
-        <p className="mercoa-text-sm mercoa-text-red-500 mercoa-text-left">{errors.phoneNumber?.message.toString()}</p>
-      )}
-    </div>
+    <MercoaInput
+      label="Phone"
+      control={control}
+      name="phoneNumber"
+      errors={errors}
+      readOnly={readOnly}
+      required={required}
+      inputMask={'(###) ###-####'}
+    />
   )
 }
 
@@ -642,19 +622,17 @@ export function EINBlock({
               )
             } else {
               return (
-                <InputMask
-                  mask="99-9999999"
+                <PatternFormat
+                  format={'##-#######'}
+                  allowEmptyFormatting
+                  mask="_"
                   value={field.value}
                   onChange={field.onChange}
                   readOnly={readOnly}
                   required={required}
-                >
-                  {
-                    ((inputProps: any) => (
-                      <input {...inputProps} type="text" className={inputClassName({})} placeholder="12-3456789" />
-                    )) as any
-                  }
-                </InputMask>
+                  placeholder="12-3456789"
+                  className={inputClassName({})}
+                />
               )
             }
           }}
