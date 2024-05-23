@@ -1,7 +1,6 @@
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  PencilSquareIcon,
   PlusIcon,
   RocketLaunchIcon,
   SparklesIcon,
@@ -12,15 +11,7 @@ import { useEffect, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../lib/currency'
-import {
-  MercoaButton,
-  MercoaCombobox,
-  MercoaInput,
-  MetadataSelection,
-  Tooltip,
-  inputClassName,
-  useMercoaSession,
-} from './index'
+import { MercoaButton, MercoaCombobox, MercoaInput, MetadataSelection, inputClassName, useMercoaSession } from './index'
 
 const nestedBg = [
   'mercoa-bg-white',
@@ -221,19 +212,7 @@ export function ApprovalPolicies() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="mercoa-relative mercoa-max-w-[820px]">
-      {!isEditing && (
-        <div className="mercoa-absolute mercoa-top-0 mercoa-right-0 mercoa-mt-2 mercoa-mr-2 ">
-          <Tooltip title="Edit Rules">
-            <PencilSquareIcon
-              className="mercoa-size-5 mercoa-text-gray-500 mercoa-cursor-pointer hover:mercoa-text-gray-700"
-              onClick={() => {
-                setIsEditing(true)
-              }}
-            />
-          </Tooltip>
-        </div>
-      )}
+    <form onSubmit={handleSubmit(onSubmit)}>
       <Level
         level={0}
         fields={formPolicies}
@@ -251,9 +230,23 @@ export function ApprovalPolicies() {
         upstreamPolicyId="root"
         isEditing={isEditing}
       />
-      {isEditing && (
+      {isEditing ? (
         <MercoaButton isEmphasized size="md" className="mercoa-mt-5">
           Save Rules
+        </MercoaButton>
+      ) : (
+        <MercoaButton
+          isEmphasized={false}
+          size="md"
+          className="mercoa-mt-5"
+          type="button"
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setIsEditing(true)
+          }}
+        >
+          Edit Rules
         </MercoaButton>
       )}
     </form>
