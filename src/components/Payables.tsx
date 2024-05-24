@@ -1106,7 +1106,14 @@ export function PayablesTable({
   )
 }
 
-export function InvoiceStatusPill({ invoice }: { invoice: Mercoa.InvoiceResponse }) {
+export function InvoiceStatusPill({
+  invoice,
+  type,
+}: {
+  invoice: Mercoa.InvoiceResponse
+  type?: 'payable' | 'receivable'
+}) {
+  const counterparty = type === 'receivable' ? invoice.payer : invoice.vendor
   let backgroundColor = 'mercoa-bg-gray-100'
   let textColor = 'mercoa-text-black'
   let message = ''
@@ -1114,9 +1121,8 @@ export function InvoiceStatusPill({ invoice }: { invoice: Mercoa.InvoiceResponse
   if (invoice.failureType === Mercoa.InvoiceFailureType.InsufficientFunds) {
     failureReason = ' - Insufficient Funds'
   }
-
   if (invoice.status === Mercoa.InvoiceStatus.Draft) {
-    if (!invoice.vendor || !invoice.amount || !invoice.dueDate) {
+    if (!counterparty || !invoice.amount || !invoice.dueDate) {
       backgroundColor = 'mercoa-bg-yellow-100'
       textColor = 'mercoa-text-black'
       message = 'Draft Incomplete'
@@ -1126,7 +1132,7 @@ export function InvoiceStatusPill({ invoice }: { invoice: Mercoa.InvoiceResponse
       message = 'Draft Ready'
     }
   } else if (invoice.status === Mercoa.InvoiceStatus.New) {
-    if (!invoice.paymentSourceId || !invoice.vendor || !invoice.amount || !invoice.dueDate) {
+    if (!invoice.paymentSourceId || !counterparty || !invoice.amount || !invoice.dueDate) {
       backgroundColor = 'mercoa-bg-yellow-100'
       textColor = 'mercoa-text-gray-800'
       message = 'Incomplete'
@@ -1139,7 +1145,7 @@ export function InvoiceStatusPill({ invoice }: { invoice: Mercoa.InvoiceResponse
     if (
       !invoice.paymentSourceId ||
       !invoice.paymentDestinationId ||
-      !invoice.vendor ||
+      !counterparty ||
       !invoice.amount ||
       !invoice.dueDate
     ) {
@@ -1149,13 +1155,13 @@ export function InvoiceStatusPill({ invoice }: { invoice: Mercoa.InvoiceResponse
     } else {
       backgroundColor = 'mercoa-bg-green-100'
       textColor = 'mercoa-text-green-800'
-      message = 'Ready for Payment'
+      message = type === 'receivable' ? 'Out for Payment' : 'Ready for Payment'
     }
   } else if (invoice.status === Mercoa.InvoiceStatus.Scheduled) {
     if (
       !invoice.paymentSourceId ||
       !invoice.paymentDestinationId ||
-      !invoice.vendor ||
+      !counterparty ||
       !invoice.amount ||
       !invoice.dueDate
     ) {

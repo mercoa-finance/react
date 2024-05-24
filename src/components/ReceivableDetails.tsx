@@ -1,4 +1,4 @@
-import { DocumentDuplicateIcon, EnvelopeIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import { DocumentDuplicateIcon, EnvelopeIcon, GlobeAltIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
 import dayjs from 'dayjs'
@@ -271,7 +271,18 @@ export function ReceivableDetails({
       // open in new window
       window.open(pdfLink.uri, '_blank')
     } else {
-      toast.error('There was an issue generating thePDF. Please refresh and try again.')
+      toast.error('There was an issue generating the Invoice PDF. Please refresh and try again.')
+    }
+  }
+
+  async function getPaymentLink() {
+    if (!invoiceLocal?.id) return
+    const pdfLink = await mercoaSession.client?.invoice.paymentLinks.getPayerLink(invoiceLocal.id)
+    if (pdfLink) {
+      // open in new window
+      window.open(pdfLink, '_blank')
+    } else {
+      toast.error('There was an issue creating the payment link. Please refresh and try again.')
     }
   }
 
@@ -348,7 +359,7 @@ export function ReceivableDetails({
       <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900">
         Edit Invoice {invoiceLocal && <InvoiceStatusPill invoice={invoiceLocal} />}
       </h2>
-      <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-max-w-xl mercoa-items-center">
+      <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-max-w-xl mercoa-items-center mercoa-mt-10">
         {/*  VENDOR SEARCH */}
         <div className="sm:mercoa-col-span-3">
           <label
@@ -646,13 +657,21 @@ export function ReceivableDetails({
                 <DocumentDuplicateIcon className="mercoa-size-5 md:mercoa-mr-2" /> Preview Invoice
               </MercoaButton>
               <MercoaButton
+                isEmphasized={false}
+                onClick={getPaymentLink}
+                type="button"
+                className="mercoa-flex mercoa-justify-center"
+              >
+                <GlobeAltIcon className="mercoa-size-5 md:mercoa-mr-2" /> Get Payment Link
+              </MercoaButton>
+              <MercoaButton
                 isEmphasized
                 onClick={sendEmail}
                 type="button"
                 className="mercoa-flex mercoa-justify-center"
               >
                 <EnvelopeIcon className="mercoa-size-5 md:mercoa-mr-2" />
-                Send Invoice
+                {invoiceLocal.status === 'DRAFT' ? 'Send Invoice' : 'Resend Invoice'}
               </MercoaButton>
             </>
           )}

@@ -426,7 +426,7 @@ function Level({
                 <span className="mercoa-font-medium mercoa-text-gray-900 ">
                   Always apply the following rule:
                   <div className="mercoa-mt-1">
-                    {formPolicies.filter((e) => e.trigger.length === 0).length === 0 && (
+                    {isEditing && formPolicies.filter((e) => e.trigger.length === 0).length === 0 && (
                       <AddRule upstreamPolicyId="root" append={append} trigger={[]} id="fallback" />
                     )}
                   </div>
