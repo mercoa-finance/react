@@ -222,20 +222,10 @@ export function EntityUsersTable({
   const mercoaSession = useMercoaSession()
 
   useEffect(() => {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    mercoaSession.client?.entity.user.getAll(mercoaSession.entity.id).then((resp) => {
-      if (resp) {
-        setUsers(resp)
-        const roles = new Set<string>()
-        resp.forEach((user) => {
-          user.roles.forEach((role) => {
-            roles.add(role)
-          })
-        })
-        setRoles(Array.from(roles))
-      }
-    })
-  }, [mercoaSession.entity?.id, mercoaSession.refreshId, mercoaSession.token])
+    if (!mercoaSession.users) return
+    setUsers(mercoaSession.users)
+    setRoles([...new Set(mercoaSession.users.map((user) => user.roles).flat())])
+  }, [mercoaSession.users])
 
   function EditUser({ user }: { user: Mercoa.EntityUserResponse }) {
     const { register, handleSubmit, setValue, watch } = useForm({

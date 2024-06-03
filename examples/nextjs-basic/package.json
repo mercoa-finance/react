@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@mercoa/javascript": "^0.3.33",
-    "@mercoa/react": "^0.0.36",
+    "@mercoa/react": "^0.0.37-rc4",
     "next": "14.0.4",
     "react": "^18",
     "react-dom": "^18"

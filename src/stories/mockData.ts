@@ -14,151 +14,73 @@ const organization: Mercoa.OrganizationResponse = {
   paymentMethods: {
     payerPayments: [
       {
-        available: false,
         type: 'bankAccount',
         name: 'Bank Account',
         active: true,
-        markup: {
-          type: 'flat',
-          amount: 0,
-        },
-        description: 'ACH',
       },
       {
-        available: false,
         type: 'card',
         name: 'Card',
         active: true,
-        markup: {
-          type: 'flat',
-          amount: 0,
-        },
-        description: 'Credit and Debit Card. Coming soon.',
       },
       {
-        available: false,
         type: 'bnpl',
         name: 'BNPL',
         active: true,
-        markup: {
-          type: 'flat',
-          amount: 0,
-        },
-        description: 'Buy Now Pay Later. Coming soon.',
       },
       {
-        available: false,
         type: 'offPlatform',
         name: 'Off-Platform',
         active: true,
-        markup: {
-          type: 'flat',
-          amount: 0,
-        },
-        description: 'Paid outside of Mercoa',
       },
       {
-        available: false,
         type: 'custom',
         name: 'cpms_0968a2ec-f59e-49b4-b6b0-bfd46133ed7a',
         active: true,
-        markup: {
-          type: 'flat',
-          amount: 0,
-        },
-        description: '',
       },
     ],
     backupDisbursements: [
       {
-        available: false,
         type: 'bankAccount',
         name: 'Bank Account',
         active: true,
-        markup: {
-          type: 'flat',
-          amount: 0,
-        },
-        description: 'ACH',
       },
       {
-        available: false,
         type: 'check',
         name: 'Check',
         active: true,
-        markup: {
-          type: 'flat',
-          amount: 0,
-        },
-        description: 'Paper check',
       },
       {
-        available: false,
         type: 'offPlatform',
         name: 'Off-Platform',
         active: true,
-        markup: {
-          type: 'flat',
-          amount: 0,
-        },
-        description: 'Paid outside of Mercoa',
       },
       {
-        available: false,
         type: 'custom',
         name: 'cpms_0968a2ec-f59e-49b4-b6b0-bfd46133ed7a',
         active: true,
-        markup: {
-          type: 'flat',
-          amount: 0,
-        },
-        description: '',
       },
     ],
     vendorDisbursements: [
       {
-        available: false,
         type: 'bankAccount',
         name: 'Bank Account',
         active: true,
-        markup: {
-          type: 'flat',
-          amount: 0,
-        },
-        description: 'ACH',
       },
       {
-        available: false,
         type: 'check',
         name: 'Check',
         active: true,
-        markup: {
-          type: 'flat',
-          amount: 0,
-        },
-        description: 'Paper check',
       },
       {
-        available: false,
         type: 'virtualCard',
         name: 'Virtual Card',
         active: true,
-        markup: {
-          type: 'flat',
-          amount: 0,
-        },
-        description: 'Virtual Discover Card. Coming soon.',
       },
       {
-        available: false,
         type: 'custom',
         name: 'cpms_0968a2ec-f59e-49b4-b6b0-bfd46133ed7a',
         active: true,
-        markup: {
-          type: 'flat',
-          amount: 0,
-        },
-        description: '',
       },
     ],
   },

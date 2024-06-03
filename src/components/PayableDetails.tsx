@@ -5,7 +5,10 @@ import {
   DocumentIcon,
   EnvelopeIcon,
   ExclamationCircleIcon,
+  EyeIcon,
+  EyeSlashIcon,
   PlusCircleIcon,
+  PlusIcon,
   XCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
@@ -18,7 +21,6 @@ import dayjs from 'dayjs'
 import minMax from 'dayjs/plugin/minMax'
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import DatePicker from 'react-datepicker'
-import Draggable from 'react-draggable'
 import Dropzone from 'react-dropzone'
 import { Control, FieldArrayWithId, FieldErrors, UseFormRegister, useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
@@ -145,11 +147,7 @@ export function PayableDetails({
   }, [contentHeightOffset])
 
   const document = (
-    <div
-      className={`mercoa-min-w-[300px] ${
-        uploadedFile || invoiceLocal?.hasDocuments ? 'mercoa-bg-gray-50' : ''
-      } mercoa-p-5 mercoa-rounded-md`}
-    >
+    <div className={`mercoa-min-w-[300px] mercoa-p-5 mercoa-rounded-md`}>
       {uploadedFile || invoiceLocal?.hasDocuments ? (
         <>
           <div className={`mercoa-text-center ${ocrProcessing ? 'mercoa-block mercoa-mb-5' : 'mercoa-hidden'}`}>
@@ -1159,29 +1157,23 @@ export function EditPayableForm({
 
         {/*  LINE ITEMS */}
         {mercoaSession.iframeOptions?.options?.invoice?.lineItems != Mercoa.LineItemAvailabilities.Disabled && (
-          <>
-            {/*  GRAY border  */}
-            <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
-
-            <div className="mercoa-col-span-full">
-              <LineItems
-                lineItems={fields}
-                append={append}
-                remove={remove}
-                register={register}
-                control={control}
-                currency={currency as Mercoa.CurrencyCode}
-                watch={watch}
-                hasDocument={!!uploadedImage || !!invoice?.hasDocuments}
-                paymentDestination={destinationPaymentMethods.find((pm) => pm.id === paymentDestinationId)}
-                paymentSource={sourcePaymentMethods.find((pm) => pm.id === paymentSourceId)}
-                setValue={setValue}
-                entityMetadata={entityMetadata}
-                width={width}
-                calculateTotalAmountFromLineItems={calculateTotalAmountFromLineItems}
-              />
-            </div>
-          </>
+          <div className="mercoa-col-span-full">
+            <LineItems
+              lineItems={fields}
+              append={append}
+              remove={remove}
+              register={register}
+              control={control}
+              currency={currency as Mercoa.CurrencyCode}
+              watch={watch}
+              hasDocument={!!uploadedImage || !!invoice?.hasDocuments}
+              paymentDestination={destinationPaymentMethods.find((pm) => pm.id === paymentDestinationId)}
+              paymentSource={sourcePaymentMethods.find((pm) => pm.id === paymentSourceId)}
+              setValue={setValue}
+              entityMetadata={entityMetadata}
+              calculateTotalAmountFromLineItems={calculateTotalAmountFromLineItems}
+            />
+          </div>
         )}
 
         {/*  METADATA  */}
@@ -2445,7 +2437,14 @@ export function MetadataSelection({
   )
 
   if (lineItem) {
-    return metadataSelection
+    return (
+      <div className="mercoa-col-span-1">
+        <h3 className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+          {schema.displayName}
+        </h3>
+        {metadataSelection}
+      </div>
+    )
   }
 
   return (
@@ -2671,7 +2670,6 @@ function LineItems({
   paymentDestination,
   paymentSource,
   hasDocument,
-  width,
   calculateTotalAmountFromLineItems,
 }: {
   lineItems?: FieldArrayWithId[]
@@ -2686,161 +2684,121 @@ function LineItems({
   paymentDestination?: Mercoa.PaymentMethodResponse
   paymentSource?: Mercoa.PaymentMethodResponse
   hasDocument: boolean
-  width: number
   calculateTotalAmountFromLineItems: (lineItems: Mercoa.InvoiceLineItemRequest[]) => void
 }) {
-  const mercoaSession = useMercoaSession()
   const lineItemsWatch = watch('lineItems')
+  const [isHidden, setIsHidden] = useState<boolean>(false)
   return (
-    <div className="mercoa-grid mercoa-grid-cols-1 mercoa-gap-x-6 mercoa-gap-y-4">
+    <div
+      className={`mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-border mercoa-border-gray-900/10 mercoa-px-2 mercoa-py-6 mercoa-rounded-md`}
+    >
       {/* HEADER */}
-      <div className="mercoa-flex mercoa-items-center mercoa-mt-5">
+      <div className="mercoa-flex mercoa-items-center mercoa-col-span-full">
         <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-700 mercoa-text-lg">
           Line Items
         </h2>
-        <button
-          onClick={() => {
-            append({
-              name: '',
-              description: `Line Item ${(lineItems?.length ?? 0) + 1}`,
-              amount: 0,
-              unitPrice: 0,
-              quantity: 1,
-            })
-          }}
-          type="button"
-          className="mercoa-ml-4 mercoa-flex-shrink-0 mercoa-col-span-1"
-        >
-          <Tooltip title="Add line item">
-            <PlusCircleIcon className="mercoa-size-5 mercoa-text-gray-400 hover:mercoa-opacity-75" aria-hidden="true" />
-          </Tooltip>
-          <span className="mercoa-sr-only">Add line item</span>
-        </button>
-      </div>
-      {/* ROWS */}
-      <div className="mercoa-overflow-x-hidden hover:mercoa-overflow-x-visible mercoa-pointer-events-none">
-        <table
-          className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300 mercoa-w-[600px] mercoa-relative mercoa-mb-6 mercoa-pointer-events-auto"
-          id="lineItemsTable"
-        >
-          <thead>
-            <tr className="mercoa-divide-x mercoa-divide-gray-200">
-              <th
-                scope="col"
-                className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
-              >
-                Amount
-              </th>
-              <th
-                scope="col"
-                className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-min-w-[300px]"
-              >
-                Description
-              </th>
-              {mercoaSession.organization?.metadataSchema
-                ?.filter((schema) => schema.lineItem)
-                .map((schema) => {
-                  return (
-                    <th
-                      scope="col"
-                      className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-min-w-[200px]"
-                      key={schema.key}
-                    >
-                      {schema.displayName}
-                    </th>
-                  )
-                })}
-              {/* <th
-                scope="col"
-                className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
-              >
-                Qty
-              </th>
-              <th
-                scope="col"
-                className="mercoa-px-4 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
-              >
-                Price
-              </th> */}
-              <th>
-                <span className="mercoa-sr-only">Remove</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="mercoa-divide-y mercoa-divide-gray-200 mercoa-bg-white">
-            {lineItems?.map((field, index) => (
-              <LineItemRow
-                currency={currency}
-                index={index}
-                remove={remove}
-                register={register}
-                control={control}
-                key={field.id}
-                watch={watch}
-                setValue={setValue}
-                entityMetadata={entityMetadata}
-                paymentDestination={paymentDestination}
-                paymentSource={paymentSource}
-                hasDocument={hasDocument}
+        {!isHidden && (
+          <MercoaButton
+            isEmphasized={false}
+            size="sm"
+            hideOutline
+            color="gray"
+            onClick={() => {
+              append({
+                name: '',
+                description: `Line Item ${(lineItems?.length ?? 0) + 1}`,
+                amount: 0,
+                unitPrice: 0,
+                quantity: 1,
+              })
+            }}
+            type="button"
+          >
+            <Tooltip title="Add line item">
+              <PlusCircleIcon
+                className="mercoa-size-5 mercoa-text-gray-400 hover:mercoa-opacity-75"
+                aria-hidden="true"
               />
-            ))}
-            {(lineItems?.length ?? 0) > 0 && (
-              <>
-                <tr>
-                  <td colSpan={3} className="mercoa-py-1 mercoa-bg-none">
-                    <MercoaButton
-                      size="sm"
-                      isEmphasized={false}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        e.preventDefault()
-                        calculateTotalAmountFromLineItems(lineItemsWatch)
-                      }}
-                      type="button"
-                    >
-                      Calculate total invoice amount
-                    </MercoaButton>
-                  </td>
-                </tr>
-                <tr />
-                {/* Add a row for the bottom border */}
-              </>
-            )}
-          </tbody>
-        </table>
-        <LineItemScrollBar width={width} />
+            </Tooltip>
+            <span className="mercoa-sr-only">Add line item</span>
+          </MercoaButton>
+        )}
+        <div className="mercoa-flex-1" />
+        <MercoaButton
+          isEmphasized={false}
+          size="sm"
+          hideOutline
+          type="button"
+          onClick={() => {
+            setIsHidden(!isHidden)
+          }}
+        >
+          {isHidden ? (
+            <span className="mercoa-flex mercoa-items-center">
+              Show Line Items <EyeSlashIcon className="mercoa-ml-2 mercoa-size-5" />
+            </span>
+          ) : (
+            <span className="mercoa-flex mercoa-items-center">
+              Hide Line Items <EyeIcon className="mercoa-ml-2 mercoa-size-5" />
+            </span>
+          )}
+        </MercoaButton>
       </div>
-    </div>
-  )
-}
 
-function LineItemScrollBar({ width }: { width: number }) {
-  const scrollBarWidth = (width / 730) * width
-  const table = document.getElementById('lineItemsTable')
-
-  function onDrag(data: { x: number }) {
-    if (table) {
-      const totalLength = width - scrollBarWidth
-      const percent = data.x / totalLength
-      const tableWidth = table?.offsetWidth ?? 0
-      const overflow = tableWidth - scrollBarWidth
-      table.style.left = `-${percent * overflow}px` // move the table left by the percent of the overflow, TODO: there is something wrong with this math but will fix later
-    }
-  }
-
-  if (width > 730) {
-    onDrag({ x: 0 })
-    return <></>
-  }
-
-  return (
-    <div className="mercoa-w-full mercoa-h-[10px] mercoa-bg-gray-100 mercoa-relative mercoa-pointer-events-auto">
-      <Draggable axis="x" bounds="parent" onDrag={(e, data) => onDrag(data)}>
-        <div
-          className="mercoa-h-[10px] mercoa-bg-gray-300 hover:mercoa-bg-gray-400 mercoa-absolute mercoa-top-0"
-          style={{ width: `${scrollBarWidth}px` }}
-        />
-      </Draggable>
+      {/* ROWS */}
+      {!isHidden &&
+        lineItems?.map((field, index) => (
+          <LineItemRow
+            numLineItems={lineItems?.length ?? 0}
+            currency={currency}
+            index={index}
+            remove={remove}
+            register={register}
+            control={control}
+            key={field.id}
+            watch={watch}
+            setValue={setValue}
+            entityMetadata={entityMetadata}
+            paymentDestination={paymentDestination}
+            paymentSource={paymentSource}
+            hasDocument={hasDocument}
+          />
+        ))}
+      {!isHidden && (lineItems?.length ?? 0) > 0 && (
+        <div className="mercoa-col-span-full mercoa-gap-2 mercoa-flex">
+          <MercoaButton
+            isEmphasized
+            size="sm"
+            onClick={() => {
+              append({
+                name: '',
+                description: `Line Item ${(lineItems?.length ?? 0) + 1}`,
+                amount: 0,
+                unitPrice: 0,
+                quantity: 1,
+              })
+            }}
+            type="button"
+          >
+            <div className="mercoa-flex mercoa-items-center">
+              Add Line Item
+              <PlusIcon className="mercoa-ml-1 mercoa-size-4" aria-hidden="true" />
+            </div>
+          </MercoaButton>
+          <MercoaButton
+            size="sm"
+            isEmphasized={false}
+            onClick={(e) => {
+              e.stopPropagation()
+              e.preventDefault()
+              calculateTotalAmountFromLineItems(lineItemsWatch)
+            }}
+            type="button"
+          >
+            Calculate total invoice amount
+          </MercoaButton>
+        </div>
+      )}
     </div>
   )
 }
@@ -2848,6 +2806,7 @@ function LineItemScrollBar({ width }: { width: number }) {
 function LineItemRow({
   currency,
   index,
+  numLineItems,
   remove,
   register,
   control,
@@ -2860,6 +2819,7 @@ function LineItemRow({
 }: {
   currency: Mercoa.CurrencyCode
   index: number
+  numLineItems: number
   remove: Function
   register: UseFormRegister<any>
   control: Control<any>
@@ -2871,22 +2831,44 @@ function LineItemRow({
   hasDocument: boolean
 }) {
   const mercoaSession = useMercoaSession()
+
   return (
-    <tr className="mercoa-divide-x mercoa-divide-gray-200">
-      <td className="mercoa-whitespace-nowrap mercoa-py-1 mercoa-pl-1 mercoa-pr-1 mercoa-text-sm mercoa-text-gray-500 sm:pr-0">
+    <>
+      <div className="mercoa-flex mercoa-col-span-full mercoa-items-start">
+        {/*  INVOICE NUMBER */}
         <MercoaInput
-          leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>}
-          name={`lineItems.${index}.amount`}
-          placeholder="0"
-          control={control}
-          type="currency"
+          name={`lineItems.${index}.description`}
+          placeholder="Description"
+          label="Description"
           register={register}
-          noBorder
+          type="text"
+          className="mercoa-flex-1"
         />
-      </td>
-      <td className="mercoa-whitespace-nowrap mercoa-p-1 mercoa-text-sm mercoa-text-gray-500">
-        <MercoaInput name={`lineItems.${index}.description`} placeholder="Description" register={register} noBorder />
-      </td>
+        {/*  INVOICE AMOUNT */}
+        <MercoaInput
+          control={control}
+          name={`lineItems.${index}.amount`}
+          label="Amount"
+          type="currency"
+          className="mercoa-max-w-[100px] mercoa-ml-2"
+          leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>}
+        />
+        {/*  Remove Button */}
+        <MercoaButton
+          isEmphasized={false}
+          size="sm"
+          hideOutline
+          type="button"
+          color="gray"
+          onClick={() => {
+            remove(index)
+          }}
+          className="mercoa-ml-1"
+        >
+          <XCircleIcon className="mercoa-size-5 hover:mercoa-opacity-75" />
+          <span className="mercoa-sr-only">Remove Line Item</span>
+        </MercoaButton>
+      </div>
       {mercoaSession.organization?.metadataSchema
         ?.filter((schema) => schema.lineItem)
         .map((schema) => {
@@ -2896,7 +2878,7 @@ function LineItemRow({
               ? watch(`lineItems.${index}.glAccountId`)
               : watch(`lineItems.${index}.metadata.${schema.key}`)
           return (
-            <td className="mercoa-whitespace-nowrap mercoa-text-sm mercoa-text-gray-500" key={schema.key}>
+            <div className="mercoa-whitespace-nowrap mercoa-text-sm mercoa-text-gray-500" key={schema.key}>
               <MetadataSelection
                 entityMetadata={entityMetadata.find((m) => m.key === schema.key)}
                 schema={schema}
@@ -2933,16 +2915,11 @@ function LineItemRow({
                 }}
                 lineItem
               />
-            </td>
+            </div>
           )
         })}
-      <td className="mercoa-whitespace-nowrap mercoa-py-1 mercoa-pl-1 mercoa-pr-1 mercoa-text-sm mercoa-text-gray-500 sm:pr-0">
-        <button type="button" onClick={() => remove(index)}>
-          <XMarkIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
-          <span className="mercoa-sr-only">Remove line item</span>
-        </button>
-      </td>
-    </tr>
+      {numLineItems - 1 != index && <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />}
+    </>
   )
 }
 

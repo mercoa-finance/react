@@ -7,9 +7,8 @@ import {
   MinusIcon,
   TrashIcon,
 } from '@heroicons/react/24/outline'
-import { Mercoa } from '@mercoa/javascript'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
-import Big from 'big.js'
 import { jwtDecode } from 'jwt-decode'
 import debounce from 'lodash/debounce'
 import {
@@ -34,6 +33,7 @@ import { MercoaSession, TokenOptions, useMercoaSession } from './index'
 
 export interface MercoaButtonProps extends HTMLAttributes<HTMLButtonElement> {
   isEmphasized: boolean
+  hideOutline?: boolean
   tooltip?: string
   className?: string
   color?: 'red' | 'green' | 'blue' | 'indigo' | 'yellow' | 'gray'
@@ -46,6 +46,7 @@ export function MercoaButton({
   children,
   tooltip,
   isEmphasized,
+  hideOutline,
   className,
   color,
   icon,
@@ -54,11 +55,15 @@ export function MercoaButton({
 }: MercoaButtonProps) {
   let classNameInternal = `
     disabled:mercoa-bg-gray-300 disabled:mercoa-text-gray-600
-    mercoa-items-center mercoa-rounded-md mercoa-border 
+    mercoa-items-center mercoa-rounded-md
     mercoa-font-medium 
-    mercoa-shadow-sm  
+    ${
+      hideOutline
+        ? ''
+        : `mercoa-shadow-sm mercoa-border 
     focus:mercoa-outline-none focus:mercoa-ring-1 
     focus:mercoa-ring-offset-2`
+    }`
 
   switch (size) {
     case 'sm':
@@ -79,27 +84,33 @@ export function MercoaButton({
     focus:mercoa-ring-mercoa-primary-light 
   `
   const classNameIsNotEmphasized = `
-    mercoa-bg-white
     mercoa-text-mercoa-primary-text
-    mercoa-border-mercoa-primary-light
+    ${
+      hideOutline
+        ? ''
+        : `mercoa-bg-white mercoa-border-mercoa-primary-light
     hover:mercoa-border-mercoa-primary-dark
-    hover:mercoa-bg-white
-    hover:mercoa-text-mercoa-primary-text
-    focus:mercoa-ring-mercoa-primary-light 
+    focus:mercoa-ring-mercoa-primary-light
+    hover:mercoa-bg-white`
+    }
+    hover:mercoa-text-mercoa-primary-dark
   `
 
-  let colorOverride = ''
+  let colorOverride = hideOutline ? '' : 'mercoa-bg-white'
   let colorOverrideIsEmphasized = ''
   if (color === 'red') {
-    colorOverride = `
-      mercoa-bg-white
+    colorOverride += `
       mercoa-text-red-600
-      mercoa-border-red-600
-      hover:mercoa-text-red-700
+      ${
+        hideOutline
+          ? ''
+          : `mercoa-border-red-600
       hover:mercoa-border-red-700
-      focus:mercoa-ring-red-500
+      focus:mercoa-ring-red-500`
+      }
+      hover:mercoa-text-red-700
     `
-    colorOverrideIsEmphasized = `
+    colorOverrideIsEmphasized += `
       mercoa-bg-red-600
       mercoa-text-white
       mercoa-border-transparent
@@ -107,15 +118,18 @@ export function MercoaButton({
       focus:mercoa-ring-red-500
     `
   } else if (color === 'green') {
-    colorOverride = `
-      mercoa-bg-white
+    colorOverride += `
       mercoa-text-green-600
-      mercoa-border-green-600
-      hover:mercoa-text-green-700
+      ${
+        hideOutline
+          ? ''
+          : `mercoa-border-green-600
       hover:mercoa-border-green-700
-      focus:mercoa-ring-green-500
+      focus:mercoa-ring-green-500`
+      }
+      hover:mercoa-text-green-700
     `
-    colorOverrideIsEmphasized = `
+    colorOverrideIsEmphasized += `
       mercoa-bg-green-600
       mercoa-text-white
       mercoa-border-transparent
@@ -123,15 +137,18 @@ export function MercoaButton({
       focus:mercoa-ring-green-500
     `
   } else if (color === 'blue') {
-    colorOverride = `
-      mercoa-bg-white
+    colorOverride += `
       mercoa-text-blue-600
-      mercoa-border-blue-600
-      hover:mercoa-text-blue-700
+      ${
+        hideOutline
+          ? ''
+          : `mercoa-border-blue-600
       hover:mercoa-border-blue-700
-      focus:mercoa-ring-blue-500
+      focus:mercoa-ring-blue-500`
+      }
+      hover:mercoa-text-blue-700
     `
-    colorOverrideIsEmphasized = `
+    colorOverrideIsEmphasized += `
       mercoa-bg-blue-600
       mercoa-text-white
       mercoa-border-transparent
@@ -139,15 +156,18 @@ export function MercoaButton({
       focus:mercoa-ring-blue-500
     `
   } else if (color === 'indigo') {
-    colorOverride = `
-      mercoa-bg-white
+    colorOverride += `
       mercoa-text-indigo-600
-      mercoa-border-indigo-600
-      hover:mercoa-text-indigo-700
+      ${
+        hideOutline
+          ? ''
+          : `mercoa-border-indigo-600
       hover:mercoa-border-indigo-700
-      focus:mercoa-ring-indigo-500
+      focus:mercoa-ring-indigo-500`
+      }
+      hover:mercoa-text-indigo-700
     `
-    colorOverrideIsEmphasized = `
+    colorOverrideIsEmphasized += `
       mercoa-bg-indigo-600
       mercoa-text-white
       mercoa-border-transparent
@@ -155,14 +175,18 @@ export function MercoaButton({
       focus:mercoa-ring-indigo-500
     `
   } else if (color === 'yellow') {
-    colorOverride = `
-      mercoa-bg-white
+    colorOverride += `
       mercoa-text-yellow-600
-      mercoa-border-yellow-600
-      hover:mercoa-border-yellow-800
-      focus:mercoa-ring-yellow-500
+      ${
+        hideOutline
+          ? ''
+          : `mercoa-border-yellow-600
+      hover:mercoa-border-yellow-700
+      focus:mercoa-ring-yellow-500`
+      }
+      hover:mercoa-text-yellow-700
     `
-    colorOverrideIsEmphasized = `
+    colorOverrideIsEmphasized += `
       mercoa-bg-yellow-600
       mercoa-text-white
       mercoa-border-transparent
@@ -170,15 +194,18 @@ export function MercoaButton({
       focus:mercoa-ring-yellow-500
     `
   } else if (color === 'gray') {
-    colorOverride = `
-      mercoa-bg-white
+    colorOverride += `
       mercoa-text-gray-600
-      mercoa-border-gray-600
-      hover:mercoa-text-gray-700
+      ${
+        hideOutline
+          ? ''
+          : `mercoa-border-gray-600
       hover:mercoa-border-gray-700
-      focus:mercoa-ring-gray-500
+      focus:mercoa-ring-gray-500`
+      }
+      hover:mercoa-text-gray-700
     `
-    colorOverrideIsEmphasized = `
+    colorOverrideIsEmphasized += `
       mercoa-bg-gray-600
       mercoa-text-white
       mercoa-border-transparent
@@ -1065,7 +1092,7 @@ export function inputClassName({
   ${align === 'right' ? 'mercoa-text-right' : ''}
   ${align === 'center' ? 'mercoa-text-center' : ''}
   mercoa-ring-inset mercoa-ring-gray-300 mercoa-border-0 mercoa-outline-0
-  focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary focus:mercoa-border-0 focus:mercoa-outline-0`
+  focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary focus:mercoa-border-0 focus:mercoa-outline-0 mercoa-overflow-hidden`
 }
 
 export function MercoaInputLabel({ label, name }: { label: string; name?: string }) {
@@ -1296,11 +1323,20 @@ export function CountPill({ count, selected }: { count: number; selected: boolea
   )
 }
 
-function formatCurrencyAmount(value: string) {
-  console.log(value)
-  try {
-    return Big(value).toFixed(2)
-  } catch (e) {
-    return value
+export async function getAllUsers(client: MercoaClient, entityId: string) {
+  const userResp: Mercoa.EntityUserResponse[] = []
+  let hasMore = true
+  while (hasMore) {
+    const resp = await client?.entity.user.find(entityId, {
+      limit: 100,
+      startingAfter: userResp.length > 0 ? userResp[userResp.length - 1].id : undefined,
+    })
+    if (resp) {
+      userResp.push(...resp.data)
+      hasMore = resp.hasMore
+    } else {
+      hasMore = false
+    }
   }
+  return userResp
 }

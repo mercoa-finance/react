@@ -1231,6 +1231,11 @@ export function InvoiceMetrics({
     }
   }) => JSX.Element
 }) {
+  // default to AP
+  if (typeof excludePayables === 'undefined' && typeof excludeReceivables === 'undefined') {
+    excludeReceivables = true
+  }
+
   const mercoaSession = useMercoaSession()
 
   const [invoiceMetrics, setInvoiceMetrics] = useState<{

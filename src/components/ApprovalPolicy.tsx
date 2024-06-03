@@ -68,14 +68,10 @@ export function ApprovalPolicies() {
   }, [mercoaSession.entity?.id, mercoaSession.refreshId, mercoaSession.token])
 
   useEffect(() => {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    mercoaSession.client?.entity.user.getAll(mercoaSession.entity.id).then((resp) => {
-      if (resp) {
-        setUsers(resp)
-        setRoles([...new Set(resp.map((user) => user.roles).flat())])
-      }
-    })
-  }, [mercoaSession.entity?.id, mercoaSession.refreshId, mercoaSession.token])
+    if (!mercoaSession.users) return
+    setUsers(mercoaSession.users)
+    setRoles([...new Set(mercoaSession.users.map((user) => user.roles).flat())])
+  }, [mercoaSession.users])
 
   useEffect(() => {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
