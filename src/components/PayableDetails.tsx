@@ -599,7 +599,6 @@ export function EditPayableForm({
   })
 
   // Auto-calculate line item amounts and total amount
-
   function calculateTotalAmountFromLineItems(lineItems: Mercoa.InvoiceLineItemRequest[]) {
     if (lineItems?.find((e) => isNaN(e.amount as number))) {
       setError('amount', { type: 'manual', message: 'Please enter a valid number' })
@@ -615,7 +614,6 @@ export function EditPayableForm({
   }
 
   // Get payment methods
-
   async function refreshPayerPaymentMethods() {
     if (!mercoaSession.token || !mercoaSession.entity?.id || !mercoaSession.client) return
     const resp = await mercoaSession.client?.entity.paymentMethod.getAll(mercoaSession.entity?.id)
@@ -624,6 +622,7 @@ export function EditPayableForm({
     }
   }
 
+  // Get Supported Currencies
   useEffect(() => {
     if (!mercoaSession.token || !mercoaSession.entity?.id || !mercoaSession.client) return
     refreshPayerPaymentMethods()
@@ -676,8 +675,25 @@ export function EditPayableForm({
     }
   }, [supportedCurrencies])
 
-  // Get destination payment methods
+  // set selected vendor form values
+  useEffect(() => {
+    if (!selectedVendor) {
+      setValue('vendorId', '')
+      setValue('vendorName', '')
+      clearErrors('vendorId')
+      clearErrors('vendorName')
+    } else if (selectedVendor.id === 'new') {
+      return
+    } else if (selectedVendor.id) {
+      mercoaSession.debug({ selectedVendor })
+      setValue('vendorId', selectedVendor.id)
+      setValue('vendorName', selectedVendor.name)
+      clearErrors('vendorId')
+      clearErrors('vendorName')
+    }
+  }, [selectedVendor])
 
+  // Get destination payment methods
   async function refreshVendorPaymentMethods() {
     if (!mercoaSession.token || !vendorId) return
     const resp = await mercoaSession.client?.entity.paymentMethod.getAll(vendorId)
@@ -1034,9 +1050,6 @@ export function EditPayableForm({
             onSelect={(vendor) => {
               mercoaSession.debug({ vendor })
               setSelectedVendor(vendor)
-              setValue('vendorId', vendor?.id ?? undefined, { shouldTouch: true, shouldDirty: true })
-              setValue('vendorName', vendor?.name ?? undefined, { shouldTouch: true, shouldDirty: true })
-              clearErrors('vendorId')
             }}
             counterparty={selectedVendor}
           />
@@ -1272,7 +1285,7 @@ export function EditPayableForm({
         <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
 
         {/*  PAYMENT DESTINATION  */}
-        {vendorName && !isPaymentSourceOffPlatform && (
+        {selectedVendor && vendorId && vendorName && !isPaymentSourceOffPlatform && (
           <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-16 mercoa-col-span-full">
             <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
               How does <span className="mercoa-text-gray-800 mercoa-underline">{vendorName}</span> want to get paid?
@@ -2438,10 +2451,12 @@ export function MetadataSelection({
 
   const metadataSelection = (
     <>
-      {(schema.type === Mercoa.MetadataType.String || schema.type === Mercoa.MetadataType.Number) && (
+      {((!entityMetadataState?.value && schema.type === Mercoa.MetadataType.String) ||
+        schema.type === Mercoa.MetadataType.Number) && (
         <MetadataInput schema={schema} setValue={setValue} value={value} />
       )}
-      {schema.type === Mercoa.MetadataType.KeyValue && (
+      {((entityMetadataState?.value && schema.type === Mercoa.MetadataType.String) ||
+        schema.type === Mercoa.MetadataType.KeyValue) && (
         <MetadataCombobox schema={schema} setValue={setValue} value={value} values={entityMetadataState?.value ?? []} />
       )}
       {schema.type === Mercoa.MetadataType.Boolean && (
