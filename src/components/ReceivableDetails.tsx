@@ -341,7 +341,7 @@ export function ReceivableDetails({
       })
     }
     const response = await mercoaSession.client?.invoice.create(newInvoice)
-    console.log(response)
+    mercoaSession.debug(response)
     if (response?.id) {
       toast.success('Invoice created')
       if (onRedirect) {
@@ -373,7 +373,7 @@ export function ReceivableDetails({
             <CounterpartySearch
               type="payor"
               onSelect={(payer) => {
-                console.log({ payer })
+                mercoaSession.debug({ payer })
                 setSelectedPayer(payer)
                 setValue('payerId', payer?.id ?? undefined, { shouldTouch: true, shouldDirty: true })
                 setValue('payerName', payer?.name ?? undefined, { shouldTouch: true, shouldDirty: true })

@@ -10,7 +10,6 @@ import { jwtDecode } from 'jwt-decode'
 import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { ToastContainer } from 'react-toastify'
 import { EntityPortal, TokenOptions } from './index'
-
 export interface MercoaContext {
   token?: string
   entityId?: string
@@ -32,6 +31,7 @@ export interface MercoaContext {
   googleMapsApiKey?: string
   heightOffset: number
   setHeightOffset: Function
+  debug: Function
 }
 const sessionContext = createContext<MercoaContext>({
   token: '',
@@ -54,6 +54,7 @@ const sessionContext = createContext<MercoaContext>({
   googleMapsApiKey: undefined,
   heightOffset: 70,
   setHeightOffset: () => {},
+  debug: () => {},
 })
 
 interface contextClassType {
@@ -78,6 +79,7 @@ export function MercoaSession({
   googleMapsApiKey,
   disableToastContainer,
   heightOffset,
+  debug,
 }: {
   children?: ReactNode
   entityId?: Mercoa.EntityId
@@ -88,6 +90,7 @@ export function MercoaSession({
   googleMapsApiKey?: string
   disableToastContainer?: boolean
   heightOffset?: number
+  debug?: boolean
 }) {
   return (
     <sessionContext.Provider
@@ -99,6 +102,7 @@ export function MercoaSession({
         isAdmin,
         googleMapsApiKey,
         heightOffset: heightOffset ?? 70,
+        debug: debug ?? false,
       })}
     >
       {disableToastContainer ? (
@@ -173,6 +177,7 @@ function useProvideSession({
   isAdmin,
   googleMapsApiKey,
   heightOffset,
+  debug,
 }: {
   token: string
   entityId?: Mercoa.EntityId
@@ -181,6 +186,7 @@ function useProvideSession({
   isAdmin?: boolean
   googleMapsApiKey?: string
   heightOffset: number
+  debug?: boolean
 }) {
   const [entity, setEntity] = useState<Mercoa.EntityResponse>()
   const [user, setUser] = useState<Mercoa.EntityUserResponse>()
@@ -357,5 +363,10 @@ function useProvideSession({
     googleMapsApiKey,
     setHeightOffset,
     heightOffset: heightOffsetLocal,
+    debug: (val: any) => {
+      if (debug) {
+        console.log(val)
+      }
+    },
   }
 }

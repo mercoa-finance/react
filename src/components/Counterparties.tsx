@@ -203,7 +203,7 @@ export function CounterpartySearch({
     )
   }
 
-  console.log(selectedCounterparty)
+  mercoaSession.debug({ selectedCounterparty })
 
   // Search for a counterparty
   return (
@@ -212,7 +212,7 @@ export function CounterpartySearch({
         <div className="mercoa-relative mercoa-mt-2 mercoa-w-full">
           <Combobox.Input
             autoComplete="off"
-            className="mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-10 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-indigo-600 sm:mercoa-text-sm sm:mercoa-leading-6"
+            className="mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-10 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
             onFocus={() => {
               if (open) return // don't click button if already open, as it will close it
               setSearchTerm(undefined) // reset filter
@@ -238,7 +238,7 @@ export function CounterpartySearch({
                 value={cp}
                 className={({ active }) =>
                   `mercoa-relative mercoa-cursor-pointer  mercoa-py-2 mercoa-pl-3 mercoa-pr-9 ${
-                    active ? 'mercoa-bg-indigo-600 mercoa-text-white' : 'mercoa-text-gray-900'
+                    active ? 'mercoa-bg-mercoa-primary mercoa-text-mercoa-primary-text-invert' : 'mercoa-text-gray-900'
                   }`
                 }
               >
@@ -250,7 +250,9 @@ export function CounterpartySearch({
                 {({ active }) => (
                   <div
                     className={`mercoa-flex mercoa-items-center mercoa-cursor-pointer  mercoa-py-2 mercoa-pl-3 mercoa-pr-9 ${
-                      active ? 'mercoa-bg-indigo-600 mercoa-text-white' : 'mercoa-text-gray-900'
+                      active
+                        ? 'mercoa-bg-mercoa-primary mercoa-text-mercoa-primary-text-invert'
+                        : 'mercoa-text-gray-900'
                     }`}
                   >
                     <PlusIcon className="mercoa-size-5 mercoa-pr-1" />

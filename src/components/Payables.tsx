@@ -205,7 +205,7 @@ function AddApproverModal({
                 displayIndex="name"
                 secondaryDisplayIndex="email"
                 onChange={(e) => {
-                  console.log(e)
+                  mercoaSession.debug(e)
                   setSelectedUser(e)
                 }}
                 value={selectedUser}

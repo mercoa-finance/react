@@ -684,7 +684,7 @@ function Trigger({
             type="button"
             className="mercoa-flex"
             onClick={() => {
-              console.log({ triggerWatch })
+              mercoaSession.debug({ triggerWatch })
               if (triggerWatch.every((e: { type: string }) => e.type != 'amount')) {
                 append({
                   type: 'amount',

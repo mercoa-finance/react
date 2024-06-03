@@ -583,6 +583,16 @@ export function EditPayableForm({
   const approvers = watch('approvers')
   const metadata = watch('metadata')
 
+  mercoaSession.debug({
+    currency,
+    vendorId,
+    vendorName,
+    paymentDestinationId,
+    paymentSourceId,
+    approvers,
+    metadata,
+  })
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'lineItems',
@@ -648,9 +658,15 @@ export function EditPayableForm({
   // Get entity metadata
   useEffect(() => {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    mercoaSession.client?.entity.metadata.getAll(mercoaSession.entity.id).then((resp) => {
-      if (resp) setEntityMetadata(resp)
-    })
+    mercoaSession.client?.entity.metadata
+      .getAll(mercoaSession.entity.id)
+      .then((resp) => {
+        mercoaSession.debug({ entityMetadata: resp })
+        if (resp) setEntityMetadata(resp)
+      })
+      .catch((e) => {
+        console.error(e)
+      })
   }, [mercoaSession.entity?.id, mercoaSession.refreshId, mercoaSession.token])
 
   // Reset currency dropdown
@@ -698,6 +714,7 @@ export function EditPayableForm({
   // OCR Merge
   useEffect(() => {
     if (!ocrResponse) return
+    mercoaSession.debug({ ocrResponse })
     if (ocrResponse.invoice.amount) setValue('amount', ocrResponse.invoice.amount)
     if (ocrResponse.invoice.invoiceNumber) setValue('invoiceNumber', ocrResponse.invoice.invoiceNumber)
     if (ocrResponse.invoice.invoiceDate)
@@ -751,9 +768,9 @@ export function EditPayableForm({
 
     if (!selectedVendor) {
       if (ocrResponse.vendor.id === 'new' && mercoaSession.iframeOptions?.options?.vendors?.disableCreation) {
-        console.log('new vendor creation disabled')
+        mercoaSession.debug('new vendor creation disabled')
       } else if (ocrResponse.vendor.id) {
-        console.log('setting selected vendor', ocrResponse.vendor)
+        mercoaSession.debug('setting selected vendor', ocrResponse.vendor)
         setSelectedVendor(ocrResponse.vendor)
       }
     }
@@ -817,7 +834,7 @@ export function EditPayableForm({
       creatorEntityId: mercoaSession.entity?.id,
       creatorUserId: mercoaSession.user?.id,
     }
-    console.log({ data, invoiceData })
+    mercoaSession.debug({ data, invoiceData })
 
     // metadata validation
     if (mercoaSession.organization?.metadataSchema) {
@@ -929,13 +946,13 @@ export function EditPayableForm({
       }
     }
 
-    console.log('invoiceData before API call: ', { invoiceData })
+    mercoaSession.debug('invoiceData before API call: ', { invoiceData })
     if (invoice) {
       mercoaSession.client?.invoice
         .update(invoice.id, invoiceData)
         .then((resp) => {
           if (resp) {
-            console.log('invoice/update API response: ', resp)
+            mercoaSession.debug('invoice/update API response: ', resp)
             setUploadedImage(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
             toast.success('Invoice updated')
             refreshInvoice(resp.id)
@@ -956,7 +973,7 @@ export function EditPayableForm({
         })
         .then((resp) => {
           if (resp) {
-            console.log('invoice/create API response: ', resp)
+            mercoaSession.debug('invoice/create API response: ', resp)
             toast.success('Invoice created')
             setUploadedImage(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
             refreshInvoice(resp.id)
@@ -1015,7 +1032,7 @@ export function EditPayableForm({
           <CounterpartySearch
             type="payee"
             onSelect={(vendor) => {
-              console.log({ vendor })
+              mercoaSession.debug({ vendor })
               setSelectedVendor(vendor)
               setValue('vendorId', vendor?.id ?? undefined, { shouldTouch: true, shouldDirty: true })
               setValue('vendorName', vendor?.name ?? undefined, { shouldTouch: true, shouldDirty: true })
