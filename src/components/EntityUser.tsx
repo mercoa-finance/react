@@ -12,6 +12,7 @@ import {
   MercoaButton,
   MercoaCombobox,
   MercoaInput,
+  NoSession,
   TableNavigation,
   Tooltip,
   useMercoaSession,
@@ -92,6 +93,7 @@ export function EntityUserNotificationTable({
       })
   }, [mercoaSession.client, entityId, notifications])
 
+  if (!mercoaSession.client) return <NoSession componentName="EntityUserNotificationTable" />
   return (
     <div>
       <div className="mercoa-flex mercoa-flex-col">
@@ -323,6 +325,7 @@ export function EntityUsersTable({
     )
   }
 
+  if (!mercoaSession.client) return <NoSession componentName="EntityUsersTable" />
   return (
     <>
       <div className="mercoa-rounded-md mercoa-bg-gray-100 mercoa-p-8">

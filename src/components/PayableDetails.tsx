@@ -1,8 +1,10 @@
 import { Bar, Container, Section } from '@column-resizer/react'
+import { Menu, Transition } from '@headlessui/react'
 import {
   ArrowDownTrayIcon,
   CheckCircleIcon,
   DocumentIcon,
+  EllipsisVerticalIcon,
   EnvelopeIcon,
   ExclamationCircleIcon,
   EyeIcon,
@@ -43,6 +45,7 @@ import {
   MercoaCombobox,
   MercoaContext,
   MercoaInput,
+  NoSession,
   StatusDropdown,
   Tooltip,
   inputClassName,
@@ -204,6 +207,7 @@ export function PayableDetails({
     </Section>
   )
 
+  if (!mercoaSession.client) return <NoSession componentName="PayableDetails" />
   return (
     <Container>
       {layout === 'left' ? invoiceUpload : invoiceDetails}
@@ -308,6 +312,7 @@ export function InvoiceDocuments({
     }
   }, [invoice])
 
+  if (!mercoaSession.client) return <NoSession componentName="InvoiceDocuments" />
   return (
     <div className="mercoa-overflow-y-auto mercoa-overflow-x-hidden" style={{ height: `${height}px` }}>
       {view === 'document' && localDocuments && localDocuments.length > 0 && (
@@ -488,8 +493,11 @@ export function EditPayableForm({
           amount: yup.number().required().typeError('Please enter a valid number'),
           quantity: yup.number().required().typeError('Please enter a valid number'),
           unitPrice: yup.number().required().typeError('Please enter a valid number'),
+          currency: yup.string().nullable(),
           metadata: yup.mixed().nullable(),
           glAccountId: yup.string(),
+          createdAt: yup.date().nullable(),
+          updatedAt: yup.date().nullable(),
         }),
       ),
       currency: yup.string().required(),
@@ -611,6 +619,30 @@ export function EditPayableForm({
     clearErrors('amount')
     setValue('amount', amount.toNumber())
     setFocus('amount')
+  }
+
+  function collapseLineItems(lineItems: Mercoa.InvoiceLineItemRequest[]) {
+    let amount = new Big(0)
+    lineItems?.forEach((lineItem, index) => {
+      amount = amount.add(Number(lineItem.amount))
+    })
+    setValue(
+      'lineItems',
+      [
+        {
+          amount: amount.toNumber(),
+          quantity: 1,
+          unitPrice: amount.toNumber(),
+          id: lineItems[0].id ?? 'new',
+          description: lineItems[0].description,
+          currency: lineItems[0].currency ?? 'USD',
+          metadata: lineItems[0].metadata,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
+      { shouldDirty: true, shouldTouch: true },
+    )
   }
 
   // Get payment methods
@@ -1023,6 +1055,7 @@ export function EditPayableForm({
     }
   }
 
+  if (!mercoaSession.client) return <NoSession componentName="EditPayableForm" />
   return (
     <div style={{ height: `${height}px` }} className="mercoa-overflow-auto mercoa-pr-2 mercoa-pb-10" ref={wrapperDiv}>
       <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900">
@@ -1202,6 +1235,7 @@ export function EditPayableForm({
               setValue={setValue}
               entityMetadata={entityMetadata}
               calculateTotalAmountFromLineItems={calculateTotalAmountFromLineItems}
+              collapseLineItems={collapseLineItems}
             />
           </div>
         )}
@@ -1265,7 +1299,7 @@ export function EditPayableForm({
           <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
             How do you want to pay?
           </h2>
-          <SelectPaymentSource
+          <SelectPaymentMethod
             paymentMethods={sourcePaymentMethods}
             paymentMethodSchemas={paymentMethodSchemas}
             currentPaymentMethodId={invoice?.paymentSourceId}
@@ -1290,7 +1324,7 @@ export function EditPayableForm({
             <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
               How does <span className="mercoa-text-gray-800 mercoa-underline">{vendorName}</span> want to get paid?
             </h2>
-            <SelectPaymentSource
+            <SelectPaymentMethod
               paymentMethods={destinationPaymentMethods}
               paymentMethodSchemas={paymentMethodSchemas}
               currentPaymentMethodId={invoice?.paymentDestinationId}
@@ -1793,7 +1827,7 @@ function createOffPlatformPaymentMethod({
   }
 }
 
-export function SelectPaymentSource({
+export function SelectPaymentMethod({
   paymentMethods,
   paymentMethodSchemas,
   watch,
@@ -1992,6 +2026,7 @@ export function SelectPaymentSource({
     })
   }, [isDestination, vendorId, selectedType])
 
+  if (!mercoaSession.client) return <NoSession componentName="SelectPaymentMethod" />
   return (
     <div className="mercoa-mt-4">
       <MercoaCombobox
@@ -2568,12 +2603,13 @@ function MetadataCombobox({
       <MercoaCombobox
         options={options}
         onChange={(value) => {
-          setValue(value.key)
+          setValue(value?.key)
         }}
         displayIndex="value"
         value={valueState}
         multiple={schema.allowMultiple}
         displaySelectedAs="pill"
+        showClear
       />
     )
   }
@@ -2587,6 +2623,7 @@ function MetadataCombobox({
       multiple={schema.allowMultiple}
       freeText={!schema.allowMultiple}
       displaySelectedAs="pill"
+      showClear
     />
   )
 }
@@ -2703,6 +2740,7 @@ function LineItems({
   paymentSource,
   hasDocument,
   calculateTotalAmountFromLineItems,
+  collapseLineItems,
 }: {
   lineItems?: FieldArrayWithId[]
   append: Function
@@ -2717,6 +2755,7 @@ function LineItems({
   paymentSource?: Mercoa.PaymentMethodResponse
   hasDocument: boolean
   calculateTotalAmountFromLineItems: (lineItems: Mercoa.InvoiceLineItemRequest[]) => void
+  collapseLineItems: (lineItems: Mercoa.InvoiceLineItemRequest[]) => void
 }) {
   const lineItemsWatch = watch('lineItems')
   const [isHidden, setIsHidden] = useState<boolean>(false)
@@ -2798,6 +2837,7 @@ function LineItems({
         ))}
       {!isHidden && (lineItems?.length ?? 0) > 0 && (
         <div className="mercoa-col-span-full mercoa-gap-2 mercoa-flex">
+          <div className="mercoa-flex-1" />
           <MercoaButton
             isEmphasized
             size="sm"
@@ -2817,21 +2857,80 @@ function LineItems({
               <PlusIcon className="mercoa-ml-1 mercoa-size-4" aria-hidden="true" />
             </div>
           </MercoaButton>
-          <MercoaButton
-            size="sm"
-            isEmphasized={false}
-            onClick={(e) => {
-              e.stopPropagation()
-              e.preventDefault()
-              calculateTotalAmountFromLineItems(lineItemsWatch)
-            }}
-            type="button"
-          >
-            Calculate total invoice amount
-          </MercoaButton>
+          <LineItemOptions
+            lineItems={lineItemsWatch}
+            calculateTotalAmountFromLineItems={calculateTotalAmountFromLineItems}
+            collapseLineItems={collapseLineItems}
+          />
         </div>
       )}
     </div>
+  )
+}
+
+function LineItemOptions({
+  lineItems,
+  calculateTotalAmountFromLineItems,
+  collapseLineItems,
+}: {
+  lineItems: Mercoa.InvoiceLineItemRequest[]
+  calculateTotalAmountFromLineItems: (lineItems: Mercoa.InvoiceLineItemRequest[]) => void
+  collapseLineItems: (lineItems: Mercoa.InvoiceLineItemRequest[]) => void
+}) {
+  return (
+    <Menu as="div" className="mercoa-relative mercoa-inline-block mercoa-text-left">
+      <div>
+        <Menu.Button className="mercoa-inline-flex mercoa-w-full mercoa-justify-center mercoa-bg-gray-100 hover:mercoa-bg-gray-200 mercoa-rounded-full mercoa-p-1.5">
+          <EllipsisVerticalIcon className="mercoa-size-5" aria-hidden="true" />
+          <span className="mercoa-sr-only">More options</span>
+        </Menu.Button>
+      </div>
+      <Transition
+        enter="transition ease-out duration-100"
+        enterFrom="transform opacity-0 scale-95"
+        enterTo="transform opacity-100 scale-100"
+        leave="transition ease-in duration-75"
+        leaveFrom="transform opacity-100 scale-100"
+        leaveTo="transform opacity-0 scale-95"
+      >
+        <Menu.Items className="mercoa-absolute mercoa-right-0 mercoa-z-10 mercoa-mt-2 mercoa-w-64 mercoa-origin-top-right mercoa-rounded-md mercoa-bg-white mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none">
+          <div className="mercoa-py-1">
+            <Menu.Item>
+              {({ active }) => (
+                <a
+                  href="#"
+                  onClick={() => {
+                    if (confirm('Are you sure you want to collapse all line items into a single item?')) {
+                      collapseLineItems(lineItems)
+                    }
+                  }}
+                  className={`${
+                    active ? 'mercoa-bg-gray-100 mercoa-text-gray-900' : 'mercoa-text-gray-700'
+                  } mercoa-block mercoa-px-4 mercoa-py-2 mercoa-text-sm`}
+                >
+                  Collapse line items
+                </a>
+              )}
+            </Menu.Item>
+            <Menu.Item>
+              {({ active }) => (
+                <a
+                  href="#"
+                  onClick={() => {
+                    calculateTotalAmountFromLineItems(lineItems)
+                  }}
+                  className={`${
+                    active ? 'mercoa-bg-gray-100 mercoa-text-gray-900' : 'mercoa-text-gray-700'
+                  } mercoa-block mercoa-px-4 mercoa-py-2 mercoa-text-sm`}
+                >
+                  Calculate invoice amount
+                </a>
+              )}
+            </Menu.Item>
+          </div>
+        </Menu.Items>
+      </Transition>
+    </Menu>
   )
 }
 
@@ -2863,6 +2962,8 @@ function LineItemRow({
   hasDocument: boolean
 }) {
   const mercoaSession = useMercoaSession()
+
+  const filteredMetadata = mercoaSession.organization?.metadataSchema?.filter((schema) => schema.lineItem) ?? []
 
   return (
     <>
@@ -2901,55 +3002,56 @@ function LineItemRow({
           <span className="mercoa-sr-only">Remove Line Item</span>
         </MercoaButton>
       </div>
-      {mercoaSession.organization?.metadataSchema
-        ?.filter((schema) => schema.lineItem)
-        .map((schema) => {
-          const metadata = watch(`lineItems.${index}.metadata`)
-          const value =
-            schema.key === 'glAccountId'
-              ? watch(`lineItems.${index}.glAccountId`)
-              : watch(`lineItems.${index}.metadata.${schema.key}`)
-          return (
-            <div className="mercoa-whitespace-nowrap mercoa-text-sm mercoa-text-gray-500" key={schema.key}>
-              <MetadataSelection
-                entityMetadata={entityMetadata.find((m) => m.key === schema.key)}
-                schema={schema}
-                value={value}
-                hasNoLineItems={false}
-                hasDocument={hasDocument}
-                paymentDestination={paymentDestination}
-                paymentSource={paymentSource}
-                setValue={(value: string | string[]) => {
-                  // combobox with multiple will return an array, but metadata needs a string, so join it with commas
-                  if (Array.isArray(value)) {
-                    value = value.join(',')
+      {filteredMetadata.map((schema) => {
+        const metadata = watch(`lineItems.${index}.metadata`)
+        const value =
+          schema.key === 'glAccountId'
+            ? watch(`lineItems.${index}.glAccountId`)
+            : watch(`lineItems.${index}.metadata.${schema.key}`)
+        return (
+          <div
+            className={`mercoa-whitespace-nowrap mercoa-text-sm mercoa-text-gray-500 ${
+              filteredMetadata.length === 1 ? 'mercoa-col-span-full' : ''
+            }`}
+            key={schema.key}
+          >
+            <MetadataSelection
+              entityMetadata={entityMetadata.find((m) => m.key === schema.key)}
+              schema={schema}
+              value={value}
+              hasNoLineItems={false}
+              hasDocument={hasDocument}
+              paymentDestination={paymentDestination}
+              paymentSource={paymentSource}
+              setValue={(value: string | string[]) => {
+                // combobox with multiple will return an array, but metadata needs a string, so join it with commas
+                if (Array.isArray(value)) {
+                  value = value.join(',')
+                }
+                if (schema.key === 'glAccountId') {
+                  setValue(`lineItems.${index}.glAccountId`, `${value}`, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  })
+                } else {
+                  let newMetadata = {} as Record<string, string>
+                  if (metadata) {
+                    newMetadata = (
+                      typeof metadata === 'string' ? JSON.parse(metadata ?? '{}') : JSON.parse(JSON.stringify(metadata))
+                    ) as Record<string, string>
                   }
-                  if (schema.key === 'glAccountId') {
-                    setValue(`lineItems.${index}.glAccountId`, `${value}`, {
-                      shouldDirty: true,
-                      shouldTouch: true,
-                    })
-                  } else {
-                    let newMetadata = {} as Record<string, string>
-                    if (metadata) {
-                      newMetadata = (
-                        typeof metadata === 'string'
-                          ? JSON.parse(metadata ?? '{}')
-                          : JSON.parse(JSON.stringify(metadata))
-                      ) as Record<string, string>
-                    }
-                    newMetadata[schema.key] = `${value}`
-                    setValue(`lineItems.${index}.metadata`, newMetadata, {
-                      shouldDirty: true,
-                      shouldTouch: true,
-                    })
-                  }
-                }}
-                lineItem
-              />
-            </div>
-          )
-        })}
+                  newMetadata[schema.key] = `${value}`
+                  setValue(`lineItems.${index}.metadata`, newMetadata, {
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  })
+                }
+              }}
+              lineItem
+            />
+          </div>
+        )
+      })}
       {numLineItems - 1 != index && <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />}
     </>
   )

@@ -29,6 +29,7 @@ import {
   LoadingSpinnerIcon,
   MercoaButton,
   MercoaInput,
+  NoSession,
   TableNavigation,
   Tooltip,
   inputClassName,
@@ -204,6 +205,8 @@ export function CounterpartySearch({
   }
 
   mercoaSession.debug({ selectedCounterparty })
+
+  if (!mercoaSession.client) return <NoSession componentName="CounterpartySearch" />
 
   // Search for a counterparty
   return (
@@ -751,6 +754,7 @@ export function Counterparties({
     )
   }
 
+  if (!mercoaSession.client) return <NoSession componentName="Counterparties" />
   return (
     <div className="mercoa-overflow-hidden mercoa-shadow mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 md:mercoa-rounded-lg mercoa-p-5">
       <div className="mercoa-flex mercoa-mb-5 mercoa-space-x-5 mercoa-items-center">
@@ -861,6 +865,7 @@ export function AddCounterpartyModal({
 }) {
   const mercoaSession = useMercoaSession()
 
+  if (!mercoaSession.client) return <NoSession componentName="AddCounterpartyModal" />
   return (
     <Transition.Root show={show} as={Fragment}>
       <Dialog
@@ -997,6 +1002,8 @@ export function CounterpartyDetails({
   if (children) {
     return children({ counterparty: counterpartyLocal, invoices: invoiceHistory ?? [] })
   }
+
+  if (!mercoaSession.client) return <NoSession componentName="CounterpartyDetails" />
 
   if (!counterpartyLocal) return <LoadingSpinnerIcon />
 
@@ -1213,9 +1220,7 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal.paymentMethods
             .filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
-            ?.map((method) => (
-              <PaymentMethodCard method={method} key={method.id} />
-            ))}
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
         </div>
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center  mercoa-border-t mercoa-border-gray-900/5 ">
           <dd className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
@@ -1225,18 +1230,14 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal.paymentMethods
             .filter((e) => e.type === Mercoa.PaymentMethodType.Check)
-            ?.map((method) => (
-              <PaymentMethodCard method={method} key={method.id} />
-            ))}
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
         </div>
 
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center mercoa-border-t mercoa-border-gray-900/5 " />
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal.paymentMethods
             .filter((e) => e.type === Mercoa.PaymentMethodType.Custom)
-            ?.map((method) => (
-              <PaymentMethodCard method={method} key={method.id} />
-            ))}
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
         </div>
       </div>
     )

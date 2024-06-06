@@ -33,6 +33,7 @@ import {
   MercoaCombobox,
   MercoaInput,
   MercoaInputLabel,
+  NoSession,
   Tooltip,
   inputClassName,
   useMercoaSession,
@@ -60,6 +61,8 @@ export type OnboardingFormData = {
   description?: string
   formationDate?: Date
   disableKYB?: 'yes' | 'no'
+  emailTo?: string
+  foreignId?: string
 }
 
 // Onboarding Blocks //////////////////////////////////////////////////////////
@@ -834,6 +837,8 @@ export async function createOrUpdateEntity({
     profile,
     isPayee,
     isPayor,
+    foreignId: data.foreignId,
+    emailTo: data.emailTo,
   }
 
   let resp: Mercoa.EntityResponse | undefined = undefined
@@ -904,6 +909,7 @@ export function EntityOnboardingButton({
 
   const accountType = watch('accountType')
 
+  if (!mercoaSession.client) return <NoSession componentName="EntityOnboardingButton" />
   return (
     <>
       <button
@@ -1079,6 +1085,7 @@ export function RepresentativeOnboardingForm({
     }
   }
 
+  if (!mercoaSession.client) return <NoSession componentName="RepresentativeOnboardingForm" />
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
       <div>
@@ -1185,6 +1192,7 @@ export function Representatives({
     setShowDialog(false)
   }
 
+  if (!mercoaSession.client) return <NoSession componentName="Representatives" />
   if (children) return children({ representatives: reps })
   else {
     return (
@@ -1268,6 +1276,7 @@ export function RepresentativeComponent({
     }
   }
 
+  if (!mercoaSession.client) return <NoSession componentName="RepresentativeComponent" />
   if (representative) {
     return (
       <div
@@ -1363,6 +1372,7 @@ export function VerifyOwnersButton({ entity }: { entity: Mercoa.EntityResponse }
 
   const hasController = reps?.some((rep) => rep.responsibilities.isController)
 
+  if (!mercoaSession.client) return <NoSession componentName="VerifyOwnersButton" />
   if (!entity || entity.profile?.business?.ownersProvided) return <></>
   return (
     <MercoaButton
@@ -1467,6 +1477,7 @@ export function AcceptTosForm({
 
   const data = watch()
 
+  if (!mercoaSession.client) return <NoSession componentName="AcceptTosForm" />
   return (
     <form
       onSubmit={handleSubmit(async () => {
@@ -1544,11 +1555,13 @@ export function EntityOnboardingForm({
   type,
   onOnboardingSubmit,
   onCancel,
+  admin,
 }: {
   entity: Mercoa.EntityResponse
   type: 'payee' | 'payor'
   onOnboardingSubmit?: (data: OnboardingFormData) => void
   onCancel?: () => void
+  admin?: boolean
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1593,6 +1606,11 @@ export function EntityOnboardingForm({
       description: entity.profile.business?.description,
       website: entity.profile.business?.website,
       formationDate: new Date(),
+      foreignId: entity.foreignId,
+      emailTo: entity.emailTo,
+      isCustomer: entity.isCustomer,
+      isPayor: entity.isPayor,
+      isPayee: entity.isPayee,
     },
     resolver: async (data, context, options) => {
       if (data.accountType === Mercoa.AccountType.Individual) {
@@ -1629,12 +1647,27 @@ export function EntityOnboardingForm({
 
   const accountType = watch('accountType')
 
+  if (!mercoaSession.client) return <NoSession componentName="EntityOnboardingForm" />
   if (!mercoaSession.organization) return <LoadingSpinner />
 
   const onboardingOptions =
     type === 'payee'
       ? mercoaSession.organization?.payeeOnboardingOptions
       : mercoaSession.organization?.payorOnboardingOptions
+
+  if (admin && onboardingOptions) {
+    ;(Object.keys(onboardingOptions.individual) as Array<keyof Mercoa.IndividualOnboardingOptions>).forEach((key) => {
+      onboardingOptions.individual[key].show = true
+      onboardingOptions.individual[key].edit = true
+      onboardingOptions.individual[key].required = false
+    })
+    ;(Object.keys(onboardingOptions.business) as Array<keyof Mercoa.BusinessOnboardingOptions>).forEach((key) => {
+      onboardingOptions.business[key].show = true
+      onboardingOptions.business[key].edit = true
+      onboardingOptions.business[key].required = false
+    })
+    onboardingOptions.paymentMethod = false
+  }
 
   return (
     <form
@@ -1649,9 +1682,12 @@ export function EntityOnboardingForm({
             data: entityData,
             entityId: entity.id,
             mercoaClient: mercoaSession.client,
-            isPayee: type === 'payee',
-            isPayor: type === 'payor',
+            isPayee: admin ? entityData.isPayee : type === 'payee',
+            isPayor: admin ? entityData.isPayor : type === 'payor',
           })
+          if (admin) {
+            toast.success('Entity Updated')
+          }
           mercoaSession.refresh()
         }
       })}
@@ -1815,6 +1851,66 @@ export function EntityOnboardingForm({
             )}
           </>
         )}
+        {admin && (
+          <>
+            <h3 className="mercoa-col-span-2 mercoa-text-lg mercoa-font-medium mercoa-text-gray-900 mercoa-my-2 mercoa-pt-3 mercoa-border-t-2">
+              Admin Options
+            </h3>
+            <MercoaInput
+              register={register}
+              name="emailTo"
+              label={'Email Inbox Address'}
+              type="text"
+              trailingIcon={
+                <span className="mercoa-px-2 mercoa-text-sm mercoa-text-gray-600">
+                  @{mercoaSession.organization.emailProvider?.inboxDomain}
+                </span>
+              }
+            />
+            <MercoaInput register={register} name="foreignId" label="Foreign ID" type="text" />
+            <div className="mercoa-col-span-full mercoa-grid mercoa-grid-cols-3 mercoa-space-x-2">
+              <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-rounded-md mercoa-border mercoa-p-2">
+                <label
+                  htmlFor="isCustomer"
+                  className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
+                >
+                  Customer
+                </label>
+                <input
+                  type="checkbox"
+                  {...register('isCustomer')}
+                  className={'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 focus:mercoa-ring-mercoa-primary'}
+                />
+              </div>
+              <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-rounded-md mercoa-border mercoa-p-2">
+                <label
+                  htmlFor="isPayor"
+                  className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
+                >
+                  Payor
+                </label>
+                <input
+                  type="checkbox"
+                  {...register('isPayor')}
+                  className={'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 focus:mercoa-ring-mercoa-primary'}
+                />
+              </div>
+              <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-rounded-md mercoa-border mercoa-p-2">
+                <label
+                  htmlFor="isPayee"
+                  className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
+                >
+                  Payee
+                </label>
+                <input
+                  type="checkbox"
+                  {...register('isPayee')}
+                  className={'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 focus:mercoa-ring-mercoa-primary'}
+                />
+              </div>
+            </div>
+          </>
+        )}
       </div>
       <div className="mercoa-mt-8 mercoa-flex">
         <div className="mercoa-flex-1" />
@@ -1824,7 +1920,7 @@ export function EntityOnboardingForm({
             Cancel
           </MercoaButton>
         )}
-        <MercoaButton isEmphasized>{onCancel ? 'Update' : 'Next'}</MercoaButton>
+        <MercoaButton isEmphasized>{onCancel ? 'Update' : admin ? 'Submit' : 'Next'}</MercoaButton>
       </div>
     </form>
   )
@@ -2104,6 +2200,7 @@ export function EntityOnboarding({
     </div>
   )
 
+  if (!mercoaSession.client) return <NoSession componentName="EntityOnboarding" />
   return (
     <div className="mercoa-flex mercoa-flex-col mercoa-rounded-l-md mercoa-p-8 mercoa-text-center mercoa-text-gray-900 mercoa-shadow-sm mercoa-w-full">
       <div className={formState === 'entity' ? '' : 'mercoa-hidden'}>

@@ -9,6 +9,7 @@ import {
   LoadingSpinnerIcon,
   MercoaInput,
   MercoaInputLabel,
+  NoSession,
   PaymentMethodList,
   inputClassName,
   useMercoaSession,
@@ -42,6 +43,7 @@ export function CustomPaymentMethod({
     if (onSelect && account) onSelect(account)
   }
 
+  if (!mercoaSession.client) return <NoSession componentName="CustomPaymentMethod" />
   if (children) return children({ paymentMethods })
   else {
     return (
@@ -195,6 +197,7 @@ export function AddCustomPaymentMethod({
     }
   }
 
+  if (!mercoaSession.client) return <NoSession componentName="AddCustomPaymentMethod" />
   return (
     <form className="mercoa-space-y-3 mercoa-text-left" onSubmit={handleSubmit((formOnlySubmit as any) || submitCPM)}>
       {title || (

@@ -648,6 +648,7 @@ export function MercoaCombobox({
   inputClassName: suppliedInputClassName,
   multiple,
   freeText,
+  showClear,
   displaySelectedAs,
   readOnly,
 }: {
@@ -664,6 +665,7 @@ export function MercoaCombobox({
   inputClassName?: string
   multiple?: boolean
   freeText?: boolean
+  showClear?: boolean
   displaySelectedAs?: 'input' | 'pill'
   readOnly?: boolean
 }) {
@@ -764,7 +766,7 @@ export function MercoaCombobox({
         </Combobox.Label>
       )}
       <div className={`mercoa-relative ${label ? 'mercoa-mt-2' : ''}`}>
-        <Combobox.Button className="mercoa-relative mercoa-w-full mercoa-bg-white">
+        <Combobox.Button className="mercoa-relative mercoa-w-full mercoa-bg-white" as="div">
           {({ open }) => {
             const showInput = displaySelectedAs === 'input' || freeText || (open && !multiple)
             return (
@@ -861,6 +863,27 @@ export function MercoaCombobox({
                 }}
               </Combobox.Option>
             ))}
+            {showClear && (
+              <Combobox.Option
+                value={undefined}
+                className={({ active }) =>
+                  classNames(
+                    'mercoa-relative mercoa-cursor-default mercoa-select-none mercoa-py-2 mercoa-pl-3 mercoa-pr-9',
+                    active ? 'mercoa-bg-mercoa-primary mercoa-text-mercoa-primary-text-invert' : 'mercoa-text-gray-900',
+                  )
+                }
+              >
+                {({ active, selected, disabled }) => {
+                  return (
+                    <div className="mercoa-flex">
+                      <span className={classNames('mercoa-truncate', selected && 'mercoa-font-semibold')}>
+                        Clear Selection
+                      </span>
+                    </div>
+                  )
+                }}
+              </Combobox.Option>
+            )}
             {filteredOptionsLimited.length != filteredOptions.length && (
               <Combobox.Option
                 className="mercoa-relative mercoa-cursor-default mercoa-select-none mercoa-py-2 mercoa-pl-3 mercoa-pr-9 mercoa-bg-gray-200 mercoa-text-gray-600"
@@ -1339,4 +1362,21 @@ export async function getAllUsers(client: MercoaClient, entityId: string) {
     }
   }
   return userResp
+}
+
+export function NoSession({ componentName }: { componentName: string }) {
+  return (
+    <div className="mercoa-text-red-700">
+      ERROR: The <pre className="mercoa-inline mercoa-text-red-900">{componentName}</pre> component needs to be wrapped
+      in a <pre className="mercoa-inline mercoa-text-red-900">MercoaSession</pre>. See{' '}
+      <a
+        href="https://docs.mercoa.com/sdks/react#usage"
+        target="_blank"
+        className="mercoa-text-blue-300 mercoa-underline"
+      >
+        documentation
+      </a>{' '}
+      for more information.
+    </div>
+  )
 }

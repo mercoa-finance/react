@@ -1,8 +1,9 @@
 import { Mercoa } from '@mercoa/javascript'
-import { BankAccounts, CreditCards, CustomPaymentMethod, useMercoaSession } from './index'
+import { BankAccounts, CreditCards, CustomPaymentMethod, NoSession, useMercoaSession } from './index'
 
 export function PaymentMethods() {
   const mercoaSession = useMercoaSession()
+  if (!mercoaSession.client) return <NoSession componentName="PaymentMethods" />
   return (
     <div>
       {mercoaSession.organization?.paymentMethods?.payerPayments?.find(

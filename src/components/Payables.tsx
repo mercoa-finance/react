@@ -7,19 +7,23 @@ import Papa from 'papaparse'
 import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import { toast } from 'react-toastify'
+import { currencyCodeToSymbol } from '../lib/currency'
+import { classNames } from '../lib/lib'
+import { isWeekday } from '../lib/scheduling'
 import {
   CountPill,
+  DebouncedSearch,
+  MercoaButton,
   MercoaCombobox,
   MercoaContext,
+  NoSession,
+  Skeleton,
+  StatCard,
   TableNavigation,
   TableOrderHeader,
   Tooltip,
   useMercoaSession,
-} from '.'
-import { currencyCodeToSymbol } from '../lib/currency'
-import { classNames } from '../lib/lib'
-import { isWeekday } from '../lib/scheduling'
-import { DebouncedSearch, MercoaButton, Skeleton, StatCard } from './index'
+} from './index'
 
 function invoiceStatusToName(
   name: Mercoa.InvoiceStatus,
@@ -926,6 +930,7 @@ export function PayablesTable({
     </tbody>
   )
 
+  if (!mercoaSession.client) return <NoSession componentName="PayablesTable" />
   return (
     <>
       <div className="mercoa-min-h-[600px]">
@@ -1297,6 +1302,7 @@ export function InvoiceMetrics({
 
   if (children) return children({ metrics: invoiceMetrics })
 
+  if (!mercoaSession.client) return <NoSession componentName="InvoiceMetrics" />
   return (
     <div className="mercoa-grid mercoa-grid-cols-3 mercoa-space-x-3 mercoa-mt-2 mercoa-mb-1 mercoa-min-h-[60px]">
       {!invoiceMetrics ? (
@@ -1389,6 +1395,7 @@ export function StatusTabs({
     })
   }, [search, tabs, mercoaSession.client, mercoaSession.entity, mercoaSession.refreshId])
 
+  if (!mercoaSession.client) return <NoSession componentName="StatusTabs" />
   return (
     <>
       {/* Inbox Selector Tabs */}

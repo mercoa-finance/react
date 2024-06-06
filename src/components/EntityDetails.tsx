@@ -3,18 +3,19 @@ import { Mercoa } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { ReactElement, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
-import { TableNavigation, Tooltip, useMercoaSession } from './index'
+import { NoSession, TableNavigation, Tooltip, useMercoaSession } from './index'
 
 export function EntityDetails({ children }: { children: Function }) {
   const mercoaSession = useMercoaSession()
+  if (!mercoaSession.client) return <NoSession componentName="EntityDetails" />
   if (children) return children({ entity: mercoaSession.entity, organization: mercoaSession.organization })
 }
 
 export function EntityStatus({ entity }: { entity?: Mercoa.EntityResponse }) {
   const mercoaSession = useMercoaSession()
   entity = entity || mercoaSession.entity
+  if (!mercoaSession.client) return <NoSession componentName="EntityStatus" />
   if (!entity) return <></>
-
   return (
     <>
       {entity.status === 'unverified' && (
@@ -56,6 +57,7 @@ export function EntityStatus({ entity }: { entity?: Mercoa.EntityResponse }) {
 export function EntityInboxEmail({ entity }: { entity?: Mercoa.EntityResponse }) {
   const mercoaSession = useMercoaSession()
   const entitySelected = entity || mercoaSession.entity
+  if (!mercoaSession.client) return <NoSession componentName="EntityInboxEmail" />
   return (
     <button
       className="mercoa-flex mercoa-gap-1 mercoa-items-center mercoa-text-gray-600"
@@ -156,6 +158,7 @@ export function EntityEmailLogs({
       setResultsPerPage,
     })
 
+  if (!mercoaSession.client) return <NoSession componentName="EntityEmailLogs" />
   return (
     <>
       {/* ******** TABLE ******** */}

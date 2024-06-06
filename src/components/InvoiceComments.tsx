@@ -5,7 +5,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { useMercoaSession } from './index'
+import { NoSession, useMercoaSession } from './index'
 dayjs.extend(relativeTime)
 
 export function InvoiceComments({ invoice }: { invoice?: Mercoa.InvoiceResponse }) {
@@ -77,6 +77,7 @@ export function InvoiceComments({ invoice }: { invoice?: Mercoa.InvoiceResponse 
     },
   }
 
+  if (!mercoaSession.client) return <NoSession componentName="InvoiceComments" />
   return (
     <>
       <ul role="list" className="mercoa-space-y-6 mercoa-ml-1">

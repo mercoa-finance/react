@@ -20,7 +20,9 @@ import {
   DefaultPaymentMethodIndicator,
   LoadingSpinnerIcon,
   MercoaButton,
+  MercoaCombobox,
   MercoaInput,
+  NoSession,
   PaymentMethodList,
   Tooltip,
   inputClassName,
@@ -60,6 +62,8 @@ export function BankAccounts({
         })
     }
   }, [mercoaSession.entity?.id, mercoaSession.token, mercoaSession.refreshId])
+
+  if (!mercoaSession.client) return <NoSession componentName="BankAccounts" />
 
   if (children) return children({ bankAccounts })
   else {
@@ -125,6 +129,8 @@ export function BankAccountComponent({
   }
 
   const { register, handleSubmit } = useForm()
+
+  if (!mercoaSession.client) return <NoSession componentName="BankAccountComponent" />
 
   if (account) {
     return (
@@ -543,6 +549,8 @@ export function PlaidPopup({
     }
   }, [linkToken, ready, open])
 
+  if (!mercoaSession.client) return <NoSession componentName="PlaidPopup" />
+
   if (!linkToken || !ready) {
     return (
       <div className="mercoa-p-9 mercoa-text-center">
@@ -579,6 +587,7 @@ export function AddBankViaPlaidOrManual({
     }
   }, [mercoaSession.entityId, entityId])
 
+  if (!mercoaSession.client) return <NoSession componentName="AddBankViaPlaidOrManual" />
   if (showManual) {
     return (
       <AddBankAccount
@@ -679,6 +688,7 @@ export function AddBankAccount({
     }
   }
 
+  if (!mercoaSession.client) return <NoSession componentName="AddBankAccount" />
   return (
     <form
       className="mercoa-space-y-3 mercoa-text-left"
@@ -753,6 +763,8 @@ export function AddBankAccountForm({
       setError('routingNumber', { message: 'Please enter a valid routing number' })
     }
   }, [routingNumber])
+
+  if (!mercoaSession.client) return <NoSession componentName="AddBankAccountForm" />
   return (
     <>
       <MercoaInput
@@ -790,11 +802,13 @@ export function EditBankAccount({
   const [showPlaid, setShowPlaid] = useState(false)
   const sigRef = useRef<SignatureCanvas | null>(null)
   const inputFile = useRef<HTMLInputElement | null>(null)
+  const [externalBankAccountIds, setExternalBankAccountIds] = useState<{ key: string; value: string }[]>([])
 
-  const { register, handleSubmit, watch } = useForm({
+  const { register, handleSubmit, watch, setValue } = useForm({
     defaultValues: {
       accountName: account.accountName,
       checkOptions: account.checkOptions,
+      externalAccountingSystemId: account.externalAccountingSystemId,
     },
   })
 
@@ -815,6 +829,7 @@ export function EditBankAccount({
             ...(signatureImage && { signatureImage }),
           },
           type: Mercoa.PaymentMethodType.BankAccount,
+          externalAccountingSystemId: data.externalAccountingSystemId,
         })
         .then(() => {
           toast.success('Bank account updated')
@@ -836,9 +851,37 @@ export function EditBankAccount({
     }
   }, [account.checkOptions?.signatureImage, useSig])
 
+  useEffect(() => {
+    if (!mercoaSession.entityId) return
+    mercoaSession.client?.entity.metadata
+      .get(mercoaSession.entityId, 'externalAccountingSystemBankAccounts')
+      .then((resp) => {
+        if (resp) {
+          const externalBankAccountIds = resp.map((e) => JSON.parse(e) as { key: string; value: string })
+          console.log(externalBankAccountIds)
+          setExternalBankAccountIds(externalBankAccountIds)
+        }
+      })
+  }, [mercoaSession.entityId, mercoaSession.refreshId])
+
+  console.log(watch('externalAccountingSystemId'))
+
+  if (!mercoaSession.client) return <NoSession componentName="EditBankAccount" />
   return (
     <form onSubmit={handleSubmit(onUpdate)}>
       <MercoaInput label="Account Name" name="accountName" register={register} optional />
+      {externalBankAccountIds.length > 0 && (
+        <MercoaCombobox
+          label="Accounting System Bank Name"
+          onChange={(e) => {
+            setValue('externalAccountingSystemId', e.key)
+          }}
+          options={externalBankAccountIds.map((e) => ({ disabled: false, value: e }))}
+          displayIndex="value"
+          value={externalBankAccountIds.find((e) => e.key === watch('externalAccountingSystemId'))}
+          className="mercoa-mt-2"
+        />
+      )}
       {account.accountType === 'CHECKING' && (
         <div className="mercoa-relative mercoa-mt-5 mercoa-flex mercoa-items-start mercoa-items-center">
           <div className="mercoa-flex mercoa-h-5 mercoa-items-center">

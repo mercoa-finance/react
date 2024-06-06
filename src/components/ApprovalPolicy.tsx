@@ -11,7 +11,15 @@ import { useEffect, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { MercoaButton, MercoaCombobox, MercoaInput, MetadataSelection, inputClassName, useMercoaSession } from './index'
+import {
+  MercoaButton,
+  MercoaCombobox,
+  MercoaInput,
+  MetadataSelection,
+  NoSession,
+  inputClassName,
+  useMercoaSession,
+} from './index'
 
 const nestedBg = [
   'mercoa-bg-white',
@@ -206,6 +214,8 @@ export function ApprovalPolicies() {
       })
     }
   }
+
+  if (!mercoaSession.client) return <NoSession componentName="ApprovalPolicies" />
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>

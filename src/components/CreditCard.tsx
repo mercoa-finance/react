@@ -7,6 +7,7 @@ import {
   DefaultPaymentMethodIndicator,
   LoadingSpinnerIcon,
   MercoaButton,
+  NoSession,
   PaymentMethodList,
   useMercoaSession,
 } from './index'
@@ -63,6 +64,8 @@ export function CreditCards({
     setShowDialog(false)
     if (onSelect && account) onSelect(account)
   }
+
+  if (!mercoaSession.client) return <NoSession componentName="CreditCards" />
 
   if (children) return children({ bankAccounts: cards })
   else {
@@ -148,6 +151,7 @@ export function AddCreditCard({
     cardInput.onSuccess = successCallback
   }, [mercoaSession.moovToken, mercoaSession.moovAccountId, mercoaSession.entityId])
 
+  if (!mercoaSession.client) return <NoSession componentName="AddCreditCard" />
   return (
     <div className="mercoa-space-y-3 mercoa-text-left">
       {title || (
@@ -188,6 +192,8 @@ export function CreditCardComponent({
   showEdit?: boolean
 }) {
   const mercoaSession = useMercoaSession()
+
+  if (!mercoaSession.client) return <NoSession componentName="CreditCardComponent" />
 
   if (!mercoaSession.organization?.paymentMethods?.payerPayments?.find((e) => e.type === 'card' && e.active))
     return <></>

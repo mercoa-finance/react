@@ -23,6 +23,7 @@ import {
   EntityUserNotificationTable,
   LoadingSpinner,
   MercoaButton,
+  NoSession,
   PayableDetails,
   Payables,
   PaymentMethods,
@@ -75,6 +76,7 @@ export function EntityPortal({ token }: { token: string }) {
     }
   }, [invoiceId])
 
+  if (!mercoaSession.client) return <NoSession componentName="EntityPortal" />
   if (!entity || !mercoaSession.organization) return <LoadingSpinner />
 
   if (

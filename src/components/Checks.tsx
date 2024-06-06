@@ -9,6 +9,7 @@ import {
   DefaultPaymentMethodIndicator,
   MercoaButton,
   MercoaInput,
+  NoSession,
   stopPropagate,
   useMercoaSession,
 } from './index'
@@ -34,6 +35,7 @@ export function CheckComponent({
     }
   }
 
+  if (!mercoaSession.client) return <NoSession componentName="CheckComponent" />
   if (account) {
     return (
       <div
@@ -192,6 +194,7 @@ export function AddCheck({
     }
   }
 
+  if (!mercoaSession.client) return <NoSession componentName="AddCheck" />
   return (
     <form
       className="mercoa-space-y-3 mercoa-text-left"

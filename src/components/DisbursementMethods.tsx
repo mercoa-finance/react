@@ -11,6 +11,7 @@ import {
   CustomPaymentMethodComponent,
   LoadingSpinnerIcon,
   MercoaButton,
+  NoSession,
   useMercoaSession,
 } from './index'
 
@@ -72,6 +73,7 @@ export function DisbursementMethods({
     })
   }, [entity, mercoaSession.refreshId])
 
+  if (!mercoaSession.client) return <NoSession componentName="DisbursementMethods" />
   return (
     <>
       {selectedMethod ? (

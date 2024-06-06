@@ -13,7 +13,8 @@ import {
   InvoiceStatusPill,
   MercoaButton,
   MercoaInput,
-  SelectPaymentSource,
+  NoSession,
+  SelectPaymentMethod,
   useMercoaSession,
 } from './index'
 
@@ -354,6 +355,7 @@ export function ReceivableDetails({
 
   const lineItemHeaders = ['Description', 'Quantity', 'Unit Price', 'Total Amount']
 
+  if (!mercoaSession.client) return <NoSession componentName="ReceivableDetails" />
   return (
     <div className="mercoa-p-2">
       <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900">
@@ -583,7 +585,7 @@ export function ReceivableDetails({
             Choose existing payment method on file for{' '}
             <span className="mercoa-text-gray-800 mercoa-underline">{payerName}</span>:
           </h2>
-          <SelectPaymentSource
+          <SelectPaymentMethod
             paymentMethods={sourcePaymentMethods}
             paymentMethodSchemas={paymentMethodSchemas}
             currentPaymentMethodId={invoiceLocal?.paymentSourceId}
@@ -608,7 +610,7 @@ export function ReceivableDetails({
           <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
             How do you want to get paid?
           </h2>
-          <SelectPaymentSource
+          <SelectPaymentMethod
             paymentMethods={destinationPaymentMethods}
             paymentMethodSchemas={paymentMethodSchemas}
             currentPaymentMethodId={invoiceLocal?.paymentDestinationId}
