@@ -1,0 +1,34 @@
+import { EntityOnboarding, MercoaSession } from '@mercoa/react'
+import { payerEntity, vendorEntities } from '../../mockData'
+import { ComponentContainer, ComponentCustomizationOptions } from '../../components/helpers'
+import { Tabs } from 'nextra/components'
+
+# Entity Onboarding
+
+The `<EntityOnboarding>` component can be used to collect onboarding information from your customers (C2) and their counterparties (C3).
+
+Mercoa will pre-fill any data already captured or provided via API.
+
+Fields displayed on the onboarding component are controlled by your [onboarding configuration](https://mercoa.com/dashboard/developers#customizations). This component can capture [business representatives](https://docs.mercoa.com/concepts/business-representatives), payment details, and let the user accept the Mercoa Terms of Service if those options are enabled.
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+## Payor Onboarding
+
+<ComponentContainer>
+  <EntityOnboarding entityId={payerEntity.id} type="payor" />
+  ```jsx
+  <EntityOnboarding entityId="ent_12345" type="payor" />
+  ```
+</ComponentContainer>
+
+## Payee (Vendor) Onboarding
+
+<ComponentContainer>
+  <EntityOnboarding entityId={payerEntity.id} type="payee" connectedEntityName="<CUSTOMER NAME>" />
+  ```jsx
+  <EntityOnboarding entityId="ent_12345" type="payee" connectedEntityName="<CUSTOMER NAME>" />
+  ```
+</ComponentContainer>
