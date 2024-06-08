@@ -4,6 +4,9 @@ const withNextra = require('nextra')({
 })
 
 module.exports = withNextra({
+  images:{
+    unoptimized: true
+  },
   output: 'export',
   webpack: (config, { isServer }) => {
     if (isServer) {
