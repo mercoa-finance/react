@@ -1,0 +1,79 @@
+import { Check, MercoaSession } from '@mercoa/react'
+import { payerEntity, vendorCheck } from '../../mockData'
+import { ComponentContainer } from '../../components/helpers'
+
+# Check Components
+
+## Check Details
+
+The `<Check>` component can be used to select and manage (create/edit) a check destination linked to an Entity. The entity will be pulled from the JWT token provided to the `<MercoaSession>`.
+
+### Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+
+### Props
+
+| Name                | Type                                                                 | Required | Description                                               |
+| :-------------------| :--------------------------------------------------------------------| :--------| :---------------------------------------------------------|
+| account             | `Mercoa.PaymentMethodResponse.Check`                                 |   ✅     | Check Object to view/edit                                 |
+| showEdit            | `boolean`                                                            |          | Allow user to edit check details                          |
+| selected            | `boolean`                                                            |          | Toggle the `selected` CSS style on or off                 |
+| onSelect            | `((value: Mercoa.PaymentMethodResponse.Check \| undefined) => void)` |          | If provided, check will be selectable                     |
+
+### Examples
+
+#### Show Existing
+
+<ComponentContainer>
+<div>
+  <Check account={vendorCheck} />
+</div>
+  ```jsx
+<div>
+  <Check account={vendorCheck} />
+</div>
+  ```
+</ComponentContainer>
+
+#### Edit Existing
+
+<ComponentContainer>
+<div>
+  <Check account={vendorCheck} showEdit/>
+</div>
+  ```jsx
+<div>
+  <Check account={vendorCheck} showEdit />
+</div>
+  ```
+</ComponentContainer>
+
+#### Show Existing as Selected
+
+<ComponentContainer>
+<div>
+  <Check account={vendorCheck} selected />
+</div>
+  ```jsx
+<div>
+  <Check account={vendorCheck} selected />
+</div>
+  ```
+</ComponentContainer>
+
+#### Show Add
+
+<ComponentContainer>
+<div>
+  <Check />
+</div>
+  ```jsx
+<div>
+  <Check />
+</div>
+  ```
+</ComponentContainer>

@@ -14,7 +14,7 @@ import {
   useMercoaSession,
 } from './index'
 
-export function CheckComponent({
+export function Check({
   account,
   onSelect,
   showEdit,
@@ -144,7 +144,7 @@ export function AddCheckDialog({
           />
         }
       />
-      <CheckComponent onSelect={() => setShowDialog(true)} />
+      <Check onSelect={() => setShowDialog(true)} />
     </div>
   )
 }

@@ -1,7 +1,7 @@
-import { Tabs } from 'nextra/components'
-import { Children } from 'react'
+import { Tabs } from 'nextra/components';
+import { Children } from 'react';
 
-export function ComponentContainer({ children }: { children: React.ReactNode }) {
+export function ComponentContainer({ children, minHeight }: { children: React.ReactNode; minHeight?: string }) {
   const items = ['Component', 'Code']
   const arrayChildren = Children.toArray(children)
 
@@ -9,7 +9,7 @@ export function ComponentContainer({ children }: { children: React.ReactNode }) 
   return (
     <Tabs items={items}>
       <Tabs.Tab>
-        <div style={{ padding: '1rem', border: '3px #aaa solid', display: 'flex', backgroundColor: 'white' }}>
+        <div style={{ padding: '1rem', border: '3px #aaa solid', display: 'flex', backgroundColor: 'white', overflow: 'scroll', minHeight: minHeight ?? '10px' }}>
           {arrayChildren[0]}
         </div>
       </Tabs.Tab>

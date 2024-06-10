@@ -1,0 +1,44 @@
+import { Payables, MercoaSession } from '@mercoa/react'
+import { payerEntity, vendorEntities } from '../../mockData'
+import { ComponentContainer } from '../../components/helpers'
+
+# Payables
+
+The `<Payables>` component shows all payables for an entity. It has built in filters and metrics as well. The entity will be pulled from the JWT token provided to the `<MercoaSession>`.
+
+## Customization Options
+
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+## Props
+
+| Name                 | Type                                  | Required | Description                                                                  |
+| :--------------------| :-------------------------------------| :--------| :----------------------------------------------------------------------------|
+| statuses             | `Mercoa.InvoiceStatus[]`              |          | List of invoice statuses to display. By default, all statuses are displayed  |
+| onSelectInvoice      | `((invoice: InvoiceResponse) => any)` |          | Function to call when an invoice is clicked                                  |
+| statusSelectionStyle | `"tabs"` `"dropdown"`                 |          | The variation for how to select the currently shown status. Default is tabs. |
+
+
+
+## Examples
+
+### Default
+
+<ComponentContainer>
+  <Payables />
+  ```jsx
+<Payables />
+  ```
+</ComponentContainer>
+
+### Dropdown Style
+
+<ComponentContainer>
+  <Payables statusSelectionStyle="dropdown" />
+  ```jsx
+<Payables statusSelectionStyle="dropdown" />
+  ```
+</ComponentContainer>

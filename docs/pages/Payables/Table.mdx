@@ -1,0 +1,400 @@
+import { PayablesTable, MercoaSession } from '@mercoa/react'
+import { Mercoa } from '@mercoa/javascript'
+import { payerEntity, vendorEntities } from '../../mockData'
+import { ComponentContainer } from '../../components/helpers'
+
+# Payable Table
+
+The `<PayablesTable>` renders a list of invoices that can be selected or actioned on. The component supports multiple filtering options to let you get the data you need, and provides out of the box pagination support.
+
+## Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ✅     |        ✅        |
+
+## Props
+
+| Name            | Type                                                           | Required | Description                                                                                                      |
+| :---------------| :--------------------------------------------------------------| :--------| :----------------------------------------------------------------------------------------------------------------|
+| statuses        | `Mercoa.InvoiceStatus[]`                                       | ✅       | List of invoice statuses to filter on                                                                            |
+| search          | `string`                                                       |          | Search filter. Searches for C3 name (fulltext), invoice number (exact), or amount (exact)                        |
+| metadata        | `Mercoa.InvoiceMetadataFilter[]`                               |          | List of metadata values to filter on                                                                             |
+| startDate       | `Date`                                                         |          | Start date filter                                                                                                |
+| endDate         | `Date`                                                         |          | End date filter                                                                                                  |
+| onSelectInvoice | `((invoice: InvoiceResponse) => any)`                          |          | Function to call when an invoice is clicked                                                                      |
+| columns         | `InvoiceTableColumn[]`                                         |          | List of columns to display, including metadata columns. See InvoiceTableColumn type for details                  |
+| children        | `((props: PayablesTableChildrenProps) => ReactElement \| null)`|          | Fully customize the UI with the help of these hooks and helper functions. See [example](#custom-design).         |
+
+
+
+```typescript
+type InvoiceTableColumn = {
+  title: string // Column Header
+  field: keyof Mercoa.InvoiceResponse | `${'metadata.'}${string}` // Field to display
+  orderBy?: Mercoa.InvoiceOrderByField // If provided, when this colum is clicked the table will reorder based on this field type
+  format?: (value: string | number | Date, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null // If provided, will return this value in the table
+};
+
+type PayablesTableChildrenProps = {
+
+  dataLoaded: boolean // If data is loaded, this is true. Otherwise this is false.
+  invoices: Mercoa.InvoiceResponse[] // List of invoices. Will be an empty list if dataLoaded is false.
+  selectedInvoiceStatuses: Mercoa.InvoiceStatus[] // Statuses passed into parent for filtering
+
+
+  hasNext: boolean // Has next page of invoices
+  getNext: () => void // Get next page of invoices
+  hasPrevious: boolean // Has previous page of invoices
+  getPrevious: () => void // Get previous page of invoices
+
+  resultsPerPage: number // Max number of results shown per page
+  setResultsPerPage: (value: number) => void // Set max number of results shown per page (1-100)
+
+  downloadCSV: () => void // Download ALL results with currently filters as a CSV
+};
+```
+
+## Examples
+
+### Default Layout
+
+<ComponentContainer>
+<div>
+  <PayablesTable statuses={[
+    'DRAFT',
+    'NEW',
+    'APPROVED',
+    'SCHEDULED',
+    'PENDING',
+    'PAID',
+    'ARCHIVED',
+    'REFUSED',
+    'CANCELED',
+    'FAILED'
+  ]} />
+</div>
+  ```jsx
+<PayablesTable statuses={[
+    'DRAFT',
+    'NEW',
+    'APPROVED',
+    'SCHEDULED',
+    'PENDING',
+    'PAID',
+    'ARCHIVED',
+    'REFUSED',
+    'CANCELED',
+    'FAILED'
+  ]} />
+  ```
+</ComponentContainer>
+
+### Search Filter
+
+<ComponentContainer>
+<div>
+  <PayablesTable statuses={[
+    'DRAFT',
+    'NEW',
+    'APPROVED',
+    'SCHEDULED',
+    'PENDING',
+    'PAID',
+    'ARCHIVED',
+    'REFUSED',
+    'CANCELED',
+    'FAILED'
+  ]}
+  search='Ac'
+/>
+</div>
+  ```jsx
+<PayablesTable statuses={[
+    'DRAFT',
+    'NEW',
+    'APPROVED',
+    'SCHEDULED',
+    'PENDING',
+    'PAID',
+    'ARCHIVED',
+    'REFUSED',
+    'CANCELED',
+    'FAILED'
+  ]}
+  search='Ac'
+/>
+  ```
+</ComponentContainer>
+
+### Custom Columns
+
+<ComponentContainer>
+<div>
+  <PayablesTable  
+  columns={[
+    {
+      field: 'vendor',
+      orderBy: 'VENDOR_NAME',
+      title: 'Merchant'
+    },
+    {
+      field: 'amount',
+      orderBy: 'AMOUNT',
+      title: 'Amount'
+    },
+    {
+      field: 'metadata.projectId',
+      format: (value) => {
+          const v = JSON.parse(value)
+          return (
+            <a href={`https://acme.com/projects/${v}`} className="hover:mercoa-underline">
+              {v}
+            </a>
+          )
+      },
+      title: 'Project ID'
+    }
+  ]}
+  statuses={[
+    'DRAFT',
+    'NEW',
+    'APPROVED',
+    'SCHEDULED',
+    'PENDING',
+    'PAID',
+    'ARCHIVED',
+    'REFUSED',
+    'CANCELED',
+    'FAILED'
+  ]}
+   />
+</div>
+  ```jsx
+<PayablesTable 
+  columns={[
+    {
+      field: 'vendor',
+      orderBy: 'VENDOR_NAME',
+      title: 'Merchant'
+    },
+    {
+      field: 'amount',
+      orderBy: 'AMOUNT',
+      title: 'Amount'
+    },
+    {
+      field: 'metadata.projectId',
+      format: (value) => {
+          const v = JSON.parse(value)
+          return (
+            <a href={`https://acme.com/projects/${v}`} className="hover:mercoa-underline">
+              {v}
+            </a>
+          )
+      },
+      title: 'Project ID'
+    }
+  ]}
+  statuses={[
+    'DRAFT',
+    'NEW',
+    'APPROVED',
+    'SCHEDULED',
+    'PENDING',
+    'PAID',
+    'ARCHIVED',
+    'REFUSED',
+    'CANCELED',
+    'FAILED'
+  ]}
+/>
+  ```
+</ComponentContainer>
+
+
+### Custom Columns with Metadata Filters
+
+<ComponentContainer>
+<div>
+  <PayablesTable  
+  columns={[
+    {
+      field: 'vendor',
+      orderBy: 'VENDOR_NAME',
+      title: 'Merchant'
+    },
+    {
+      field: 'amount',
+      orderBy: 'AMOUNT',
+      title: 'Amount'
+    },
+    {
+      field: 'metadata.projectId',
+      format: (value) => {
+          const v = JSON.parse(value)
+          return (
+            <a href={`https://acme.com/projects/${v}`} className="hover:mercoa-underline">
+              {v}
+            </a>
+          )
+      },
+      title: 'Project ID'
+    }
+  ]}
+  statuses={[
+    'DRAFT',
+    'NEW',
+    'APPROVED',
+    'SCHEDULED',
+    'PENDING',
+    'PAID',
+    'ARCHIVED',
+    'REFUSED',
+    'CANCELED',
+    'FAILED'
+  ]}
+  metadata={{key: 'projectId', value: 'proj_123'}}
+   />
+</div>
+  ```jsx
+<PayablesTable 
+  columns={[
+    {
+      field: 'vendor',
+      orderBy: 'VENDOR_NAME',
+      title: 'Merchant'
+    },
+    {
+      field: 'amount',
+      orderBy: 'AMOUNT',
+      title: 'Amount'
+    },
+    {
+      field: 'metadata.projectId',
+      format: (value) => {
+          const v = JSON.parse(value)
+          return (
+            <a href={`https://acme.com/projects/${v}`} className="hover:mercoa-underline">
+              {v}
+            </a>
+          )
+      },
+      title: 'Project ID'
+    }
+  ]}
+  statuses={[
+    'DRAFT',
+    'NEW',
+    'APPROVED',
+    'SCHEDULED',
+    'PENDING',
+    'PAID',
+    'ARCHIVED',
+    'REFUSED',
+    'CANCELED',
+    'FAILED'
+  ]}
+  metadata={{key: 'projectId', value: 'proj_123'}}
+/>
+  ```
+</ComponentContainer>
+
+### Custom Design
+
+
+<ComponentContainer>
+<PayablesTable statuses={[
+    'DRAFT',
+    'NEW',
+    'APPROVED',
+    'SCHEDULED',
+    'PENDING',
+    'PAID',
+    'ARCHIVED',
+    'REFUSED',
+    'CANCELED',
+    'FAILED'
+  ]}
+    children={({ invoices, hasNext, getNext, hasPrevious, getPrevious, setResultsPerPage }) => {
+    return (
+      <div style={{ maxWidth: '800px', margin: 'auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '5px' }}>
+          {invoices.map((invoice) => (
+            <div key={invoice.id} style={{ padding: '5px', border: '1px solid #eee' }}>
+              <p style={{ fontWeight: 'bold' }}>{invoice.vendor?.name ?? 'N/A'}</p>
+              <p style={{ textDecoration: 'underline' }}>{invoice.metadata.projectId}</p>
+              <p>Amount: ${invoice.amount}</p>
+              <p>Due: {invoice.dueDate?.toDateString()}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
+          <button
+            style={{ padding: '5px', border: '1px solid #eee', color: hasPrevious ? '#000' : '#ccc' }}
+            disabled={!hasPrevious}
+            onClick={getPrevious}
+          >
+            Previous
+          </button>
+          <button
+            style={{ padding: '5px', border: '1px solid #eee', color: hasNext ? '#000' : '#ccc' }}
+            disabled={!hasNext}
+            onClick={getNext}
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    )
+  }}
+  />
+  ```jsx
+<PayablesTable statuses={[
+    'DRAFT',
+    'NEW',
+    'APPROVED',
+    'SCHEDULED',
+    'PENDING',
+    'PAID',
+    'ARCHIVED',
+    'REFUSED',
+    'CANCELED',
+    'FAILED'
+  ]}
+  >
+({ invoices, hasNext, getNext, hasPrevious, getPrevious, setResultsPerPage }) => {
+    return (
+      <div style={{ maxWidth: '800px', margin: 'auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '5px' }}>
+          {invoices.map((invoice) => (
+            <div key={invoice.id} style={{ padding: '5px', border: '1px solid #eee' }}>
+              <p style={{ fontWeight: 'bold' }}>{invoice.vendor?.name ?? 'N/A'}</p>
+              <p style={{ textDecoration: 'underline' }}>{invoice.metadata.projectId}</p>
+              <p>Amount: ${invoice.amount}</p>
+              <p>Due: {invoice.dueDate?.toDateString()}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
+          <button
+            style={{ padding: '5px', border: '1px solid #eee', color: hasPrevious ? '#000' : '#ccc' }}
+            disabled={!hasPrevious}
+            onClick={getPrevious}
+          >
+            Previous
+          </button>
+          <button
+            style={{ padding: '5px', border: '1px solid #eee', color: hasNext ? '#000' : '#ccc' }}
+            disabled={!hasNext}
+            onClick={getNext}
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    )
+  }
+  </PayablesTable>
+  ```
+  </ComponentContainer>

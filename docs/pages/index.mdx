@@ -1,9 +1,11 @@
+import { Callout } from 'nextra/components'
+
 # Mercoa React Component Library
 
 ## Setup
 
 ```sh npm2yarn
-npm install --save @mercoa/react
+npm install --save @mercoa/react @mercoa/javascript
 ```
 
 ## Usage
@@ -12,7 +14,16 @@ The Mercoa React component library ships with a CSS stylesheet (based on [tailwi
 
 The Mercoa React component library uses a [React Context](https://legacy.reactjs.org/docs/context.html) called `MercoaSession`. You can wrap your full app with this context, or only include it on specific routes and pages.
 
-All Mercoa components need to be inside a valid MercoaSession component.
+ 
+<Callout type="warning" emoji="⚠️">
+  All Mercoa components need to be inside a valid `MercoaSession` component.
+</Callout>
+
+The `<MercoaSession>` requires a [valid JWT token](https://docs.mercoa.com/api-reference/entity/user/get-token) to be passed in to authenticate the [Entity](https://docs.mercoa.com/concepts/entities) and [User](https://docs.mercoa.com/concepts/users).
+
+<Callout type="error" emoji="⚠️">
+  Do not use your API key as the token! The API key is for backend use only and should never be exposed.
+</Callout>
 
 ### Basic Usage
 
@@ -40,8 +51,6 @@ export default function Index() {
 }
 ```
 
-Components are documented on the menu on the left!
-
 ### Google Maps API Key
 
 Some Mercoa Components, like the entity onboarding component, use the Google Maps API for address autocompletion. You can get your own Google Maps API by following the instructions here: https://developers.google.com/maps/documentation/embed/get-api-key#create-api-keys
@@ -51,3 +60,7 @@ Once you get the key, pass it to the MercoaSession:
 ```javascript
 <MercoaSession googleMapsApiKey={'YOUR_API_KEY'} />
 ```
+
+## Theme
+
+You can setup the theme in your [Mercoa Developer Settings](https://mercoa.com/dashboard/developers#customizations), the the components will pull theme information from the JWT used to authenticate.

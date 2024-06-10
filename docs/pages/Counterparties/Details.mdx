@@ -1,0 +1,30 @@
+import { CounterpartyDetails, MercoaSession } from '@mercoa/react'
+import { payerEntity, vendorEntities } from '../../mockData'
+import { ComponentContainer } from '../../components/helpers'
+
+# Counterparty Details
+
+The `<CounterpartyDetails>` component displays details about a counterparty entity.
+
+## Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+## Props
+
+| Name                | Type                | Required | Description                                                              |
+| :-------------------| :-------------------| :--------| :------------------------------------------------------------------------|
+| counterpartyId      | `string`            |          | The ID of the counterparty entity to dispaly                             |
+| type                | `"payee"` `"payor"` | ✅       | Use `Payee` to view as a payee (AP), and `Payor` to view as a payor (AR) |
+
+
+## Examples
+
+<ComponentContainer>
+  <CounterpartyDetails counterpartyId={vendorEntities[0]} type="payee" />
+  ```jsx
+<CounterpartyDetails counterpartyId={"ent_XXXX-XXXX-XXX"} type="payee" />
+  ```
+</ComponentContainer>

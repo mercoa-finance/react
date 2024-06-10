@@ -1,0 +1,25 @@
+import { EntityPortal, MercoaSession } from '@mercoa/react'
+import { ComponentContainer, ComponentCustomizationOptions } from '../components/helpers'
+import { mockToken } from '../mockData'
+
+
+# Drop In Portal
+
+The `<EntityPortal>` component can be used to drop in a fully featured AP product into your app with a single component.
+
+The portal's configuration is controlled by the options passed in when creating the [JWT token](https://docs.mercoa.com/api-reference/entity/get-token#request)
+
+## Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+## Examples
+
+<ComponentContainer>
+  <EntityPortal token={mockToken}/>
+  ```jsx
+  <EntityPortal  token='eyJhbGciOiJ.....' />
+  ```
+</ComponentContainer>
