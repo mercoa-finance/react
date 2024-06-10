@@ -1,18 +1,18 @@
 import { Bar, Container, Section } from '@column-resizer/react'
 import { Menu, Transition } from '@headlessui/react'
 import {
-  ArrowDownTrayIcon,
-  CheckCircleIcon,
-  DocumentIcon,
-  EllipsisVerticalIcon,
-  EnvelopeIcon,
-  ExclamationCircleIcon,
-  EyeIcon,
-  EyeSlashIcon,
-  PlusCircleIcon,
-  PlusIcon,
-  XCircleIcon,
-  XMarkIcon,
+    ArrowDownTrayIcon,
+    CheckCircleIcon,
+    DocumentIcon,
+    EllipsisVerticalIcon,
+    EnvelopeIcon,
+    ExclamationCircleIcon,
+    EyeIcon,
+    EyeSlashIcon,
+    PlusCircleIcon,
+    PlusIcon,
+    XCircleIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { PhotoIcon } from '@heroicons/react/24/solid'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -30,26 +30,26 @@ import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { isWeekday } from '../lib/scheduling'
 import {
-  AddBankAccountDialog,
-  AddCheckDialog,
-  BankAccount,
-  CardComponent,
-  Check,
-  CounterpartySearch,
-  CustomPaymentMethodComponent,
-  InvoiceComments,
-  InvoiceStatusPill,
-  LoadingSpinner,
-  LoadingSpinnerIcon,
-  MercoaButton,
-  MercoaCombobox,
-  MercoaContext,
-  MercoaInput,
-  NoSession,
-  StatusDropdown,
-  Tooltip,
-  inputClassName,
-  useMercoaSession,
+    AddBankAccountDialog,
+    AddCheckDialog,
+    BankAccount,
+    Card,
+    Check,
+    CounterpartySearch,
+    CustomPaymentMethodComponent,
+    InvoiceComments,
+    InvoiceStatusPill,
+    LoadingSpinner,
+    LoadingSpinnerIcon,
+    MercoaButton,
+    MercoaCombobox,
+    MercoaContext,
+    MercoaInput,
+    NoSession,
+    StatusDropdown,
+    Tooltip,
+    inputClassName,
+    useMercoaSession,
 } from './index'
 
 const dJSON = require('dirty-json')
@@ -2182,7 +2182,7 @@ export function SelectPaymentMethod({
             ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
             .map((paymentMethod) => (
               <div key={paymentMethod.id} className="mercoa-mt-1">
-                <CardComponent
+                <Card
                   account={paymentMethod as Mercoa.PaymentMethodResponse.Card}
                   selected={paymentId === paymentMethod.id}
                   onSelect={() => {

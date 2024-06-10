@@ -1,15 +1,15 @@
 import { Combobox, Dialog, Transition } from '@headlessui/react'
 import {
-  ChevronUpDownIcon,
-  DevicePhoneMobileIcon,
-  EnvelopeIcon,
-  MapPinIcon,
-  PencilSquareIcon,
-  PlusIcon,
-  ShieldCheckIcon,
-  UserIcon,
-  XCircleIcon,
-  XMarkIcon,
+    ChevronUpDownIcon,
+    DevicePhoneMobileIcon,
+    EnvelopeIcon,
+    MapPinIcon,
+    PencilSquareIcon,
+    PlusIcon,
+    ShieldCheckIcon,
+    UserIcon,
+    XCircleIcon,
+    XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
@@ -20,20 +20,20 @@ import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { capitalize, constructFullName } from '../lib/lib'
 import {
-  BankAccount,
-  CardComponent,
-  Check,
-  CustomPaymentMethodComponent,
-  DebouncedSearch,
-  EntityOnboardingForm,
-  LoadingSpinnerIcon,
-  MercoaButton,
-  MercoaInput,
-  NoSession,
-  TableNavigation,
-  Tooltip,
-  inputClassName,
-  useMercoaSession,
+    BankAccount,
+    Card,
+    Check,
+    CustomPaymentMethodComponent,
+    DebouncedSearch,
+    EntityOnboardingForm,
+    LoadingSpinnerIcon,
+    MercoaButton,
+    MercoaInput,
+    NoSession,
+    TableNavigation,
+    Tooltip,
+    inputClassName,
+    useMercoaSession,
 } from './index'
 const human = require('humanparser')
 
@@ -1026,7 +1026,7 @@ export function CounterpartyDetails({
     if (method.type === Mercoa.PaymentMethodType.BankAccount) {
       card = <BankAccount account={method} />
     } else if (method.type === Mercoa.PaymentMethodType.Card) {
-      card = <CardComponent account={method} />
+      card = <Card account={method} />
     } else if (method.type === Mercoa.PaymentMethodType.Custom) {
       card = <CustomPaymentMethodComponent account={method} />
     } else if (method.type === Mercoa.PaymentMethodType.Check) {

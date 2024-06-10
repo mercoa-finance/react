@@ -78,7 +78,7 @@ export function Cards({
         )}
         <PaymentMethodList accounts={cards} showEdit={showEdit}>
           {(account: Mercoa.PaymentMethodResponse.Card) => (
-            <CardComponent account={account} onSelect={onSelect} showEdit={showEdit} />
+            <Card account={account} onSelect={onSelect} showEdit={showEdit} />
           )}
         </PaymentMethodList>
         {cards && showAdd && (
@@ -94,7 +94,7 @@ export function Cards({
                 />
               }
             />
-            <CardComponent onSelect={() => setShowDialog(true)} />
+            <Card onSelect={() => setShowDialog(true)} />
           </div>
         )}
       </>
@@ -178,7 +178,7 @@ export function AddCard({
   )
 }
 
-export function CardComponent({
+export function Card({
   children,
   account,
   onSelect,
