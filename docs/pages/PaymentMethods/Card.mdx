@@ -1,0 +1,156 @@
+import { Cards, Card, MercoaSession } from '@mercoa/react'
+import { payerEntity, payerCreditCard } from '../../mockData'
+import { ComponentContainer } from '../../components/helpers'
+
+# Card Components
+
+## Card List
+
+The `<Cards>` component can be used to manage (create/edit) cards linked to an Entity. The entity will be pulled from the JWT token provided to the `<MercoaSession>`.
+
+### Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+
+### Props
+
+| Name                | Type                                                                       | Required | Description                                                      |
+| :-------------------| :--------------------------------------------------------------------------| :--------| :----------------------------------------------------------------|
+| showEdit            | `boolean`                                                                  |          | Allow user to edit card details                          |
+| showAdd             | `boolean`                                                                  |          | Allow user to add new cards                              |
+| onSelect            | `((value: Mercoa.PaymentMethodResponse.CreditCard \| undefined) => void)` |          | If provided, card will be selectable                     |
+
+
+### Examples
+
+
+#### Show Existing
+
+<ComponentContainer>
+<div>
+  <Cards />
+</div>
+  ```jsx
+<div>
+  <Cards />
+</div>
+  ```
+</ComponentContainer>
+
+#### Edit Existing
+
+<ComponentContainer>
+<div>
+  <Cards showEdit />
+</div>
+  ```jsx
+<div>
+  <Cards showEdit />
+</div>
+  ```
+</ComponentContainer>
+
+#### Show Existing with Add New
+
+<ComponentContainer>
+<div>
+  <Cards showAdd />
+</div>
+  ```jsx
+<div>
+  <Cards showAdd />
+</div>
+  ```
+</ComponentContainer>
+
+### Show Verified
+
+<ComponentContainer>
+<div>
+  <Cards verifiedOnly />
+</div>
+  ```jsx
+<div>
+  <Cards verifiedOnly />
+</div>
+  ```
+</ComponentContainer>
+
+
+## CreditCard Details
+
+
+The `<Card>` component can be used to select and manage (create/edit) a card linked to an Entity. The entity will be pulled from the JWT token provided to the `<MercoaSession>`.
+
+### Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+
+### Props
+
+| Name                | Type                                                                       | Required | Description                                                      |
+| :-------------------| :--------------------------------------------------------------------------| :--------| :----------------------------------------------------------------|
+| account             | `Mercoa.PaymentMethodResponse.Card`                                 |   ✅     | Card Object to view/edit                                 |
+| showEdit            | `boolean`                                                                  |          | Allow user to edit card details                          |
+| selected            | `boolean`                                                                  |          | Toggle the `selected` CSS style on or off                        |
+| onSelect            | `((value: Mercoa.PaymentMethodResponse.Card \| undefined) => void)` |          | If provided, card will be selectable                     |
+
+### Examples
+
+#### Show Existing
+
+<ComponentContainer>
+<div>
+  <Card account={payerCreditCard} />
+</div>
+  ```jsx
+<div>
+  <Card account={payerCreditCard} />
+</div>
+  ```
+</ComponentContainer>
+
+#### Edit Existing
+
+<ComponentContainer>
+<div>
+  <Card account={payerCreditCard} showEdit/>
+</div>
+  ```jsx
+<div>
+  <Card account={payerCreditCard} showEdit />
+</div>
+  ```
+</ComponentContainer>
+
+#### Show Existing as Selected
+
+<ComponentContainer>
+<div>
+  <Card account={payerCreditCard} selected />
+</div>
+  ```jsx
+<div>
+  <Card account={payerCreditCard} selected />
+</div>
+  ```
+</ComponentContainer>
+
+#### Show Add
+
+<ComponentContainer>
+<div>
+  <Card />
+</div>
+  ```jsx
+<div>
+  <Card />
+</div>
+  ```
+</ComponentContainer>

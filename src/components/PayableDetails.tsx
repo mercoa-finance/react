@@ -32,10 +32,10 @@ import { isWeekday } from '../lib/scheduling'
 import {
   AddBankAccountDialog,
   AddCheckDialog,
-  BankAccountComponent,
-  CheckComponent,
+  BankAccount,
+  CardComponent,
+  Check,
   CounterpartySearch,
-  CreditCardComponent,
   CustomPaymentMethodComponent,
   InvoiceComments,
   InvoiceStatusPill,
@@ -886,15 +886,29 @@ export function EditPayableForm({
 
     // metadata validation
     if (mercoaSession.organization?.metadataSchema) {
-      for (const [key, value] of Object.entries(invoiceData?.metadata ?? {})) {
+      if (!invoiceData.metadata) invoiceData.metadata = {}
+      for (const [key, value] of Object.entries(invoiceData.metadata)) {
         const metadataSchema = mercoaSession.organization?.metadataSchema?.find((e) => e.key === key)
         if (metadataSchema && metadataSchema.validationRules?.regex) {
-          const regex = new RegExp(metadataSchema.validationRules.regex)
-          if (!regex.test(value)) {
-            toast.error(metadataSchema.validationRules.errorMessage)
-            setError('metadata', { type: 'manual', message: metadataSchema.validationRules.errorMessage })
-            setIsSaving(false)
-            return
+          if (
+            showMetadata({
+              schema: metadataSchema,
+              lineItem: false,
+              hasDocument: !!uploadedImage || !!invoice?.hasDocuments,
+              hasNoLineItems: fields.length === 0,
+              paymentDestination: destinationPaymentMethods.find((pm) => pm.id === paymentDestinationId),
+              paymentSource: sourcePaymentMethods.find((pm) => pm.id === paymentSourceId),
+            })
+          ) {
+            const regex = new RegExp(metadataSchema.validationRules.regex)
+            if (!regex.test(value)) {
+              toast.error(metadataSchema.validationRules.errorMessage)
+              setError('metadata', { type: 'manual', message: metadataSchema.validationRules.errorMessage })
+              setIsSaving(false)
+              return
+            }
+          } else {
+            delete invoiceData.metadata[key]
           }
         }
       }
@@ -1666,7 +1680,7 @@ function ActionBar({
       case Mercoa.InvoiceStatus.New:
         buttons.push(
           <ApproverActionButtons invoice={invoice} refreshInvoice={refreshInvoice} setIsSaving={setIsSaving} />,
-          archiveButton,
+          cancelButton,
         )
 
         break
@@ -1709,7 +1723,7 @@ function ActionBar({
             </MercoaButton>
           )
         }
-        buttons.push(nextButton, archiveButton)
+        buttons.push(nextButton, cancelButton)
 
         break
 
@@ -1717,10 +1731,6 @@ function ActionBar({
         buttons.push(cancelButton)
         break
 
-      case Mercoa.InvoiceStatus.Archived:
-        break
-
-      case Mercoa.InvoiceStatus.Pending:
       case Mercoa.InvoiceStatus.Paid:
         if (invoice.paymentDestination?.type === Mercoa.PaymentMethodType.Check) {
           buttons.push(printCheck)
@@ -1740,13 +1750,15 @@ function ActionBar({
           >
             Retry Payment
           </MercoaButton>,
+          cancelButton,
         )
-        buttons.push(archiveButton)
         break
 
-      // Rejected / Cancelled
+      case Mercoa.InvoiceStatus.Archived:
+      case Mercoa.InvoiceStatus.Pending:
+      case Mercoa.InvoiceStatus.Canceled:
+      case Mercoa.InvoiceStatus.Refused:
       default:
-        buttons.push(archiveButton)
         break
     }
 
@@ -2044,7 +2056,7 @@ export function SelectPaymentMethod({
             ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)
             .map((paymentMethod) => (
               <div key={paymentMethod.id} className="mercoa-mt-1">
-                <BankAccountComponent
+                <BankAccount
                   account={paymentMethod as Mercoa.PaymentMethodResponse.BankAccount}
                   selected={paymentId === paymentMethod.id}
                   onSelect={() => {
@@ -2087,7 +2099,7 @@ export function SelectPaymentMethod({
             ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)
             .map((paymentMethod) => (
               <div key={paymentMethod.id} className="mercoa-mt-1">
-                <CheckComponent
+                <Check
                   account={paymentMethod as Mercoa.PaymentMethodResponse.Check}
                   selected={paymentId === paymentMethod.id}
                   onSelect={() => {
@@ -2170,7 +2182,7 @@ export function SelectPaymentMethod({
             ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
             .map((paymentMethod) => (
               <div key={paymentMethod.id} className="mercoa-mt-1">
-                <CreditCardComponent
+                <CardComponent
                   account={paymentMethod as Mercoa.PaymentMethodResponse.Card}
                   selected={paymentId === paymentMethod.id}
                   onSelect={() => {

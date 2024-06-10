@@ -6,8 +6,8 @@ import {
   AddBankViaPlaidOrManual,
   AddCheck,
   AddCustomPaymentMethod,
-  BankAccountComponent,
-  CheckComponent,
+  BankAccount,
+  Check,
   CustomPaymentMethodComponent,
   LoadingSpinnerIcon,
   MercoaButton,
@@ -183,7 +183,7 @@ export function DisbursementMethods({
             .map((method) => (
               <Fragment key={method.id}>
                 {method.type === Mercoa.PaymentMethodType.BankAccount && (
-                  <BankAccountComponent
+                  <BankAccount
                     account={method}
                     onSelect={(e) => {
                       setSelectedExisting(e)
@@ -192,7 +192,7 @@ export function DisbursementMethods({
                   />
                 )}
                 {method.type === Mercoa.PaymentMethodType.Check && (
-                  <CheckComponent
+                  <Check
                     account={method}
                     onSelect={(e) => {
                       setSelectedExisting(e)
@@ -213,14 +213,14 @@ export function DisbursementMethods({
               </Fragment>
             ))}
           {selectedMethod?.type === Mercoa.PaymentMethodType.BankAccount && (
-            <BankAccountComponent
+            <BankAccount
               onSelect={() => {
                 setSelectedExisting('new')
               }}
             />
           )}
           {selectedMethod?.type === Mercoa.PaymentMethodType.Check && (
-            <CheckComponent
+            <Check
               onSelect={() => {
                 setSelectedExisting('new')
               }}

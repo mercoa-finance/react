@@ -1,0 +1,42 @@
+import { CounterpartySearch, MercoaSession } from '@mercoa/react'
+import { payerEntity, vendorEntities } from '../../mockData'
+import { ComponentContainer } from '../../components/helpers'
+
+# Counterparty Search
+
+The `<CounterpartySearch>` component lets you search for, select, and edit a counterparty, or create a new one.
+
+## Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+## Props
+
+| Name                | Type                | Required | Description                                                              |
+| :-------------------| :-------------------| :--------| :------------------------------------------------------------------------|
+| counterparty        | `Mercoa.CounterpartyResponse`         |          | Pre-selected Counterparty                       |
+| type                | `"payee"` `"payor"`                   | ✅       | Use `Payee` to view as a payee (AP), and `Payor` to view as a payor (AR) |
+| onSelect            | `((counterparty: CounterpartyResponse) => any)` |          | Function to call when an counterparty is selected                                  |
+
+
+## Examples
+
+### Search
+
+<ComponentContainer minHeight='300px'>
+  <CounterpartySearch type="payee" />
+  ```jsx
+<CounterpartySearch type="payee" />
+  ```
+</ComponentContainer>
+
+### Pre-Selected
+
+<ComponentContainer minHeight='300px'>
+  <CounterpartySearch type="payee" counterparty={vendorEntities[0]}/>
+  ```jsx
+<CounterpartySearch type="payee" counterparty={vendorEntities[0]}/>
+  ```
+</ComponentContainer>

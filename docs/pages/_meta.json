@@ -1,3 +1,11 @@
 {
-  "index": "Introduction"
+  "index": "Introduction",
+  "Portal": "Drop In Portal",
+  "Entity": "Entity",
+  "Counterparties": "Counterparties",
+  "Payables": "Payables",
+  "Receivables": "Receivables",
+  "PaymentMethods": "Payment Methods",
+  "Metrics": "Invoice Metrics / Graphs",
+  "Approvals": "Approvals"
 }

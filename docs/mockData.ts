@@ -813,6 +813,102 @@ export const representatives: Mercoa.RepresentativeResponse[] = [
   },
 ]
 
+const entityMetadata = [
+  {
+    "key": "propertyId",
+    "value": [
+      "{key: 'prop_123', value: 'Beach Rental'}",
+      "{key: 'prop_456', value: 'City Rental'}"
+    ]
+  },
+  {
+    "key": "projectId",
+    "value": [
+      "proj_123"
+    ]
+  }
+]
+
+const pmSchemas = [
+  {
+    "id": "cpms_4794d597-70dc-4fec-b6ec-c5988e759769",
+    "name": "Wire",
+    "isSource": false,
+    "isDestination": true,
+    "supportedCurrencies": [
+      "USD",
+      "EUR"
+    ],
+    "fields": [
+      {
+        "name": "bankName",
+        "type": "text",
+        "optional": false,
+        "displayName": "Bank Name"
+      },
+      {
+        "name": "recipientName",
+        "type": "text",
+        "optional": false,
+        "displayName": "Recipient Name"
+      },
+      {
+        "name": "accountNumber",
+        "type": "number",
+        "optional": false,
+        "displayName": "Account Number",
+        "useAsAccountNumber": true
+      },
+      {
+        "name": "routingNumber",
+        "type": "number",
+        "optional": false,
+        "displayName": "Routing Number"
+      }
+    ],
+    "createdAt": "2021-01-01T00:00:00Z",
+    "updatedAt": "2021-01-01T00:00:00Z"
+  },
+  {
+    "id": "cpms_14f78dcd-4614-426e-a37a-7af262431d41",
+    "name": "Check",
+    "isSource": false,
+    "isDestination": true,
+    "supportedCurrencies": [
+      "USD"
+    ],
+    "fields": [
+      {
+        "name": "payToTheOrderOf",
+        "type": "text",
+        "optional": false,
+        "displayName": "Pay To The Order Of"
+      },
+      {
+        "name": "accountNumber",
+        "type": "number",
+        "optional": false,
+        "displayName": "Account Number",
+        "useAsAccountNumber": true
+      },
+      {
+        "name": "routingNumber",
+        "type": "number",
+        "optional": false,
+        "displayName": "Routing Number"
+      },
+      {
+        "name": "address",
+        "type": "address",
+        "optional": false,
+        "displayName": "Address"
+      }
+    ],
+    "createdAt": "2021-01-01T00:00:00Z",
+    "updatedAt": "2021-01-01T00:00:00Z"
+  }
+]
+
 export const mswHandlers = [
   // Org
   http.get(`${basePath}/organization`, () => {
@@ -824,9 +920,6 @@ export const mswHandlers = [
   }),
   http.get(`${basePath}/entity/${payerEntity.id}`, () => {
     return HttpResponse.json(payerEntity)
-  }),
-  http.get(`${basePath}/entity/${vendorEntities[0].id}`, () => {
-    return HttpResponse.json(vendorEntities[0])
   }),
   http.get(`${basePath}/entity/${payerEntity.id}/invoices`, ({ request }) => {
     const filteredInvoices = getFilteredInvoices({ request })
@@ -842,8 +935,13 @@ export const mswHandlers = [
   http.get(`${basePath}/entity/${payerEntity.id}/approval-policies`, () => {
     return HttpResponse.json([approvalPolicy])
   }),
+  http.post(`${basePath}/entity/${payerEntity.id}/approval-policy/ap_123`, () => {
+    return HttpResponse.json(approvalPolicy)
+  }),
   http.get(`${basePath}/entity/${payerEntity.id}/representatives`, () => {
     return HttpResponse.json(representatives)
+  }),  http.get(`${basePath}/entity/${payerEntity.id}/metadata`, () => {
+    return HttpResponse.json(entityMetadata)
   }),
   http.get(`${basePath}/entity/${payerEntity.id}/invoice-metrics`, ({ request }) => {
     const filteredInvoice = getFilteredInvoices({ request })?.[0]
@@ -854,6 +952,43 @@ export const mswHandlers = [
           totalAmount: filteredInvoice.amount ?? 0,
           totalCount: 1,
           currency: 'USD',
+          dates: {
+            '2021-01-01T00:00:00Z':{
+              date: '2021-01-01T00:00:00Z',
+              averageAmount: filteredInvoice.amount ?? 0,
+              totalAmount: filteredInvoice.amount ?? 0,
+              totalCount: 1,
+              currency: 'USD',
+            },
+            '2021-01-02T00:00:00Z':{
+              date: '2021-01-02T00:00:00Z',
+              averageAmount: filteredInvoice.amount ?? 0,
+              totalAmount: filteredInvoice.amount ?? 0,
+              totalCount: 2,
+              currency: 'USD',
+            },
+            '2021-01-03T00:00:00Z':{
+              date: '2021-01-03T00:00:00Z',
+              averageAmount: filteredInvoice.amount ?? 0,
+              totalAmount: filteredInvoice.amount ?? 0,
+              totalCount: 3,
+              currency: 'USD',
+            },
+            '2021-01-04T00:00:00Z':{
+              date: '2021-01-04T00:00:00Z',
+              averageAmount: filteredInvoice.amount ?? 0,
+              totalAmount: filteredInvoice.amount ?? 0,
+              totalCount: 1,
+              currency: 'USD',
+            },
+            '2021-01-05T00:00:00Z':{
+              date: '2021-01-05T00:00:00Z',
+              averageAmount: filteredInvoice.amount ?? 0,
+              totalAmount: filteredInvoice.amount ?? 0,
+              totalCount: 2,
+              currency: 'USD',
+            }
+          }
         },
       ])
     } else {
@@ -885,6 +1020,7 @@ export const mswHandlers = [
         paymentMethods: [vendorPaymentMethods[index]],
         invoiceMetrics: {
           totalAmount: 1000,
+          totalCount: 10,
           totalInvoices: 10,
           statuses: [],
         },
@@ -892,6 +1028,42 @@ export const mswHandlers = [
       })),
     })
   }),
+  http.get(`${basePath}/entity/${payerEntity.id}/counterparties/payors`, ({ request }) => {
+    const url = new URL(request.url)
+    const search = url.searchParams.get('name')?.toLocaleLowerCase()
+    const filteredVendors = vendorEntities.filter((entity) => {
+      if (search && !entity?.name.toLocaleLowerCase().startsWith(search)) return false
+      return true
+    })
+    return HttpResponse.json({
+      hasMore: false,
+      count: filteredVendors.length,
+      data: filteredVendors.map((entity, index) => ({
+        ...entity,
+        paymentMethods: [vendorPaymentMethods[index]],
+        invoiceMetrics: {
+          totalAmount: 1000,
+          totalCount: 10,
+          totalInvoices: 10,
+          statuses: [],
+        },
+        counterpartyType: [Mercoa.CounterpartyNetworkType.Entity],
+      })),
+    })
+  }),
+  http.get(`${basePath}/entity/${payerEntity.id}/paymentMethods`, () => {
+    return HttpResponse.json([payerBankAccount, payerBankAccount2, payerCreditCard, payerCreditCard2])
+  }),
+  ...vendorEntities.map((vendorEntity, index) => 
+    http.get(`${basePath}/entity/${vendorEntity.id}`, () => {
+      return HttpResponse.json(vendorEntity)
+    })
+  ),
+...vendorEntities.map((vendorEntity, index) => 
+  http.get(`${basePath}/entity/${vendorEntity.id}/paymentMethods`, ({ request }) => {
+    return HttpResponse.json([vendorPaymentMethods[index]])
+  })
+),
   http.get(`${basePath}/entity/${payerEntity.id}/users`, () => {
     return HttpResponse.json([user])
   }),
@@ -899,9 +1071,13 @@ export const mswHandlers = [
     return HttpResponse.json(user)
   }),
   // Invoice
-  http.get(`${basePath}/invoice/*`, () => {
+  http.get(`${basePath}/invoice/inv_new_ready`, () => {
     return HttpResponse.json(inv_new_ready)
   }),
+  // PMS
+  http.get(`${basePath}/paymentMethod/schema`, () => {
+    return HttpResponse.json(pmSchemas)
+  })
 ]
 
 // helper functions

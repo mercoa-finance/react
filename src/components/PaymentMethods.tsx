@@ -1,5 +1,5 @@
 import { Mercoa } from '@mercoa/javascript'
-import { BankAccounts, CreditCards, CustomPaymentMethod, NoSession, useMercoaSession } from './index'
+import { BankAccounts, Cards, CustomPaymentMethod, NoSession, useMercoaSession } from './index'
 
 export function PaymentMethods() {
   const mercoaSession = useMercoaSession()
@@ -19,7 +19,7 @@ export function PaymentMethods() {
       ) && (
         <>
           <h3 className="mercoa-mt-8">Cards</h3>
-          <CreditCards showEdit showAdd />
+          <Cards showEdit showAdd />
         </>
       )}
       {mercoaSession.organization?.paymentMethods?.payerPayments?.find(

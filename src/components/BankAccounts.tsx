@@ -76,7 +76,7 @@ export function BankAccounts({
         )}
         <PaymentMethodList accounts={bankAccounts} showEdit={showEdit}>
           {(account: Mercoa.PaymentMethodResponse.BankAccount) => (
-            <BankAccountComponent account={account} onSelect={onSelect} showEdit={showEdit} />
+            <BankAccount account={account} onSelect={onSelect} showEdit={showEdit} />
           )}
         </PaymentMethodList>
         {bankAccounts && showAdd && (
@@ -103,7 +103,7 @@ export function BankAccounts({
   }
 }
 
-export function BankAccountComponent({
+export function BankAccount({
   children,
   account,
   onSelect,
@@ -463,7 +463,7 @@ export function AddBankAccountDialog({
           />
         }
       />
-      <BankAccountComponent onSelect={() => setShowDialog(true)} />
+      <BankAccount onSelect={() => setShowDialog(true)} />
     </div>
   )
 }

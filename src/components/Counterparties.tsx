@@ -20,9 +20,9 @@ import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { capitalize, constructFullName } from '../lib/lib'
 import {
-  BankAccountComponent,
-  CheckComponent,
-  CreditCardComponent,
+  BankAccount,
+  CardComponent,
+  Check,
   CustomPaymentMethodComponent,
   DebouncedSearch,
   EntityOnboardingForm,
@@ -571,6 +571,18 @@ function CounterpartyAddOrEdit({
   )
 }
 
+export type CounterpartiesChildrenProps = {
+  setSearch: (search: string) => void
+  dataLoaded: boolean
+  hasNext: boolean
+  getNext: () => void
+  hasPrevious: boolean
+  getPrevious: () => void
+  resultsPerPage: number
+  setResultsPerPage: (value: number) => void
+  counterparties: Mercoa.CounterpartyResponse[]
+}
+
 export function Counterparties({
   type,
   admin,
@@ -588,17 +600,7 @@ export function Counterparties({
     resultsPerPage,
     setResultsPerPage,
     counterparties,
-  }: {
-    setSearch: (search: string) => void
-    dataLoaded: boolean
-    hasNext: boolean
-    getNext: () => void
-    hasPrevious: boolean
-    getPrevious: () => void
-    resultsPerPage: number
-    setResultsPerPage: (value: number) => void
-    counterparties: Mercoa.CounterpartyResponse[]
-  }) => JSX.Element
+  }: CounterpartiesChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
   const [entities, setEntities] = useState<Mercoa.CounterpartyResponse[] | undefined>(undefined)
@@ -1022,13 +1024,13 @@ export function CounterpartyDetails({
   function PaymentMethodCard({ method }: { method: Mercoa.PaymentMethodResponse }) {
     let card = <></>
     if (method.type === Mercoa.PaymentMethodType.BankAccount) {
-      card = <BankAccountComponent account={method} />
+      card = <BankAccount account={method} />
     } else if (method.type === Mercoa.PaymentMethodType.Card) {
-      card = <CreditCardComponent account={method} />
+      card = <CardComponent account={method} />
     } else if (method.type === Mercoa.PaymentMethodType.Custom) {
       card = <CustomPaymentMethodComponent account={method} />
     } else if (method.type === Mercoa.PaymentMethodType.Check) {
-      card = <CheckComponent account={method} />
+      card = <Check account={method} />
     }
     return (
       <div key={method.id}>
@@ -1220,7 +1222,9 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal.paymentMethods
             .filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center  mercoa-border-t mercoa-border-gray-900/5 ">
           <dd className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
@@ -1230,14 +1234,18 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal.paymentMethods
             .filter((e) => e.type === Mercoa.PaymentMethodType.Check)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
 
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center mercoa-border-t mercoa-border-gray-900/5 " />
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal.paymentMethods
             .filter((e) => e.type === Mercoa.PaymentMethodType.Custom)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
       </div>
     )

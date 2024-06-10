@@ -1,3 +1,6 @@
 {
-  "Onboarding": "Onboarding"
+  "Onboarding": "Onboarding",
+  "OnboardingForm": "Entity Onboarding Form",
+  "RepresentativeForm": "Add Representative Form",
+  "EmailInbox": "Email Inbox Address"
 }

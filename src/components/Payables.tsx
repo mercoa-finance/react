@@ -86,6 +86,9 @@ async function getMetrics({
   excludeReceivables: boolean
   excludePayables: boolean
 }) {
+  if (!excludePayables && !excludeReceivables) {
+    excludeReceivables = true
+  }
   const results = (
     await Promise.all(
       (statuses ?? []).map(async (status) => {
@@ -243,6 +246,20 @@ export type InvoiceTableColumn = {
   format?: (value: string | number | Date, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
 }
 
+export type PayablesTableChildrenProps = {
+  dataLoaded: boolean
+  invoices: Mercoa.InvoiceResponse[]
+  hasNext: boolean
+  getNext: () => void
+  hasPrevious: boolean
+  getPrevious: () => void
+  resultsPerPage: number
+  setResultsPerPage: (value: number) => void
+  selectedInvoiceStatuses: Mercoa.InvoiceStatus[]
+  setSelectedInvoiceStatues: (statuses: Mercoa.InvoiceStatus[]) => void
+  downloadCSV: () => void
+}
+
 export function PayablesTable({
   statuses,
   search,
@@ -272,19 +289,7 @@ export function PayablesTable({
     selectedInvoiceStatuses,
     setSelectedInvoiceStatues,
     downloadCSV,
-  }: {
-    dataLoaded: boolean
-    invoices: Mercoa.InvoiceResponse[]
-    hasNext: boolean
-    getNext: () => void
-    hasPrevious: boolean
-    getPrevious: () => void
-    resultsPerPage: number
-    setResultsPerPage: (value: number) => void
-    selectedInvoiceStatuses: Mercoa.InvoiceStatus[]
-    setSelectedInvoiceStatues: (statuses: Mercoa.InvoiceStatus[]) => void
-    downloadCSV: () => void
-  }) => ReactElement | null
+  }: PayablesTableChildrenProps) => ReactElement | null
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -932,7 +937,7 @@ export function PayablesTable({
 
   if (!mercoaSession.client) return <NoSession componentName="PayablesTable" />
   return (
-    <>
+    <div>
       <div className="mercoa-min-h-[600px]">
         {/* create checkbox that toggles invoices assigned to me */}
         {currentStatuses.includes(Mercoa.InvoiceStatus.New) && invoicesThatNeedMyApprovalCount > 0 && (
@@ -1107,7 +1112,7 @@ export function PayablesTable({
         setResultsPerPage={setResultsPerPage}
         downloadAll={downloadAsCSV}
       />
-    </>
+    </div>
   )
 }
 

@@ -14,8 +14,10 @@ export function EntityDetails({ children }: { children: Function }) {
 export function EntityStatus({ entity }: { entity?: Mercoa.EntityResponse }) {
   const mercoaSession = useMercoaSession()
   entity = entity || mercoaSession.entity
-  if (!mercoaSession.client) return <NoSession componentName="EntityStatus" />
-  if (!entity) return <></>
+  if (!entity) {
+    if (!mercoaSession.client && !entity) return <NoSession componentName="EntityStatus" />
+    return <></>
+  }
   return (
     <>
       {entity.status === 'unverified' && (
