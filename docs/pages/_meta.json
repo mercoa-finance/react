@@ -1,6 +1,6 @@
 {
   "index": "Introduction",
-  "Session": "useMercoaSession()",
+  "Session": "useMercoaSession",
   "Portal": "Drop In Portal",
   "Entity": "Entity",
   "Counterparties": "Counterparties",
