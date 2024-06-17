@@ -102,7 +102,7 @@ export function EntityPortal({ token }: { token: string }) {
               To pay bills and invoices with {mercoaSession.organization.name}, you&apos;ll need to provide us with a
               few pieces of information.
             </p>
-            <div className="mercoa-p-4 mercoa-text-sm mercoa-rounded-md mercoa-bg-gray-100 mercoa-my-4 mercoa-grid mercoa-gap-3">
+            <div className="mercoa-p-4 mercoa-text-sm mercoa-rounded-mercoa mercoa-bg-gray-100 mercoa-my-4 mercoa-grid mercoa-gap-3">
               <p className="mercoa-flex mercoa-items-center">
                 <LockClosedIcon className="mercoa-size-5 mercoa-mr-5" /> Your information is used for verification
                 purposes and isn&apos;t used for third-party marketing. We take your privacy seriously.

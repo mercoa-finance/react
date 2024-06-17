@@ -8,7 +8,7 @@ import {
   AddCustomPaymentMethod,
   BankAccount,
   Check,
-  CustomPaymentMethodComponent,
+  CustomPaymentMethod,
   LoadingSpinnerIcon,
   MercoaButton,
   NoSession,
@@ -124,7 +124,7 @@ export function DisbursementMethods({
 
     return (
       <button
-        className="mercoa-cursor-pointer  mercoa-rounded-lg mercoa-border mercoa-border-gray-100 mercoa-bg-white mercoa-shadow-lg hover:mercoa-shadow-xl"
+        className="mercoa-cursor-pointer  mercoa-rounded-mercoa mercoa-border mercoa-border-gray-100 mercoa-bg-white mercoa-shadow-lg hover:mercoa-shadow-xl"
         onClick={() => setSelectedMethod(method)}
       >
         <div className="mercoa-px-4 mercoa-py-5 mercoa-text-center sm:mercoa-p-6">
@@ -201,7 +201,7 @@ export function DisbursementMethods({
                   />
                 )}
                 {method.type === Mercoa.PaymentMethodType.Custom && method.schemaId === selectedMethod?.name && (
-                  <CustomPaymentMethodComponent
+                  <CustomPaymentMethod
                     account={method}
                     onSelect={(e: Mercoa.PaymentMethodResponse) => {
                       setSelectedExisting(e)
@@ -227,7 +227,7 @@ export function DisbursementMethods({
             />
           )}
           {selectedMethod?.type === Mercoa.PaymentMethodType.Custom && (
-            <CustomPaymentMethodComponent
+            <CustomPaymentMethod
               onSelect={() => {
                 setSelectedExisting('new')
               }}
@@ -265,7 +265,7 @@ export function DisbursementMethods({
     return (
       <div className="mercoa-m-auto mercoa-w-96 mercoa-text-left">
         <div
-          className="mercoa-mt-3 mercoa-rounded-md mercoa-bg-white mercoa-p-5 mercoa-text-center mercoa-shadow-lg"
+          className="mercoa-mt-3 mercoa-rounded-mercoa mercoa-bg-white mercoa-p-5 mercoa-text-center mercoa-shadow-lg"
           style={{ minHeight: '300px' }}
         >
           {selectedMethod?.type === Mercoa.PaymentMethodType.BankAccount && (

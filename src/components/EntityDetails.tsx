@@ -56,7 +56,7 @@ export function EntityStatus({ entity }: { entity?: Mercoa.EntityResponse }) {
   )
 }
 
-export function EntityInboxEmail({ entity }: { entity?: Mercoa.EntityResponse }) {
+export function EntityInboxEmail({ entity, layout }: { entity?: Mercoa.EntityResponse; layout?: 'left' | 'right' }) {
   const mercoaSession = useMercoaSession()
   const entitySelected = entity || mercoaSession.entity
   if (!mercoaSession.client) return <NoSession componentName="EntityInboxEmail" />
@@ -71,8 +71,9 @@ export function EntityInboxEmail({ entity }: { entity?: Mercoa.EntityResponse })
         toast.success('Email address copied')
       }}
     >
-      <Square2StackIcon className="mercoa-size-5" />
+      {(!layout || layout === 'left') && <Square2StackIcon className="mercoa-size-5" />}
       {entitySelected?.emailTo ?? ''}@{mercoaSession.organization?.emailProvider?.inboxDomain}
+      {(!layout || layout === 'right') && <Square2StackIcon className="mercoa-size-5" />}
     </button>
   )
 }

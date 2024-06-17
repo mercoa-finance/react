@@ -104,11 +104,11 @@ export function EntityUserNotificationTable({
           })}
         >
           <div className="mercoa-hidden md:mercoa-block md:mercoa-col-span-2" />
-          <div className="mercoa-mt-2 mercoa-flex mercoa-w-full mercoa-rounded-md mercoa-shadow-sm mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1"></div>
+          <div className="mercoa-mt-2 mercoa-flex mercoa-w-full mercoa-rounded-mercoa mercoa-shadow-sm mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1"></div>
         </form>
         <div className="-mercoa-my-2 -mercoa-mx-4 mercoa-overflow-x-auto sm:-mercoa-mx-6 lg:-mercoa-mx-8">
           <div className="mercoa-inline-block mercoa-min-w-full mercoa-py-2 mercoa-align-middle md:mercoa-px-6 lg:mercoa-px-8">
-            <div className="mercoa-overflow-hidden mercoa-shadow mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 md:mercoa-rounded-lg">
+            <div className="mercoa-overflow-hidden mercoa-shadow mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 md:mercoa-rounded-mercoa">
               <table className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300">
                 <thead className="mercoa-bg-gray-50">
                   <tr>
@@ -328,7 +328,7 @@ export function EntityUsersTable({
   if (!mercoaSession.client) return <NoSession componentName="EntityUsersTable" />
   return (
     <>
-      <div className="mercoa-rounded-md mercoa-bg-gray-100 mercoa-p-8">
+      <div className="mercoa-rounded-mercoa mercoa-bg-gray-100 mercoa-p-8">
         <ul
           role="list"
           className="mercoa-divide-y mercoa-divide-gray-100 mercoa-overflow-hidden mercoa-bg-white mercoa-shadow-sm mercoa-ring-1 mercoa-ring-gray-900/5 sm:mercoa-rounded-xl"
@@ -372,7 +372,7 @@ export function EntityUsersTable({
                   })}
                 </div>
                 <div
-                  className="mercoa-flex mercoa-items-center mercoa-rounded-md mercoa-p-2 hover:mercoa-bg-gray-200"
+                  className="mercoa-flex mercoa-items-center mercoa-rounded-mercoa mercoa-p-2 hover:mercoa-bg-gray-200"
                   onClick={(e) => {
                     e.preventDefault()
                     e.stopPropagation()
@@ -501,7 +501,7 @@ export function EntityUsersTable({
                 leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
               >
                 <Dialog.Panel
-                  className={`mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-max-w-lg sm:mercoa-p-6`}
+                  className={`mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-max-w-lg sm:mercoa-p-6`}
                 >
                   {selectedUser && <EditUser user={selectedUser} />}
                 </Dialog.Panel>

@@ -9,13 +9,14 @@ import { Moov, loadMoov } from '@moovio/moov-js'
 import { jwtDecode } from 'jwt-decode'
 import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { ToastContainer } from 'react-toastify'
-import { EntityPortal, TokenOptions } from './index'
+import { EntityPortal, TokenOptions, getAllUsers } from './index'
 export interface MercoaContext {
   token?: string
   entityId?: string
   entity: Mercoa.EntityResponse | undefined
   user: Mercoa.EntityUserResponse | undefined
   users: Mercoa.EntityUserResponse[]
+  customPaymentMethodSchemas: Mercoa.CustomPaymentMethodSchemaResponse[]
   selectedInvoice: Mercoa.InvoiceResponse | undefined
   setSelectedInvoice: Function
   client: MercoaClient | undefined
@@ -39,6 +40,7 @@ const sessionContext = createContext<MercoaContext>({
   entity: undefined,
   user: undefined,
   users: [],
+  customPaymentMethodSchemas: [],
   selectedInvoice: undefined,
   setSelectedInvoice: () => {},
   client: undefined,
@@ -191,6 +193,8 @@ function useProvideSession({
   const [entity, setEntity] = useState<Mercoa.EntityResponse>()
   const [user, setUser] = useState<Mercoa.EntityUserResponse>()
   const [users, setUsers] = useState<Mercoa.EntityUserResponse[]>([])
+  const [customPaymentMethodSchemas, setCustomPaymentMethodSchemas] =
+    useState<Mercoa.CustomPaymentMethodSchemaResponse[]>()
   const [selectedInvoice, setSelectedInvoice] = useState<Mercoa.InvoiceResponse>()
   const [organization, setOrganization] = useState<Mercoa.OrganizationResponse>()
   const [refreshId, setRefreshId] = useState(0)
@@ -214,6 +218,8 @@ function useProvideSession({
 
   async function refresh() {
     if (!token) return
+
+    // get entity Id from passed prop or token
     let eid = entityId
     if (!eid) {
       try {
@@ -224,24 +230,39 @@ function useProvideSession({
       }
     }
     if (eid === 'undefined') return
-    client.organization
-      .get({
+
+    // Get org data
+    try {
+      const o = await client.organization.get({
         paymentMethods: true,
         emailProvider: true,
+        externalAccountingSystemProvider: true,
         colorScheme: true,
         payeeOnboardingOptions: true,
         payorOnboardingOptions: true,
         metadataSchema: true,
       })
-      .then((o: Mercoa.OrganizationResponse) => {
-        setOrganization(o)
-      })
+      const schemas = await client.customPaymentMethodSchema.getAll()
+      setOrganization(o)
+      setCustomPaymentMethodSchemas(schemas)
+    } catch (e) {
+      console.error(e)
+      console.error('Failed to get organization data')
+    }
+
     if (eid === 'all') return
+
+    // Get entity data
     if (eid) {
-      client.entity.get(eid).then((e) => {
+      try {
+        const e = await client.entity.get(eid)
         setEntity(e)
-        setRefreshId(Math.random())
-      })
+      } catch (e) {
+        console.error(e)
+        console.error('Failed to get entity ' + eid)
+      }
+
+      // get entity user id from passed prop or token
       let uid = entityUserId
       if (!uid) {
         try {
@@ -251,14 +272,19 @@ function useProvideSession({
           console.error(e)
         }
       }
-      if (uid) {
-        client.entity.user.get(eid, uid).then((u) => {
-          setUser(u)
-        })
+
+      // get user data
+      try {
+        const allUsers = await getAllUsers(client, eid)
+        setUsers(allUsers)
+        if (uid) {
+          setUser(allUsers.find((u) => u.id === uid))
+        }
+      } catch (e) {
+        console.error(e)
+        console.error('Failed to get users for entity ' + eid)
       }
-      client.entity.user.getAll(eid).then((u) => {
-        setUsers(u)
-      })
+
       if (!moov && !isAdmin) {
         client.entity.getToken(eid, {}).then(async (e) => {
           setToken(e)
@@ -335,6 +361,10 @@ function useProvideSession({
     document.documentElement.style.setProperty('--mercoa-primary-dark', primaryDark)
     document.documentElement.style.setProperty('--mercoa-primary-text', primaryText)
     document.documentElement.style.setProperty('--mercoa-primary-text-invert', primaryTextInvert)
+    document.documentElement.style.setProperty(
+      '--mercoa-border-radius',
+      (organization.colorScheme.roundedCorners ?? 6) + 'px',
+    )
   }, [organization?.colorScheme?.primaryColor])
 
   useEffect(() => {
@@ -345,7 +375,7 @@ function useProvideSession({
   return {
     refresh,
     refreshId,
-    token,
+    token: tokenLocal,
     entityId: entityId ?? entity?.id,
     entity,
     user,
@@ -362,6 +392,7 @@ function useProvideSession({
     getNewToken,
     googleMapsApiKey,
     setHeightOffset,
+    customPaymentMethodSchemas: customPaymentMethodSchemas ?? [],
     heightOffset: heightOffsetLocal,
     debug: (val: any) => {
       if (debug) {

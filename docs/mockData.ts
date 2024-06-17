@@ -97,6 +97,7 @@ const organization: Mercoa.OrganizationResponse = {
     primaryColor: '',
     secondaryColor: '',
     logoBackgroundColor: '',
+    roundedCorners: 6,
   },
   payeeOnboardingOptions: {
     enableBusiness: true,
@@ -338,7 +339,9 @@ export const payerEntity: Mercoa.EntityResponse = {
   emailToAlias: ['123Biz@yo.com'],
   foreignId: '888',
   isPayee: false,
+  isNetworkPayee: false,
   isPayor: true,
+  isNetworkPayor: false,
   profile: {
     business: {
       legalBusinessName: '123 Biz',
@@ -388,7 +391,9 @@ export const vendorEntities: Mercoa.EntityResponse[] = [
   name,
   email: name + '@123biz.com',
   isPayee: true,
+  isNetworkPayee: false,
   isPayor: false,
+  isNetworkPayor: false,
   profile: {
     business: {
       legalBusinessName: name + ' Biz',
@@ -815,98 +820,88 @@ export const representatives: Mercoa.RepresentativeResponse[] = [
 
 const entityMetadata = [
   {
-    "key": "propertyId",
-    "value": [
-      "{key: 'prop_123', value: 'Beach Rental'}",
-      "{key: 'prop_456', value: 'City Rental'}"
-    ]
+    key: 'propertyId',
+    value: ["{key: 'prop_123', value: 'Beach Rental'}", "{key: 'prop_456', value: 'City Rental'}"],
   },
   {
-    "key": "projectId",
-    "value": [
-      "proj_123"
-    ]
-  }
+    key: 'projectId',
+    value: ['proj_123'],
+  },
 ]
 
 const pmSchemas = [
   {
-    "id": "cpms_4794d597-70dc-4fec-b6ec-c5988e759769",
-    "name": "Wire",
-    "isSource": false,
-    "isDestination": true,
-    "supportedCurrencies": [
-      "USD",
-      "EUR"
+    id: 'cpms_4794d597-70dc-4fec-b6ec-c5988e759769',
+    name: 'Wire',
+    isSource: false,
+    isDestination: true,
+    supportedCurrencies: ['USD', 'EUR'],
+    fields: [
+      {
+        name: 'bankName',
+        type: 'text',
+        optional: false,
+        displayName: 'Bank Name',
+      },
+      {
+        name: 'recipientName',
+        type: 'text',
+        optional: false,
+        displayName: 'Recipient Name',
+      },
+      {
+        name: 'accountNumber',
+        type: 'number',
+        optional: false,
+        displayName: 'Account Number',
+        useAsAccountNumber: true,
+      },
+      {
+        name: 'routingNumber',
+        type: 'number',
+        optional: false,
+        displayName: 'Routing Number',
+      },
     ],
-    "fields": [
-      {
-        "name": "bankName",
-        "type": "text",
-        "optional": false,
-        "displayName": "Bank Name"
-      },
-      {
-        "name": "recipientName",
-        "type": "text",
-        "optional": false,
-        "displayName": "Recipient Name"
-      },
-      {
-        "name": "accountNumber",
-        "type": "number",
-        "optional": false,
-        "displayName": "Account Number",
-        "useAsAccountNumber": true
-      },
-      {
-        "name": "routingNumber",
-        "type": "number",
-        "optional": false,
-        "displayName": "Routing Number"
-      }
-    ],
-    "createdAt": "2021-01-01T00:00:00Z",
-    "updatedAt": "2021-01-01T00:00:00Z"
+    createdAt: '2021-01-01T00:00:00Z',
+    updatedAt: '2021-01-01T00:00:00Z',
   },
   {
-    "id": "cpms_14f78dcd-4614-426e-a37a-7af262431d41",
-    "name": "Check",
-    "isSource": false,
-    "isDestination": true,
-    "supportedCurrencies": [
-      "USD"
+    id: 'cpms_14f78dcd-4614-426e-a37a-7af262431d41',
+    name: 'Check',
+    isSource: false,
+    isDestination: true,
+    supportedCurrencies: ['USD'],
+    fields: [
+      {
+        name: 'payToTheOrderOf',
+        type: 'text',
+        optional: false,
+        displayName: 'Pay To The Order Of',
+      },
+      {
+        name: 'accountNumber',
+        type: 'number',
+        optional: false,
+        displayName: 'Account Number',
+        useAsAccountNumber: true,
+      },
+      {
+        name: 'routingNumber',
+        type: 'number',
+        optional: false,
+        displayName: 'Routing Number',
+      },
+      {
+        name: 'address',
+        type: 'address',
+        optional: false,
+        displayName: 'Address',
+      },
     ],
-    "fields": [
-      {
-        "name": "payToTheOrderOf",
-        "type": "text",
-        "optional": false,
-        "displayName": "Pay To The Order Of"
-      },
-      {
-        "name": "accountNumber",
-        "type": "number",
-        "optional": false,
-        "displayName": "Account Number",
-        "useAsAccountNumber": true
-      },
-      {
-        "name": "routingNumber",
-        "type": "number",
-        "optional": false,
-        "displayName": "Routing Number"
-      },
-      {
-        "name": "address",
-        "type": "address",
-        "optional": false,
-        "displayName": "Address"
-      }
-    ],
-    "createdAt": "2021-01-01T00:00:00Z",
-    "updatedAt": "2021-01-01T00:00:00Z"
-  }
+    createdAt: '2021-01-01T00:00:00Z',
+    updatedAt: '2021-01-01T00:00:00Z',
+  },
 ]
 
 export const mswHandlers = [
@@ -940,8 +935,15 @@ export const mswHandlers = [
   }),
   http.get(`${basePath}/entity/${payerEntity.id}/representatives`, () => {
     return HttpResponse.json(representatives)
-  }),  http.get(`${basePath}/entity/${payerEntity.id}/metadata`, () => {
+  }),
+  http.get(`${basePath}/entity/${payerEntity.id}/metadata`, () => {
     return HttpResponse.json(entityMetadata)
+  }),
+  http.get(`${basePath}/entity/${payerEntity.id}/metadata/*`, ({ request }) => {
+    const url = new URL(request.url)
+    const key = url.pathname.split('/').pop() ?? ''
+    console.log(entityMetadata.find((m) => m.key === key))
+    return HttpResponse.json(entityMetadata.find((m) => m.key === key)?.value ?? [])
   }),
   http.get(`${basePath}/entity/${payerEntity.id}/invoice-metrics`, ({ request }) => {
     const filteredInvoice = getFilteredInvoices({ request })?.[0]
@@ -953,42 +955,42 @@ export const mswHandlers = [
           totalCount: 1,
           currency: 'USD',
           dates: {
-            '2021-01-01T00:00:00Z':{
+            '2021-01-01T00:00:00Z': {
               date: '2021-01-01T00:00:00Z',
               averageAmount: filteredInvoice.amount ?? 0,
               totalAmount: filteredInvoice.amount ?? 0,
               totalCount: 1,
               currency: 'USD',
             },
-            '2021-01-02T00:00:00Z':{
+            '2021-01-02T00:00:00Z': {
               date: '2021-01-02T00:00:00Z',
               averageAmount: filteredInvoice.amount ?? 0,
               totalAmount: filteredInvoice.amount ?? 0,
               totalCount: 2,
               currency: 'USD',
             },
-            '2021-01-03T00:00:00Z':{
+            '2021-01-03T00:00:00Z': {
               date: '2021-01-03T00:00:00Z',
               averageAmount: filteredInvoice.amount ?? 0,
               totalAmount: filteredInvoice.amount ?? 0,
               totalCount: 3,
               currency: 'USD',
             },
-            '2021-01-04T00:00:00Z':{
+            '2021-01-04T00:00:00Z': {
               date: '2021-01-04T00:00:00Z',
               averageAmount: filteredInvoice.amount ?? 0,
               totalAmount: filteredInvoice.amount ?? 0,
               totalCount: 1,
               currency: 'USD',
             },
-            '2021-01-05T00:00:00Z':{
+            '2021-01-05T00:00:00Z': {
               date: '2021-01-05T00:00:00Z',
               averageAmount: filteredInvoice.amount ?? 0,
               totalAmount: filteredInvoice.amount ?? 0,
               totalCount: 2,
               currency: 'USD',
-            }
-          }
+            },
+          },
         },
       ])
     } else {
@@ -1054,16 +1056,16 @@ export const mswHandlers = [
   http.get(`${basePath}/entity/${payerEntity.id}/paymentMethods`, () => {
     return HttpResponse.json([payerBankAccount, payerBankAccount2, payerCreditCard, payerCreditCard2])
   }),
-  ...vendorEntities.map((vendorEntity, index) => 
+  ...vendorEntities.map((vendorEntity, index) =>
     http.get(`${basePath}/entity/${vendorEntity.id}`, () => {
       return HttpResponse.json(vendorEntity)
-    })
+    }),
   ),
-...vendorEntities.map((vendorEntity, index) => 
-  http.get(`${basePath}/entity/${vendorEntity.id}/paymentMethods`, ({ request }) => {
-    return HttpResponse.json([vendorPaymentMethods[index]])
-  })
-),
+  ...vendorEntities.map((vendorEntity, index) =>
+    http.get(`${basePath}/entity/${vendorEntity.id}/paymentMethods`, ({ request }) => {
+      return HttpResponse.json([vendorPaymentMethods[index]])
+    }),
+  ),
   http.get(`${basePath}/entity/${payerEntity.id}/users`, () => {
     return HttpResponse.json([user])
   }),
@@ -1077,7 +1079,7 @@ export const mswHandlers = [
   // PMS
   http.get(`${basePath}/paymentMethod/schema`, () => {
     return HttpResponse.json(pmSchemas)
-  })
+  }),
 ]
 
 // helper functions

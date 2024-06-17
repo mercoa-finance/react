@@ -1,63 +1,425 @@
 import { Combobox, Dialog, Transition } from '@headlessui/react'
 import {
-    ChevronUpDownIcon,
-    DevicePhoneMobileIcon,
-    EnvelopeIcon,
-    MapPinIcon,
-    PencilSquareIcon,
-    PlusIcon,
-    ShieldCheckIcon,
-    UserIcon,
-    XCircleIcon,
-    XMarkIcon,
+  ChevronUpDownIcon,
+  DevicePhoneMobileIcon,
+  EnvelopeIcon,
+  MapPinIcon,
+  PencilSquareIcon,
+  PlusIcon,
+  ShieldCheckIcon,
+  UserIcon,
+  XCircleIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
 import debounce from 'lodash/debounce'
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { capitalize, constructFullName } from '../lib/lib'
 import {
-    BankAccount,
-    Card,
-    Check,
-    CustomPaymentMethodComponent,
-    DebouncedSearch,
-    EntityOnboardingForm,
-    LoadingSpinnerIcon,
-    MercoaButton,
-    MercoaInput,
-    NoSession,
-    TableNavigation,
-    Tooltip,
-    inputClassName,
-    useMercoaSession,
+  BankAccount,
+  Card,
+  Check,
+  CustomPaymentMethod,
+  DebouncedSearch,
+  EntityOnboardingForm,
+  LoadingSpinnerIcon,
+  MercoaButton,
+  MercoaContext,
+  MercoaInput,
+  NoSession,
+  TableNavigation,
+  Tooltip,
+  inputClassName,
+  useMercoaSession,
 } from './index'
 const human = require('humanparser')
 
+export async function onSubmitCounterparty({
+  data,
+  mercoaSession,
+  type,
+  setError,
+  onSelect,
+}: {
+  data: any
+  mercoaSession: MercoaContext
+  type: 'payee' | 'payor'
+  setError: any
+  onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
+}) {
+  if (!mercoaSession.entity?.id) return
+  const profile: Mercoa.ProfileRequest = {}
+
+  if (data.accountType === 'individual') {
+    profile.individual = {
+      email: data.email,
+      name: {
+        firstName: data.firstName ?? '',
+        lastName: data.lastName ?? '',
+        middleName: data.middleName ?? '',
+        suffix: data.suffix ?? '',
+      },
+    }
+
+    if (!profile.individual.name.firstName) {
+      setError('vendor.firstName', {
+        type: 'manual',
+        message: 'First Name is required',
+      })
+      return
+    }
+    if (!profile.individual.name.lastName) {
+      setError('vendor.lastName', {
+        type: 'manual',
+        message: 'Last Name is required',
+      })
+      return
+    }
+  } else {
+    profile.business = {
+      email: data.email,
+      description: data.description,
+      website: data.website,
+      legalBusinessName: data.name,
+    }
+    if (!profile.business.legalBusinessName) {
+      setError('vendor.name', {
+        type: 'manual',
+        message: 'Name is required',
+      })
+      return
+    }
+    if (!profile.business.website && !profile.business.description) {
+      setError('vendor.website', {
+        type: 'manual',
+        message: 'Website or description is required',
+      })
+      setError('vendor.description', {
+        type: 'manual',
+        message: 'Website or description is required',
+      })
+      return
+    }
+  }
+
+  let counterparty: Mercoa.CounterpartyResponse | undefined = undefined
+
+  if (data?.id && data.id !== 'new') {
+    counterparty = await mercoaSession.client?.entity.update(data.id, {
+      profile,
+      accountType: data.accountType,
+    })
+  } else {
+    counterparty = await mercoaSession.client?.entity.create({
+      profile,
+      accountType: data.accountType,
+      isPayee: type === 'payee',
+      isPayor: type === 'payor',
+      isCustomer: false,
+    })
+  }
+
+  if (!counterparty?.id) return
+
+  if (type === 'payee') {
+    await mercoaSession.client?.entity.counterparty.addPayees(mercoaSession.entity.id, {
+      payees: [counterparty.id],
+    })
+  } else {
+    await mercoaSession.client?.entity.counterparty.addPayors(mercoaSession.entity.id, {
+      payors: [counterparty.id],
+    })
+  }
+  if (onSelect) onSelect(counterparty)
+}
+
+export const counterpartyYupValidation = {
+  id: yup.string().nullable(),
+  name: yup.string().typeError('Please enter a name'),
+  email: yup.string().email('Please enter a valid email'),
+  accountType: yup.string(),
+  firstName: yup.string(),
+  lastName: yup.string(),
+  middleName: yup.string(),
+  suffix: yup.string(),
+  website: yup.string().url('Website must start with http:// or https:// and be a valid URL'),
+  description: yup.string(),
+}
+
 export function CounterpartySearch({
   counterparty,
+  disableCreation,
   onSelect,
   type,
   network,
 }: {
-  counterparty?: Mercoa.CounterpartyResponse | Mercoa.EntityResponse
-  onSelect?: (counterparty: Mercoa.CounterpartyResponse | Mercoa.EntityResponse | undefined) => any
+  counterparty?: Mercoa.CounterpartyResponse
+  disableCreation?: boolean
+  onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
   type: 'payee' | 'payor'
   network?: Mercoa.CounterpartyNetworkType[]
 }) {
   const mercoaSession = useMercoaSession()
 
+  const [edit, setEdit] = useState<boolean>(false)
+
+  const methods = useForm({
+    resolver: yupResolver(
+      yup
+        .object({
+          vendor: yup.object().shape(counterpartyYupValidation),
+        })
+        .required(),
+    ),
+    defaultValues: {
+      vendor: {
+        id: counterparty?.id,
+        accountType: counterparty?.accountType,
+        name: counterparty?.name,
+        firstName: counterparty?.profile?.individual?.name?.firstName,
+        lastName: counterparty?.profile?.individual?.name?.lastName,
+        middleName: counterparty?.profile?.individual?.name?.middleName,
+        suffix: counterparty?.profile?.individual?.name?.suffix,
+        email:
+          counterparty?.accountType === 'business'
+            ? counterparty?.profile?.business?.email
+            : counterparty?.profile?.individual?.email,
+        website: counterparty?.profile?.business?.website,
+        description: counterparty?.profile?.business?.description,
+      },
+    },
+  })
+
+  const { handleSubmit, setError } = methods
+
+  const onSubmit = async (overall: any) => {
+    if (!mercoaSession.entity?.id) return
+    const data = overall.vendor
+    await onSubmitCounterparty({
+      data,
+      mercoaSession,
+      type,
+      setError,
+      onSelect: (e) => {
+        onSelect?.(e)
+        setEdit(false)
+      },
+    })
+  }
+
+  return (
+    <FormProvider {...methods}>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="mercoa-p-3 mercoa-bg-gray-100 mercoa-rounded-mercoa mercoa-relative mercoa-w-full"
+      >
+        <CounterpartySearchBase
+          counterparty={counterparty}
+          disableCreation={disableCreation}
+          onSelect={onSelect}
+          type={type}
+          network={network}
+          edit={edit}
+          setEdit={setEdit}
+        />
+      </form>
+    </FormProvider>
+  )
+}
+
+export function PayableCounterpartySearch({
+  counterparty,
+  disableCreation,
+  onSelect,
+  network,
+}: {
+  counterparty?: Mercoa.CounterpartyResponse
+  disableCreation?: boolean
+  onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
+  network?: Mercoa.CounterpartyNetworkType[]
+}) {
+  const [edit, setEdit] = useState<boolean>(false)
+  const {
+    formState: { errors },
+  } = useFormContext()
+
+  useEffect(() => {
+    setEdit(false)
+  }, [counterparty])
+
+  return (
+    <>
+      <div className="sm:mercoa-col-span-3">
+        <label
+          htmlFor="vendor-name"
+          className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700"
+        >
+          Vendor
+        </label>
+
+        <div className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-left">
+          <div className="mercoa-p-3 mercoa-bg-gray-100 mercoa-rounded-mercoa mercoa-relative mercoa-w-full">
+            <CounterpartySearchBase
+              counterparty={counterparty}
+              disableCreation={disableCreation}
+              onSelect={onSelect}
+              type={'payee'}
+              network={network}
+              edit={edit}
+              setEdit={setEdit}
+            />
+          </div>
+        </div>
+        {errors.vendorId?.message && (
+          <p className="mercoa-text-sm mercoa-text-red-500">{errors.vendorId?.message.toString()}</p>
+        )}
+      </div>
+    </>
+  )
+}
+
+export function AddCounterpartyModal({
+  type,
+  show,
+  setShow,
+}: {
+  type: 'payor' | 'payee'
+  show: boolean
+  setShow: (show: boolean) => void
+}) {
+  const mercoaSession = useMercoaSession()
+
+  const methods = useForm({
+    resolver: yupResolver(
+      yup
+        .object({
+          vendor: yup.object().shape(counterpartyYupValidation),
+        })
+        .required(),
+    ),
+    defaultValues: {
+      vendor: {
+        id: '',
+        accountType: 'business',
+        name: '',
+        firstName: '',
+        lastName: '',
+        middleName: '',
+        suffix: '',
+        email: '',
+        website: '',
+        description: '',
+      },
+    },
+  })
+
+  const { handleSubmit, setError } = methods
+
+  const onSubmit = async (overall: any) => {
+    if (!mercoaSession.entity?.id) return
+    const data = overall.vendor
+    await onSubmitCounterparty({
+      data,
+      mercoaSession,
+      type,
+      setError,
+      onSelect: (e) => {
+        setShow(false)
+        mercoaSession.refresh()
+      },
+    })
+  }
+
+  if (!mercoaSession.client) return <NoSession componentName="AddCounterpartyModal" />
+  return (
+    <Transition.Root show={show} as={Fragment}>
+      <Dialog
+        as="div"
+        className="mercoa-relative mercoa-z-10"
+        onClose={() => {
+          mercoaSession.refresh()
+          setShow(false)
+        }}
+      >
+        <Transition.Child
+          as={Fragment}
+          enter="mercoa-ease-out mercoa-duration-300"
+          enterFrom="mercoa-opacity-0"
+          enterTo="mercoa-opacity-100"
+          leave="mercoa-ease-in mercoa-duration-200"
+          leaveFrom="mercoa-opacity-100"
+          leaveTo="mercoa-opacity-0"
+        >
+          <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
+        </Transition.Child>
+
+        <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
+          <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="mercoa-ease-out mercoa-duration-300"
+              enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+              enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+              leave="mercoa-ease-in mercoa-duration-200"
+              leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+              leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+            >
+              <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-text-left mercoa-shadow-xl mercoa-transition-all">
+                <div className="mercoa-w-[600px]">
+                  <FormProvider {...methods}>
+                    <form
+                      onSubmit={handleSubmit(onSubmit)}
+                      className="mercoa-p-3 mercoa-bg-gray-100 mercoa-rounded-mercoa mercoa-relative mercoa-w-full"
+                    >
+                      <CounterpartyAddOrEditForm
+                        onComplete={() => {
+                          setShow(false)
+                          mercoaSession.refresh()
+                        }}
+                        onExit={() => {
+                          setShow(false)
+                        }}
+                      />
+                    </form>
+                  </FormProvider>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition.Root>
+  )
+}
+
+function CounterpartySearchBase({
+  counterparty,
+  disableCreation,
+  onSelect,
+  type,
+  network,
+  edit,
+  setEdit,
+}: {
+  counterparty?: Mercoa.CounterpartyResponse
+  disableCreation?: boolean
+  onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
+  type: 'payee' | 'payor'
+  network?: Mercoa.CounterpartyNetworkType[]
+  edit: boolean
+  setEdit: (edit: boolean) => any
+}) {
+  const mercoaSession = useMercoaSession()
+
   const buttonRef = useRef<HTMLButtonElement>(null)
   const [input, setInput] = useState<string>('')
-  const [edit, setEdit] = useState<boolean>(false)
   const [search, setSearch] = useState<string>()
   const [counterparties, setCounterparties] = useState<Array<Mercoa.CounterpartyResponse>>()
-  const [selectedCounterparty, setSelectedCounterparty] = useState<
-    Mercoa.CounterpartyResponse | Mercoa.EntityResponse | undefined
-  >()
+  const [selectedCounterparty, setSelectedCounterparty] = useState<Mercoa.CounterpartyResponse | undefined>()
 
   const [searchTerm, setSearchTerm] = useState<string>()
   const debouncedSearch = useRef(debounce(setSearch, 200)).current
@@ -102,7 +464,7 @@ export function CounterpartySearch({
     }
   }, [mercoaSession.entity?.id, mercoaSession.token, mercoaSession.refreshId, search])
 
-  function setSelection(counterparty: Mercoa.CounterpartyResponse | Mercoa.EntityResponse | undefined) {
+  function setSelection(counterparty: Mercoa.CounterpartyResponse | undefined) {
     setSelectedCounterparty(counterparty)
     onSelect?.(counterparty)
     if (counterparty) {
@@ -116,12 +478,12 @@ export function CounterpartySearch({
       <>
         <div className="mercoa-w-full mercoa-flex mercoa-items-center">
           <div className="mercoa-flex-auto">
-            <div className="mercoa-flex mercoa-items-center mercoa-bg-gray-50 mercoa-rounded-md">
+            <div className="mercoa-flex mercoa-items-center mercoa-bg-gray-50 mercoa-rounded-mercoa">
               <div className="mercoa-flex-auto mercoa-p-3">
                 <div className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">
                   {selectedCounterparty?.name}
                 </div>
-                {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && (
+                {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation && (
                   <div className="mercoa-text-sm mercoa-text-gray-500">{selectedCounterparty?.email}</div>
                 )}
               </div>
@@ -158,8 +520,7 @@ export function CounterpartySearch({
   if (selectedCounterparty?.id === 'new') {
     if (input) {
       return (
-        <CounterpartyAddOrEdit
-          type={type}
+        <CounterpartyAddOrEditForm
           name={input}
           onComplete={(e) => {
             setSelection(e)
@@ -170,26 +531,14 @@ export function CounterpartySearch({
       )
     } else if (selectedCounterparty) {
       return (
-        <CounterpartyAddOrEdit
-          counterparty={selectedCounterparty}
-          onComplete={setSelection}
-          type={type}
-          onExit={onSelect}
-        />
+        <CounterpartyAddOrEditForm counterparty={selectedCounterparty} onComplete={setSelection} onExit={onSelect} />
       )
     }
   }
 
   // Editing a counterparty
   else if (selectedCounterparty?.id && edit) {
-    return (
-      <CounterpartyAddOrEdit
-        counterparty={selectedCounterparty}
-        onComplete={setSelection}
-        type={type}
-        onExit={onSelect}
-      />
-    )
+    return <CounterpartyAddOrEditForm counterparty={selectedCounterparty} onComplete={setSelection} onExit={onSelect} />
   }
 
   // if no counterparties, show loading
@@ -214,8 +563,9 @@ export function CounterpartySearch({
       {({ open }) => (
         <div className="mercoa-relative mercoa-mt-2 mercoa-w-full">
           <Combobox.Input
+            placeholder="Enter a company name..."
             autoComplete="off"
-            className="mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-10 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
+            className="mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-10 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
             onFocus={() => {
               if (open) return // don't click button if already open, as it will close it
               setSearchTerm(undefined) // reset filter
@@ -234,7 +584,7 @@ export function CounterpartySearch({
             <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
           </Combobox.Button>
 
-          <Combobox.Options className="mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-md mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm">
+          <Combobox.Options className="mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-mercoa mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm">
             {counterparties.map((cp) => (
               <Combobox.Option
                 key={cp.id}
@@ -271,20 +621,23 @@ export function CounterpartySearch({
   )
 }
 
-function CounterpartyAddOrEdit({
+function CounterpartyAddOrEditForm({
   counterparty,
   name,
   onComplete,
-  type,
   onExit,
 }: {
-  counterparty?: Mercoa.EntityResponse
+  counterparty?: Mercoa.CounterpartyResponse
   name?: string
-  onComplete: (counterparty?: Mercoa.EntityResponse) => any
-  type: 'payee' | 'payor'
+  onComplete: (counterparty?: Mercoa.CounterpartyResponse) => any
   onExit?: (counterparty?: any) => any
 }) {
-  const mercoaSession = useMercoaSession()
+  const {
+    register,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useFormContext()
 
   let counterpartyName = name
   if (!counterpartyName && counterparty?.accountType === 'business') {
@@ -298,152 +651,43 @@ function CounterpartyAddOrEdit({
     )}`
   }
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    setError,
-    formState: { errors },
-  } = useForm({
-    resolver: yupResolver(
-      yup
-        .object({
-          name: yup.string().required('Please enter a name'),
-          email: yup.string().email('Please enter a valid email'),
-          accountType: yup.string().required(),
-          firstName: yup.string().required(),
-          lastName: yup.string().required(),
-          middleName: yup.string(),
-          suffix: yup.string(),
-          website: yup.string().url('Website must start with http:// or https:// and be a valid URL'),
-          description: yup.string(),
-        })
-        .required(),
-    ),
-    defaultValues: {
-      accountType: counterparty?.accountType,
-      name: counterpartyName,
-      firstName: counterparty?.profile?.individual?.name?.firstName,
-      lastName: counterparty?.profile?.individual?.name?.lastName,
-      middleName: counterparty?.profile?.individual?.name?.middleName,
-      suffix: counterparty?.profile?.individual?.name?.suffix,
-      email:
-        counterparty?.accountType === 'business'
-          ? counterparty?.profile?.business?.email
-          : counterparty?.profile?.individual?.email,
-      website: counterparty?.profile?.business?.website,
-      description: counterparty?.profile?.business?.description,
-    },
-  })
+  useEffect(() => {
+    setValue('vendor.id', counterparty?.id)
+    setValue('vendor.accountType', counterparty?.accountType)
+    setValue('vendor.name', counterpartyName)
+    setValue('vendor.firstName', counterparty?.profile?.individual?.name?.firstName)
+    setValue('vendor.lastName', counterparty?.profile?.individual?.name?.lastName)
+    setValue('vendor.middleName', counterparty?.profile?.individual?.name?.middleName)
+    setValue('vendor.suffix', counterparty?.profile?.individual?.name?.suffix)
+    setValue(
+      'vendor.email',
+      counterparty?.accountType === 'business'
+        ? counterparty?.profile?.business?.email
+        : counterparty?.profile?.individual?.email,
+    )
+    setValue('vendor.website', counterparty?.profile?.business?.website)
+    setValue('vendor.description', counterparty?.profile?.business?.description)
+  }, [counterparty])
 
-  const accountType = watch('accountType')
-  const nameInput = watch('name')
+  const accountType = watch('vendor.accountType')
+  const nameInput = watch('vendor.name')
 
   useEffect(() => {
     if (!nameInput && !accountType) return
     if (accountType === 'business') {
-      setValue('firstName', 'business')
-      setValue('lastName', 'business')
+      setValue('vendor.firstName', 'business')
+      setValue('vendor.lastName', 'business')
     } else {
       const { firstName, suffix, lastName, middleName } = human.parseName(nameInput)
-      setValue('firstName', firstName)
-      setValue('lastName', lastName)
-      setValue('middleName', middleName)
-      setValue('suffix', suffix)
+      setValue('vendor.firstName', firstName)
+      setValue('vendor.lastName', lastName)
+      setValue('vendor.middleName', middleName)
+      setValue('vendor.suffix', suffix)
     }
   }, [nameInput, accountType])
 
-  const onSubmit = async (data: any) => {
-    if (!mercoaSession.entity?.id) return
-    const profile: Mercoa.ProfileRequest = {}
-
-    if (data.accountType === 'individual') {
-      profile.individual = {
-        email: data.email,
-        name: {
-          firstName: data.firstName ?? '',
-          lastName: data.lastName ?? '',
-          middleName: data.middleName ?? '',
-          suffix: data.suffix ?? '',
-        },
-      }
-
-      if (!profile.individual.name.firstName) {
-        setError('firstName', {
-          type: 'manual',
-          message: 'First Name is required',
-        })
-        return
-      }
-      if (!profile.individual.name.lastName) {
-        setError('lastName', {
-          type: 'manual',
-          message: 'Last Name is required',
-        })
-        return
-      }
-    } else {
-      profile.business = {
-        email: data.email,
-        description: data.description,
-        website: data.website,
-        legalBusinessName: data.name,
-      }
-      if (!profile.business.legalBusinessName) {
-        setError('name', {
-          type: 'manual',
-          message: 'Name is required',
-        })
-        return
-      }
-      if (!profile.business.website && !profile.business.description) {
-        setError('website', {
-          type: 'manual',
-          message: 'Website or description is required',
-        })
-        setError('description', {
-          type: 'manual',
-          message: 'Website or description is required',
-        })
-        return
-      }
-    }
-
-    if (counterparty?.id && counterparty.id !== 'new') {
-      counterparty = await mercoaSession.client?.entity.update(counterparty.id, {
-        profile,
-        accountType: data.accountType,
-      })
-    } else {
-      counterparty = await mercoaSession.client?.entity.create({
-        profile,
-        accountType: data.accountType,
-        isPayee: type === 'payee',
-        isPayor: type === 'payor',
-        isCustomer: false,
-      })
-    }
-
-    if (!counterparty?.id) return
-
-    if (type === 'payee') {
-      await mercoaSession.client?.entity.counterparty.addPayees(mercoaSession.entity.id, {
-        payees: [counterparty.id],
-      })
-    } else {
-      await mercoaSession.client?.entity.counterparty.addPayors(mercoaSession.entity.id, {
-        payors: [counterparty.id],
-      })
-    }
-    onComplete(counterparty)
-  }
-
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="mercoa-p-3 mercoa-bg-gray-100 mercoa-rounded-md mercoa-relative mercoa-w-full"
-    >
+    <>
       <button
         type="button"
         className="mercoa-absolute mercoa-top-2 mercoa-right-2"
@@ -461,7 +705,7 @@ function CounterpartyAddOrEdit({
       </button>
       <MercoaInput
         label="Name"
-        name="name"
+        name="vendor.name"
         register={register}
         placeholder="Name"
         errors={errors}
@@ -470,7 +714,7 @@ function CounterpartyAddOrEdit({
       />
       <MercoaInput
         label="Email"
-        name="email"
+        name="vendor.email"
         register={register}
         placeholder="Email"
         errors={errors}
@@ -481,8 +725,8 @@ function CounterpartyAddOrEdit({
       <div className="mercoa-mt-1 mercoa-mt-2 mercoa-flex mercoa-space-x-2">
         <button
           type="button"
-          onClick={() => setValue('accountType', 'individual')}
-          className={`mercoa-flex-grow mercoa-rounded-lg mercoa-border mercoa-border-gray-300 mercoa-text-center mercoa-text-gray-600
+          onClick={() => setValue('vendor.accountType', 'individual')}
+          className={`mercoa-flex-grow mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-text-center mercoa-text-gray-600
             ${accountType === 'individual' ? 'mercoa-border-mercoa-primary mercoa-text-gray-800' : ''} 
             ${accountType === 'business' ? 'mercoa-text-gray-300' : ''} 
           mercoa-cursor-pointer mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm hover:mercoa-border-mercoa-primary hover:mercoa-text-gray-800`}
@@ -491,8 +735,8 @@ function CounterpartyAddOrEdit({
         </button>
         <button
           type="button"
-          onClick={() => setValue('accountType', 'business')}
-          className={`mercoa-flex-grow mercoa-rounded-lg mercoa-border mercoa-border-gray-300 mercoa-text-center mercoa-text-gray-600
+          onClick={() => setValue('vendor.accountType', 'business')}
+          className={`mercoa-flex-grow mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-text-center mercoa-text-gray-600
             ${accountType === 'business' ? 'mercoa-border-mercoa-primary mercoa-text-gray-800' : ''} 
             ${accountType === 'individual' ? 'mercoa-text-gray-300' : ''} 
           mercoa-cursor-pointer  mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm hover:mercoa-border-mercoa-primary hover:mercoa-text-gray-800`}
@@ -505,7 +749,7 @@ function CounterpartyAddOrEdit({
         <>
           <MercoaInput
             label="Business Website"
-            name="website"
+            name="vendor.website"
             register={register}
             placeholder="https://www.example.com"
             errors={errors}
@@ -513,7 +757,7 @@ function CounterpartyAddOrEdit({
           />
           <MercoaInput
             label="Business Description"
-            name="description"
+            name="vendor.description"
             register={register}
             errors={errors}
             className="mercoa-mt-1"
@@ -532,25 +776,25 @@ function CounterpartyAddOrEdit({
           <div className="mercoa-grid mercoa-grid-cols-7 mercoa-gap-1">
             <input
               type="text"
-              {...register('firstName')}
+              {...register('vendor.firstName')}
               required
               className={`mercoa-col-span-2 ${inputClassName({})}`}
               placeholder="First Name"
             />
             <input
               type="text"
-              {...register('middleName')}
+              {...register('vendor.middleName')}
               className={`mercoa-col-span-2 ${inputClassName({})}`}
               placeholder="Middle Name"
             />
             <input
               type="text"
-              {...register('lastName')}
+              {...register('vendor.lastName')}
               required
               className={`mercoa-col-span-2 ${inputClassName({})}`}
               placeholder="Last Name"
             />
-            <select {...register('suffix')} className={inputClassName({})}>
+            <select {...register('vendor.suffix')} className={inputClassName({})}>
               <option value=""></option>
               <option value="Sr.">Sr.</option>
               <option value="Jr.">Jr.</option>
@@ -563,11 +807,18 @@ function CounterpartyAddOrEdit({
         </div>
       )}
       {accountType && (
-        <MercoaButton isEmphasized type="submit" className="mercoa-mt-2 mercoa-w-full">
+        <MercoaButton
+          isEmphasized
+          type="submit"
+          className="mercoa-mt-2 mercoa-w-full"
+          onClick={() => {
+            setValue('saveAsStatus', 'COUNTERPARTY')
+          }}
+        >
           Save
         </MercoaButton>
       )}
-    </form>
+    </>
   )
 }
 
@@ -701,7 +952,7 @@ export function Counterparties({
       return (
         <tr key={entity.id} className={`hover:mercoa-bg-gray-100 ${index % 2 === 0 ? undefined : 'mercoa-bg-gray-50'}`}>
           <td className="mercoa-p-10 mercoa-bg-gray-200" colSpan={admin ? 4 : 3}>
-            <div className="mercoa-rounded-lg mercoa-bg-gray-50 mercoa-shadow mercoa-ring-1 mercoa-ring-gray-900/5">
+            <div className="mercoa-rounded-mercoa mercoa-bg-gray-50 mercoa-shadow mercoa-ring-1 mercoa-ring-gray-900/5">
               <CounterpartyDetails counterparty={entity} admin={admin} type={type} />
             </div>
           </td>
@@ -758,7 +1009,7 @@ export function Counterparties({
 
   if (!mercoaSession.client) return <NoSession componentName="Counterparties" />
   return (
-    <div className="mercoa-overflow-hidden mercoa-shadow mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 md:mercoa-rounded-lg mercoa-p-5">
+    <div className="mercoa-overflow-hidden mercoa-shadow mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 md:mercoa-rounded-mercoa mercoa-p-5">
       <div className="mercoa-flex mercoa-mb-5 mercoa-space-x-5 mercoa-items-center">
         <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900">
           {type === 'payor' ? 'Customers' : 'Vendors'}
@@ -853,70 +1104,6 @@ export function Counterparties({
 
       <AddCounterpartyModal type={type} show={addCounterparty} setShow={setAddCounterparty} />
     </div>
-  )
-}
-
-export function AddCounterpartyModal({
-  type,
-  show,
-  setShow,
-}: {
-  type: 'payor' | 'payee'
-  show: boolean
-  setShow: (show: boolean) => void
-}) {
-  const mercoaSession = useMercoaSession()
-
-  if (!mercoaSession.client) return <NoSession componentName="AddCounterpartyModal" />
-  return (
-    <Transition.Root show={show} as={Fragment}>
-      <Dialog
-        as="div"
-        className="mercoa-relative mercoa-z-10"
-        onClose={() => {
-          mercoaSession.refresh()
-          setShow(false)
-        }}
-      >
-        <Transition.Child
-          as={Fragment}
-          enter="mercoa-ease-out mercoa-duration-300"
-          enterFrom="mercoa-opacity-0"
-          enterTo="mercoa-opacity-100"
-          leave="mercoa-ease-in mercoa-duration-200"
-          leaveFrom="mercoa-opacity-100"
-          leaveTo="mercoa-opacity-0"
-        >
-          <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
-        </Transition.Child>
-
-        <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
-          <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
-            <Transition.Child
-              as={Fragment}
-              enter="mercoa-ease-out mercoa-duration-300"
-              enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
-              enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
-              leave="mercoa-ease-in mercoa-duration-200"
-              leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
-              leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
-            >
-              <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-text-left mercoa-shadow-xl mercoa-transition-all">
-                <div className="mercoa-w-[600px]">
-                  <CounterpartyAddOrEdit
-                    type={type}
-                    onComplete={() => {
-                      setShow(false)
-                      mercoaSession.refresh()
-                    }}
-                  />
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </div>
-      </Dialog>
-    </Transition.Root>
   )
 }
 
@@ -1028,7 +1215,7 @@ export function CounterpartyDetails({
     } else if (method.type === Mercoa.PaymentMethodType.Card) {
       card = <Card account={method} />
     } else if (method.type === Mercoa.PaymentMethodType.Custom) {
-      card = <CustomPaymentMethodComponent account={method} />
+      card = <CustomPaymentMethod account={method} />
     } else if (method.type === Mercoa.PaymentMethodType.Check) {
       card = <Check account={method} />
     }
@@ -1220,11 +1407,9 @@ export function CounterpartyDetails({
           </dd>
         </div>
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
-          {counterpartyLocal.paymentMethods
-            .filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
-            ?.map((method) => (
-              <PaymentMethodCard method={method} key={method.id} />
-            ))}
+          {counterpartyLocal?.paymentMethods
+            ?.filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
         </div>
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center  mercoa-border-t mercoa-border-gray-900/5 ">
           <dd className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
@@ -1232,20 +1417,16 @@ export function CounterpartyDetails({
           </dd>
         </div>
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
-          {counterpartyLocal.paymentMethods
-            .filter((e) => e.type === Mercoa.PaymentMethodType.Check)
-            ?.map((method) => (
-              <PaymentMethodCard method={method} key={method.id} />
-            ))}
+          {counterpartyLocal?.paymentMethods
+            ?.filter((e) => e.type === Mercoa.PaymentMethodType.Check)
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
         </div>
 
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center mercoa-border-t mercoa-border-gray-900/5 " />
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
-          {counterpartyLocal.paymentMethods
-            .filter((e) => e.type === Mercoa.PaymentMethodType.Custom)
-            ?.map((method) => (
-              <PaymentMethodCard method={method} key={method.id} />
-            ))}
+          {counterpartyLocal?.paymentMethods
+            ?.filter((e) => e.type === Mercoa.PaymentMethodType.Custom)
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
         </div>
       </div>
     )
