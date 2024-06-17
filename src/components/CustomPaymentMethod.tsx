@@ -5,6 +5,7 @@ import { usePlacesWidget } from 'react-google-autocomplete'
 import { Controller, UseFormRegister, useFieldArray, useForm } from 'react-hook-form'
 import { capitalize } from '../lib/lib'
 import {
+  AddDialog,
   DefaultPaymentMethodIndicator,
   LoadingSpinnerIcon,
   MercoaInput,
@@ -15,7 +16,7 @@ import {
   useMercoaSession,
 } from './index'
 
-export function CustomPaymentMethod({
+export function CustomPaymentMethods({
   children,
   onSelect,
   showEdit,
@@ -53,18 +54,20 @@ export function CustomPaymentMethod({
             <LoadingSpinnerIcon />
           </div>
         )}
-        <PaymentMethodList accounts={paymentMethods} showEdit={showEdit}>
-          {(account: Mercoa.PaymentMethodResponse.Custom) => (
-            <CustomPaymentMethodComponent account={account} onSelect={onSelect} schema={schema} showEdit={showEdit} />
+        <PaymentMethodList
+          accounts={paymentMethods}
+          showEdit={showEdit}
+          formatAccount={(account: Mercoa.PaymentMethodResponse.Custom) => (
+            <CustomPaymentMethod account={account} onSelect={onSelect} schema={schema} showEdit={showEdit} />
           )}
-        </PaymentMethodList>
+        />
         {paymentMethods && paymentMethods?.map((account) => <div className="mercoa-mt-2" key={account.id}></div>)}
       </>
     )
   }
 }
 
-export function CustomPaymentMethodComponent({
+export function CustomPaymentMethod({
   children,
   account,
   onSelect,
@@ -87,7 +90,7 @@ export function CustomPaymentMethodComponent({
           if (onSelect) onSelect(account)
         }}
         key={account?.id}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border ${
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
           selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
         } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
           onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
@@ -123,7 +126,7 @@ export function CustomPaymentMethodComponent({
         onClick={() => {
           if (onSelect) onSelect()
         }}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border ${
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
           selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
         } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
           onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
@@ -160,14 +163,14 @@ export function AddCustomPaymentMethod({
   title,
   actions,
   formOnlySubmit,
-  custom,
+  entityId,
   schema,
 }: {
-  onSubmit?: Function
+  onSubmit?: (data: Mercoa.PaymentMethodResponse) => void
   title?: ReactNode
   actions?: ReactNode
   formOnlySubmit?: Function
-  custom?: Mercoa.CustomPaymentMethodRequest
+  entityId?: string
   schema: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
   const mercoaSession = useMercoaSession()
@@ -184,8 +187,10 @@ export function AddCustomPaymentMethod({
       }
     })
 
-    if (mercoaSession.entity?.id) {
-      const resp = await mercoaSession.client?.entity.paymentMethod.create(mercoaSession.entity?.id, {
+    const eid = entityId ?? mercoaSession.entity?.id
+
+    if (eid) {
+      const resp = await mercoaSession.client?.entity.paymentMethod.create(eid, {
         type: 'custom',
         schemaId: schema?.id,
         data: filtered,
@@ -193,7 +198,6 @@ export function AddCustomPaymentMethod({
       })
       if (!onSubmit) return
       if (resp) onSubmit(resp)
-      else onSubmit()
     }
   }
 
@@ -207,7 +211,7 @@ export function AddCustomPaymentMethod({
       )}
       <AddCustomPaymentMethodForm register={register} schema={schema} control={control} />
       {actions || (
-        <button className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-indigo-600 mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2">
+        <button className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-mercoa mercoa-border mercoa-border-transparent mercoa-bg-indigo-600 mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2">
           Add
         </button>
       )}
@@ -385,7 +389,7 @@ function CustomAddressBlock({
       ref={ref as any}
       type="text"
       placeholder="Enter a location"
-      className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
+      className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
       required={required}
     />
   )
@@ -409,4 +413,42 @@ export function findCustomPaymentMethodAccountNameAndNumber(account: Mercoa.Cust
   }
 
   return { accountName, accountNumber }
+}
+
+export function AddCustomPaymentMethodDialog({
+  entityId,
+  schema,
+  onSelect,
+}: {
+  entityId?: Mercoa.EntityId
+  schema?: Mercoa.CustomPaymentMethodSchemaResponse
+  onSelect?: Function
+}) {
+  const [showDialog, setShowDialog] = useState(false)
+
+  const onClose = (account?: Mercoa.PaymentMethodResponse) => {
+    setShowDialog(false)
+    if (onSelect && account) onSelect(account)
+  }
+
+  if (!schema) return <></>
+
+  return (
+    <div className="mercoa-mt-2">
+      <AddDialog
+        show={showDialog}
+        onClose={onClose}
+        component={
+          <AddCustomPaymentMethod
+            onSubmit={(data) => {
+              onClose(data)
+            }}
+            schema={schema}
+            entityId={entityId}
+          />
+        }
+      />
+      <CustomPaymentMethod onSelect={() => setShowDialog(true)} schema={schema} />
+    </div>
+  )
 }

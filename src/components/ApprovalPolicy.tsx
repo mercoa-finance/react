@@ -333,11 +333,11 @@ function Level({
             </div>
             <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
               <div
-                className={`font-medium mercoa-text-gray-900 mercoa-p-2 mercoa-pb-5 mercoa-rounded-md ${
+                className={`font-medium mercoa-text-gray-900 mercoa-p-2 mercoa-pb-5 mercoa-rounded-mercoa ${
                   nestedBg[level + 1]
                 }`}
               >
-                <div className="mercoa-grid mercoa-grid-cols-4 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-md mercoa-relative mercoa-bg-white">
+                <div className="mercoa-grid mercoa-grid-cols-4 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-mercoa mercoa-relative mercoa-bg-white">
                   {isEditing && (
                     <button
                       className="mercoa-absolute mercoa-top-2 mercoa-right-2 mercoa-text-gray-400 hover:mercoa-text-gray-500"
@@ -517,7 +517,7 @@ function Trigger({
         return (
           <div
             key={triggerIndex}
-            className="mercoa-p-3 mercoa-bg-gray-50 mercoa-rounded-md mercoa-col-span-4 mercoa-flex mercoa-items-center"
+            className="mercoa-p-3 mercoa-bg-gray-50 mercoa-rounded-mercoa mercoa-col-span-4 mercoa-flex mercoa-items-center"
           >
             <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-mr-2">
               {triggerIndex > 0 ? 'And' : 'If'}
@@ -602,7 +602,7 @@ function Trigger({
                       </label>
                       <select
                         {...register(`policies.${index}.trigger.${triggerIndex}.currency`)}
-                        className="mercoa-h-full mercoa-rounded-md mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+                        className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                       >
                         {Object.values(Mercoa.CurrencyCode).map((option: Mercoa.CurrencyCode, index: number) => (
                           <option key={index} value={option}>
@@ -652,19 +652,14 @@ function Trigger({
                   is
                 </span>
                 <MetadataSelection
-                  lineItem
+                  hideLabel
                   setValue={(value) => {
                     setValue(`policies.${index}.trigger.${triggerIndex}.value`, value, {
                       shouldDirty: true,
                     })
                   }}
-                  hasDocument
-                  hasNoLineItems
                   skipValidation
                   value={watch(`policies.${index}.trigger.${triggerIndex}.value`)}
-                  entityMetadata={metadata.find(
-                    (e) => e.key === watch(`policies.${index}.trigger.${triggerIndex}.key`),
-                  )}
                   schema={
                     mercoaSession.organization?.metadataSchema?.find(
                       (e) => e.key === watch(`policies.${index}.trigger.${triggerIndex}.key`),
@@ -753,7 +748,7 @@ function Rule({
   }, [ruleIdType])
 
   return (
-    <div className="mercoa-grid mercoa-grid-cols-1 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-md mercoa-relative mercoa-mt-5 mercoa-ml-10 mercoa-bg-white">
+    <div className="mercoa-grid mercoa-grid-cols-1 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-mercoa mercoa-relative mercoa-mt-5 mercoa-ml-10 mercoa-bg-white">
       <ArrowDownLeftIcon className="mercoa-w-7 mercoa-h-7 mercoa-absolute -mercoa-top-2 -mercoa-left-10" />
       {noTrigger && isEditing ? (
         <button

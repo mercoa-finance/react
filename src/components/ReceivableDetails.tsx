@@ -41,7 +41,7 @@ export function ReceivableDetails({
   >([])
   const [sourcePaymentMethods, setSourcePaymentMethods] = useState<Mercoa.PaymentMethodResponse[]>([])
   const [invoiceLocal, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>(invoice)
-  const [selectedPayer, setSelectedPayer] = useState<Mercoa.EntityResponse | undefined>(invoice?.payer)
+  const [selectedPayer, setSelectedPayer] = useState<Mercoa.CounterpartyResponse | undefined>(invoice?.payer)
   const [supportedCurrencies, setSupportedCurrencies] = useState<Array<Mercoa.CurrencyCode>>([])
 
   const schema = yup
@@ -359,7 +359,7 @@ export function ReceivableDetails({
   return (
     <div className="mercoa-p-2">
       <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900">
-        Edit Invoice {invoiceLocal && <InvoiceStatusPill invoice={invoiceLocal} />}
+        Edit Invoice {invoiceLocal && <InvoiceStatusPill status={invoice?.status ?? 'DRAFT'} />}
       </h2>
       <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-max-w-xl mercoa-items-center mercoa-mt-10">
         {/*  VENDOR SEARCH */}
@@ -545,7 +545,7 @@ export function ReceivableDetails({
                 </label>
                 <select
                   {...register('currency')}
-                  className="mercoa-h-full mercoa-rounded-md mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+                  className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                 >
                   {supportedCurrencies.map((option: Mercoa.CurrencyCode, index: number) => (
                     <option key={index} value={option}>
@@ -569,7 +569,7 @@ export function ReceivableDetails({
                 id="description"
                 {...register('description')}
                 rows={3}
-                className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
+                className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
                 defaultValue={''}
               />
             </div>
@@ -585,17 +585,7 @@ export function ReceivableDetails({
             Choose existing payment method on file for{' '}
             <span className="mercoa-text-gray-800 mercoa-underline">{payerName}</span>:
           </h2>
-          <SelectPaymentMethod
-            paymentMethods={sourcePaymentMethods}
-            paymentMethodSchemas={paymentMethodSchemas}
-            currentPaymentMethodId={invoiceLocal?.paymentSourceId}
-            isSource
-            watch={watch}
-            setValue={setValue}
-            clearErrors={clearErrors}
-            refreshVendorPaymentMethods={refreshVendorPaymentMethods}
-            refreshPayerPaymentMethods={refreshPayerPaymentMethods}
-          />
+          <SelectPaymentMethod isSource />
           {errors.paymentSourceId?.message && (
             <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentSourceId?.message.toString()}</p>
           )}
@@ -610,17 +600,7 @@ export function ReceivableDetails({
           <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
             How do you want to get paid?
           </h2>
-          <SelectPaymentMethod
-            paymentMethods={destinationPaymentMethods}
-            paymentMethodSchemas={paymentMethodSchemas}
-            currentPaymentMethodId={invoiceLocal?.paymentDestinationId}
-            isDestination
-            watch={watch}
-            setValue={setValue}
-            clearErrors={clearErrors}
-            refreshVendorPaymentMethods={refreshVendorPaymentMethods}
-            refreshPayerPaymentMethods={refreshPayerPaymentMethods}
-          />
+          <SelectPaymentMethod isDestination />
           {/* {invoice?.id &&
       invoice?.status != Mercoa.InvoiceStatus.Canceled &&
       invoice?.status != Mercoa.InvoiceStatus.Archived &&

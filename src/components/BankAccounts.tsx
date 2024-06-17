@@ -74,25 +74,31 @@ export function BankAccounts({
             <LoadingSpinnerIcon />
           </div>
         )}
-        <PaymentMethodList accounts={bankAccounts} showEdit={showEdit}>
-          {(account: Mercoa.PaymentMethodResponse.BankAccount) => (
+        <PaymentMethodList
+          accounts={bankAccounts}
+          showEdit={showEdit}
+          addAccount={
+            bankAccounts && showAdd ? (
+              <>
+                <AddBankAccountDialog
+                  onSelect={(account: Mercoa.PaymentMethodResponse.BankAccount) => {
+                    if (
+                      !bankAccounts.find(
+                        (e) => e.accountNumber === account.accountNumber && e.routingNumber === account.routingNumber,
+                      )
+                    ) {
+                      setBankAccounts([...bankAccounts, account])
+                    }
+                    if (onSelect) onSelect(account)
+                  }}
+                />
+              </>
+            ) : undefined
+          }
+          formatAccount={(account: Mercoa.PaymentMethodResponse.BankAccount) => (
             <BankAccount account={account} onSelect={onSelect} showEdit={showEdit} />
           )}
-        </PaymentMethodList>
-        {bankAccounts && showAdd && (
-          <AddBankAccountDialog
-            onSelect={(account: Mercoa.PaymentMethodResponse.BankAccount) => {
-              if (
-                !bankAccounts.find(
-                  (e) => e.accountNumber === account.accountNumber && e.routingNumber === account.routingNumber,
-                )
-              ) {
-                setBankAccounts([...bankAccounts, account])
-              }
-              if (onSelect) onSelect(account)
-            }}
-          />
-        )}
+        />
         {bankAccounts && bankAccounts.length == 0 && verifiedOnly && (
           <div className="mercoa-mt-2 mercoa-text-left mercoa-text-gray-700">
             No verified bank accounts found. Please add and verify at least one bank account.
@@ -139,7 +145,7 @@ export function BankAccount({
           if (onSelect) onSelect(account)
         }}
         key={`${account?.routingNumber} ${account?.accountNumber}`}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border ${
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
           selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
         } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
           onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
@@ -200,13 +206,10 @@ export function BankAccount({
             </div>
             {showEdit &&
               (account?.status === Mercoa.BankStatus.New || account?.status === Mercoa.BankStatus.Pending) && (
-                <button
-                  className="mercoa-ml-2 mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-md mercoa-bg-green-600 mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-green-700"
-                  onClick={() => setVerify(true)}
-                >
+                <MercoaButton isEmphasized size="md" className="mercoa-ml-2" onClick={() => setVerify(true)}>
                   {account?.status === Mercoa.BankStatus.New && 'Start Verification'}
                   {account?.status === Mercoa.BankStatus.Pending && 'Complete Verification'}
-                </button>
+                </MercoaButton>
               )}
           </div>
         </div>
@@ -299,7 +302,7 @@ export function BankAccount({
                         leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
                         leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
                       >
-                        <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-lg sm:mercoa-p-6">
+                        <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-lg sm:mercoa-p-6">
                           <Dialog.Title
                             as="h3"
                             className="mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
@@ -317,12 +320,13 @@ export function BankAccount({
                                 Once transactions have been sent, you&apos;ll have 14 days to verify their values.
                               </p>
                               {mercoaSession.organization?.sandbox && (
-                                <p className="mercoa-mt-3 mercoa-rounded-md mercoa-bg-orange-200 mercoa-p-1 mercoa-text-sm">
+                                <p className="mercoa-mt-3 mercoa-rounded-mercoa mercoa-bg-orange-200 mercoa-p-1 mercoa-text-sm">
                                   <b>Test Mode:</b> actual deposits will not be sent. Use 0 and 0 as the values to
                                   instantly verify the account in the next step.
                                 </p>
                               )}
-                              <button
+                              <MercoaButton
+                                isEmphasized
                                 onClick={async () => {
                                   if (mercoaSession.entity?.id && account?.id) {
                                     await mercoaSession.client?.entity.paymentMethod.initiateMicroDeposits(
@@ -333,10 +337,10 @@ export function BankAccount({
                                     mercoaSession.refresh()
                                   }
                                 }}
-                                className="mercoa-mt-5 mercoa-inline-flex mercoa-w-full mercoa-justify-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-indigo-600 mercoa-px-4 mercoa-py-2 mercoa-text-base mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2 disabled:mercoa-bg-indigo-300 sm:mercoa-text-sm"
+                                className="mercoa-mt-5 mercoa-inline-flex mercoa-w-full mercoa-justify-center"
                               >
                                 Send deposits
-                              </button>
+                              </MercoaButton>
                             </>
                           )}
 
@@ -361,7 +365,7 @@ export function BankAccount({
                                 values please enter the amounts to verify this account.
                               </p>
                               {mercoaSession.organization?.sandbox && (
-                                <p className="mercoa-mt-3 mercoa-rounded-md mercoa-bg-orange-200 mercoa-p-1 mercoa-text-sm">
+                                <p className="mercoa-mt-3 mercoa-rounded-mercoa mercoa-bg-orange-200 mercoa-p-1 mercoa-text-sm">
                                   <b>Test Mode:</b> use 0 and 0 to instantly verify this account.
                                 </p>
                               )}
@@ -409,7 +413,7 @@ export function BankAccount({
         onClick={() => {
           if (onSelect) onSelect(account)
         }}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
           onSelect ? 'mercoa-cursor-pointer ' : ''
         }`}
       >
@@ -903,7 +907,7 @@ export function EditBankAccount({
         </div>
       )}
       {checkEnabled && (
-        <div className="mercoa-bg-gray-100 mercoa-p-2 mercoa-rounded-md mercoa-mt-2">
+        <div className="mercoa-bg-gray-100 mercoa-p-2 mercoa-rounded-mercoa mercoa-mt-2">
           <MercoaInput
             label="Initial Check Number"
             name="checkOptions.initialCheckNumber"

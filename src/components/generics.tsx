@@ -11,6 +11,7 @@ import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import { jwtDecode } from 'jwt-decode'
 import debounce from 'lodash/debounce'
+import get from 'lodash/get'
 import {
   ChangeEvent,
   FocusEvent,
@@ -55,7 +56,7 @@ export function MercoaButton({
 }: MercoaButtonProps) {
   let classNameInternal = `
     disabled:mercoa-bg-gray-300 disabled:mercoa-text-gray-600
-    mercoa-items-center mercoa-rounded-md
+    mercoa-items-center mercoa-rounded-mercoa
     mercoa-font-medium 
     ${
       hideOutline
@@ -333,7 +334,7 @@ export function TableNavigation({
                 Results per Page
               </Listbox.Label>
               <div className="mercoa-relative mercoa-mx-2">
-                <Listbox.Button className="mercoa-relative mercoa-w-24 mercoa-cursor-default mercoa-rounded-md mercoa-bg-white mercoa-py-1 mercoa-pl-3 mercoa-pr-10 mercoa-text-left mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-outline-none focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6">
+                <Listbox.Button className="mercoa-relative mercoa-w-24 mercoa-cursor-default mercoa-rounded-mercoa mercoa-bg-white mercoa-py-1 mercoa-pl-3 mercoa-pr-10 mercoa-text-left mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-outline-none focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6">
                   <span className="mercoa-block mercoa-truncate">{resultsPerPage}</span>
                   <span className="mercoa-pointer-events-none mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-pr-2">
                     <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
@@ -347,7 +348,7 @@ export function TableNavigation({
                   leaveFrom="mercoa-opacity-100"
                   leaveTo="mercoa-opacity-0"
                 >
-                  <Listbox.Options className="mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-md mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm">
+                  <Listbox.Options className="mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-mercoa mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm">
                     {pageOptions.map((num) => (
                       <Listbox.Option
                         key={num}
@@ -400,7 +401,7 @@ export function TableNavigation({
           <button
             type="button"
             onClick={downloadAll}
-            className="mercoa-relative mercoa-ml-3 mercoa-inline-flex mercoa-items-center mercoa-rounded-md mercoa-bg-white mercoa-px-3 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 focus-visible:mercoa-outline-offset-0 disabled:mercoa-opacity-50 disabled:mercoa-cursor-not-allowed"
+            className="mercoa-relative mercoa-ml-3 mercoa-inline-flex mercoa-items-center mercoa-rounded-mercoa mercoa-bg-white mercoa-px-3 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 focus-visible:mercoa-outline-offset-0 disabled:mercoa-opacity-50 disabled:mercoa-cursor-not-allowed"
           >
             Download CSV
           </button>
@@ -409,7 +410,7 @@ export function TableNavigation({
           disabled={page === 1}
           type="button"
           onClick={prevPage}
-          className="mercoa-relative mercoa-ml-3 mercoa-inline-flex mercoa-items-center mercoa-rounded-md mercoa-bg-white mercoa-px-3 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 focus-visible:mercoa-outline-offset-0 disabled:mercoa-opacity-50 disabled:mercoa-cursor-not-allowed"
+          className="mercoa-relative mercoa-ml-3 mercoa-inline-flex mercoa-items-center mercoa-rounded-mercoa mercoa-bg-white mercoa-px-3 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 focus-visible:mercoa-outline-offset-0 disabled:mercoa-opacity-50 disabled:mercoa-cursor-not-allowed"
         >
           Previous
         </button>
@@ -417,7 +418,7 @@ export function TableNavigation({
           disabled={!hasMore}
           type="button"
           onClick={nextPage}
-          className="mercoa-relative mercoa-ml-3 mercoa-inline-flex mercoa-items-center mercoa-rounded-md mercoa-bg-white mercoa-px-3 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 focus-visible:mercoa-outline-offset-0 disabled:mercoa-opacity-50 disabled:mercoa-cursor-not-allowed"
+          className="mercoa-relative mercoa-ml-3 mercoa-inline-flex mercoa-items-center mercoa-rounded-mercoa mercoa-bg-white mercoa-px-3 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 focus-visible:mercoa-outline-offset-0 disabled:mercoa-opacity-50 disabled:mercoa-cursor-not-allowed"
         >
           Next
         </button>
@@ -459,7 +460,7 @@ export function Skeleton({ rows, height }: { rows?: number; height?: number }) {
       {[...Array(rows)].map((key) => (
         <div
           key={Math.random()}
-          className={`mercoa-w-full mercoa-rounded-md mercoa-bg-gray-200`}
+          className={`mercoa-w-full mercoa-rounded-mercoa mercoa-bg-gray-200`}
           style={{ height: height + 'px' }}
         ></div>
       ))}
@@ -508,11 +509,13 @@ export function DefaultPaymentMethodIndicator({
 export function PaymentMethodList({
   accounts,
   showEdit,
-  children,
+  addAccount,
+  formatAccount,
 }: {
   accounts?: Mercoa.PaymentMethodResponse[]
   showEdit?: boolean
-  children: Function
+  addAccount?: JSX.Element
+  formatAccount: (account: any) => JSX.Element | JSX.Element[] | null
 }) {
   const mercoaSession = useMercoaSession()
   return (
@@ -520,7 +523,7 @@ export function PaymentMethodList({
       {accounts &&
         accounts.map((account) => (
           <div className="mercoa-mt-2 mercoa-flex" key={account.id}>
-            <div className="mercoa-flex-grow">{children(account)}</div>
+            <div className="mercoa-flex-grow">{formatAccount(account)}</div>
             {showEdit && (
               <button
                 onClick={() => {
@@ -545,6 +548,12 @@ export function PaymentMethodList({
             )}
           </div>
         ))}
+      {addAccount && (
+        <div className="mercoa-mt-2 mercoa-flex">
+          <div className="mercoa-flex-grow">{addAccount}</div>
+          {showEdit && <div className="mercoa-ml-2 mercoa-size-5" />}
+        </div>
+      )}
     </>
   )
 }
@@ -625,7 +634,10 @@ export function StatCard({
   const titleFontSize = size === 'sm' ? 'mercoa-text-xs' : 'mercoa-text-sm'
   const valueFontSize = size === 'sm' ? 'mercoa-text-md' : 'mercoa-text-3xl'
   return (
-    <div key={title} className={`mercoa-overflow-hidden mercoa-rounded-lg mercoa-bg-white ${padding} mercoa-shadow`}>
+    <div
+      key={title}
+      className={`mercoa-overflow-hidden mercoa-rounded-mercoa mercoa-bg-white ${padding} mercoa-shadow`}
+    >
       <dt className={`mercoa-truncate ${titleFontSize} mercoa-font-medium mercoa-text-gray-500`}>{title}</dt>
       <dd className={`mercoa-mt-1 ${valueFontSize} mercoa-font-semibold mercoa-tracking-tight mercoa-text-gray-900`}>
         {value}
@@ -735,7 +747,7 @@ export function MercoaCombobox({
       return (
         <span
           key={index}
-          className="mercoa-m-0.5 mercoa-inline-flex mercoa-items-center mercoa-rounded-md mercoa-px-2 mercoa-py-1 mercoa-text-xs mercoa-font-medium mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-500/10"
+          className="mercoa-m-0.5 mercoa-inline-flex mercoa-items-center mercoa-rounded-mercoa mercoa-px-2 mercoa-py-1 mercoa-text-xs mercoa-font-medium mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-500/10"
           style={{ backgroundColor: option?.color ?? '#E5E7EB' }}
         >
           {value}
@@ -803,7 +815,7 @@ export function MercoaCombobox({
         </Combobox.Button>
 
         {filteredOptionsLimited.length > 0 && (
-          <Combobox.Options className="mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-md mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm ">
+          <Combobox.Options className="mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-mercoa mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm ">
             {filteredOptionsLimited.map(({ value, disabled }) => (
               <Combobox.Option
                 key={value?.id ?? (displayIndex ? value[displayIndex] : value)}
@@ -1028,10 +1040,10 @@ export const useDebounce = (obj: any = null, wait: number = 1000) => {
   const [state, setState] = useState(obj)
 
   const setDebouncedState = (_val: any) => {
-    dbnc(_val)
+    debounceCallback(_val)
   }
 
-  const dbnc = useCallback(
+  const debounceCallback = useCallback(
     debounce((_prop: string) => {
       setState(_prop)
     }, wait),
@@ -1068,7 +1080,7 @@ export function AddDialog({ show, onClose, component }: { show: boolean; onClose
               leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
               leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
             >
-              <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-md sm:mercoa-p-6">
+              <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-md sm:mercoa-p-6">
                 {component}
               </Dialog.Panel>
             </Transition.Child>
@@ -1081,6 +1093,7 @@ export function AddDialog({ show, onClose, component }: { show: boolean; onClose
 
 export function stopPropagate(callback: () => void) {
   return (e: { stopPropagation: () => void; preventDefault: () => void }) => {
+    console.log(e)
     e.stopPropagation()
     e.preventDefault()
     callback()
@@ -1107,7 +1120,7 @@ export function inputClassName({
       pl = 'mercoa-pl-10'
     }
   }
-  return `mercoa-block mercoa-w-full mercoa-flex-1 mercoa-rounded-md mercoa-py-1.5 ${pl} ${
+  return `mercoa-block mercoa-w-full mercoa-flex-1 mercoa-rounded-mercoa mercoa-py-1.5 ${pl} ${
     trailingIcon ? 'mercoa-pr-[4.4rem]' : 'mercoa-pr-2'
   } mercoa-text-gray-900 sm:mercoa-text-sm sm:mercoa-leading-6
   ${noBorder ? 'mercoa-ring-0' : 'mercoa-ring-1'}
@@ -1280,6 +1293,7 @@ export function MercoaInput({
         render={({ field: { onChange, name, value } }) => (
           <NumericFormat
             decimalScale={2}
+            thousandSeparator
             fixedDecimalScale
             name={name}
             value={value}
@@ -1313,20 +1327,36 @@ export function MercoaInput({
     </div>
   )
 
+  const errorContainer = (
+    <>
+      {name && get(errors, name)?.message && (
+        <p className="mercoa-text-sm mercoa-text-red-500 mercoa-text-left">{get(errors, name)?.message?.toString()}</p>
+      )}
+    </>
+  )
+
   if (!label) {
     if (className) {
-      return <div className={className}>{inputContainer}</div>
+      return (
+        <div className={className}>
+          {inputContainer}
+          {errorContainer}
+        </div>
+      )
     }
-    return inputContainer
+    return (
+      <>
+        {inputContainer}
+        {errorContainer}
+      </>
+    )
   }
 
   return (
     <div className={className}>
       <MercoaInputLabel label={label} name={name} />
       <div className="mercoa-mt-1">{inputContainer}</div>
-      {name && errors?.[name]?.message && (
-        <p className="mercoa-text-sm mercoa-text-red-500 mercoa-text-left">{errors?.[name]?.message?.toString()}</p>
-      )}
+      {errorContainer}
     </div>
   )
 }
@@ -1379,4 +1409,8 @@ export function NoSession({ componentName }: { componentName: string }) {
       for more information.
     </div>
   )
+}
+
+export function removeThousands(_value: any, originalValue: string | number) {
+  return typeof originalValue === 'string' ? Number(originalValue?.replace(/,/g, '')) : originalValue
 }

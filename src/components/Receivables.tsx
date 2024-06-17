@@ -398,7 +398,7 @@ export function Receivables({
             </div>
           )}
         </div>
-        <div className="mercoa-flex mercoa-w-full mercoa-rounded-md mercoa-shadow-sm mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1">
+        <div className="mercoa-flex mercoa-w-full mercoa-rounded-mercoa mercoa-shadow-sm mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1">
           <DebouncedSearch placeholder="Search Customers, Invoice #, Amount" onSettle={setSearch} />
         </div>
       </div>

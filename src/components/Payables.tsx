@@ -129,13 +129,13 @@ function SchedulePaymentModal({
       {/* Full-screen  mercoa-container to center the panel */}
       <div className="mercoa-fixed mercoa-inset-0 mercoa-overflow-y-auto">
         <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
-          <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-shadow-xl mercoa-transition-all sm:mercoa-p-6">
+          <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-shadow-xl mercoa-transition-all sm:mercoa-p-6">
             <Dialog.Title className="mercoa-text-lg mercoa-font-semibold">
               When should these payments be scheduled?
             </Dialog.Title>
             <div className="mercoa-flex mercoa-mt-5">
               <DatePicker
-                className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+                className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-gray-300 focus:mercoa-border-mercoa-primary focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                 placeholderText="Select Payment Date"
                 onChange={(date) => setSelectedDate(date)}
                 selected={selectedDate}
@@ -196,7 +196,7 @@ function AddApproverModal({
       {/* Full-screen  mercoa-container to center the panel */}
       <div className="mercoa-fixed mercoa-inset-0 mercoa-overflow-y-auto">
         <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
-          <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-shadow-xl mercoa-transition-all sm:mercoa-p-6">
+          <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-shadow-xl mercoa-transition-all sm:mercoa-p-6">
             <Tooltip title="User will be added to the first available approval slot they are eligible for">
               <Dialog.Title className="mercoa-text-lg mercoa-font-semibold mercoa-flex mercoa-items-center mercoa-justify-center">
                 Select Approver To Add
@@ -772,7 +772,7 @@ export function PayablesTable({
                 <Tooltip title={user?.email} key={approver.approvalSlotId}>
                   <div
                     key={approver.approvalSlotId}
-                    className={`mercoa-flex mercoa-items-center mercoa-rounded-md mercoa-text-xs ${
+                    className={`mercoa-flex mercoa-items-center mercoa-rounded-mercoa mercoa-text-xs ${
                       approver.action === Mercoa.ApproverAction.Approve
                         ? 'mercoa-bg-green-100 mercoa-text-green-800'
                         : ''
@@ -795,7 +795,18 @@ export function PayablesTable({
       title: 'Status',
       field: 'status',
       format: (_, invoice) => {
-        return <InvoiceStatusPill invoice={invoice} />
+        return (
+          <InvoiceStatusPill
+            status={invoice.status}
+            vendorId={invoice.vendorId}
+            payerId={invoice.payerId}
+            paymentDestinationId={invoice.paymentDestinationId}
+            paymentSourceId={invoice.paymentSourceId}
+            dueDate={invoice.dueDate}
+            amount={invoice.amount}
+            type="payable"
+          />
+        )
       },
     },
     {
@@ -1117,22 +1128,30 @@ export function PayablesTable({
 }
 
 export function InvoiceStatusPill({
-  invoice,
+  status,
+  amount,
+  payerId,
+  vendorId,
+  dueDate,
+  paymentSourceId,
+  paymentDestinationId,
   type,
 }: {
-  invoice: Mercoa.InvoiceResponse
+  status: Mercoa.InvoiceStatus
+  amount?: number
+  payerId?: string
+  vendorId?: string
+  dueDate?: Date
+  paymentSourceId?: string
+  paymentDestinationId?: string
   type?: 'payable' | 'receivable'
 }) {
-  const counterparty = type === 'receivable' ? invoice.payer : invoice.vendor
+  const counterparty = type === 'receivable' ? payerId : vendorId
   let backgroundColor = 'mercoa-bg-gray-100'
   let textColor = 'mercoa-text-black'
   let message = ''
-  let failureReason = ''
-  if (invoice.failureType === Mercoa.InvoiceFailureType.InsufficientFunds) {
-    failureReason = ' - Insufficient Funds'
-  }
-  if (invoice.status === Mercoa.InvoiceStatus.Draft) {
-    if (!counterparty || !invoice.amount || !invoice.dueDate) {
+  if (!status || status === Mercoa.InvoiceStatus.Draft) {
+    if (!counterparty || !amount || !dueDate) {
       backgroundColor = 'mercoa-bg-yellow-100'
       textColor = 'mercoa-text-black'
       message = 'Draft Incomplete'
@@ -1141,8 +1160,8 @@ export function InvoiceStatusPill({
       textColor = 'mercoa-text-green-800'
       message = 'Draft Ready'
     }
-  } else if (invoice.status === Mercoa.InvoiceStatus.New) {
-    if (!invoice.paymentSourceId || !counterparty || !invoice.amount || !invoice.dueDate) {
+  } else if (status === Mercoa.InvoiceStatus.New) {
+    if (!paymentSourceId || !counterparty || !amount || !dueDate) {
       backgroundColor = 'mercoa-bg-yellow-100'
       textColor = 'mercoa-text-gray-800'
       message = 'Incomplete'
@@ -1151,14 +1170,8 @@ export function InvoiceStatusPill({
       textColor = 'mercoa-text-green-800'
       message = 'Ready for Review'
     }
-  } else if (invoice.status === Mercoa.InvoiceStatus.Approved) {
-    if (
-      !invoice.paymentSourceId ||
-      !invoice.paymentDestinationId ||
-      !counterparty ||
-      !invoice.amount ||
-      !invoice.dueDate
-    ) {
+  } else if (status === Mercoa.InvoiceStatus.Approved) {
+    if (!paymentSourceId || !paymentDestinationId || !counterparty || !amount || !dueDate) {
       backgroundColor = 'mercoa-bg-yellow-100'
       textColor = 'mercoa-text-black'
       message = 'Incomplete'
@@ -1167,14 +1180,8 @@ export function InvoiceStatusPill({
       textColor = 'mercoa-text-green-800'
       message = type === 'receivable' ? 'Out for Payment' : 'Ready for Payment'
     }
-  } else if (invoice.status === Mercoa.InvoiceStatus.Scheduled) {
-    if (
-      !invoice.paymentSourceId ||
-      !invoice.paymentDestinationId ||
-      !counterparty ||
-      !invoice.amount ||
-      !invoice.dueDate
-    ) {
+  } else if (status === Mercoa.InvoiceStatus.Scheduled) {
+    if (!paymentSourceId || !paymentDestinationId || !counterparty || !amount || !dueDate) {
       backgroundColor = 'mercoa-bg-yellow-100'
       textColor = 'mercoa-text-black'
       message = 'Incomplete'
@@ -1183,30 +1190,30 @@ export function InvoiceStatusPill({
       textColor = 'mercoa-text-green-800'
       message = 'Payment Scheduled'
     }
-  } else if (invoice.status === Mercoa.InvoiceStatus.Pending) {
+  } else if (status === Mercoa.InvoiceStatus.Pending) {
     backgroundColor = 'mercoa-bg-yellow-100'
     textColor = 'mercoa-text-black'
     message = 'Payment Processing'
-  } else if (invoice.status === Mercoa.InvoiceStatus.Paid) {
+  } else if (status === Mercoa.InvoiceStatus.Paid) {
     backgroundColor = 'mercoa-bg-green-100'
     textColor = 'mercoa-text-green-800'
     message = 'Paid'
-  } else if (invoice.status === Mercoa.InvoiceStatus.Canceled) {
+  } else if (status === Mercoa.InvoiceStatus.Canceled) {
     backgroundColor = 'mercoa-bg-red-100'
     textColor = 'mercoa-text-red-800'
     message = 'Canceled'
-  } else if (invoice.status === Mercoa.InvoiceStatus.Archived) {
+  } else if (status === Mercoa.InvoiceStatus.Archived) {
     backgroundColor = 'mercoa-bg-gray-100'
     textColor = 'mercoa-text-black'
     message = 'Archived'
-  } else if (invoice.status === Mercoa.InvoiceStatus.Refused) {
+  } else if (status === Mercoa.InvoiceStatus.Refused) {
     backgroundColor = 'mercoa-bg-red-100'
     textColor = 'mercoa-text-red-800'
     message = 'Rejected'
-  } else if (invoice.status === Mercoa.InvoiceStatus.Failed) {
+  } else if (status === Mercoa.InvoiceStatus.Failed) {
     backgroundColor = 'mercoa-bg-red-100'
     textColor = 'mercoa-text-red-800'
-    message = 'Failed ' + failureReason
+    message = 'Failed'
   }
 
   return message ? (
@@ -1412,7 +1419,7 @@ export function StatusTabs({
         <select
           id="tabs"
           name="tabs"
-          className="mercoa-block mercoa-w-full mercoa-rounded-md mercoa-border-gray-300 mercoa-py-1 mercoa-pl-3 mercoa-pr-10 mercoa-text-base focus:mercoa-border-mercoa-primary focus:mercoa-outline-none focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+          className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-gray-300 mercoa-py-1 mercoa-pl-3 mercoa-pr-10 mercoa-text-base focus:mercoa-border-mercoa-primary focus:mercoa-outline-none focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
           defaultValue={selectedStatuses}
           onChange={(e) => {
             setSelectedStatuses([e.target.value as Mercoa.InvoiceStatus])
@@ -1556,7 +1563,7 @@ export function Payables({
             </div>
           )}
         </div>
-        <div className="mercoa-flex mercoa-w-full mercoa-rounded-md mercoa-shadow-sm mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1">
+        <div className="mercoa-flex mercoa-w-full mercoa-rounded-mercoa mercoa-shadow-sm mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1">
           <DebouncedSearch placeholder="Search Vendors, Invoice #, Amount" onSettle={setSearch} />
         </div>
       </div>

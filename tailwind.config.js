@@ -23,6 +23,7 @@ export default {
     extend: {
       borderRadius: {
         '4xl': '2rem',
+        mercoa: 'var(--mercoa-border-radius)',
       },
       fontFamily: {
         sans: ['Inter', ...defaultTheme.fontFamily.sans],
@@ -38,6 +39,9 @@ export default {
         'mercoa-primary-text': 'var(--mercoa-primary-text)',
         'mercoa-primary-text-invert': 'var(--mercoa-primary-text-invert)',
         'mercoa-logo-background': 'var(--mercoa-logo-background)',
+      },
+      backgroundImage: {
+        'mercoa-primary': 'var(--mercoa-primary)',
       },
     },
   },

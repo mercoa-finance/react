@@ -126,7 +126,7 @@ function SyncExternalAccountingSystemButton() {
                 leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
                 leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
               >
-                <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-max-w-md sm:mercoa-p-6">
+                <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-max-w-md sm:mercoa-p-6">
                   {isSyncing ? (
                     <div className="mercoa-min-w-24 mercoa-flex mercoa-items-center mercoa-mt-3">
                       <LoadingSpinnerIcon />

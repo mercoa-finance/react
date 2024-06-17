@@ -76,27 +76,31 @@ export function Cards({
             <LoadingSpinnerIcon />
           </div>
         )}
-        <PaymentMethodList accounts={cards} showEdit={showEdit}>
-          {(account: Mercoa.PaymentMethodResponse.Card) => (
+        <PaymentMethodList
+          accounts={cards}
+          showEdit={showEdit}
+          addAccount={
+            cards && showAdd ? (
+              <div className="mercoa-mt-2">
+                <AddDialog
+                  show={showDialog}
+                  onClose={onClose}
+                  component={
+                    <AddCard
+                      onSubmit={(data: Mercoa.PaymentMethodResponse.Card) => {
+                        onClose(data)
+                      }}
+                    />
+                  }
+                />
+                <Card onSelect={() => setShowDialog(true)} />
+              </div>
+            ) : undefined
+          }
+          formatAccount={(account: Mercoa.PaymentMethodResponse.Card) => (
             <Card account={account} onSelect={onSelect} showEdit={showEdit} />
           )}
-        </PaymentMethodList>
-        {cards && showAdd && (
-          <div className="mercoa-mt-2">
-            <AddDialog
-              show={showDialog}
-              onClose={onClose}
-              component={
-                <AddCard
-                  onSubmit={(data: Mercoa.PaymentMethodResponse.Card) => {
-                    onClose(data)
-                  }}
-                />
-              }
-            />
-            <Card onSelect={() => setShowDialog(true)} />
-          </div>
-        )}
+        />
       </>
     )
   }
@@ -208,7 +212,7 @@ export function Card({
           if (onSelect) onSelect(account)
         }}
         key={`${account?.id}`}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border ${
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
           selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
         } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
           onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
@@ -244,7 +248,7 @@ export function Card({
         onClick={() => {
           if (onSelect) onSelect(account)
         }}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
           onSelect ? 'mercoa-cursor-pointer ' : ''
         }`}
       >

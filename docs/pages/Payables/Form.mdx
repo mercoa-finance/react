@@ -1,28 +1,68 @@
-import { PayableDetails, MercoaSession } from '@mercoa/react'
-import { payerEntity, vendorEntities } from '../../mockData'
+import { 
+ PayableDetails,
+ MercoaSession, 
+ PayableForm, 
+ PayableFormHeader, 
+ PayableCounterpartySearch,
+ PayableOverview,
+ PayableLineItems,
+ PayableMetadata,
+ PayablePaymentSource,
+ PayablePaymentDestination,
+ PayableApprovers,
+ InvoiceComments,
+ PayableActions
+} from '@mercoa/react'
+import { payerEntity, vendorEntities, inv_new_ready } from '../../mockData'
 import { ComponentContainer } from '../../components/helpers'
+import { Callout } from 'nextra/components'
 
-# Payable Form
+# Payable Details
 
 The `<PayableDetails>` component is used to let users create and manage payable invoices.
-
-The components's configuration is controlled by the options passed in when creating the [JWT token](https://docs.mercoa.com/api-reference/entity/get-token#request)
 
 ## Customization Options
 
 | Themeable | Variations | Custom Component |
 | :-------: | :--------: | :--------------: |
-|    ✅     |     ✅     |        ❌        |
+|    ✅     |     ✅     |        ✅        |
 
 ## Props
 
-| Name         | Type                                              | Required | Description                                                                                                                                           |
-| :------------| :-------------------------------------------------| :--------| :-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| invoiceId    | `string`                                          |          | The ID of the invoice to edit. Leave blank if creating a new invoice                                                                                  |
-| onRedirect   | `(invoice: InvoiceResponse \| undefined) => void` | ✅       | When the invoice is created, updated, or deleted, this callback is triggered                                                                          |
-| layout       | `"left" "right"`                                  |          | If "left", the invoice upload/document is on the left. Otherwise this is flipped. Default is "left"                                                   |
-| heightOffset | `number`                                          |          | This component uses the screen size to set its height. If you have other elements on the screen, increase the height offset to shrink this component. |
+| Name             | Type                                                                                 | Required | Description                                                                                                                                           |
+| :----------------| :------------------------------------------------------------------------------------| :--------| :-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| invoiceId        | `string`                                                                             |          | The ID of the invoice to edit. Leave blank if creating a new invoice                                                                                  |
+| onRedirect       | `(invoice: InvoiceResponse \| undefined) => void`                                    | ✅       | When the invoice is created, updated, or deleted, this callback is triggered                                                                          |
+| heightOffset     | `number`                                                                             |          | This component uses the screen size to set its height. If you have other elements on the screen, increase the height offset to shrink this component. |
+| documentPosition | `'right' \| 'left' \| 'none'`                                                        |          | Control where to place the invoice doucment (or hide it). Default is `left`                                                                           |
+| invoicePreSubmit | `(invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>` |          | This function is called after frontend validations are complete, and before the API call to create/update the invoice is sent.                        |
+| children         | `(methods: PayableFormChildrenProps) => JSX.Element`                                 |          | See [customization](#customization) for details on how to use the children prop.                                                                                      |
 
+```typescript
+type PayableFormChildrenProps = {
+
+  invoice?: Mercoa.InvoiceResponse // If there is an existing invoice, this will be the current invoice data
+  refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void // If there is an existing invoice, refresh data from the server
+
+  ocrResponse?: Mercoa.OcrResponse // Once OCR is completed, this will contain the raw response from the API
+
+  uploadedDocument?: string // The uploaded/stored PDF/Image.
+  setUploadedDocument: (e?: string) => void // Set the uploaded document (Base64 encoded string)
+
+  setSelectedVendor: (e?: Mercoa.CounterpartyResponse) => void // Set the vendor
+  selectedVendor?: Mercoa.CounterpartyResponse // Get the current selected vendor
+  getVendorPaymentLink: () => Promise<string | undefined> // Generate a link for the vendor to accept the payment
+
+
+
+  setValue: (name: UseFormSetValue<Mercoa.InvoiceCreationRequest>, // react-hook-form method to set the value of a form element. InvoiceRequest fields are used for the name.
+             value: any, 
+             options?: { shouldValidate?: boolean; shouldDirty?: boolean }) => void
+
+  watch: (name: UseFormWatch<Mercoa.InvoiceCreationRequest>) => any // react-hook-form hook to get the real-time value of any form component
+  errors: FieldErrors<Mercoa.InvoiceCreationRequest> // react-hook-form error object
+};
+```
 
 ## Examples
 
@@ -80,3 +120,269 @@ The components's configuration is controlled by the options passed in when creat
   ```
 </ComponentContainer>
 
+
+## Customization
+
+The `PayableDetails` component consists of multiple subcomponents that can all be customized. Additionally, you can mix in your own custom components to further control the UX.
+
+<Callout>
+All of the subcomponents must be children of a `PayableDetails` component
+</Callout>
+
+The default children is the following:
+
+```tsx
+<>
+  {({ setSelectedVendor, selectedVendor }) => 
+    <>
+      <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+      <PayableFormHeader />
+      <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+
+      <PayableCounterpartySearch onSelect={setSelectedVendor} counterparty={selectedVendor} />
+      <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+
+      <PayableOverview />
+      <PayableLineItems />
+      <PayableMetadata />
+      
+      <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+      <PayablePaymentSource />
+      <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+      <PayablePaymentDestination />
+      <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+
+      <PayableApprovers />
+      <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+
+      <InvoiceComments />
+      <PayableActions />
+    </>
+  }
+</>
+```
+
+### PayableForm
+
+This component is the form without the document upload and slider. The children passed to `PayableDetails` are passed to this component. 
+
+Most of the time, this component shouldn't be used directly. Instead, use `PayableDetails` with `documentPosition={'none'}`.
+
+### PayableFormHeader
+
+| Name             | Type       | Required | Description                  |
+| :----------------| :----------| :--------| :----------------------------|
+| hideId           | `boolean`  |          | Hide the internal invoice id |
+
+<ComponentContainer>
+  <PayableForm>
+  {()=><PayableFormHeader />}
+  </PayableForm>
+  ```jsx
+  <PayableForm>
+  {()=><>
+    <PayableFormHeader />
+  </>}
+  </PayableForm>
+  ```
+</ComponentContainer>
+
+### PayableCounterpartySearch
+
+| Name             | Type                                                     | Required | Description                                                |
+| :----------------| :--------------------------------------------------------| :--------| :----------------------------------------------------------|
+| onSelect         | `(counterparty?: Mercoa.CounterpartyResponse ) => any`   |    ✅    |  Callback when a vendor is selected or created.            |
+| counterparty     | `Mercoa.CounterpartyResponse`                            |          | Pre-selected vendor counterparty (C3)                      |
+| disableCreation  | `boolean`                                                |          | Disable new vendor creation                                |
+| network          | `Mercoa.CounterpartyNetworkType[]`                       |          | Mercoa counterparty network to search. Default is `ENTITY` |
+
+
+<ComponentContainer display='block'>
+  <PayableForm>
+  {({ setSelectedVendor, selectedVendor })=>
+  <>
+    <PayableCounterpartySearch onSelect={setSelectedVendor} counterparty={selectedVendor} />
+  </>
+  }
+  </PayableForm>
+  ```jsx
+  <PayableForm>
+  {({ setSelectedVendor, selectedVendor })=>
+  <>
+    <PayableCounterpartySearch onSelect={setSelectedVendor} counterparty={selectedVendor} />
+  </>
+  }
+  </PayableForm>
+  ```
+</ComponentContainer>
+
+ ### PayableOverview
+
+| Name     | Type      | Required | Description         |
+| :--------| :---------| :--------| :-------------------|
+| readOnly | `boolean` |          | Make data read only |
+
+<ComponentContainer display='block'>
+  <PayableForm>
+  {()=><PayableOverview />}
+  </PayableForm>
+  ```jsx
+  <PayableForm>
+  {()=><>
+    <PayableOverview />
+  </>}
+  </PayableForm>
+  ```
+</ComponentContainer>
+
+ ### PayableLineItems
+
+ | Name     | Type      | Required | Description         |
+| :--------| :---------| :--------| :-------------------|
+| readOnly | `boolean` |          | Make data read only |
+
+<ComponentContainer display='block'>
+  <PayableForm>
+  {()=><PayableLineItems />}
+  </PayableForm>
+  ```jsx
+  <PayableForm>
+  {()=><>
+    <PayableLineItems />
+  </>}
+  </PayableForm>
+  ```
+</ComponentContainer>
+
+ ### PayableMetadata
+
+| Name     | Type      | Required | Description         |
+| :--------| :---------| :--------| :-------------------|
+| readOnly | `boolean` |          | Make data read only |
+
+<ComponentContainer display='block'>
+  <PayableForm>
+  {()=><PayableMetadata />}
+  </PayableForm>
+  ```jsx
+  <PayableForm>
+  {()=><>
+    <PayableMetadata />
+  </>}
+  </PayableForm>
+  ```
+</ComponentContainer>
+
+ ### PayablePaymentSource
+
+| Name     | Type      | Required | Description         |
+| :--------| :---------| :--------| :-------------------|
+| readOnly | `boolean` |          | Make data read only |
+
+<ComponentContainer display='block'>
+  <PayableForm>
+  {()=><PayablePaymentSource />}
+  </PayableForm>
+  ```jsx
+  <PayableForm>
+  {()=><>
+    <PayablePaymentSource />
+  </>}
+  </PayableForm>
+  ```
+</ComponentContainer>
+
+ ### PayablePaymentDestination
+
+| Name     | Type      | Required | Description         |
+| :--------| :---------| :--------| :-------------------|
+| readOnly | `boolean` |          | Make data read only |
+
+<ComponentContainer display='block'>
+  <PayableForm invoice={inv_new_ready}>
+  {()=><PayablePaymentDestination />}
+  </PayableForm>
+  ```jsx
+  <PayableForm invoice={inv_new_ready}>
+  {()=><>
+    <PayablePaymentDestination />
+  </>}
+  </PayableForm>
+  ```
+</ComponentContainer>
+
+ ### PayableApprovers
+
+| Name     | Type      | Required | Description         |
+| :--------| :---------| :--------| :-------------------|
+| readOnly | `boolean` |          | Make data read only |
+
+<ComponentContainer display='block'>
+  <PayableForm invoice={inv_new_ready}>
+  {()=><PayableApprovers />}
+  </PayableForm>
+  ```jsx
+  <PayableForm invoice={inv_new_ready}>
+  {()=><>
+    <PayableApprovers />
+  </>}
+  </PayableForm>
+  ```
+</ComponentContainer>
+
+ ### InvoiceComments
+
+| Name     | Type      | Required | Description         |
+| :--------| :---------| :--------| :-------------------|
+| readOnly | `boolean` |          | Make data read only |
+
+<ComponentContainer display='block'>
+  <PayableForm invoice={inv_new_ready}>
+  {()=><InvoiceComments />}
+  </PayableForm>
+  ```jsx
+  <PayableForm invoice={inv_new_ready}>
+  {()=><>
+    <InvoiceComments />
+  </>}
+  </PayableForm>
+  ```
+</ComponentContainer>
+
+ ### PayableActions
+
+ <Callout>
+ The payable actions is a `position: absolute` component that sticks to the bottom of the form. It should only be used in a `position: relative` container or in `PayableDetails`. It also wraps the `PayableFormErrors` component.
+ </Callout>
+
+| Name                | Type                                                     | Required | Description           |
+| :-------------------| :--------------------------------------------------------| :--------| :---------------------|
+| approveButton       |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
+| rejectButton        |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
+| nonApproverButton   |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
+| deleteButton        |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
+| archiveButton       |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
+| cancelButton        |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
+| saveDraftButton     |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
+| printCheckButton    |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
+| createInvoiceButton |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
+
+<ComponentContainer display='block'>
+  <PayableForm invoice={inv_new_ready}>
+  {()=><div className='mercoa-mt-10 mercoa-relative mercoa-w-full mercoa-col-span-full'>
+  <PayableActions />
+  </div>}
+  </PayableForm>
+  ```jsx
+  <PayableForm invoice={inv_new_ready}>
+  {()=><div className='mercoa-mt-10 mercoa-relative mercoa-w-full mercoa-col-span-full'>
+    <PayableActions />
+  </div>}
+  </PayableForm>
+  ```
+</ComponentContainer>
+
+
+### PayableFormErrors
+
+This component shows errors when the form is submitted.

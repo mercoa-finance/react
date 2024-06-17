@@ -918,7 +918,7 @@ export function EntityOnboardingButton({
         }}
         className={
           className ||
-          'mercoa-inline-flex mercoa-items-center mercoa-justify-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-mercoa-primary mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-mercoa-primary-dark focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-mercoa-primary focus:mercoa-ring-offset-2 sm:mercoa-w-auto'
+          'mercoa-inline-flex mercoa-items-center mercoa-justify-center mercoa-rounded-mercoa mercoa-border mercoa-border-transparent mercoa-bg-mercoa-primary mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-mercoa-primary-dark focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-mercoa-primary focus:mercoa-ring-offset-2 sm:mercoa-w-auto'
         }
       >
         {buttonText || 'Get Started'}
@@ -948,7 +948,7 @@ export function EntityOnboardingButton({
                 leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
                 leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
               >
-                <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-sm sm:mercoa-p-6">
+                <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-sm sm:mercoa-p-6">
                   <form
                     onSubmit={handleSubmit(async (data) => {
                       if (!mercoaSession.client) return
@@ -979,7 +979,7 @@ export function EntityOnboardingButton({
                     <div className="mercoa-mt-4">
                       <button
                         type="submit"
-                        className="mercoa-w-full mercoa-inline-flex mercoa-justify-center mercoa-rounded-md mercoa-border mercoa-border-transparent mercoa-bg-mercoa-primary mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-mercoa-primary-dark focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-mercoa-primary focus:mercoa-ring-offset-2 sm:mercoa-w-auto"
+                        className="mercoa-w-full mercoa-inline-flex mercoa-justify-center mercoa-rounded-mercoa mercoa-border mercoa-border-transparent mercoa-bg-mercoa-primary mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-mercoa-primary-dark focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-mercoa-primary focus:mercoa-ring-offset-2 sm:mercoa-w-auto"
                       >
                         Continue
                       </button>
@@ -1098,7 +1098,7 @@ export function RepresentativeOnboardingForm({
             </h3>
             <div className="mercoa-flex-1" />
             <XMarkIcon
-              className="mercoa-size-5 mercoa-cursor-pointer mercoa-rounded-md mercoa-p-0.5 hover:mercoa-bg-gray-100"
+              className="mercoa-size-5 mercoa-cursor-pointer mercoa-rounded-mercoa mercoa-p-0.5 hover:mercoa-bg-gray-100"
               type="button"
               onClick={() => {
                 if (onClose) onClose()
@@ -1284,7 +1284,7 @@ export function RepresentativeComponent({
           if (onSelect) onSelect(representative)
         }}
         key={representative?.id}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border ${
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
           selected ? 'mercoa-border-mercoa-primary' : 'mercoa-border-gray-300'
         } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 ${
           onSelect ? 'mercoa-cursor-pointer hover:mercoa-border-gray-400' : ''
@@ -1334,7 +1334,7 @@ export function RepresentativeComponent({
         onClick={() => {
           if (onSelect) onSelect(representative)
         }}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-lg mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
           onSelect ? 'mercoa-cursor-pointer ' : ''
         }`}
       >
@@ -1450,7 +1450,7 @@ export function AcceptToSButton({
                 leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
                 leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
               >
-                <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-md sm:mercoa-p-6">
+                <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-md sm:mercoa-p-6">
                   <Dialog.Title className="mercoa-mb-3 mercoa-w-full mercoa-text-center mercoa-text-xl mercoa-text-gray-800 mercoa-underline">
                     {title || 'Terms of Service'}
                   </Dialog.Title>
@@ -1597,8 +1597,8 @@ export function EntityOnboardingForm({
       taxID: entity.profile.individual?.governmentIdProvided
         ? '****'
         : entity.profile.business?.taxIdProvided
-        ? '**-*******'
-        : '',
+          ? '**-*******'
+          : '',
       dob: new Date(),
 
       legalBusinessName: entity.profile.business?.legalBusinessName ?? '',
@@ -1672,22 +1672,22 @@ export function EntityOnboardingForm({
   return (
     <form
       onSubmit={handleSubmit(async (entityData) => {
+        if (!entity) return
+        if (!entityData) return
+        if (!mercoaSession.client) return
+        await createOrUpdateEntity({
+          data: entityData,
+          entityId: entity.id,
+          mercoaClient: mercoaSession.client,
+          isPayee: admin ? entityData.isPayee : type === 'payee',
+          isPayor: admin ? entityData.isPayor : type === 'payor',
+        })
+        if (admin) {
+          toast.success('Entity Updated')
+        }
         if (onOnboardingSubmit) {
           onOnboardingSubmit(entityData)
         } else {
-          if (!entity) return
-          if (!entityData) return
-          if (!mercoaSession.client) return
-          await createOrUpdateEntity({
-            data: entityData,
-            entityId: entity.id,
-            mercoaClient: mercoaSession.client,
-            isPayee: admin ? entityData.isPayee : type === 'payee',
-            isPayor: admin ? entityData.isPayor : type === 'payor',
-          })
-          if (admin) {
-            toast.success('Entity Updated')
-          }
           mercoaSession.refresh()
         }
       })}
@@ -1869,7 +1869,7 @@ export function EntityOnboardingForm({
             />
             <MercoaInput register={register} name="foreignId" label="Foreign ID" type="text" />
             <div className="mercoa-col-span-full mercoa-grid mercoa-grid-cols-3 mercoa-space-x-2">
-              <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-rounded-md mercoa-border mercoa-p-2">
+              <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-rounded-mercoa mercoa-border mercoa-p-2">
                 <label
                   htmlFor="isCustomer"
                   className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
@@ -1882,7 +1882,7 @@ export function EntityOnboardingForm({
                   className={'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 focus:mercoa-ring-mercoa-primary'}
                 />
               </div>
-              <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-rounded-md mercoa-border mercoa-p-2">
+              <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-rounded-mercoa mercoa-border mercoa-p-2">
                 <label
                   htmlFor="isPayor"
                   className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
@@ -1895,7 +1895,7 @@ export function EntityOnboardingForm({
                   className={'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 focus:mercoa-ring-mercoa-primary'}
                 />
               </div>
-              <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-rounded-md mercoa-border mercoa-p-2">
+              <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-rounded-mercoa mercoa-border mercoa-p-2">
                 <label
                   htmlFor="isPayee"
                   className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
@@ -2183,7 +2183,7 @@ export function EntityOnboarding({
     )
 
   const infoWell = (
-    <div className="mercoa-p-4 mercoa-text-sm mercoa-rounded-md mercoa-bg-gray-100 mercoa-my-4 mercoa-grid mercoa-grid-cols-12 mercoa-gap-3 mercoa-items-center">
+    <div className="mercoa-p-4 mercoa-text-sm mercoa-rounded-mercoa mercoa-bg-gray-100 mercoa-my-4 mercoa-grid mercoa-grid-cols-12 mercoa-gap-3 mercoa-items-center">
       <div className="mercoa-w-full mercoa-flex mercoa-justify-center">
         <LockClosedIcon className="mercoa-w-[22px]" />
       </div>
@@ -2237,7 +2237,7 @@ export function EntityOnboarding({
           <h2 className="mercoa-font-gray-800 mercoa-text-xl mercoa-font-normal mercoa-text-center">
             Representative Verification
           </h2>
-          <div className="mercoa-p-4 mercoa-text-sm mercoa-rounded-md mercoa-bg-gray-100 mercoa-my-4 mercoa-grid mercoa-grid-cols-12 mercoa-gap-3 mercoa-items-center">
+          <div className="mercoa-p-4 mercoa-text-sm mercoa-rounded-mercoa mercoa-bg-gray-100 mercoa-my-4 mercoa-grid mercoa-grid-cols-12 mercoa-gap-3 mercoa-items-center">
             <div className="mercoa-w-full mercoa-flex mercoa-justify-center">
               <BuildingLibraryIcon className="mercoa-w-[22px]" />
             </div>
