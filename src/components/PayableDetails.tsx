@@ -17,12 +17,13 @@ import {
 import { PhotoIcon } from '@heroicons/react/24/solid'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
+import useResizeObserver from '@react-hook/resize-observer'
 import accounting from 'accounting'
 import Big from 'big.js'
 import dayjs from 'dayjs'
 import minMax from 'dayjs/plugin/minMax'
 import utc from 'dayjs/plugin/utc'
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import Dropzone from 'react-dropzone'
 import {
@@ -534,15 +535,13 @@ export function PayableForm({
       })
     }
 
-    if (!selectedVendor) {
-      if (ocrResponse.vendor.id === 'new' && mercoaSession.iframeOptions?.options?.vendors?.disableCreation) {
-        mercoaSession.debug('new vendor creation disabled')
-      } else if (ocrResponse.vendor.id) {
-        mercoaSession.debug('setting selected vendor', ocrResponse.vendor)
-        setSelectedVendor(ocrResponse.vendor)
-      }
+    if (ocrResponse.vendor.id === 'new' && mercoaSession.iframeOptions?.options?.vendors?.disableCreation) {
+      mercoaSession.debug('new vendor creation disabled')
+    } else if (ocrResponse.vendor.id) {
+      mercoaSession.debug('setting selected vendor', ocrResponse.vendor)
+      setSelectedVendor(ocrResponse.vendor)
     }
-  }, [ocrResponse, selectedVendor])
+  }, [ocrResponse])
 
   async function saveInvoice(data: any) {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
@@ -958,7 +957,9 @@ export function PayableForm({
       <FormProvider {...methods}>
         <form
           onSubmit={handleSubmit(saveInvoice)}
-          className={'mercoa-grid-cols-3 mercoa-mt-6 mercoa-grid mercoa-gap-x-6 mercoa-gap-y-4 mercoa-p-0.5'}
+          className={
+            'mercoa-grid-cols-3 mercoa-mt-6 mercoa-grid md:mercoa-gap-x-6 md:mercoa-gap-y-4 mercoa-gap-2 mercoa-p-0.5'
+          }
         >
           {children ? (
             children({
@@ -1206,7 +1207,7 @@ export function PayableDocument({
   }
 
   return (
-    <div className={`mercoa-min-w-[300px] mercoa-p-5 mercoa-rounded-mercoa`}>
+    <div className={`mercoa-p-5 mercoa-rounded-mercoa`}>
       {uploadedFile || invoice?.hasDocuments ? (
         <>
           <div className={`mercoa-text-center ${ocrProcessing ? 'mercoa-block mercoa-mb-5' : 'mercoa-hidden'}`}>
@@ -1221,7 +1222,9 @@ export function PayableDocument({
           />
         </>
       ) : (
-        <DocumentUploadBox onFileUpload={onFileUpload} />
+        <div className={`mercoa-min-w-[340px]`}>
+          <DocumentUploadBox onFileUpload={onFileUpload} />
+        </div>
       )}
     </div>
   )
@@ -1792,8 +1795,39 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
     }
   }, [supportedCurrencies, currency])
 
+  const useWidth = (target: any) => {
+    const [width, setWidth] = useState<number>(0)
+
+    useLayoutEffect(() => {
+      setWidth(target.current.getBoundingClientRect().width)
+    }, [target])
+
+    useResizeObserver(target, (entry) => setWidth(entry.contentRect.width))
+    return width
+  }
+
+  const wrapperDiv = useRef(null)
+  const width = useWidth(wrapperDiv)
+
+  let formCols = 'mercoa-grid-cols-1'
+  if (width && width > 300) {
+    formCols = 'mercoa-grid-cols-2'
+  }
+  if (width && width > 500) {
+    formCols = 'mercoa-grid-cols-3'
+  }
+  if (width && width > 700) {
+    formCols = 'mercoa-grid-cols-4'
+  }
+  if (width && width > 900) {
+    formCols = 'mercoa-grid-cols-5'
+  }
+  if (width && width > 1100) {
+    formCols = 'mercoa-grid-cols-6'
+  }
+
   return (
-    <>
+    <div className={`mercoa-grid ${formCols} mercoa-col-span-full md:mercoa-gap-4 mercoa-gap-2`} ref={wrapperDiv}>
       <label
         htmlFor="vendor-name"
         className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mb-2 mercoa-col-span-full"
@@ -1809,7 +1843,7 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
         label="Invoice #"
         type="text"
         readOnly={readOnly}
-        className="sm:mercoa-col-span-1"
+        className="md:mercoa-col-span-1 mercoa-col-span-full"
       />
 
       {/*  INVOICE AMOUNT */}
@@ -1819,7 +1853,7 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
         label="Amount"
         type="currency"
         readOnly={readOnly}
-        className="sm:mercoa-col-span-1"
+        className="md:mercoa-col-span-1 mercoa-col-span-full"
         leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>}
         trailingIcon={
           <>
@@ -1848,7 +1882,7 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
         placeholder="Invoice Date"
         type="date"
         readOnly={readOnly}
-        className="sm:mercoa-col-span-1"
+        className="md:mercoa-col-span-1 mercoa-col-span-full"
         control={control}
         errors={errors}
       />
@@ -1860,7 +1894,7 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
         placeholder="Due Date"
         type="date"
         readOnly={readOnly}
-        className="sm:mercoa-col-span-1"
+        className="md:mercoa-col-span-1 mercoa-col-span-full"
         control={control}
         errors={errors}
       />
@@ -1872,7 +1906,7 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
         placeholder="Scheduled Payment Date"
         type="date"
         readOnly={readOnly}
-        className="sm:mercoa-col-span-1"
+        className="md:mercoa-col-span-1 mercoa-col-span-full"
         control={control}
         errors={errors}
         dateOptions={{
@@ -1900,7 +1934,7 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
           />
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
@@ -3425,6 +3459,7 @@ function LineItemRows({ readOnly }: { readOnly?: boolean }) {
                 schema={schema}
                 value={value}
                 lineItem
+                key={schema.key}
                 readOnly={readOnly}
                 setValue={(value: string | string[]) => {
                   // combobox with multiple will return an array, but metadata needs a string, so join it with commas
