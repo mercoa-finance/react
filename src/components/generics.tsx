@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
+import dayjs from 'dayjs'
 import { jwtDecode } from 'jwt-decode'
 import debounce from 'lodash/debounce'
 import get from 'lodash/get'
@@ -1256,7 +1257,7 @@ export function MercoaInput({
             className={inClassName}
             placeholderText={placeholder}
             onChange={(date) => field.onChange(date)}
-            selected={field.value}
+            selected={field.value ? dayjs(field.value).toDate() : null}
             minDate={dateOptions?.minDate}
             maxDate={dateOptions?.maxDate}
             filterDate={dateOptions?.filterDate}

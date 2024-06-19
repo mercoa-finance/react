@@ -8,7 +8,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
 import { useEffect, useState } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../lib/currency'
 import {
@@ -45,14 +45,15 @@ export function ApprovalPolicies() {
   const [users, setUsers] = useState<Mercoa.EntityUserResponse[]>([])
   const [roles, setRoles] = useState<string[]>([])
   const [counterparties, setCounterparties] = useState<Mercoa.CounterpartyResponse[]>([])
-  const [metadata, setMetadata] = useState<Mercoa.EntityMetadataResponse[]>([])
   const [isEditing, setIsEditing] = useState(false)
 
-  const { register, handleSubmit, watch, setValue, control, reset } = useForm({
+  const methods = useForm({
     defaultValues: {
       policies,
     },
   })
+
+  const { register, handleSubmit, watch, setValue, control, reset } = methods
 
   const { append, remove, fields } = useFieldArray({
     control,
@@ -90,13 +91,6 @@ export function ApprovalPolicies() {
       .then((resp) => {
         if (resp) setCounterparties(resp.data)
       })
-  }, [mercoaSession.entity?.id, mercoaSession.refreshId, mercoaSession.token])
-
-  useEffect(() => {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    mercoaSession.client?.entity.metadata.getAll(mercoaSession.entity.id).then((resp) => {
-      if (resp) setMetadata(resp)
-    })
   }, [mercoaSession.entity?.id, mercoaSession.refreshId, mercoaSession.token])
 
   async function onSubmit(data: { policies: Mercoa.ApprovalPolicyResponse[] }) {
@@ -218,44 +212,45 @@ export function ApprovalPolicies() {
   if (!mercoaSession.client) return <NoSession componentName="ApprovalPolicies" />
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <Level
-        level={0}
-        fields={formPolicies}
-        remove={remove}
-        append={append}
-        control={control}
-        watch={watch}
-        register={register}
-        setValue={setValue}
-        users={users}
-        roles={roles}
-        counterparties={counterparties}
-        metadata={metadata}
-        formPolicies={formPolicies}
-        upstreamPolicyId="root"
-        isEditing={isEditing}
-      />
-      {isEditing ? (
-        <MercoaButton isEmphasized size="md" className="mercoa-mt-5">
-          Save Rules
-        </MercoaButton>
-      ) : (
-        <MercoaButton
-          isEmphasized={false}
-          size="md"
-          className="mercoa-mt-5"
-          type="button"
-          onClick={(e) => {
-            e.preventDefault()
-            e.stopPropagation()
-            setIsEditing(true)
-          }}
-        >
-          Edit Rules
-        </MercoaButton>
-      )}
-    </form>
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Level
+          level={0}
+          fields={formPolicies}
+          remove={remove}
+          append={append}
+          control={control}
+          watch={watch}
+          register={register}
+          setValue={setValue}
+          users={users}
+          roles={roles}
+          counterparties={counterparties}
+          formPolicies={formPolicies}
+          upstreamPolicyId="root"
+          isEditing={isEditing}
+        />
+        {isEditing ? (
+          <MercoaButton isEmphasized size="md" className="mercoa-mt-5">
+            Save Rules
+          </MercoaButton>
+        ) : (
+          <MercoaButton
+            isEmphasized={false}
+            size="md"
+            className="mercoa-mt-5"
+            type="button"
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setIsEditing(true)
+            }}
+          >
+            Edit Rules
+          </MercoaButton>
+        )}
+      </form>
+    </FormProvider>
   )
 }
 
@@ -272,7 +267,6 @@ function Level({
   users,
   roles,
   counterparties,
-  metadata,
   formPolicies,
   isEditing,
 }: {
@@ -288,7 +282,6 @@ function Level({
   users: Mercoa.EntityUserResponse[]
   roles: string[]
   counterparties: Mercoa.CounterpartyResponse[]
-  metadata: Mercoa.EntityMetadataResponse[]
   formPolicies: Mercoa.ApprovalPolicyResponse[]
   isEditing: boolean
 }) {
@@ -356,7 +349,6 @@ function Level({
                     setValue={setValue}
                     counterparties={counterparties}
                     index={fields.findIndex((e) => e.id == policy.id)}
-                    metadata={metadata}
                     isEditing={isEditing}
                   />
                 </div>
@@ -383,7 +375,6 @@ function Level({
                     users={users}
                     roles={roles}
                     counterparties={counterparties}
-                    metadata={metadata}
                     formPolicies={formPolicies}
                     upstreamPolicyId={policy.id}
                     isEditing={isEditing}
@@ -486,7 +477,6 @@ function Trigger({
   setValue,
   counterparties,
   index,
-  metadata,
   isEditing,
 }: {
   control: any
@@ -495,7 +485,6 @@ function Trigger({
   setValue: any
   counterparties: Mercoa.CounterpartyResponse[]
   index: number
-  metadata: Mercoa.EntityMetadataResponse[]
   isEditing: boolean
 }) {
   const mercoaSession = useMercoaSession()
@@ -653,13 +642,8 @@ function Trigger({
                 </span>
                 <MetadataSelection
                   hideLabel
-                  setValue={(value) => {
-                    setValue(`policies.${index}.trigger.${triggerIndex}.value`, value, {
-                      shouldDirty: true,
-                    })
-                  }}
+                  field={`policies.${index}.trigger.${triggerIndex}.value`}
                   skipValidation
-                  value={watch(`policies.${index}.trigger.${triggerIndex}.value`)}
                   schema={
                     mercoaSession.organization?.metadataSchema?.find(
                       (e) => e.key === watch(`policies.${index}.trigger.${triggerIndex}.key`),

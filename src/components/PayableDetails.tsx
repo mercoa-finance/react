@@ -24,7 +24,6 @@ import dayjs from 'dayjs'
 import minMax from 'dayjs/plugin/minMax'
 import utc from 'dayjs/plugin/utc'
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import DatePicker from 'react-datepicker'
 import Dropzone from 'react-dropzone'
 import {
   FieldErrors,
@@ -58,7 +57,6 @@ import {
   PayableCounterpartySearch,
   Tooltip,
   counterpartyYupValidation,
-  inputClassName,
   onSubmitCounterparty,
   removeThousands,
   useMercoaSession,
@@ -349,7 +347,7 @@ export function PayableForm({
       hasDocuments: invoice?.hasDocuments ?? !!uploadedDocument ?? false,
       saveAsStatus: '',
       saveAsAdmin: false,
-      metadata: JSON.stringify(invoice?.metadata ?? {}),
+      metadata: invoice?.metadata ?? {},
       approvalPolicy: invoice?.approvalPolicy ?? { type: 'any', approvers: [] },
       approvers: invoice?.approvers ?? [],
       newBankAccount: {
@@ -437,7 +435,7 @@ export function PayableForm({
     setValue('hasDocuments', invoice.hasDocuments ?? uploadedDocument ?? false)
     setValue('saveAsStatus', '')
     setValue('saveAsAdmin', false)
-    setValue('metadata', JSON.stringify(invoice.metadata ?? {}) as any)
+    setValue('metadata', invoice.metadata ?? {})
     setValue('approvers', invoice?.approvers ?? [])
     setValue('approvalPolicy', invoice?.approvalPolicy ?? { type: 'any', approvers: [] })
     setValue('creatorUser', invoice?.creatorUser)
@@ -492,7 +490,7 @@ export function PayableForm({
       setValue('dueDate', dayjs(dayjs(ocrResponse.invoice.dueDate).utc().format('YYYY-MM-DD')).toDate())
     }
     if (ocrResponse.invoice.currency) setValue('currency', ocrResponse.invoice.currency)
-    if (ocrResponse.invoice.metadata) setValue('metadata', JSON.stringify(ocrResponse.invoice.metadata))
+    if (ocrResponse.invoice.metadata) setValue('metadata', ocrResponse.invoice.metadata)
     if (
       ocrResponse.invoice.lineItems &&
       mercoaSession.iframeOptions?.options?.invoice?.lineItems != Mercoa.LineItemAvailabilities.Disabled
@@ -712,13 +710,13 @@ export function PayableForm({
           amount: Number(lineItem.amount),
           quantity: Number(lineItem.quantity),
           unitPrice: Number(lineItem.unitPrice),
-          metadata: lineItem.metadata,
+          metadata: JSON.parse(JSON.stringify(lineItem.metadata)) as unknown as Record<string, string>,
           currency: data.currency ?? 'USD',
           glAccountId: lineItem.glAccountId,
         }
         return out
       }),
-      metadata: JSON.parse(data.metadata) as Record<string, string>,
+      metadata: JSON.parse(JSON.stringify(data.metadata)) as unknown as Record<string, string>,
       document: uploadedDocument,
       creatorEntityId: mercoaSession.entity?.id,
       creatorUserId: mercoaSession.user?.id,
@@ -1741,7 +1739,7 @@ export function PayableActions({
         ) : (
           <>
             <PayableFormErrors />
-            <div className=" mercoa-container mercoa-mx-auto mercoa-flex mercoa-flex-row-reverse mercoa-items-center mercoa-gap-2 mercoa-py-3 mercoa-px-4 sm:mercoa-px-6 lg:mercoa-px-8">
+            <div className="mercoa-mx-auto mercoa-flex mercoa-flex-row-reverse mercoa-items-center mercoa-gap-2 mercoa-py-3 mercoa-px-6">
               {buttons.map((button, index) => (
                 <div key={index}>{button}</div>
               ))}
@@ -2792,58 +2790,35 @@ export function propagateApprovalPolicy({
 // Metadata
 export function PayableMetadata({ skipValidation, readOnly }: { skipValidation?: boolean; readOnly?: boolean }) {
   const mercoaSession = useMercoaSession()
-  const { setValue, watch } = useFormContext()
-  const metadata = watch('metadata')
-
-  const items = mercoaSession.organization?.metadataSchema?.map((schema) => {
-    const md = JSON.parse((metadata as string) ?? {}) as Record<string, string>
-    const value = md?.[schema.key]
-    return (
-      <MetadataSelection
-        readOnly={readOnly}
-        key={schema.key}
-        schema={schema}
-        value={value}
-        skipValidation={skipValidation}
-        setValue={(value: string | string[]) => {
-          // combobox with multiple will return an array, but metadata needs a string, so join it with commas
-          if (Array.isArray(value)) {
-            value = value.join(',')
-          }
-          const newMetadata = JSON.parse((metadata as string) ?? {}) as Record<string, string>
-          if (typeof value === 'undefined') {
-            delete newMetadata[schema.key]
-          } else {
-            newMetadata[schema.key] = `${value}`
-          }
-          setValue('metadata', JSON.stringify(newMetadata), { shouldDirty: true, shouldTouch: true })
-        }}
-      />
-    )
-  })
 
   return (
     <div className="mercoa-col-span-full mercoa-grid-cols-1 mercoa-gap-4 mercoa-hidden has-[div]:mercoa-grid ">
       <label className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700">
         Additional Invoice Details
       </label>
-      {items}
+      {mercoaSession.organization?.metadataSchema?.map((schema) => (
+        <MetadataSelection
+          readOnly={readOnly}
+          key={schema.key}
+          schema={schema}
+          skipValidation={skipValidation}
+          field={'metadata.' + schema.key}
+        />
+      ))}
     </div>
   )
 }
 
 export function MetadataSelection({
   schema,
-  value,
-  setValue,
+  field,
   skipValidation,
   readOnly,
   lineItem,
   hideLabel,
 }: {
   schema: Mercoa.MetadataSchema
-  value?: string
-  setValue: (e: string) => void
+  field: string
   skipValidation?: boolean
   readOnly?: boolean
   lineItem?: boolean
@@ -2854,7 +2829,7 @@ export function MetadataSelection({
 
   const [entityMetadata, setEntityMetadata] = useState<string[]>()
 
-  const { watch } = methods ?? { watch: () => {} }
+  const { watch, register, setValue, control } = methods
 
   const hasDocument = watch('hasDocuments')
   const paymentDestinationType = watch('paymentDestinationType')
@@ -2989,57 +2964,6 @@ export function MetadataSelection({
     )
   }
 
-  function MetadataDate({
-    setValue,
-    value,
-    displayName,
-  }: {
-    setValue: (e: string) => void
-    value?: string
-    displayName: string
-  }) {
-    return (
-      <DatePicker
-        className={`mercoa-block mercoa-w-full mercoa-flex-1 mercoa-rounded-mercoa mercoa-py-1.5 mercoa-pl-2 mercoa-pr-2 mercoa-text-gray-900 sm:mercoa-text-sm sm:mercoa-leading-6
-        mercoa-border-0 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 :mercoa-border-0 mercoa-outline-0 
-        focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary focus:mercoa-border-0 focus:mercoa-outline-0`}
-        placeholderText={`Select ${displayName}`}
-        onChange={(date) => {
-          if (date) {
-            setValue(date.toISOString())
-          }
-        }}
-        readOnly={readOnly}
-        selected={(() => {
-          if (dayjs(value).isValid()) {
-            return dayjs(value).toDate()
-          }
-          return undefined
-        })()}
-      />
-    )
-  }
-
-  function MetadataInput({
-    schema,
-    setValue,
-    value,
-  }: {
-    schema: Mercoa.MetadataSchema
-    setValue: (e: string) => void
-    value?: string
-  }) {
-    return (
-      <input
-        readOnly={readOnly}
-        type={schema.type === Mercoa.MetadataType.Number ? 'number' : 'text'}
-        className={inputClassName({})}
-        defaultValue={value}
-        onChange={(e) => setValue(e.target.value)}
-      />
-    )
-  }
-
   function MetadataBoolean({ setValue, value }: { setValue: (e: string) => void; value?: string }) {
     return (
       <div className="mercoa-space-y-4 sm:mercoa-flex sm:mercoa-items-center sm:mercoa-space-x-10 sm:mercoa-space-y-0">
@@ -3076,15 +3000,40 @@ export function MetadataSelection({
     <>
       {((!entityMetadata && schema.type === Mercoa.MetadataType.String) ||
         schema.type === Mercoa.MetadataType.Number) && (
-        <MetadataInput schema={schema} setValue={setValue} value={value} />
+        <MercoaInput
+          readOnly={readOnly}
+          type={schema.type === Mercoa.MetadataType.Number ? 'number' : 'text'}
+          name={field}
+          register={register}
+        />
       )}
       {((entityMetadata && schema.type === Mercoa.MetadataType.String) ||
         schema.type === Mercoa.MetadataType.KeyValue) && (
-        <MetadataCombobox schema={schema} setValue={setValue} value={value} values={entityMetadata ?? []} />
+        <MetadataCombobox
+          schema={schema}
+          values={entityMetadata ?? []}
+          value={watch(field)}
+          setValue={(e) => {
+            setValue(field, e)
+          }}
+        />
       )}
-      {schema.type === Mercoa.MetadataType.Boolean && <MetadataBoolean setValue={setValue} value={value} />}
+      {schema.type === Mercoa.MetadataType.Boolean && (
+        <MetadataBoolean
+          value={watch(field)}
+          setValue={(e) => {
+            setValue(field, e)
+          }}
+        />
+      )}
       {schema.type === Mercoa.MetadataType.Date && (
-        <MetadataDate setValue={setValue} value={value} displayName={schema.displayName} />
+        <MercoaInput
+          name={field}
+          type="date"
+          readOnly={readOnly}
+          className="md:mercoa-col-span-1 mercoa-col-span-full"
+          control={control}
+        />
       )}
     </>
   )
@@ -3448,52 +3397,19 @@ function LineItemRows({ readOnly }: { readOnly?: boolean }) {
               </MercoaButton>
             )}
           </div>
-          {filteredMetadata.map((schema) => {
-            const metadata = watch(`lineItems.${index}.metadata`)
-            const value =
-              schema.key === 'glAccountId'
-                ? watch(`lineItems.${index}.glAccountId`)
-                : watch(`lineItems.${index}.metadata.${schema.key}`)
-            return (
-              <MetadataSelection
-                schema={schema}
-                value={value}
-                lineItem
-                key={schema.key}
-                readOnly={readOnly}
-                setValue={(value: string | string[]) => {
-                  // combobox with multiple will return an array, but metadata needs a string, so join it with commas
-                  if (Array.isArray(value)) {
-                    value = value.join(',')
-                  }
-                  if (schema.key === 'glAccountId') {
-                    setValue(`lineItems.${index}.glAccountId`, `${value}`, {
-                      shouldDirty: true,
-                      shouldTouch: true,
-                    })
-                  } else {
-                    let newMetadata = {} as Record<string, string>
-                    if (metadata) {
-                      newMetadata = (
-                        typeof metadata === 'string'
-                          ? JSON.parse(metadata ?? '{}')
-                          : JSON.parse(JSON.stringify(metadata))
-                      ) as Record<string, string>
-                    }
-                    if (value) {
-                      newMetadata[schema.key] = `${value}`
-                    } else {
-                      delete newMetadata[schema.key]
-                    }
-                    setValue(`lineItems.${index}.metadata`, newMetadata, {
-                      shouldDirty: true,
-                      shouldTouch: true,
-                    })
-                  }
-                }}
-              />
-            )
-          })}
+          {filteredMetadata.map((schema) => (
+            <MetadataSelection
+              schema={schema}
+              lineItem
+              key={schema.key}
+              readOnly={readOnly}
+              field={
+                schema.key === 'glAccountId'
+                  ? `lineItems[${index}].${schema.key}`
+                  : `lineItems[${index}].metadata.${schema.key}`
+              }
+            />
+          ))}
           {lineItems.length - 1 === index && (
             <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full mercoa-my-4" />
           )}

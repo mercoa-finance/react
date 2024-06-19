@@ -156,7 +156,7 @@ export function EntityPortal({ token }: { token: string }) {
       )
     }
     return (
-      <div className=" mercoa-container mercoa-mx-auto mercoa-mt-5 mercoa-text-center">
+      <div className="mercoa-mx-auto mercoa-mt-5 mercoa-text-center">
         <h2 className="mercoa-font-gray-800 mercoa-text-lg">Welcome to your Accounts Payable Dashboard</h2>
         {content}
       </div>
@@ -164,7 +164,7 @@ export function EntityPortal({ token }: { token: string }) {
   }
 
   return (
-    <div className=" mercoa-container mercoa-mx-auto mercoa-px-4 sm:mercoa-px-6 lg:mercoa-px-8">
+    <div className="mercoa-mx-auto mercoa-px-4">
       <div className="mercoa-flex mercoa-items-center">
         <div className="mercoa-flex-auto mercoa-text-sm mercoa-text-gray-700 mercoa-my-4 sm:mercoa-mt-0">
           {screen === 'inbox' ? (
