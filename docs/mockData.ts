@@ -568,6 +568,8 @@ export const approvalPolicy: Mercoa.ApprovalPolicyResponse = {
       value: [user.id],
     },
   },
+  createdAt: new Date(),
+  updatedAt: new Date(),
 }
 
 export const inv_draft_incomplete: Mercoa.InvoiceResponse = {
