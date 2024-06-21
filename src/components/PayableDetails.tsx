@@ -2,6 +2,8 @@ import { Bar, Container, Section } from '@column-resizer/react'
 import { Menu, Transition } from '@headlessui/react'
 import {
   ArrowDownTrayIcon,
+  ArrowRightIcon,
+  CalendarDaysIcon,
   CheckCircleIcon,
   DocumentIcon,
   EllipsisVerticalIcon,
@@ -37,7 +39,7 @@ import {
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { isWeekday } from '../lib/scheduling'
+import { addWeekdays, isWeekday } from '../lib/scheduling'
 import {
   AddBankAccountDialog,
   AddCheckDialog,
@@ -1942,11 +1944,13 @@ export function SelectPaymentMethod({
   isSource,
   isDestination,
   disableCreation,
+  disablePaymentTimingDisplay,
   readOnly,
 }: {
   isSource?: boolean
   isDestination?: boolean
   disableCreation?: boolean
+  disablePaymentTimingDisplay?: boolean
   readOnly?: boolean // UNIMPLEMENTED
 }) {
   const mercoaSession = useMercoaSession()
@@ -2418,6 +2422,7 @@ export function SelectPaymentMethod({
             )}
         </>
       )}
+      {isDestination && !disablePaymentTimingDisplay && <PaymentDestinationProcessingTime />}
     </div>
   )
 }
@@ -2463,6 +2468,92 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
         </div>
       )}
     </>
+  )
+}
+
+export function PaymentDestinationProcessingTime() {
+  const mercoaSession = useMercoaSession()
+  const { watch } = useFormContext()
+
+  const deductionDate = watch('deductionDate') as Date
+  const paymentDestinationType = watch('paymentDestinationType') as Mercoa.PaymentMethodType
+  const paymentDestinationSchemaId = watch('paymentDestinationSchemaId') as string
+  const paymentDestinationOptions = watch('paymentDestinationOptions') as Mercoa.PaymentDestinationOptions
+
+  const nextWindow = getNextWindow(deductionDate, paymentDestinationType, paymentDestinationSchemaId)
+  const processingTime = getProcessingTime(
+    paymentDestinationType,
+    paymentDestinationSchemaId,
+    paymentDestinationOptions,
+  )
+  const endDate = addWeekdays(dayjs(nextWindow), processingTime).toDate()
+
+  function getNextWindow(deductionDate: Date, paymentDestinationType: Mercoa.PaymentMethodType, schemaId: string) {
+    let window = dayjs(deductionDate).isAfter(dayjs()) ? dayjs(deductionDate).toDate() : dayjs().add(1, 'day').toDate()
+    while (!isWeekday(window)) {
+      window = dayjs(window).add(1, 'day').toDate()
+    }
+    return window
+  }
+
+  function getProcessingTime(
+    paymentDestinationType: Mercoa.PaymentMethodType,
+    schemaId: string,
+    options: Mercoa.PaymentDestinationOptions,
+  ) {
+    if (paymentDestinationType === Mercoa.PaymentMethodType.BankAccount) {
+      if (options?.delivery === 'ACH_STANDARD') {
+        return 3
+      } else {
+        return 2
+      }
+    } else if (paymentDestinationType === Mercoa.PaymentMethodType.Check) {
+      if (options?.delivery === 'PRINT') {
+        return -1
+      } else {
+        return 14
+      }
+    } else if (paymentDestinationType === Mercoa.PaymentMethodType.Custom) {
+      const schema = mercoaSession.customPaymentMethodSchemas.find((e) => e.id === schemaId)
+      return schema?.estimatedProcessingTime ?? -1
+    }
+    return -1
+  }
+
+  if (processingTime < 0) return null
+
+  return (
+    <div className="mercoa-flex mercoa-items-center mercoa-justify-between mercoa-p-5 mercoa-rounded-md mercoa-text-center">
+      <div className="mercoa-flex mercoa-items-center">
+        <CalendarDaysIcon className="mercoa-size-5 mercoa-mr-2" />
+        <span className="mercoa-text-gray-900">{dayjs(nextWindow).format('MMM D')}</span>
+      </div>
+
+      <div className="mercoa-flex mercoa-items-center">
+        <hr className="mercoa-border-t mercoa-border-gray-300 mercoa-w-10" />
+        <ArrowRightIcon className="mercoa-border-t mercoa-border-transparent mercoa-size-5 mercoa-text-gray-300 -mercoa-ml-1" />
+        <Tooltip
+          title={
+            <div className="mercoa-text-xs">
+              Estimated time.
+              <br />
+              Business days are Monday through Friday, excluding holidays.
+            </div>
+          }
+        >
+          <span className="mercoa-text-gray-500 mercoa-mx-4">
+            {processingTime} business days<span className="mercoa-text-xs">*</span>
+          </span>
+        </Tooltip>
+        <hr className="mercoa-border-t mercoa-border-gray-300 mercoa-w-10" />
+        <ArrowRightIcon className="mercoa-border-t mercoa-border-transparent mercoa-size-5 mercoa-text-gray-300 -mercoa-ml-1" />
+      </div>
+
+      <div className="mercoa-flex mercoa-items-center">
+        <CalendarDaysIcon className="mercoa-size-5 mercoa-mr-2" />
+        <span className="mercoa-text-gray-900">{dayjs(endDate).format('MMM D')}</span>
+      </div>
+    </div>
   )
 }
 
@@ -3155,7 +3246,7 @@ export function PayableLineItems({ readOnly }: { readOnly?: boolean }) {
     >
       {/* HEADER */}
       <div className="mercoa-flex mercoa-items-center mercoa-col-span-full">
-        <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-700 mercoa-text-lg">
+        <h2 className="mercoa-text-lg mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-700">
           Line Items{' '}
           <span className="mercoa-font-medium mercoa-text-gray-500 mercoa-text-base">({lineItems?.length ?? 0})</span>
         </h2>
