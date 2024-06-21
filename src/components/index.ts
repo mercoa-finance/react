@@ -18,6 +18,7 @@ export * from './PayableDetails'
 export * from './Payables'
 export * from './PaymentMethods'
 export * from './ReceivableDetails'
+export * from './ReceivablePayments'
 export * from './Receivables'
 export * from './generics'
 

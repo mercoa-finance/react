@@ -1,13 +1,23 @@
+import { Bar, Container, Section } from '@column-resizer/react'
 import { DocumentDuplicateIcon, EnvelopeIcon, GlobeAltIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { useEffect, useState } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import {
+  FieldErrors,
+  FormProvider,
+  UseFormSetValue,
+  UseFormWatch,
+  useFieldArray,
+  useForm,
+  useFormContext,
+} from 'react-hook-form'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
+import InvoicePreview from './InvoicePreview'
 import {
   CounterpartySearch,
   InvoiceStatusPill,
@@ -20,18 +30,56 @@ import {
 
 dayjs.extend(utc)
 
+export type ReceivableFormValues = {
+  id?: string
+  status?: Mercoa.InvoiceStatus
+  invoiceNumber?: string
+  amount?: number
+  currency?: Mercoa.CurrencyCode
+  payerId?: string
+  payerName?: string
+  invoiceDate?: Date
+  dueDate?: Date
+  deductionDate?: Date
+  lineItems?: Mercoa.InvoiceLineItemResponse[]
+  paymentDestinationId?: string
+  paymentDestinationType?: string
+  paymentDestinationOptions?: Mercoa.PaymentDestinationOptions
+  paymentSourceId?: string
+  paymentSourceType?: string
+  paymentSourceCheckEnabled?: boolean
+  description?: string
+  saveAsDraft?: boolean
+  hasDocuments?: boolean
+  saveAsStatus?: string
+  saveAsAdmin?: boolean
+  metadata?: Record<string, any>
+  commentText?: string
+  comments?: Array<any>
+  creatorUser?: any
+}
+
 export function ReceivableDetails({
   invoiceId,
   invoice,
   onRedirect,
   admin,
-  layout = 'left',
+  documentPosition = 'left',
+  children,
 }: {
   invoiceId?: Mercoa.InvoiceId
   invoice?: Mercoa.InvoiceResponse
   onRedirect: (invoice: Mercoa.InvoiceResponse | undefined) => void
   admin?: boolean
-  layout?: 'right' | 'left'
+  documentPosition?: 'right' | 'left' | 'none'
+  children?: ({
+    invoice,
+    refreshInvoice,
+    setSelectedPayer,
+    selectedPayer,
+    setValue,
+    watch,
+  }: ReceivableFormChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -40,12 +88,13 @@ export function ReceivableDetails({
     Mercoa.PaymentMethodResponse.BankAccount[]
   >([])
   const [sourcePaymentMethods, setSourcePaymentMethods] = useState<Mercoa.PaymentMethodResponse[]>([])
-  const [invoiceLocal, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>(invoice)
+  const [invoiceLocal, setInvoiceLocal] = useState<Mercoa.InvoiceResponse | undefined>(invoice)
   const [selectedPayer, setSelectedPayer] = useState<Mercoa.CounterpartyResponse | undefined>(invoice?.payer)
   const [supportedCurrencies, setSupportedCurrencies] = useState<Array<Mercoa.CurrencyCode>>([])
 
   const schema = yup
     .object({
+      id: yup.string().nullable(),
       status: yup.string(),
       amount: yup.number().positive().required().typeError('Please enter a valid number'),
       invoiceNumber: yup.string(),
@@ -72,31 +121,22 @@ export function ReceivableDetails({
       payerId: yup.string(),
       payerName: yup.string(),
       paymentDestinationId: yup.string(),
-      paymentMethodDestinationType: yup.string(),
+      paymentDestinationType: yup.string(),
       paymentDestinationOptions: yup.mixed().nullable(),
+      paymentSourceCheckEnabled: yup.boolean(),
+      paymentSourceType: yup.string(),
       paymentSourceId: yup.string(),
-      paymentMethodSourceType: yup.string(),
       saveAsDraft: yup.boolean(),
       saveAsAdmin: yup.boolean(),
       metadata: yup.mixed().nullable(),
-      newBankAccount: yup.mixed().nullable(),
-      newCheck: yup.mixed().nullable(),
+      creatorUser: yup.mixed().nullable(),
     })
     .required()
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    setError,
-    clearErrors,
-    watch,
-    setFocus,
-    control,
-    formState: { errors },
-  } = useForm({
+  const methods = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
+      id: invoice?.id,
       status: invoice?.status,
       invoiceNumber: invoice?.invoiceNumber,
       amount: invoice?.amount,
@@ -108,31 +148,223 @@ export function ReceivableDetails({
       deductionDate: invoice?.deductionDate ? dayjs(invoice?.deductionDate).toDate() : undefined,
       lineItems: invoice?.lineItems ?? [],
       paymentDestinationId: invoice?.paymentDestination?.id,
-      paymentMethodDestinationType: '',
+      paymentDestinationType: invoice?.paymentDestination?.type ?? '',
       paymentDestinationOptions: invoice?.paymentDestinationOptions,
       paymentSourceId: invoice?.paymentSource?.id,
-      paymentMethodSourceType: '',
+      paymentSourceType: invoice?.paymentSource?.type ?? '',
+      paymentSourceCheckEnabled: (invoice?.paymentSource as Mercoa.BankAccountResponse)?.checkOptions?.enabled ?? false,
       description: invoice?.noteToSelf ?? '',
       saveAsDraft: false,
-      saveAsAdmin: false,
-      metadata: JSON.stringify(invoice?.metadata ?? {}),
+      metadata: invoice?.metadata ?? {},
+      creatorUser: invoice?.creatorUser,
     },
   })
 
+  async function refreshInvoice(invoiceId: Mercoa.InvoiceId) {
+    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    const resp = await mercoaSession.client?.invoice.get(invoiceId)
+    if (resp) {
+      setInvoiceLocal(resp)
+      setSelectedPayer(resp.payer)
+    }
+  }
+
   useEffect(() => {
-    if (!invoiceLocal?.id) return
-    setValue('status', invoiceLocal?.status)
-    setValue('invoiceNumber', invoiceLocal?.invoiceNumber)
-    if (invoiceLocal?.amount) setValue('amount', invoiceLocal.amount)
-    setValue('currency', invoiceLocal?.currency ?? 'USD')
-    setValue('payerId', invoiceLocal?.payer?.id)
-    setValue('payerName', invoiceLocal?.payer?.name)
-    if (invoiceLocal?.invoiceDate) setValue('invoiceDate', dayjs(invoiceLocal.invoiceDate).toDate())
-    if (invoiceLocal?.dueDate) setValue('dueDate', dayjs(invoiceLocal?.dueDate).toDate())
-    setValue('deductionDate', invoiceLocal?.deductionDate ? dayjs(invoiceLocal?.deductionDate).toDate() : undefined)
+    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    if (!invoice && invoiceId) {
+      refreshInvoice(invoiceId)
+    }
+  }, [invoice, invoiceId, mercoaSession.token, mercoaSession.entity?.id])
+
+  if (!mercoaSession.client) return <NoSession componentName="ReceivableDetails" />
+
+  if (documentPosition === 'none') {
+    return (
+      <FormProvider {...methods}>
+        <ReceivableForm
+          invoice={invoiceLocal}
+          onRedirect={onRedirect}
+          refreshInvoice={refreshInvoice}
+          admin={admin}
+          supportedCurrencies={supportedCurrencies}
+          setSupportedCurrencies={setSupportedCurrencies}
+          setDestinationPaymentMethods={setDestinationPaymentMethods}
+          setSourcePaymentMethods={setSourcePaymentMethods}
+          setPaymentMethodSchemas={setPaymentMethodSchemas}
+          selectedPayer={selectedPayer}
+          setSelectedPayer={setSelectedPayer}
+        >
+          {children}
+        </ReceivableForm>
+      </FormProvider>
+    )
+  }
+
+  const invoicePreview = (
+    <Section minSize={0} maxSize={800}>
+      <InvoicePreview selectedPayer={selectedPayer} />
+    </Section>
+  )
+  const invoiceDetails = (
+    <Section className={`mercoa-relative ${documentPosition === 'left' ? 'mercoa-pl-5' : 'mercoa-pr-5'}`} minSize={400}>
+      <ReceivableForm
+        invoice={invoiceLocal}
+        onRedirect={onRedirect}
+        refreshInvoice={refreshInvoice}
+        admin={admin}
+        supportedCurrencies={supportedCurrencies}
+        setSupportedCurrencies={setSupportedCurrencies}
+        setDestinationPaymentMethods={setDestinationPaymentMethods}
+        setSourcePaymentMethods={setSourcePaymentMethods}
+        setPaymentMethodSchemas={setPaymentMethodSchemas}
+        selectedPayer={selectedPayer}
+        setSelectedPayer={setSelectedPayer}
+      >
+        {children}
+      </ReceivableForm>
+    </Section>
+  )
+
+  return (
+    <FormProvider {...methods}>
+      <Container>
+        {documentPosition === 'left' ? invoicePreview : invoiceDetails}
+        <Bar
+          size={10}
+          className="mercoa-bg-gray-200 mercoa-cursor-ew-resize mercoa-invisible min-[450px]:mercoa-visible"
+        >
+          <div className="mercoa-w-3 mercoa-h-10 mercoa-bg-gray-500 mercoa-absolute mercoa-top-1/2 mercoa-left-1/2 mercoa-transform -mercoa-translate-x-1/2 -mercoa-translate-y-1/2" />
+        </Bar>
+        {documentPosition === 'right' ? invoicePreview : invoiceDetails}
+      </Container>
+    </FormProvider>
+  )
+}
+
+export type ReceivableFormChildrenProps = {
+  invoice?: Mercoa.InvoiceResponse
+  refreshInvoice?: (invoiceId: Mercoa.InvoiceId) => void
+  setSelectedPayer: (e?: Mercoa.CounterpartyResponse) => void
+  selectedPayer?: Mercoa.CounterpartyResponse
+  setValue: (
+    name: UseFormSetValue<Mercoa.InvoiceCreationRequest>,
+    value: any,
+    options?: { shouldValidate?: boolean; shouldDirty?: boolean },
+  ) => void
+  watch: (name: UseFormWatch<Mercoa.InvoiceCreationRequest>) => any
+  errors: FieldErrors<Mercoa.InvoiceCreationRequest>
+}
+
+export function ReceivableForm({
+  invoice,
+  onRedirect,
+  refreshInvoice,
+  // height,              TODO: Is used in PayableDetails but not used at all here, implement
+  admin,
+  // invoicePreSubmit,
+  supportedCurrencies,
+  setSupportedCurrencies,
+  setDestinationPaymentMethods,
+  setSourcePaymentMethods,
+  setPaymentMethodSchemas,
+  selectedPayer,
+  setSelectedPayer,
+  children,
+}: {
+  invoice?: Mercoa.InvoiceResponse
+  onRedirect: (invoice: Mercoa.InvoiceResponse | undefined) => void
+  refreshInvoice: (invoice: Mercoa.InvoiceId) => void
+  admin?: boolean
+  supportedCurrencies: Mercoa.CurrencyCode[]
+  setSupportedCurrencies: (currencies: Mercoa.CurrencyCode[]) => void
+  setDestinationPaymentMethods: (paymentMethods: Mercoa.PaymentMethodResponse.BankAccount[]) => void
+  setSourcePaymentMethods: (paymentMethods: Mercoa.PaymentMethodResponse[]) => void
+  setPaymentMethodSchemas: (paymentMethodSchemas: Mercoa.CustomPaymentMethodSchemaResponse[]) => void
+  invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
+  selectedPayer: Mercoa.CounterpartyResponse | undefined
+  setSelectedPayer: (payer: Mercoa.CounterpartyResponse | undefined) => void
+  children?: ({
+    invoice,
+    refreshInvoice,
+    setSelectedPayer,
+    selectedPayer,
+    setValue,
+    watch,
+  }: ReceivableFormChildrenProps) => JSX.Element
+}) {
+  const mercoaSession = useMercoaSession()
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    setError,
+    clearErrors,
+    watch,
+    setFocus,
+    control,
+    formState: { errors },
+  } = useFormContext()
+
+  useEffect(() => {
+    if (!invoice) return
+
+    if (invoice.paymentDestination?.type === 'custom') {
+      setValue(
+        'paymentDestinationType',
+        (invoice.paymentDestination as Mercoa.CustomPaymentMethodResponse)?.schemaId ?? '',
+      )
+    } else {
+      setValue('paymentDestinationType', invoice.paymentDestination?.type ?? '')
+    }
+
+    if (invoice.paymentSource?.type === 'custom') {
+      setValue('paymentSourceType', (invoice.paymentSource as Mercoa.CustomPaymentMethodResponse)?.schemaId ?? '')
+    } else {
+      setValue('paymentSourceType', invoice.paymentSource?.type ?? '')
+    }
+
+    setValue('id', invoice.id)
+    setValue('status', invoice.status)
+    setValue('invoiceNumber', invoice.invoiceNumber)
+    setValue('amount', invoice.amount)
+    setValue('currency', invoice.currency ?? 'USD')
+    setValue('payerId', invoice.payer?.id)
+    setValue('payerName', invoice.payer?.name)
+    setValue('invoiceDate', invoice.invoiceDate ? dayjs(invoice.invoiceDate).toDate() : undefined)
+    setValue('dueDate', invoice.dueDate ? dayjs(invoice.dueDate).toDate() : undefined)
+    setValue('deductionDate', invoice.deductionDate ? dayjs(invoice.deductionDate).toDate() : undefined)
+    setValue('lineItems', (invoice.lineItems ?? []) as any)
+    setValue('paymentDestinationId', invoice.paymentDestination?.id)
+    setValue('paymentDestinationOptions', invoice.paymentDestinationOptions)
+    setValue('paymentSourceId', invoice.paymentSource?.id)
+    setValue(
+      'paymentSourceCheckEnabled',
+      (invoice.paymentSource as Mercoa.BankAccountResponse)?.checkOptions?.enabled ?? false,
+    )
+    setValue('description', invoice.noteToSelf ?? '')
+    setValue('hasDocuments', invoice.hasDocuments ?? false)
+    setValue('saveAsStatus', '')
+    setValue('saveAsAdmin', false)
+    setValue('metadata', invoice.metadata ?? {})
+    setValue('creatorUser', invoice?.creatorUser)
+    setValue('comments', invoice?.comments ?? [])
+  }, [invoice])
+
+  useEffect(() => {
+    if (!invoice?.id) return
+    setValue('status', invoice?.status)
+    setValue('invoiceNumber', invoice?.invoiceNumber)
+    if (invoice?.amount) setValue('amount', invoice.amount)
+    setValue('currency', invoice?.currency ?? 'USD')
+    setValue('payerId', invoice?.payer?.id)
+    setValue('payerName', invoice?.payer?.name)
+    if (invoice?.invoiceDate) setValue('invoiceDate', dayjs(invoice.invoiceDate).toDate())
+    if (invoice?.dueDate) setValue('dueDate', dayjs(invoice?.dueDate).toDate())
+    setValue('deductionDate', invoice?.deductionDate ? dayjs(invoice?.deductionDate).toDate() : undefined)
     setValue(
       'lineItems',
-      invoiceLocal?.lineItems?.map((lineItem) => ({
+      invoice?.lineItems?.map((lineItem) => ({
         description: lineItem.description ?? '',
         currency: lineItem.currency ?? 'USD',
         amount: lineItem.amount ?? 0,
@@ -146,13 +378,11 @@ export function ReceivableDetails({
         updatedAt: lineItem.updatedAt ?? new Date(),
       })) ?? [],
     )
-    setValue('paymentDestinationId', invoiceLocal?.paymentDestination?.id)
-    setValue('paymentMethodDestinationType', '')
-    setValue('paymentDestinationOptions', invoiceLocal?.paymentDestinationOptions)
-    setValue('paymentSourceId', invoiceLocal?.paymentSource?.id)
-    setValue('paymentMethodSourceType', '')
-    setValue('description', invoiceLocal?.noteToSelf ?? '')
-  }, [invoiceLocal, setValue])
+    setValue('paymentDestinationId', invoice?.paymentDestination?.id)
+    setValue('paymentDestinationOptions', invoice?.paymentDestinationOptions)
+    setValue('paymentSourceId', invoice?.paymentSource?.id)
+    setValue('description', invoice?.noteToSelf ?? '')
+  }, [invoice, setValue])
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -187,22 +417,6 @@ export function ReceivableDetails({
   const payerId = watch('payerId')
   const payerName = watch('payerName')
   const currency = watch('currency')
-
-  async function refreshInvoice(invoiceId: Mercoa.InvoiceId) {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    const resp = await mercoaSession.client?.invoice.get(invoiceId)
-    if (resp) {
-      setInvoice(resp)
-      setSelectedPayer(resp.payer)
-    }
-  }
-
-  useEffect(() => {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    if (!invoice && invoiceId) {
-      refreshInvoice(invoiceId)
-    }
-  }, [invoice, invoiceId, mercoaSession.token, mercoaSession.entity?.id])
 
   function refreshVendorPaymentMethods() {
     if (!mercoaSession.entityId) return
@@ -266,8 +480,8 @@ export function ReceivableDetails({
   }, [supportedCurrencies])
 
   async function getPDFLink() {
-    if (!invoiceLocal?.id) return
-    const pdfLink = await mercoaSession.client?.invoice.document.generateInvoicePdf(invoiceLocal.id)
+    if (!invoice?.id) return
+    const pdfLink = await mercoaSession.client?.invoice.document.generateInvoicePdf(invoice.id)
     if (pdfLink?.uri) {
       // open in new window
       window.open(pdfLink.uri, '_blank')
@@ -277,8 +491,8 @@ export function ReceivableDetails({
   }
 
   async function getPaymentLink() {
-    if (!invoiceLocal?.id) return
-    const pdfLink = await mercoaSession.client?.invoice.paymentLinks.getPayerLink(invoiceLocal.id)
+    if (!invoice?.id) return
+    const pdfLink = await mercoaSession.client?.invoice.paymentLinks.getPayerLink(invoice.id)
     if (pdfLink) {
       // open in new window
       window.open(pdfLink, '_blank')
@@ -288,16 +502,16 @@ export function ReceivableDetails({
   }
 
   async function sendEmail() {
-    if (!invoiceLocal?.id) return
-    if (!invoiceLocal.payer?.email) {
+    if (!invoice?.id) return
+    if (!invoice.payer?.email) {
       toast.error('There is no payer email address for this invoice.')
       return
     }
     try {
-      await mercoaSession.client?.invoice.update(invoiceLocal.id, {
+      await mercoaSession.client?.invoice.update(invoice.id, {
         status: Mercoa.InvoiceStatus.Approved,
       })
-      const url = await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(invoiceLocal.id)
+      const url = await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(invoice.id)
       if (url) {
         navigator.clipboard.writeText(url).then(
           function () {
@@ -355,13 +569,13 @@ export function ReceivableDetails({
 
   const lineItemHeaders = ['Description', 'Quantity', 'Unit Price', 'Total Amount']
 
-  if (!mercoaSession.client) return <NoSession componentName="ReceivableDetails" />
+  if (!mercoaSession.client) return <NoSession componentName="ReceivableForm" />
   return (
-    <div className="mercoa-p-2">
-      <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900">
-        Edit Invoice {invoiceLocal && <InvoiceStatusPill status={invoice?.status ?? 'DRAFT'} />}
+    <div className="mercoa-p-2 mercoa-mx-4">
+      <h2 className="mercoa-text-lg mercoa-font-bold mercoa-leading-7 mercoa-text-gray-900">
+        Edit Invoice {invoice && <InvoiceStatusPill status={invoice?.status ?? 'DRAFT'} />}
       </h2>
-      <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-max-w-xl mercoa-items-center mercoa-mt-10">
+      <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-items-center mercoa-mt-10 mercoa-w-full">
         {/*  VENDOR SEARCH */}
         <div className="sm:mercoa-col-span-3">
           <label
@@ -371,7 +585,7 @@ export function ReceivableDetails({
             Customer
           </label>
 
-          <div className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-left">
+          <div className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-left mercoa-w-full">
             <CounterpartySearch
               type="payor"
               onSelect={(payer) => {
@@ -389,9 +603,8 @@ export function ReceivableDetails({
           )}
         </div>
       </div>
-
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-3 mercoa-max-w-xl mercoa-items-center mercoa-gap-4 mercoa-p-0.5">
+        <div className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-3 mercoa-items-center mercoa-gap-4 mercoa-p-0.5">
           {/*  INVOICE DATE */}
           <MercoaInput
             name="invoiceDate"
@@ -433,7 +646,7 @@ export function ReceivableDetails({
           <p className="mercoa-mb-1 mercoa-mt-5 mercoa-text-lg">Line Items</p>
           <table className="mercoa-min-w-full">
             <thead>
-              <tr>
+              <tr className="mercoa-grid mercoa-grid-cols-[24%_24%_24%_24%_4%]">
                 {lineItemHeaders.map((header, index) => (
                   <th
                     key={header}
@@ -446,7 +659,7 @@ export function ReceivableDetails({
             </thead>
             <tbody>
               {fields.map((field, index) => (
-                <tr key={field.id}>
+                <tr key={field.id} className="mercoa-grid mercoa-grid-cols-[24%_24%_24%_24%_4%]">
                   <td>
                     <MercoaInput
                       name={`lineItems.${index}.description`}
@@ -491,7 +704,7 @@ export function ReceivableDetails({
                       }
                     />
                   </td>
-                  <td>
+                  <td className="mercoa-flex mercoa-items-center">
                     <XCircleIcon
                       className="mercoa-size-5 mercoa-cursor-pointer mercoa-text-gray-500"
                       onClick={() => remove(index)}
@@ -525,55 +738,55 @@ export function ReceivableDetails({
               </tr>
             </tbody>
           </table>
-        </div>
-
-        <div className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-4 mercoa-gap-4 mercoa-items-start mercoa-p-0.5">
-          <MercoaInput
-            name="amount"
-            label="Invoice Total Amount"
-            type="currency"
-            readOnly
-            errors={errors}
-            control={control}
-            leadingIcon={
-              <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
-            }
-            trailingIcon={
-              <>
-                <label htmlFor="currency" className="mercoa-sr-only">
-                  Currency
-                </label>
-                <select
-                  {...register('currency')}
-                  className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
-                >
-                  {supportedCurrencies.map((option: Mercoa.CurrencyCode, index: number) => (
-                    <option key={index} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </>
-            }
-          />
-          {/*  DESCRIPTION */}
-          <div className="mercoa-col-span-3">
-            <label
-              htmlFor="description"
-              className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 "
-            >
-              Notes
-            </label>
-            <div className="mercoa-mt-1">
-              <textarea
-                id="description"
-                {...register('description')}
-                rows={3}
-                className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
-                defaultValue={''}
-              />
+          <table className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-4 mercoa-gap-4 mercoa-items-start mercoa-p-0.5">
+            <MercoaInput
+              name="amount"
+              label="Invoice Total Amount"
+              type="currency"
+              readOnly
+              errors={errors}
+              control={control}
+              leadingIcon={
+                <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
+              }
+              trailingIcon={
+                <>
+                  <label htmlFor="currency" className="mercoa-sr-only">
+                    Currency
+                  </label>
+                  <select
+                    {...register('currency')}
+                    className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+                  >
+                    {supportedCurrencies.map((option: Mercoa.CurrencyCode, index: number) => (
+                      <option key={index} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              }
+            />
+            {/*  DESCRIPTION */}
+            <div className="mercoa-col-span-3">
+              <label
+                htmlFor="description"
+                className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 "
+              >
+                Notes
+              </label>
+              <div className="mercoa-mt-1">
+                <textarea
+                  id="description"
+                  {...register('description')}
+                  rows={3}
+                  className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
+                  style={{ height: '36px' }}
+                  defaultValue={''}
+                />
+              </div>
             </div>
-          </div>
+          </table>
         </div>
 
         {/*  GRAY border  */}
@@ -621,13 +834,13 @@ export function ReceivableDetails({
         </div>
 
         <div className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-4 mercoa-gap-4 mercoa-items-end mercoa-p-0.5">
-          {!invoiceLocal?.id ? (
+          {!invoice?.id ? (
             <MercoaButton className="mercoa-mt-5" isEmphasized>
               Create Invoice
             </MercoaButton>
           ) : (
             <>
-              {invoiceLocal.status === Mercoa.InvoiceStatus.Draft && (
+              {invoice.status === Mercoa.InvoiceStatus.Draft && (
                 <MercoaButton isEmphasized={false}>Update Draft</MercoaButton>
               )}
               <MercoaButton
@@ -653,7 +866,7 @@ export function ReceivableDetails({
                 className="mercoa-flex mercoa-justify-center"
               >
                 <EnvelopeIcon className="mercoa-size-5 md:mercoa-mr-2" />
-                {invoiceLocal.status === 'DRAFT' ? 'Send Invoice' : 'Resend Invoice'}
+                {invoice.status === 'DRAFT' ? 'Send Invoice' : 'Resend Invoice'}
               </MercoaButton>
             </>
           )}

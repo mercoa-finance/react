@@ -6,7 +6,18 @@ export function subtractWeekdays(input: dayjs.Dayjs, days: number) {
   let date = dayjs(input)
   while (days > 0) {
     date = date.subtract(1, 'day')
-    if (date.day() !== 0 && date.day() !== 6) {
+    if (date.day() !== 0 && date.day() !== 6 && !holidays.find((holiday) => date.isSame(holiday.date, 'day'))) {
+      days--
+    }
+  }
+  return date
+}
+
+export function addWeekdays(input: dayjs.Dayjs, days: number) {
+  let date = dayjs(input)
+  while (days > 0) {
+    date = date.add(1, 'day')
+    if (date.day() !== 0 && date.day() !== 6 && !holidays.find((holiday) => date.isSame(holiday.date, 'day'))) {
       days--
     }
   }
