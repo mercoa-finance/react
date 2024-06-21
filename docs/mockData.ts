@@ -1071,6 +1071,9 @@ export const mswHandlers = [
   http.get(`${basePath}/entity/${payerEntity.id}/users`, () => {
     return HttpResponse.json([user])
   }),
+  http.put(`${basePath}/entity/${payerEntity.id}/users`, () => {
+    return HttpResponse.json([user])
+  }),
   http.get(`${basePath}/entity/${payerEntity.id}/user/${user.id}`, () => {
     return HttpResponse.json(user)
   }),

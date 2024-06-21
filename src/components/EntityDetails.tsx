@@ -71,7 +71,7 @@ export function EntityInboxEmail({ entity, layout }: { entity?: Mercoa.EntityRes
         toast.success('Email address copied')
       }}
     >
-      {(!layout || layout === 'left') && <Square2StackIcon className="mercoa-size-5" />}
+      {layout === 'left' && <Square2StackIcon className="mercoa-size-5" />}
       {entitySelected?.emailTo ?? ''}@{mercoaSession.organization?.emailProvider?.inboxDomain}
       {(!layout || layout === 'right') && <Square2StackIcon className="mercoa-size-5" />}
     </button>

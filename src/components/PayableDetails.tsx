@@ -24,6 +24,7 @@ import accounting from 'accounting'
 import Big from 'big.js'
 import dayjs from 'dayjs'
 import minMax from 'dayjs/plugin/minMax'
+import tz from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Dropzone from 'react-dropzone'
@@ -65,6 +66,7 @@ import {
 } from './index'
 dayjs.extend(utc)
 dayjs.extend(minMax)
+dayjs.extend(tz)
 
 const dJSON = require('dirty-json')
 
@@ -75,6 +77,7 @@ export function PayableDetails({
   heightOffset,
   admin,
   documentPosition = 'left',
+  documentCustomization,
   children,
   invoicePreSubmit,
 }: {
@@ -84,6 +87,10 @@ export function PayableDetails({
   heightOffset?: number
   admin?: boolean
   documentPosition?: 'right' | 'left' | 'none'
+  documentCustomization?: {
+    downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+    viewEmailButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  }
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
   children?: ({
     invoice,
@@ -167,6 +174,8 @@ export function PayableDetails({
       }}
       height={height}
       invoice={invoiceLocal}
+      downloadButton={documentCustomization?.downloadButton}
+      viewEmailButton={documentCustomization?.viewEmailButton}
     />
   )
 
@@ -712,7 +721,9 @@ export function PayableForm({
           amount: Number(lineItem.amount),
           quantity: Number(lineItem.quantity),
           unitPrice: Number(lineItem.unitPrice),
-          metadata: JSON.parse(JSON.stringify(lineItem.metadata)) as unknown as Record<string, string>,
+          metadata: lineItem.metadata
+            ? (JSON.parse(JSON.stringify(lineItem.metadata)) as unknown as Record<string, string>)
+            : {},
           currency: data.currency ?? 'USD',
           glAccountId: lineItem.glAccountId,
         }
@@ -1098,11 +1109,15 @@ export function PayableDocument({
   onDocumentUpload,
   invoice,
   height,
+  downloadButton,
+  viewEmailButton,
 }: {
   onOCRComplete?: (ocrResponse?: Mercoa.OcrResponse) => void
   onDocumentUpload?: ({ fileReaderObj, mimeType }: { fileReaderObj: string; mimeType: string }) => void
   invoice?: Mercoa.InvoiceResponse
   height: number
+  downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  viewEmailButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1219,6 +1234,8 @@ export function PayableDocument({
             invoice={invoice}
             height={height}
             showSourceEmail
+            downloadButton={downloadButton}
+            viewEmailButton={viewEmailButton}
           />
         </>
       ) : (
@@ -1235,11 +1252,15 @@ export function PayableDocumentDisplay({
   invoice,
   height,
   showSourceEmail,
+  downloadButton,
+  viewEmailButton,
 }: {
   documents?: Array<{ fileReaderObj: string; mimeType: string }>
   invoice?: Mercoa.InvoiceResponse
   height: number
   showSourceEmail?: boolean
+  downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  viewEmailButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
   const [localDocuments, setLocalDocuments] = useState<Array<{ fileReaderObj: string; mimeType: string }> | undefined>(
@@ -1275,26 +1296,35 @@ export function PayableDocumentDisplay({
           {localDocuments.map((document, i) => (
             <div key={i}>
               <div className="mercoa-flex mercoa-flex-row-reverse mercoa-gap-4 mercoa-mb-4">
-                {showSourceEmail && sourceEmails && (
-                  <MercoaButton
-                    type="button"
-                    isEmphasized={false}
-                    className="mercoa-mt-2"
-                    onClick={() => setView('email')}
-                  >
-                    <span className="mercoa-hidden xl:mercoa-inline">
-                      <EnvelopeIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-size-5" /> View Email
-                    </span>
-                  </MercoaButton>
-                )}
+                {showSourceEmail &&
+                  sourceEmails &&
+                  (viewEmailButton ? (
+                    viewEmailButton({ onClick: () => setView('email') })
+                  ) : (
+                    <MercoaButton
+                      type="button"
+                      isEmphasized={false}
+                      className="mercoa-mt-2"
+                      onClick={() => setView('email')}
+                    >
+                      <span className="mercoa-hidden xl:mercoa-inline">
+                        <EnvelopeIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-size-5" /> View
+                        Email
+                      </span>
+                    </MercoaButton>
+                  ))}
                 <a href={document.fileReaderObj} target="_blank" rel="noreferrer" download>
-                  <MercoaButton type="button" isEmphasized={false} className="mercoa-mt-2">
-                    <span className="mercoa-hidden xl:mercoa-inline">
-                      <ArrowDownTrayIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-size-5" />{' '}
-                      Download Invoice
-                    </span>
-                    <span className="mercoa-inline xl:mercoa-hidden">Download</span>
-                  </MercoaButton>
+                  {downloadButton ? (
+                    downloadButton({ onClick: () => {} })
+                  ) : (
+                    <MercoaButton type="button" isEmphasized={false} className="mercoa-mt-2">
+                      <span className="mercoa-hidden xl:mercoa-inline">
+                        <ArrowDownTrayIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-size-5" />{' '}
+                        Download Invoice
+                      </span>
+                      <span className="mercoa-inline xl:mercoa-hidden">Download</span>
+                    </MercoaButton>
+                  )}
                 </a>
               </div>
 
@@ -2489,7 +2519,24 @@ export function PaymentDestinationProcessingTime() {
   const endDate = addWeekdays(dayjs(nextWindow), processingTime).toDate()
 
   function getNextWindow(deductionDate: Date, paymentDestinationType: Mercoa.PaymentMethodType, schemaId: string) {
-    let window = dayjs(deductionDate).isAfter(dayjs()) ? dayjs(deductionDate).toDate() : dayjs().add(1, 'day').toDate()
+    // is it before 11:59 AM PST
+    const isBeforeNoon = dayjs()
+      .tz('America/Los_Angeles')
+      .isBefore(
+        dayjs().tz('America/Los_Angeles').set('hour', 11).set('minute', 59).set('second', 59).set('millisecond', 999),
+      )
+
+    let window = dayjs(deductionDate).toDate()
+    if (dayjs(deductionDate).isAfter(dayjs())) {
+      window = dayjs(deductionDate).toDate()
+    } else {
+      if (isBeforeNoon) {
+        window = dayjs().toDate()
+      } else {
+        window = dayjs().add(1, 'day').toDate()
+      }
+    }
+
     while (!isWeekday(window)) {
       window = dayjs(window).add(1, 'day').toDate()
     }
@@ -2521,9 +2568,10 @@ export function PaymentDestinationProcessingTime() {
   }
 
   if (processingTime < 0) return null
+  if (!deductionDate) return null
 
   return (
-    <div className="mercoa-flex mercoa-items-center mercoa-justify-between mercoa-p-5 mercoa-rounded-md mercoa-text-center">
+    <div className="mercoa-flex mercoa-items-center mercoa-justify-between mercoa-p-5 mercoa-rounded-md mercoa-text-center mercoa-max-w-[500px] mercoa-m-auto">
       <div className="mercoa-flex mercoa-items-center">
         <CalendarDaysIcon className="mercoa-size-5 mercoa-mr-2" />
         <span className="mercoa-text-gray-900">{dayjs(nextWindow).format('MMM D')}</span>
@@ -2970,12 +3018,27 @@ export function MetadataSelection({
           values.map((value) => {
             let parsedValue = {
               key: '',
-              value: '',
+              value: '' as any,
+              subtitle: '' as any,
             }
             try {
-              parsedValue = JSON.parse(value) as { key: string; value: string }
-              parsedValue.value = `${parsedValue.value}`
+              parsedValue = JSON.parse(value) as { key: string; value: string; subtitle: string }
               parsedValue.key = `${parsedValue.key}`
+              try {
+                const value = JSON.parse(parsedValue.value) as {
+                  value: string
+                  title?: string
+                  subtitle?: string
+                }
+                if (value.value) {
+                  parsedValue.value = value.title ?? value.value
+                  parsedValue.subtitle = value.subtitle
+                } else {
+                  parsedValue.value = `${parsedValue.value}`
+                }
+              } catch (e) {
+                parsedValue.value = `${parsedValue.value}`
+              }
             } catch (e) {
               console.error(e)
             }
@@ -2993,25 +3056,27 @@ export function MetadataSelection({
 
     // Get Value
     useEffect(() => {
+      if (!value) return
       if (schema.type === Mercoa.MetadataType.KeyValue) {
-        setValueState(
-          JSON.parse(
-            values.find((e) => {
-              let parsedValue = {
-                key: '',
-                value: '',
-              }
-              try {
-                parsedValue = JSON.parse(e) as { key: string; value: string }
-                parsedValue.value = `${parsedValue.value}`
-                parsedValue.key = `${parsedValue.key}`
-              } catch (e) {
-                console.error(e)
-              }
-              return parsedValue?.key === `${value ?? ''}`
-            }) ?? '{}',
-          ) as any,
-        )
+        const foundValue = JSON.parse(
+          values.find((e) => {
+            let parsedValue = { key: '' }
+            try {
+              parsedValue = JSON.parse(e) as { key: string }
+              parsedValue.key = `${parsedValue.key}`
+            } catch (e) {
+              console.error(e)
+            }
+            return parsedValue?.key === `${value ?? ''}`
+          }) ?? '{}',
+        ) as any
+        try {
+          const valueParsed = JSON.parse(foundValue.value) as { value: string; title?: string; subtitle?: string }
+          if (valueParsed.value) {
+            foundValue.value = valueParsed.title ?? valueParsed.value
+          }
+        } catch (e) {}
+        setValueState(foundValue.value ? foundValue.value : foundValue)
       } else {
         let comboboxValue: string | string[] | undefined = value
         if (schema.allowMultiple) {
@@ -3031,6 +3096,7 @@ export function MetadataSelection({
             setValue(value?.key)
           }}
           displayIndex="value"
+          secondaryDisplayIndex="subtitle"
           value={valueState}
           multiple={schema.allowMultiple}
           displaySelectedAs="pill"
@@ -3206,7 +3272,16 @@ function filterMetadataValues(entityMetadata: string[], schema: Mercoa.MetadataS
     if (schema.type === Mercoa.MetadataType.KeyValue) {
       entityMetadata = entityMetadata.map((e) => {
         try {
-          const parsedValue = dJSON.parse(e) as { key: string; value: string }
+          const parsedValue = dJSON.parse(e) as {
+            key: string
+            value:
+              | string
+              | {
+                  title?: string
+                  subtitle?: string
+                  value: string
+                }
+          }
           if (parsedValue.key && parsedValue.value) {
             return JSON.stringify(parsedValue)
           }
@@ -3242,7 +3317,7 @@ export function PayableLineItems({ readOnly }: { readOnly?: boolean }) {
   if (mercoaSession.iframeOptions?.options?.invoice?.lineItems === Mercoa.LineItemAvailabilities.Disabled) return <></>
   return (
     <div
-      className={`mercoa-col-span-full mercoa-grid mercoa-grid-cols-2 mercoa-gap-2 mercoa-border mercoa-border-gray-900/10 mercoa-px-2 mercoa-py-6 mercoa-rounded-mercoa`}
+      className={`mercoa-col-span-full mercoa-grid mercoa-gap-2 mercoa-border mercoa-border-gray-900/10 mercoa-px-2 mercoa-py-6 mercoa-rounded-mercoa`}
     >
       {/* HEADER */}
       <div className="mercoa-flex mercoa-items-center mercoa-col-span-full">
@@ -3446,8 +3521,8 @@ function LineItemRows({ readOnly }: { readOnly?: boolean }) {
     <>
       {lineItems.map((lineItem, index) => (
         <Fragment key={lineItem.id}>
-          <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full mercoa-my-4" />
-          <div className="mercoa-flex mercoa-col-span-full mercoa-items-start">
+          <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-my-4" />
+          <div className="mercoa-flex mercoa-items-start">
             {/*  INVOICE NUMBER */}
             <MercoaInput
               name={`lineItems.${index}.description`}
@@ -3488,22 +3563,22 @@ function LineItemRows({ readOnly }: { readOnly?: boolean }) {
               </MercoaButton>
             )}
           </div>
-          {filteredMetadata.map((schema) => (
-            <MetadataSelection
-              schema={schema}
-              lineItem
-              key={schema.key}
-              readOnly={readOnly}
-              field={
-                schema.key === 'glAccountId'
-                  ? `lineItems[${index}].${schema.key}`
-                  : `lineItems[${index}].metadata.${schema.key}`
-              }
-            />
-          ))}
-          {lineItems.length - 1 === index && (
-            <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full mercoa-my-4" />
-          )}
+          <div className={`mercoa-grid ${filteredMetadata.length > 1 ? 'mercoa-grid-cols-2' : 'mercoa-grid-cols-1'}`}>
+            {filteredMetadata.map((schema) => (
+              <MetadataSelection
+                schema={schema}
+                lineItem
+                key={schema.key}
+                readOnly={readOnly}
+                field={
+                  schema.key === 'glAccountId'
+                    ? `lineItems[${index}].${schema.key}`
+                    : `lineItems[${index}].metadata.${schema.key}`
+                }
+              />
+            ))}
+          </div>
+          {lineItems.length - 1 === index && <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-my-4" />}
         </Fragment>
       ))}
     </>
