@@ -837,6 +837,7 @@ const pmSchemas = [
     name: 'Wire',
     isSource: false,
     isDestination: true,
+    estimatedProcessingTime: 0,
     supportedCurrencies: ['USD', 'EUR'],
     fields: [
       {
@@ -873,6 +874,7 @@ const pmSchemas = [
     name: 'Check',
     isSource: false,
     isDestination: true,
+    estimatedProcessingTime: 14,
     supportedCurrencies: ['USD'],
     fields: [
       {
@@ -1069,10 +1071,18 @@ export const mswHandlers = [
     }),
   ),
   http.get(`${basePath}/entity/${payerEntity.id}/users`, () => {
-    return HttpResponse.json([user])
+    return HttpResponse.json({
+      hasMore: false,
+      count: 1,
+      data: [user],
+    })
   }),
   http.put(`${basePath}/entity/${payerEntity.id}/users`, () => {
-    return HttpResponse.json([user])
+    return HttpResponse.json({
+      hasMore: false,
+      count: 1,
+      data: [user],
+    })
   }),
   http.get(`${basePath}/entity/${payerEntity.id}/user/${user.id}`, () => {
     return HttpResponse.json(user)

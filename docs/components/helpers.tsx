@@ -1,3 +1,4 @@
+import { useMercoaSession } from '@mercoa/react'
 import { Tabs } from 'nextra/components'
 import { Children } from 'react'
 
@@ -12,6 +13,7 @@ export function ComponentContainer({
 }) {
   const items = ['Component', 'Code']
   const arrayChildren = Children.toArray(children)
+  const mercoaSession = useMercoaSession()
 
   if (arrayChildren.length < 2) items.pop()
   return (
@@ -27,7 +29,7 @@ export function ComponentContainer({
             minHeight: minHeight ?? '10px',
           }}
         >
-          {arrayChildren[0]}
+          {mercoaSession.token && arrayChildren[0]}
         </div>
       </Tabs.Tab>
       {arrayChildren[1] && <Tabs.Tab>{arrayChildren[1]}</Tabs.Tab>}

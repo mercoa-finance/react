@@ -13,12 +13,9 @@ export default function MyApp({ Component, pageProps }: { Component: any; pagePr
       setIsLoaded(true)
     })
   }, [])
-  if (isLoaded) {
-    return (
-      <MercoaSession token={mockToken}>
-        <Component {...pageProps} />
-      </MercoaSession>
-    )
-  }
-  return <>loading...</>
+  return (
+    <MercoaSession token={isLoaded ? mockToken : undefined}>
+      <Component {...pageProps} />
+    </MercoaSession>
+  )
 }
