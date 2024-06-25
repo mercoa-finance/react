@@ -8,6 +8,7 @@ import {
   AddDialog,
   DefaultPaymentMethodIndicator,
   LoadingSpinnerIcon,
+  MercoaButton,
   MercoaInput,
   MercoaInputLabel,
   NoSession,
@@ -210,11 +211,9 @@ export function AddCustomPaymentMethod({
         </h3>
       )}
       <AddCustomPaymentMethodForm register={register} schema={schema} control={control} />
-      {actions || (
-        <button className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-rounded-mercoa mercoa-border mercoa-border-transparent mercoa-bg-indigo-600 mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-medium mercoa-text-white mercoa-shadow-sm hover:mercoa-bg-indigo-700 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2">
-          Add
-        </button>
-      )}
+      <div className="mercoa-flex mercoa-flex-row-reverse">
+        {actions || <MercoaButton isEmphasized>Add</MercoaButton>}
+      </div>
     </form>
   )
 }

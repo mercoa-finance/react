@@ -236,13 +236,11 @@ export function PayableCounterpartySearch({
   disableCreation,
   onSelect,
   network,
-  saveButton,
 }: {
   counterparty?: Mercoa.CounterpartyResponse
   disableCreation?: boolean
   onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
   network?: Mercoa.CounterpartyNetworkType[]
-  saveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
 }) {
   const [edit, setEdit] = useState<boolean>(false)
   const {
@@ -273,7 +271,6 @@ export function PayableCounterpartySearch({
               network={network}
               edit={edit}
               setEdit={setEdit}
-              saveButton={saveButton}
             />
           </div>
         </div>
@@ -407,7 +404,6 @@ function CounterpartySearchBase({
   network,
   edit,
   setEdit,
-  saveButton,
 }: {
   counterparty?: Mercoa.CounterpartyResponse
   disableCreation?: boolean
@@ -416,7 +412,6 @@ function CounterpartySearchBase({
   network?: Mercoa.CounterpartyNetworkType[]
   edit: boolean
   setEdit: (edit: boolean) => any
-  saveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -502,7 +497,7 @@ function CounterpartySearchBase({
                 <XCircleIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
                 <span className="mercoa-sr-only">Clear</span>
               </button>
-              {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && (
+              {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation && (
                 <button
                   onClick={() => {
                     setEdit(true)
@@ -532,7 +527,6 @@ function CounterpartySearchBase({
             setTimeout(() => setEdit(true), 100)
           }}
           onExit={onSelect}
-          saveButton={saveButton}
         />
       )
     } else if (selectedCounterparty) {
@@ -604,7 +598,7 @@ function CounterpartySearchBase({
                 <span>{cp.name}</span>
               </Combobox.Option>
             ))}
-            {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && (
+            {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation && (
               <Combobox.Option value={{ id: 'new' }}>
                 {({ active }) => (
                   <div
@@ -632,13 +626,11 @@ function CounterpartyAddOrEditForm({
   name,
   onComplete,
   onExit,
-  saveButton,
 }: {
   counterparty?: Mercoa.CounterpartyResponse
   name?: string
   onComplete: (counterparty?: Mercoa.CounterpartyResponse) => any
   onExit?: (counterparty?: any) => any
-  saveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
 }) {
   const {
     register,
@@ -815,26 +807,16 @@ function CounterpartyAddOrEditForm({
         </div>
       )}
       {accountType && (
-        <>
-          {saveButton ? (
-            saveButton({
-              onClick: () => {
-                setValue('saveAsStatus', 'COUNTERPARTY')
-              },
-            })
-          ) : (
-            <MercoaButton
-              isEmphasized
-              type="submit"
-              className="mercoa-mt-2 mercoa-w-full"
-              onClick={() => {
-                setValue('saveAsStatus', 'COUNTERPARTY')
-              }}
-            >
-              Save
-            </MercoaButton>
-          )}{' '}
-        </>
+        <MercoaButton
+          isEmphasized
+          type="submit"
+          className="mercoa-mt-2 mercoa-w-full"
+          onClick={() => {
+            setValue('saveAsStatus', 'COUNTERPARTY')
+          }}
+        >
+          Save
+        </MercoaButton>
       )}
     </>
   )

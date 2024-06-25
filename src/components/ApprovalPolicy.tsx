@@ -38,7 +38,7 @@ function ArrowDownLeftIcon({ className }: { className?: string }) {
   )
 }
 
-export function ApprovalPolicies() {
+export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
   const mercoaSession = useMercoaSession()
 
   const [policies, setPolicies] = useState<Mercoa.ApprovalPolicyResponse[]>([])
@@ -200,6 +200,7 @@ export function ApprovalPolicies() {
         type: 'success',
       })
       setIsEditing(false)
+      if (onSave) onSave()
       mercoaSession.refresh()
     } else {
       console.error(toasts)

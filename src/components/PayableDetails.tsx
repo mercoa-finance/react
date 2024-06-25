@@ -291,6 +291,7 @@ export function PayableForm({
       amount: yup.number().transform(removeThousands).positive().typeError('Please enter a valid number'),
       invoiceNumber: yup.string(),
       description: yup.string(),
+      processedAt: yup.date().nullable(),
       dueDate: yup.date().typeError('Please select a due date'),
       deductionDate: yup.date().typeError('Please select a deduction date'),
       invoiceDate: yup.date().typeError('Please select an invoice date'),
@@ -347,6 +348,7 @@ export function PayableForm({
       invoiceDate: invoice?.invoiceDate ? dayjs(invoice?.invoiceDate).toDate() : undefined,
       dueDate: invoice?.dueDate ? dayjs(invoice?.dueDate).toDate() : undefined,
       deductionDate: invoice?.deductionDate ? dayjs(invoice?.deductionDate).toDate() : undefined,
+      processedAt: invoice?.processedAt ? dayjs(invoice?.processedAt).toDate() : undefined,
       lineItems: invoice?.lineItems ?? [],
       paymentDestinationId: invoice?.paymentDestination?.id,
       paymentDestinationType: invoice?.paymentDestination?.type ?? '',
@@ -1111,6 +1113,7 @@ export function PayableDocument({
   height,
   downloadButton,
   viewEmailButton,
+  theme,
 }: {
   onOCRComplete?: (ocrResponse?: Mercoa.OcrResponse) => void
   onDocumentUpload?: ({ fileReaderObj, mimeType }: { fileReaderObj: string; mimeType: string }) => void
@@ -1118,6 +1121,7 @@ export function PayableDocument({
   height: number
   downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   viewEmailButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  theme?: 'light' | 'dark'
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1197,13 +1201,13 @@ export function PayableDocument({
         {({ getRootProps, getInputProps, isDragActive }) => (
           <div
             className={`mercoa-mt-2 mercoa-flex mercoa-justify-center mercoa-rounded-mercoa mercoa-border mercoa-border-dashed mercoa-border-gray-900/25 ${
-              isDragActive ? 'mercoa-border-mercoa-primary' : 'mercoa-border-gray-300'
-            } mercoa-px-6 mercoa-py-10`}
+              theme === 'dark' ? 'mercoa-text-gray-100' : 'mercoa-text-gray-600'
+            } ${isDragActive ? 'mercoa-border-mercoa-primary' : 'mercoa-border-gray-300'} mercoa-px-6 mercoa-py-10`}
             {...getRootProps()}
           >
             <div className="mercoa-text-center">
               <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
-              <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm mercoa-text-gray-600">
+              <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm">
                 <label
                   htmlFor="file-upload"
                   className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-mercoa mercoa-font-semibold mercoa-text-mercoa-primary focus-within:mercoa-outline-none focus-within:mercoa-ring-1 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2"
@@ -1213,7 +1217,7 @@ export function PayableDocument({
                 </label>
                 <p className="mercoa-pl-1">or drag and drop</p>
               </div>
-              <p className="mercoa-text-xs mercoa-leading-5 mercoa-text-gray-600">PNG, JPG, PDF up to 10MB</p>
+              <p className="mercoa-text-xs mercoa-leading-5">PNG, JPG, PDF up to 10MB</p>
             </div>
           </div>
         )}
@@ -2506,19 +2510,19 @@ export function PaymentDestinationProcessingTime() {
   const { watch } = useFormContext()
 
   const deductionDate = watch('deductionDate') as Date
+  const processedAt = watch('processedAt') as Date
   const paymentDestinationType = watch('paymentDestinationType') as Mercoa.PaymentMethodType
-  const paymentDestinationSchemaId = watch('paymentDestinationSchemaId') as string
   const paymentDestinationOptions = watch('paymentDestinationOptions') as Mercoa.PaymentDestinationOptions
 
-  const nextWindow = getNextWindow(deductionDate, paymentDestinationType, paymentDestinationSchemaId)
-  const processingTime = getProcessingTime(
-    paymentDestinationType,
-    paymentDestinationSchemaId,
-    paymentDestinationOptions,
-  )
+  const nextWindow = getNextWindow()
+  const processingTime = getProcessingTime()
   const endDate = addWeekdays(dayjs(nextWindow), processingTime).toDate()
 
-  function getNextWindow(deductionDate: Date, paymentDestinationType: Mercoa.PaymentMethodType, schemaId: string) {
+  function getNextWindow() {
+    if (processedAt) {
+      return dayjs(processedAt).toDate()
+    }
+
     // is it before 11:59 AM PST
     const isBeforeNoon = dayjs()
       .tz('America/Los_Angeles')
@@ -2543,28 +2547,24 @@ export function PaymentDestinationProcessingTime() {
     return window
   }
 
-  function getProcessingTime(
-    paymentDestinationType: Mercoa.PaymentMethodType,
-    schemaId: string,
-    options: Mercoa.PaymentDestinationOptions,
-  ) {
+  function getProcessingTime() {
     if (paymentDestinationType === Mercoa.PaymentMethodType.BankAccount) {
-      if (options?.delivery === 'ACH_STANDARD') {
+      if (paymentDestinationOptions?.delivery === 'ACH_STANDARD') {
         return 3
       } else {
         return 2
       }
     } else if (paymentDestinationType === Mercoa.PaymentMethodType.Check) {
-      if (options?.delivery === 'PRINT') {
+      if (paymentDestinationOptions?.delivery === 'PRINT') {
         return -1
       } else {
         return 14
       }
-    } else if (paymentDestinationType === Mercoa.PaymentMethodType.Custom) {
-      const schema = mercoaSession.customPaymentMethodSchemas.find((e) => e.id === schemaId)
-      return schema?.estimatedProcessingTime ?? -1
+    } else {
+      const schema = mercoaSession.customPaymentMethodSchemas.find((e) => e.id === paymentDestinationType)
+      if (!schema) return -1
+      return schema.estimatedProcessingTime
     }
-    return -1
   }
 
   if (processingTime < 0) return null

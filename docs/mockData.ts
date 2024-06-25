@@ -908,6 +908,40 @@ const pmSchemas = [
   },
 ]
 
+const emailLogs: Mercoa.EmailLogResponse = {
+  hasMore: false,
+  count: 3,
+  data: [
+    {
+      id: '123456',
+      subject: 'Invoice #123456',
+      from: 'vendor1@test.com',
+      to: payerEntity.emailTo + '@ap.yourdomain.com',
+      textBody: 'This is a test email',
+      htmlBody: '<p>This is a test email</p>',
+      createdAt: new Date(),
+    },
+    {
+      id: '123457',
+      subject: 'Invoice #123457',
+      from: 'vendor2@test.com',
+      to: payerEntity.emailTo + '@ap.yourdomain.com',
+      textBody: 'This is another test email',
+      htmlBody: '<p>This is another test email</p>',
+      createdAt: new Date(),
+    },
+    {
+      id: '567890',
+      subject: 'Invoice #234234',
+      from: 'vendor3@test.com',
+      to: payerEntity.emailTo + '@ap.yourdomain.com',
+      textBody: 'This is yet another test email',
+      htmlBody: '<p>This is yet another test email</p>',
+      createdAt: new Date(),
+    },
+  ],
+}
+
 export const mswHandlers = [
   // Org
   http.get(`${basePath}/organization`, () => {
@@ -939,6 +973,9 @@ export const mswHandlers = [
   }),
   http.get(`${basePath}/entity/${payerEntity.id}/representatives`, () => {
     return HttpResponse.json(representatives)
+  }),
+  http.get(`${basePath}/entity/${payerEntity.id}/emailLogs`, () => {
+    return HttpResponse.json(emailLogs)
   }),
   http.get(`${basePath}/entity/${payerEntity.id}/metadata`, () => {
     return HttpResponse.json(entityMetadata)

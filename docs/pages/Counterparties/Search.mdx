@@ -14,12 +14,13 @@ The `<CounterpartySearch>` component lets you search for, select, and edit a cou
 
 ## Props
 
-| Name                | Type                | Required | Description                                                              |
-| :-------------------| :-------------------| :--------| :------------------------------------------------------------------------|
-| counterparty        | `Mercoa.CounterpartyResponse`         |          | Pre-selected Counterparty                       |
-| type                | `"payee"` `"payor"`                   | ✅       | Use `Payee` to view as a payee (AP), and `Payor` to view as a payor (AR) |
-| onSelect            | `((counterparty: CounterpartyResponse) => any)` |          | Function to call when an counterparty is selected                                  |
-
+| Name                | Type                                            | Required | Description                                                              |
+| :-------------------| :-----------------------------------------------| :--------| :------------------------------------------------------------------------|
+| counterparty        | `Mercoa.CounterpartyResponse`                   |          | Pre-selected Counterparty                                                |
+| type                | `"payee"` `"payor"`                             | ✅       | Use `Payee` to view as a payee (AP), and `Payor` to view as a payor (AR) |
+| onSelect            | `((counterparty: CounterpartyResponse) => any)` |          | Function to call when an counterparty is selected                        |
+| disableCreation     | `boolean`                                       |          | Disable the ability to create an counterparty from the search            |
+| network             | `Mercoa.CounterpartyNetworkType[]`              |          | Defaults to `ENTITY`. Use `NETWORK` to show `isNetwork` counterparties   |
 
 ## Examples
 

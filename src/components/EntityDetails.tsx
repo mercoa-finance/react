@@ -1,7 +1,7 @@
 import { Square2StackIcon } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
 import dayjs from 'dayjs'
-import { ReactElement, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { NoSession, TableNavigation, Tooltip, useMercoaSession } from './index'
 
@@ -56,13 +56,23 @@ export function EntityStatus({ entity }: { entity?: Mercoa.EntityResponse }) {
   )
 }
 
-export function EntityInboxEmail({ entity, layout }: { entity?: Mercoa.EntityResponse; layout?: 'left' | 'right' }) {
+export function EntityInboxEmail({
+  entity,
+  layout,
+  theme,
+}: {
+  entity?: Mercoa.EntityResponse
+  layout?: 'left' | 'right'
+  theme?: 'light' | 'dark'
+}) {
   const mercoaSession = useMercoaSession()
   const entitySelected = entity || mercoaSession.entity
   if (!mercoaSession.client) return <NoSession componentName="EntityInboxEmail" />
   return (
     <button
-      className="mercoa-flex mercoa-gap-1 mercoa-items-center mercoa-text-gray-600"
+      className={`mercoa-flex mercoa-gap-1 mercoa-items-center ${
+        theme === 'dark' ? 'mercoa-text-gray-100' : 'mercoa-text-gray-600'
+      }`}
       onClick={() => {
         // copy email address to clipboard
         navigator.clipboard.writeText(
@@ -76,6 +86,17 @@ export function EntityInboxEmail({ entity, layout }: { entity?: Mercoa.EntityRes
       {(!layout || layout === 'right') && <Square2StackIcon className="mercoa-size-5" />}
     </button>
   )
+}
+
+export type EntityEmailLogsChildrenProps = {
+  dataLoaded: boolean
+  emails: Mercoa.EmailLog[]
+  hasNext: boolean
+  getNext: () => void
+  hasPrevious: boolean
+  getPrevious: () => void
+  resultsPerPage: number
+  setResultsPerPage: (value: number) => void
 }
 
 export function EntityEmailLogs({
@@ -94,16 +115,7 @@ export function EntityEmailLogs({
     getPrevious,
     resultsPerPage,
     setResultsPerPage,
-  }: {
-    dataLoaded: boolean
-    emails: Mercoa.EmailLog[]
-    hasNext: boolean
-    getNext: () => void
-    hasPrevious: boolean
-    getPrevious: () => void
-    resultsPerPage: number
-    setResultsPerPage: (value: number) => void
-  }) => ReactElement | null
+  }: EntityEmailLogsChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
   const entitySelected = entity || mercoaSession.entity
@@ -163,7 +175,7 @@ export function EntityEmailLogs({
 
   if (!mercoaSession.client) return <NoSession componentName="EntityEmailLogs" />
   return (
-    <>
+    <div>
       {/* ******** TABLE ******** */}
       <table className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300 mercoa-mt-5">
         <thead>
@@ -185,7 +197,7 @@ export function EntityEmailLogs({
           {emailLogs?.map((log) => (
             <tr
               key={log.id}
-              className="mercoa-bg-white hover:mercoa-bg-gray-100"
+              className={`mercoa-bg-white ${onClick && log.invoiceId ? 'hover:mercoa-bg-gray-100' : ''}`}
               onClick={() => {
                 if (onClick && log.invoiceId) onClick(log.invoiceId)
               }}
@@ -226,6 +238,6 @@ export function EntityEmailLogs({
         resultsPerPage={resultsPerPage}
         setResultsPerPage={setResultsPerPage}
       />
-    </>
+    </div>
   )
 }
