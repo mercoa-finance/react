@@ -1597,8 +1597,8 @@ export function EntityOnboardingForm({
       taxID: entity.profile.individual?.governmentIdProvided
         ? '****'
         : entity.profile.business?.taxIdProvided
-        ? '**-*******'
-        : '',
+          ? '**-*******'
+          : '',
       dob: new Date(),
 
       legalBusinessName: entity.profile.business?.legalBusinessName ?? '',

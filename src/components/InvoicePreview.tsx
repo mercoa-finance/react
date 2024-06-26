@@ -82,7 +82,10 @@ export default function InvoicePreview({ selectedPayer }: { selectedPayer?: Merc
             </button>
           ))}
         </nav>
-        <div className="mercoa-w-full mercoa-grow mercoa-border mercoa-rounded-mercoa mercoa-shadow-md mercoa-p-10">
+        <div
+          style={{ transform: 'scale(0.75)' }}
+          className="mercoa-w-full mercoa-grow mercoa-border mercoa-rounded-mercoa mercoa-shadow-md mercoa-p-10"
+        >
           {previewType === 'pdf' && <InvoicePreviewPdf invoice={invoice} logo={logo} />}
           {previewType === 'email' && <InvoicePreviewEmail invoice={invoice} />}
           {previewType === 'paymentPage' && <InvoicePreviewPaymentPage invoice={invoice} logo={logo} />}

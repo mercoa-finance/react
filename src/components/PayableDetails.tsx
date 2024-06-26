@@ -3025,11 +3025,13 @@ export function MetadataSelection({
               parsedValue = JSON.parse(value) as { key: string; value: string; subtitle: string }
               parsedValue.key = `${parsedValue.key}`
               try {
-                const value = JSON.parse(parsedValue.value) as {
-                  value: string
-                  title?: string
-                  subtitle?: string
-                }
+                const value = parsedValue.value.value
+                  ? parsedValue.value
+                  : (JSON.parse(parsedValue.value) as {
+                      value: string
+                      title?: string
+                      subtitle?: string
+                    })
                 if (value.value) {
                   parsedValue.value = value.title ?? value.value
                   parsedValue.subtitle = value.subtitle
