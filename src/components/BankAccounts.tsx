@@ -26,7 +26,6 @@ import {
   PaymentMethodList,
   Tooltip,
   inputClassName,
-  stopPropagate,
   useMercoaSession,
 } from './index'
 
@@ -623,14 +622,12 @@ export function AddBankAccount({
   onSubmit,
   title,
   actions,
-  formOnlySubmit,
   bankAccount,
   entityId,
 }: {
   onSubmit?: Function
   title?: ReactNode
   actions?: ReactNode
-  formOnlySubmit?: Function
   bankAccount?: Mercoa.BankAccountRequest
   entityId?: Mercoa.EntityId
 }) {
@@ -687,10 +684,7 @@ export function AddBankAccount({
   if (!mercoaSession.client) return <NoSession componentName="AddBankAccount" />
   return (
     <FormProvider {...methods}>
-      <form
-        className="mercoa-space-y-3 mercoa-text-left"
-        onSubmit={stopPropagate(methods.handleSubmit((formOnlySubmit as any) || submitBankAccount))}
-      >
+      <form className="mercoa-space-y-3 mercoa-text-left" onSubmit={methods.handleSubmit(submitBankAccount as any)}>
         {title || (
           <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
             Add Bank Account
@@ -720,6 +714,8 @@ export function AddBankAccount({
 
 export function AddBankAccountForm({ prefix }: { prefix?: string }) {
   const mercoaSession = useMercoaSession()
+
+  if (!prefix) prefix = ''
 
   const {
     register,

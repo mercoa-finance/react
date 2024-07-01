@@ -797,6 +797,7 @@ export function PayablesTable({
       format: (_, invoice) => {
         return (
           <InvoiceStatusPill
+            failureType={invoice.failureType}
             status={invoice.status}
             vendorId={invoice.vendorId}
             payerId={invoice.payerId}
@@ -1129,6 +1130,7 @@ export function PayablesTable({
 
 export function InvoiceStatusPill({
   status,
+  failureType,
   amount,
   payerId,
   vendorId,
@@ -1138,6 +1140,7 @@ export function InvoiceStatusPill({
   type,
 }: {
   status: Mercoa.InvoiceStatus
+  failureType?: Mercoa.InvoiceFailureType
   amount?: number
   payerId?: string
   vendorId?: string
@@ -1214,6 +1217,17 @@ export function InvoiceStatusPill({
     backgroundColor = 'mercoa-bg-red-100'
     textColor = 'mercoa-text-red-800'
     message = 'Failed'
+    if (failureType === Mercoa.InvoiceFailureType.InsufficientFunds) {
+      message = 'Insufficient Funds'
+    } else if (failureType === Mercoa.InvoiceFailureType.ProcessingError) {
+      message = 'Processing Error'
+    } else if (failureType === Mercoa.InvoiceFailureType.DestinationPaymentError) {
+      message = 'Destination Payment Error'
+    } else if (failureType === Mercoa.InvoiceFailureType.SourcePaymentError) {
+      message = 'Source Payment Error'
+    } else if (failureType === Mercoa.InvoiceFailureType.RejectedHighRisk) {
+      message = 'Rejected High Risk'
+    }
   }
 
   return message ? (

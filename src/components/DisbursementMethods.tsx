@@ -249,7 +249,7 @@ export function DisbursementMethods({
     }
 
     const actions = (
-      <div className="mercoa-mt-5 mercoa-flex sm:mercoa-mt-6">
+      <div className="mercoa-mt-5 mercoa-flex sm:mercoa-mt-6 mercoa-w-full">
         <MercoaButton isEmphasized={false} onClick={() => setSelectedMethod(undefined)} type="button" size="md">
           Back
         </MercoaButton>

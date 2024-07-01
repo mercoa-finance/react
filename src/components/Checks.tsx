@@ -12,7 +12,6 @@ import {
   MercoaCombobox,
   MercoaInput,
   NoSession,
-  stopPropagate,
   useMercoaSession,
 } from './index'
 
@@ -155,14 +154,12 @@ export function AddCheck({
   onSubmit,
   title,
   actions,
-  formOnlySubmit,
   check,
   entityId,
 }: {
   onSubmit?: (data?: Mercoa.PaymentMethodResponse) => void
   title?: ReactNode
   actions?: ReactNode
-  formOnlySubmit?: Function
   check?: Mercoa.CheckRequest
   entityId?: Mercoa.EntityId
 }) {
@@ -199,10 +196,7 @@ export function AddCheck({
   if (!mercoaSession.client) return <NoSession componentName="AddCheck" />
   return (
     <FormProvider {...methods}>
-      <form
-        className="mercoa-space-y-3 mercoa-text-left"
-        onSubmit={stopPropagate(methods.handleSubmit((formOnlySubmit as any) || submitCheck))}
-      >
+      <form className="mercoa-space-y-3 mercoa-text-left" onSubmit={methods.handleSubmit(submitCheck as any)}>
         {title || (
           <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
             Add Check Address
@@ -218,7 +212,14 @@ export function AddCheck({
 }
 
 export function AddCheckForm({ prefix }: { prefix?: string }) {
-  const { register, setValue, watch } = useFormContext()
+  const {
+    register,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useFormContext()
+
+  if (!prefix) prefix = ''
 
   const stateOrProvince = watch(prefix + 'stateOrProvince')
 
@@ -230,8 +231,23 @@ export function AddCheckForm({ prefix }: { prefix?: string }) {
         label="Pay To The Order Of"
         className="mercoa-mt-1"
       />
-      <MercoaInput register={register} name={prefix + 'addressLine1'} label="Address Line 1" className="mercoa-mt-1" />
-      <MercoaInput register={register} name={prefix + 'addressLine2'} label="Address Line 2" className="mercoa-mt-1" />
+      <MercoaInput
+        register={register}
+        name={prefix + 'addressLine1'}
+        label="Address Line 1"
+        className="mercoa-mt-1"
+        errors={errors}
+      />
+      <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-x-4">
+        <MercoaInput
+          register={register}
+          name={prefix + 'addressLine2'}
+          label="Address Line 2"
+          className="mercoa-mt-1"
+          errors={errors}
+        />
+        <MercoaInput register={register} name={prefix + 'city'} label="City" className="mercoa-mt-1" errors={errors} />
+      </div>
       <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-x-4">
         <MercoaCombobox
           options={usaStates.map(({ name, abbreviation }) => ({
@@ -244,7 +260,13 @@ export function AddCheckForm({ prefix }: { prefix?: string }) {
             setValue(prefix + 'stateOrProvince', value, { shouldDirty: true })
           }}
         />
-        <MercoaInput register={register} name={prefix + 'postalCode'} label="Postal Code" className="mercoa-mt-1" />
+        <MercoaInput
+          register={register}
+          name={prefix + 'postalCode'}
+          label="Postal Code"
+          className="mercoa-mt-1"
+          errors={errors}
+        />
       </div>
     </div>
   )

@@ -340,6 +340,7 @@ export function PayableForm({
       vendor: yup.object().shape(counterpartyYupValidation),
       '~cpm~~': yup.mixed().nullable(),
       fees: yup.mixed().nullable(),
+      failureType: yup.string().nullable(),
     })
     .required()
 
@@ -388,6 +389,7 @@ export function PayableForm({
         country: 'US',
       },
       '~cpm~~': {} as any,
+      failureType: invoice?.failureType ?? '',
       commentText: '',
       comments: invoice?.comments ?? [],
       creatorUser: invoice?.creatorUser,
@@ -465,6 +467,7 @@ export function PayableForm({
     setValue('creatorUser', invoice?.creatorUser)
     setValue('comments', invoice?.comments ?? [])
     setValue('fees', invoice?.fees)
+    setValue('failureType', invoice?.failureType ?? '')
   }, [invoice])
 
   const { fields: lineItems } = useFieldArray({
@@ -1113,6 +1116,7 @@ export function PayableFormHeader({ hideId }: { hideId?: boolean }) {
         <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900">
           Edit Invoice{' '}
           <InvoiceStatusPill
+            failureType={watch('failureType')}
             status={watch('status')}
             payerId={watch('payerId')}
             dueDate={watch('dueDate')}

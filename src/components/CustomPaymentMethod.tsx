@@ -1,10 +1,10 @@
 import { BuildingLibraryIcon, PencilIcon } from '@heroicons/react/24/outline'
+import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import { ReactNode, useEffect, useState } from 'react'
 import { usePlacesWidget } from 'react-google-autocomplete'
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize } from '../lib/lib'
 import {
@@ -209,14 +209,12 @@ export function AddCustomPaymentMethod({
   onSubmit,
   title,
   actions,
-  formOnlySubmit,
   entityId,
   schema,
 }: {
   onSubmit?: (data: Mercoa.PaymentMethodResponse) => void
   title?: ReactNode
   actions?: ReactNode
-  formOnlySubmit?: Function
   entityId?: string
   schema: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
@@ -251,10 +249,7 @@ export function AddCustomPaymentMethod({
   if (!mercoaSession.client) return <NoSession componentName="AddCustomPaymentMethod" />
   return (
     <FormProvider {...methods}>
-      <form
-        className="mercoa-space-y-3 mercoa-text-left"
-        onSubmit={methods.handleSubmit((formOnlySubmit as any) || submitCPM)}
-      >
+      <form className="mercoa-space-y-3 mercoa-text-left" onSubmit={methods.handleSubmit(submitCPM)}>
         {title || (
           <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
             {schema.name}
