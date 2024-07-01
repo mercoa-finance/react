@@ -1,8 +1,11 @@
-import { BuildingLibraryIcon } from '@heroicons/react/24/outline'
-import { Mercoa } from '@mercoa/javascript'
+import { BuildingLibraryIcon, PencilIcon } from '@heroicons/react/24/outline'
+import accounting from 'accounting'
 import { ReactNode, useEffect, useState } from 'react'
 import { usePlacesWidget } from 'react-google-autocomplete'
-import { Controller, UseFormRegister, useFieldArray, useForm } from 'react-hook-form'
+import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form'
+import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
+import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize } from '../lib/lib'
 import {
   AddDialog,
@@ -13,6 +16,7 @@ import {
   MercoaInputLabel,
   NoSession,
   PaymentMethodList,
+  Tooltip,
   inputClassName,
   useMercoaSession,
 } from './index'
@@ -83,8 +87,11 @@ export function CustomPaymentMethod({
   showEdit?: boolean
   schema?: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
+  const mercoaSession = useMercoaSession()
+
   if (account) {
     const { accountName, accountNumber } = findCustomPaymentMethodAccountNameAndNumber(account)
+    if (!mercoaSession.client) return <NoSession componentName="CustomPaymentMethod" />
     return (
       <div
         onClick={() => {
@@ -114,11 +121,50 @@ export function CustomPaymentMethod({
             >{`${capitalize(accountName)} ${accountNumber ? `••••${String(accountNumber).slice(-4)}` : ''}`}</p>
           </div>
         </div>
-        {showEdit && (
-          <div className="mercoa-flex">
-            <DefaultPaymentMethodIndicator paymentMethod={account} />
-          </div>
-        )}
+        <div className="mercoa-flex">
+          {showEdit ? (
+            <>
+              <DefaultPaymentMethodIndicator paymentMethod={account} />
+              <MercoaButton
+                size="sm"
+                isEmphasized={false}
+                className="mercoa-mr-2 mercoa-px-[4px] mercoa-py-[4px]"
+                onClick={async () => {
+                  const newBalance = prompt('Enter new balance', `${account?.availableBalance}`)
+                  if (newBalance && mercoaSession.entityId) {
+                    await mercoaSession.client?.entity.paymentMethod.update(mercoaSession.entityId, account?.id, {
+                      type: 'custom',
+                      availableBalance: Number(newBalance),
+                    })
+                    mercoaSession.refresh()
+                    toast.success('Successfully updated balance')
+                  }
+                }}
+              >
+                <Tooltip title="Edit">
+                  <PencilIcon className="mercoa-size-4" />
+                </Tooltip>
+              </MercoaButton>
+            </>
+          ) : (
+            <>
+              {account?.availableBalance && (
+                <Tooltip title="Available balance" offset={30}>
+                  <p
+                    className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
+                      selected ? 'mercoa-underline' : ''
+                    }`}
+                  >
+                    {accounting.formatMoney(
+                      account?.availableBalance ?? '',
+                      currencyCodeToSymbol(account.supportedCurrencies[0]),
+                    )}
+                  </p>
+                </Tooltip>
+              )}
+            </>
+          )}
+        </div>
       </div>
     )
   } else if (schema) {
@@ -176,7 +222,7 @@ export function AddCustomPaymentMethod({
 }) {
   const mercoaSession = useMercoaSession()
 
-  const { register, handleSubmit, control } = useForm()
+  const methods = useForm()
 
   async function submitCPM(data: Record<string, any>) {
     const filtered: Record<string, string> = {}
@@ -204,30 +250,30 @@ export function AddCustomPaymentMethod({
 
   if (!mercoaSession.client) return <NoSession componentName="AddCustomPaymentMethod" />
   return (
-    <form className="mercoa-space-y-3 mercoa-text-left" onSubmit={handleSubmit((formOnlySubmit as any) || submitCPM)}>
-      {title || (
-        <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
-          {schema.name}
-        </h3>
-      )}
-      <AddCustomPaymentMethodForm register={register} schema={schema} control={control} />
-      <div className="mercoa-flex mercoa-flex-row-reverse">
-        {actions || <MercoaButton isEmphasized>Add</MercoaButton>}
-      </div>
-    </form>
+    <FormProvider {...methods}>
+      <form
+        className="mercoa-space-y-3 mercoa-text-left"
+        onSubmit={methods.handleSubmit((formOnlySubmit as any) || submitCPM)}
+      >
+        {title || (
+          <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+            {schema.name}
+          </h3>
+        )}
+        <AddCustomPaymentMethodForm schema={schema} />
+        <div className="mercoa-flex mercoa-flex-row-reverse">
+          {actions || <MercoaButton isEmphasized>Add</MercoaButton>}
+        </div>
+      </form>
+    </FormProvider>
   )
 }
 
-export function AddCustomPaymentMethodForm({
-  register,
-  control,
-  schema,
-}: {
-  register: UseFormRegister<any>
-  control: any
-  schema: Mercoa.CustomPaymentMethodSchemaResponse
-}) {
+export function AddCustomPaymentMethodForm({ schema }: { schema?: Mercoa.CustomPaymentMethodSchemaResponse }) {
+  const mercoaSession = useMercoaSession()
   const [schemaFields, setSchemaFields] = useState<Mercoa.CustomPaymentMethodSchemaField[]>()
+
+  const { register, control } = useFormContext()
 
   const { append, fields } = useFieldArray({
     control,
@@ -255,49 +301,35 @@ export function AddCustomPaymentMethodForm({
         <div className="mercoa-mt-1" key={field.id}>
           <MercoaInputLabel label={schemaFields?.[index]?.displayName || schemaFields?.[index]?.name || ''} />
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Text && (
-            <input
-              {...register(`~cpm~~.${index}.value`)}
+            <MercoaInput
+              name={`~cpm~~.${index}.value`}
+              register={register}
               type="text"
               required={schemaFields?.[index]?.optional ? false : true}
               placeholder={`${schemaFields?.[index]?.displayName || schemaFields?.[index]?.name}`}
-              className={inputClassName({})}
             />
           )}
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Url && (
-            <input
-              {...register(`~cpm~~.${index}.value`, {
-                pattern: {
-                  value:
-                    /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/,
-                  message: 'Invalid URL',
-                  // https://stackoverflow.com/questions/3809401/what-is-a-good-regular-expression-to-match-a-url
-                },
-              })}
+            <MercoaInput
+              name={`~cpm~~.${index}.value`}
+              register={register}
               type="text"
               required={schemaFields?.[index]?.optional ? false : true}
               placeholder={`https://example.com`}
-              className={inputClassName({})}
             />
           )}
           {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Email && (
-            <>
-              <input
-                {...register(`~cpm~~.${index}.value`, {
-                  pattern: {
-                    value:
-                      /(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9]))\.){3}(?:(2(5[0-5]|[0-4][0-9])|1[0-9][0-9]|[1-9]?[0-9])|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/,
-                    message: 'Invalid email',
-                    // https://stackoverflow.com/questions/201323/how-can-i-validate-an-email-address-using-a-regular-expression
-                  },
-                })}
-                type="text"
-                required={schemaFields?.[index]?.optional ? false : true}
-                placeholder={`name@example.com`}
-                className={inputClassName({})}
-              />
-            </>
+            <MercoaInput
+              name={`~cpm~~.${index}.value`}
+              register={register}
+              type="text"
+              required={schemaFields?.[index]?.optional ? false : true}
+              placeholder={`name@example.com`}
+            />
           )}
-          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Number && (
+          {(schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Number ||
+            schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.UsBankAccountNumber ||
+            schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.UsBankRoutingNumber) && (
             <MercoaInput
               type="number"
               required={schemaFields?.[index]?.optional ? false : true}

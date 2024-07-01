@@ -42,9 +42,9 @@ import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { addWeekdays, isWeekday } from '../lib/scheduling'
 import {
-  AddBankAccountDialog,
-  AddCheckDialog,
-  AddCustomPaymentMethodDialog,
+  AddBankAccountForm,
+  AddCheckForm,
+  AddCustomPaymentMethodForm,
   BankAccount,
   Card,
   Check,
@@ -58,6 +58,7 @@ import {
   MercoaInput,
   NoSession,
   PayableCounterpartySearch,
+  PaymentMethodInlineForm,
   Tooltip,
   counterpartyYupValidation,
   onSubmitCounterparty,
@@ -218,9 +219,14 @@ export function PayableDetails({
   return (
     <Container>
       {documentPosition === 'left' ? invoiceUpload : invoiceDetails}
-      <Bar size={10} className="mercoa-bg-gray-200 mercoa-cursor-ew-resize mercoa-invisible min-[450px]:mercoa-visible">
-        <div className="mercoa-w-3 mercoa-h-10 mercoa-bg-gray-500 mercoa-absolute mercoa-top-1/2 mercoa-left-1/2 mercoa-transform -mercoa-translate-x-1/2 -mercoa-translate-y-1/2" />
-      </Bar>
+      <Bar
+        size={10}
+        className="mercoa-cursor-col-resize mercoa-invisible min-[450px]:mercoa-visible"
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(229,231,235,1) 48%, rgba(145,145,145,1) 48%, rgba(145,145,145,1) 52%, rgba(229,231,235,1) 52%)',
+        }}
+      />
       {documentPosition === 'right' ? invoiceUpload : invoiceDetails}
     </Container>
   )
@@ -332,6 +338,8 @@ export function PayableForm({
       creatorUser: yup.mixed().nullable(),
       approvalPolicy: yup.mixed().nullable(),
       vendor: yup.object().shape(counterpartyYupValidation),
+      '~cpm~~': yup.mixed().nullable(),
+      fees: yup.mixed().nullable(),
     })
     .required()
 
@@ -363,10 +371,12 @@ export function PayableForm({
       metadata: invoice?.metadata ?? {},
       approvalPolicy: invoice?.approvalPolicy ?? { type: 'any', approvers: [] },
       approvers: invoice?.approvers ?? [],
+      fees: invoice?.fees,
       newBankAccount: {
         routingNumber: '',
         accountNumber: '',
         bankName: '',
+        accountType: Mercoa.BankType.Checking,
       },
       newCheck: {
         payToTheOrderOf: '',
@@ -375,8 +385,9 @@ export function PayableForm({
         city: '',
         state: '',
         postalCode: '',
-        country: '',
+        country: 'US',
       },
+      '~cpm~~': {} as any,
       commentText: '',
       comments: invoice?.comments ?? [],
       creatorUser: invoice?.creatorUser,
@@ -453,6 +464,7 @@ export function PayableForm({
     setValue('approvalPolicy', invoice?.approvalPolicy ?? { type: 'any', approvers: [] })
     setValue('creatorUser', invoice?.creatorUser)
     setValue('comments', invoice?.comments ?? [])
+    setValue('fees', invoice?.fees)
   }, [invoice])
 
   const { fields: lineItems } = useFieldArray({
@@ -531,6 +543,7 @@ export function PayableForm({
         routingNumber: ocrResponse.bankAccount.routingNumber,
         accountNumber: ocrResponse.bankAccount.accountNumber,
         bankName: ocrResponse.bankAccount.bankName,
+        accountType: Mercoa.BankType.Checking,
       })
     }
 
@@ -541,7 +554,7 @@ export function PayableForm({
         city: ocrResponse.check.city,
         state: ocrResponse.check.stateOrProvince,
         postalCode: ocrResponse.check.postalCode,
-        country: ocrResponse.check.country,
+        country: 'US',
         payToTheOrderOf: ocrResponse.check.payToTheOrderOf,
       })
     }
@@ -582,11 +595,87 @@ export function PayableForm({
         type: 'payee',
         setError,
         onSelect: (counterparty) => {
-          setSelectedVendor(counterparty)
           mercoaSession.refresh()
+          setTimeout(() => {
+            setSelectedVendor(counterparty)
+          }, 1000)
         },
       })
       return
+    }
+    // payment method creation for vendor
+    else if (data.saveAsStatus === 'CREATE_BANK_ACCOUNT') {
+      if (vendorId) {
+        try {
+          const pm = await mercoaSession.client?.entity.paymentMethod.create(vendorId, {
+            type: Mercoa.PaymentMethodType.BankAccount,
+            routingNumber: data.newBankAccount.routingNumber,
+            accountNumber: data.newBankAccount.accountNumber,
+            accountType: data.newBankAccount.accountType,
+          })
+          mercoaSession.refresh()
+          setTimeout(() => {
+            setValue('paymentDestinationType', Mercoa.PaymentMethodType.BankAccount, { shouldDirty: true })
+            setValue('paymentDestinationId', pm?.id, { shouldDirty: true })
+            setValue('saveAsStatus', 'PAYMENT_METHOD_CREATION_SUCCESS')
+          }, 1000)
+        } catch (e: any) {
+          setError('newBankAccount', { message: e.body ?? 'Invalid Bank Account Data' })
+        }
+        return
+      }
+    } else if (data.saveAsStatus === 'CREATE_CHECK') {
+      if (vendorId) {
+        try {
+          const pm = await mercoaSession.client?.entity.paymentMethod.create(vendorId, {
+            type: Mercoa.PaymentMethodType.Check,
+            payToTheOrderOf: data.newCheck.payToTheOrderOf,
+            addressLine1: data.newCheck.addressLine1,
+            addressLine2: data.newCheck.addressLine2,
+            city: data.newCheck.city,
+            stateOrProvince: data.newCheck.stateOrProvince,
+            postalCode: data.newCheck.postalCode,
+            country: 'US',
+          })
+          mercoaSession.refresh()
+          setTimeout(() => {
+            setValue('paymentDestinationType', Mercoa.PaymentMethodType.Check, { shouldDirty: true })
+            setValue('paymentDestinationId', pm?.id, { shouldDirty: true })
+            setValue('saveAsStatus', 'PAYMENT_METHOD_CREATION_SUCCESS')
+          }, 1000)
+        } catch (e: any) {
+          setError('newCheck', { message: e.body ?? 'Invalid Check Data' })
+        }
+        return
+      }
+    } else if (data.saveAsStatus === 'CREATE_CUSTOM') {
+      if (vendorId) {
+        const filtered: Record<string, string> = {}
+        Object.entries(data).forEach(([key, value]: [any, any]) => {
+          if (key.startsWith('~cpm~~')) {
+            value.forEach((v: any) => {
+              filtered[v.name] = `${filtered[v.name] ?? v.value}`
+            })
+          }
+        })
+        try {
+          const pm = (await mercoaSession.client?.entity.paymentMethod.create(vendorId, {
+            type: Mercoa.PaymentMethodType.Custom,
+            schemaId: data.paymentDestinationType,
+            data: filtered,
+            foreignId: Math.random().toString(36).substring(7), // random string
+          })) as Mercoa.PaymentMethodResponse.Custom
+          mercoaSession.refresh()
+          setTimeout(() => {
+            setValue('paymentDestinationType', pm.schemaId, { shouldDirty: true })
+            setValue('paymentDestinationId', pm.id, { shouldDirty: true })
+            setValue('saveAsStatus', 'PAYMENT_METHOD_CREATION_SUCCESS')
+          }, 1000)
+        } catch (e: any) {
+          setError('~cpm~~', { message: e.body ?? 'Invalid Data' })
+        }
+        return
+      }
     } else if (data.saveAsStatus === 'DELETE') {
       if (invoice?.id) {
         try {
@@ -1002,6 +1091,8 @@ export function PayableForm({
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <PayablePaymentDestination />{' '}
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+              <PayableFees />
+              <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <PayableApprovers /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <InvoiceComments />
               <PayableActions admin={admin} />
@@ -1064,12 +1155,15 @@ export function PayableFormErrors() {
     approvers: 'Approvers:',
     lineItems: 'Line Items:',
     vendor: 'Vendor:',
+    '~cpm~~': 'Payment Destination:',
   } as Record<string, string>
 
   const errorMessages = {
     approvers: 'Please select all approvers',
-    lineItems: 'Please make sure all line items have a description and amount.',
-    vendor: 'Details incomplete.',
+    lineItems: 'Please make sure all line items have a description and amount',
+    vendor: 'Details incomplete',
+    newBankAccount: 'Invalid Bank Account Data',
+    newCheck: 'Invalid Check Data',
   } as Record<string, string>
 
   return (
@@ -1474,7 +1568,9 @@ export function PayableActions({
   const deleteButtonComponent = deleteButton ? (
     deleteButton({
       onClick: () => {
-        setValue('saveAsStatus', 'DELETE')
+        if (confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
+          setValue('saveAsStatus', 'DELETE')
+        }
       },
     })
   ) : (
@@ -1482,7 +1578,9 @@ export function PayableActions({
       isEmphasized={false}
       color="red"
       onClick={() => {
-        setValue('saveAsStatus', 'DELETE')
+        if (confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
+          setValue('saveAsStatus', 'DELETE')
+        }
       }}
     >
       Delete Invoice
@@ -2253,23 +2351,14 @@ export function SelectPaymentMethod({
               return e.type === selectedType
             }) && (
               <>
-                <AddBankAccountDialog
-                  entityId={vendorId}
-                  onSelect={async (paymentMethod: Mercoa.PaymentMethodResponse.BankAccount) => {
-                    await refreshPaymentMethods()
-                    setTimeout(() => {
-                      setValue(paymentMethodTypeKey, Mercoa.PaymentMethodType.BankAccount, { shouldDirty: true })
-                      setValue(sourceOrDestination, paymentMethod.id)
-                      clearErrors(sourceOrDestination)
-                    }, 100)
-                  }}
-                  bankAccount={{
-                    routingNumber: watch('newBankAccount.routingNumber') ?? '',
-                    accountNumber: watch('newBankAccount.accountNumber') ?? '',
-                    bankName: watch('newBankAccount.bankName') ?? '',
-                    accountType: 'CHECKING',
-                  }}
-                />
+                <div className="mercoa-col-span-full mercoa-mt-1">
+                  <PaymentMethodInlineForm
+                    form={<AddBankAccountForm prefix="newBankAccount." />}
+                    name="Bank Account"
+                    addNewButton={<BankAccount />}
+                    saveAsStatus="CREATE_BANK_ACCOUNT"
+                  />
+                </div>
                 <div className="mercoa-mt-2" />
                 <MercoaCombobox
                   displaySelectedAs="pill"
@@ -2334,26 +2423,14 @@ export function SelectPaymentMethod({
               return e.type === selectedType
             }) && (
               <>
-                <AddCheckDialog
-                  entityId={vendorId}
-                  onSelect={async (paymentMethod: Mercoa.PaymentMethodResponse.Check) => {
-                    await refreshPaymentMethods()
-                    setTimeout(() => {
-                      setValue(paymentMethodTypeKey, Mercoa.PaymentMethodType.Check, { shouldDirty: true })
-                      setValue(sourceOrDestination, paymentMethod.id)
-                      clearErrors(sourceOrDestination)
-                    }, 100)
-                  }}
-                  check={{
-                    payToTheOrderOf: watch('newCheck.payToTheOrderOf') ?? '',
-                    addressLine1: watch('newCheck.addressLine1') ?? '',
-                    addressLine2: watch('newCheck.addressLine2') ?? '',
-                    city: watch('newCheck.city') ?? '',
-                    stateOrProvince: watch('newCheck.state') ?? '',
-                    postalCode: watch('newCheck.postalCode') ?? '',
-                    country: watch('newCheck.country') ?? '',
-                  }}
-                />
+                <div className="mercoa-col-span-full mercoa-mt-1">
+                  <PaymentMethodInlineForm
+                    form={<AddCheckForm prefix="newCheck." />}
+                    name="Check Address"
+                    addNewButton={<Check />}
+                    saveAsStatus="CREATE_CHECK"
+                  />
+                </div>
                 <div className="mercoa-mt-2" />
                 <MercoaCombobox
                   label="Check Delivery Method"
@@ -2440,18 +2517,22 @@ export function SelectPaymentMethod({
               return e.type === selectedType
             }) && (
               <>
-                <AddCustomPaymentMethodDialog
-                  entityId={vendorId}
-                  schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
-                  onSelect={async (paymentMethod: Mercoa.PaymentMethodResponse.Custom) => {
-                    await refreshPaymentMethods()
-                    setTimeout(() => {
-                      setValue(paymentMethodTypeKey, paymentMethod.schemaId, { shouldDirty: true })
-                      setValue(sourceOrDestination, paymentMethod.id)
-                      clearErrors(sourceOrDestination)
-                    }, 100)
-                  }}
-                />
+                <div className="mercoa-col-span-full mercoa-mt-1">
+                  <PaymentMethodInlineForm
+                    form={
+                      <AddCustomPaymentMethodForm
+                        schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
+                      />
+                    }
+                    name={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)?.name ?? 'Other'}
+                    addNewButton={
+                      <CustomPaymentMethod
+                        schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
+                      />
+                    }
+                    saveAsStatus="CREATE_CUSTOM"
+                  />
+                </div>
               </>
             )}
         </>
@@ -2491,7 +2572,7 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
   return (
     <>
       {vendorId && vendorName && paymentSourceType !== 'offPlatform' && (
-        <div className="mercoa-pb-16 mercoa-col-span-full">
+        <div className="mercoa-pb-6 mercoa-col-span-full">
           <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-my-5">
             How does <span className="mercoa-text-gray-800 mercoa-underline">{vendorName}</span> want to get paid?
           </h2>
@@ -3586,3 +3667,84 @@ function LineItemRows({ readOnly }: { readOnly?: boolean }) {
     </>
   )
 } // End Line Items
+
+// Fees
+
+export function PayableFees() {
+  const mercoaSession = useMercoaSession()
+  const { watch } = useFormContext()
+
+  const amount = watch('amount')
+  const currency = watch('currency')
+  const paymentSourceId = watch('paymentSourceId')
+  const paymentDestinationId = watch('paymentDestinationId')
+
+  const [fees, setFees] = useState<Mercoa.InvoiceFeesResponse>()
+
+  useEffect(() => {
+    if (amount && paymentSourceId && paymentDestinationId) {
+      // convert number to digits
+      let amountNumber = amount
+      if (typeof amount === 'string') {
+        amountNumber = Number(amount.replace(/,/g, ''))
+      }
+      mercoaSession.client?.fees
+        .calculate({
+          amount: amountNumber,
+          paymentSourceId,
+          paymentDestinationId,
+        })
+        .then((fees) => {
+          setFees(fees)
+        })
+    }
+  }, [amount, paymentSourceId, paymentDestinationId])
+
+  if (
+    amount &&
+    paymentSourceId &&
+    paymentDestinationId &&
+    (fees?.destinationPlatformMarkupFee || fees?.destinationPlatformMarkupFee)
+  ) {
+    return (
+      <div className="mercoa-pb-6 mercoa-col-span-full">
+        <div className="mercoa-flex mercoa-text-gray-700 mercoa-text-md">
+          <div className="mercoa-flex-1" />
+          Invoice Amount:
+          <span className="mercoa-font-medium mercoa-ml-1 mercoa-text-gray-900 mercoa-w-28 mercoa-text-right">
+            {accounting.formatMoney(amount, currencyCodeToSymbol(currency))}
+          </span>
+        </div>
+
+        <div className="mercoa-flex mercoa-text-gray-700 mercoa-text-md">
+          <div className="mercoa-flex-1" />
+          Payment Fees:
+          <span className="mercoa-font-medium mercoa-ml-1 mercoa-text-gray-900 mercoa-w-28 mercoa-text-right">
+            {accounting.formatMoney(
+              fees?.destinationPlatformMarkupFee + fees?.sourcePlatformMarkupFee,
+              currencyCodeToSymbol(currency),
+            )}
+          </span>
+        </div>
+
+        <div className="mercoa-flex mercoa-mb-1">
+          <div className="mercoa-flex-1" />
+          <div className="mercoa-border-b-2 mercoa-border-gray-300 mercoa-w-64" />
+        </div>
+
+        <div className="mercoa-flex mercoa-text-gray-700 mercoa-text-lg">
+          <div className="mercoa-flex-1" />
+          Total Payment:
+          <span className="mercoa-font-medium mercoa-ml-1 mercoa-text-gray-900 mercoa-w-28 mercoa-text-right">
+            {accounting.formatMoney(
+              amount + fees?.destinationPlatformMarkupFee + fees?.sourcePlatformMarkupFee,
+              currencyCodeToSymbol(currency),
+            )}
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}

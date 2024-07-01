@@ -9,7 +9,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
 import { Fragment, ReactNode, useEffect, useRef, useState } from 'react'
-import { UseFormRegister, useForm } from 'react-hook-form'
+import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { PlaidLinkError, PlaidLinkOnExitMetadata, usePlaidLink } from 'react-plaid-link'
 import SignatureCanvas from 'react-signature-canvas'
 import { toast } from 'react-toastify'
@@ -667,15 +667,7 @@ export function AddBankAccount({
     })
     .required()
 
-  const {
-    register,
-    setValue,
-    setError,
-    clearErrors,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm({
+  const methods = useForm({
     defaultValues: bankAccount,
     resolver: yupResolver(schema),
   })
@@ -694,104 +686,95 @@ export function AddBankAccount({
 
   if (!mercoaSession.client) return <NoSession componentName="AddBankAccount" />
   return (
-    <form
-      className="mercoa-space-y-3 mercoa-text-left"
-      onSubmit={stopPropagate(handleSubmit((formOnlySubmit as any) || submitBankAccount))}
-    >
-      {title || (
-        <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
-          Add Bank Account
-        </h3>
-      )}
+    <FormProvider {...methods}>
+      <form
+        className="mercoa-space-y-3 mercoa-text-left"
+        onSubmit={stopPropagate(methods.handleSubmit((formOnlySubmit as any) || submitBankAccount))}
+      >
+        {title || (
+          <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+            Add Bank Account
+          </h3>
+        )}
 
-      <AddBankAccountForm
-        register={register}
-        errors={errors}
-        watch={watch}
-        setValue={setValue}
-        setError={setError}
-        clearErrors={clearErrors}
-      />
+        <AddBankAccountForm />
 
-      {actions || (
-        <div className="mercoa-flex mercoa-justify-between">
-          <MercoaButton
-            isEmphasized={false}
-            onClick={() => {
-              if (onSubmit) onSubmit()
-            }}
-            type="button"
-          >
-            Back
-          </MercoaButton>
-          <MercoaButton isEmphasized>Add Bank Account</MercoaButton>
-        </div>
-      )}
-    </form>
+        {actions || (
+          <div className="mercoa-flex mercoa-justify-between">
+            <MercoaButton
+              isEmphasized={false}
+              onClick={() => {
+                if (onSubmit) onSubmit()
+              }}
+              type="button"
+            >
+              Back
+            </MercoaButton>
+            <MercoaButton isEmphasized>Add Bank Account</MercoaButton>
+          </div>
+        )}
+      </form>
+    </FormProvider>
   )
 }
 
-export function AddBankAccountForm({
-  register,
-  errors,
-  watch,
-  setValue,
-  setError,
-  clearErrors,
-}: {
-  register: UseFormRegister<any>
-  errors: any
-  watch: Function
-  setValue: Function
-  setError: Function
-  clearErrors: Function
-}) {
+export function AddBankAccountForm({ prefix }: { prefix?: string }) {
   const mercoaSession = useMercoaSession()
-  const routingNumber = watch('routingNumber')
-  const bankName = watch('bankName')
+
+  const {
+    register,
+    setValue,
+    setError,
+    clearErrors,
+    watch,
+    formState: { errors },
+  } = useFormContext()
+
+  const routingNumber = watch(prefix + 'routingNumber')
+  const bankName = watch(prefix + 'bankName')
 
   useEffect(() => {
-    setValue('bankName', '', { shouldDirty: true, shouldTouch: true })
+    setValue(prefix + 'bankName', '', { shouldDirty: true, shouldTouch: true })
     if (!routingNumber) return
     //if (validBankAccount.routingNumber(routingNumber).isPotentiallyValid) {
     if (routingNumber.length === 9) {
       mercoaSession.client?.bankLookup.find({ routingNumber }).then((bankNameResp) => {
         if (bankNameResp.bankName) {
-          setValue('bankName', bankNameResp.bankName)
-          clearErrors('routingNumber')
+          setValue(prefix + 'bankName', bankNameResp.bankName)
+          clearErrors(prefix + 'routingNumber')
         } else {
-          setError('routingNumber', { message: 'Please enter a valid routing number' })
+          setError(prefix + 'routingNumber', { message: 'Please enter a valid routing number' })
         }
       })
     } else if (routingNumber) {
-      setError('routingNumber', { message: 'Please enter a valid routing number' })
+      setError(prefix + 'routingNumber', { message: 'Please enter a valid routing number' })
     }
   }, [routingNumber])
 
   if (!mercoaSession.client) return <NoSession componentName="AddBankAccountForm" />
   return (
-    <>
+    <div className="mercoa-flex mercoa-flex-col mercoa-gap-y-2">
       <MercoaInput
         label={`Routing Number ${bankName ? ` - ${bankName}` : ''}`}
-        name="routingNumber"
+        name={prefix + 'routingNumber'}
         register={register}
         errors={errors}
       />
-      <MercoaInput label="Account Number" name="accountNumber" register={register} errors={errors} />
+      <MercoaInput label="Account Number" name={prefix + 'accountNumber'} register={register} errors={errors} />
       <div>
-        <label htmlFor="accountType" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-700">
+        <label htmlFor="accountType" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">
           Account Type
         </label>
         <div className="mercoa-mt-1">
-          <select {...register('accountType')} className={inputClassName({})}>
+          <select {...register(prefix + 'accountType')} className={inputClassName({})}>
             <option value="CHECKING">Checking</option>
             <option value="SAVINGS">Savings</option>
             <option value="UNKNOWN">Other</option>
           </select>
         </div>
       </div>
-      <MercoaInput label="Account Name" name="accountName" register={register} errors={errors} optional />
-    </>
+      <MercoaInput label="Account Name" name={prefix + 'accountName'} register={register} errors={errors} optional />
+    </div>
   )
 }
 

@@ -6,6 +6,7 @@ import {
   ChevronUpIcon,
   MinusIcon,
   TrashIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
@@ -27,7 +28,7 @@ import {
   useState,
 } from 'react'
 import DatePicker from 'react-datepicker'
-import { Control, Controller, FieldErrors, UseFormRegister } from 'react-hook-form'
+import { Control, Controller, FieldErrors, UseFormRegister, useFormContext } from 'react-hook-form'
 import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import { classNames, getEndpoint } from '../lib/lib'
@@ -1414,4 +1415,69 @@ export function NoSession({ componentName }: { componentName: string }) {
 
 export function removeThousands(_value: any, originalValue: string | number) {
   return typeof originalValue === 'string' ? Number(originalValue?.replace(/,/g, '')) : originalValue
+}
+
+export function PaymentMethodInlineForm({
+  name,
+  saveAsStatus,
+  addNewButton,
+  form,
+}: {
+  name: string
+  saveAsStatus: string
+  addNewButton: JSX.Element
+  form: JSX.Element
+}) {
+  const [open, setOpen] = useState(false)
+
+  const { setValue, watch } = useFormContext()
+
+  const status = watch('saveAsStatus')
+
+  useEffect(() => {
+    if (status === 'PAYMENT_METHOD_CREATION_SUCCESS') {
+      setOpen(false)
+    }
+  }, [status])
+
+  return (
+    <div className={'mercoa-bg-gray-100 mercoa-rounded-mercoa mercoa-border-gray-200'}>
+      {open ? (
+        <>
+          <div className="mercoa-flex mercoa-flex-row-reverse -mercoa-mb-2">
+            <MercoaButton
+              isEmphasized={false}
+              color="gray"
+              type="button"
+              size="sm"
+              hideOutline
+              onClick={() => {
+                setOpen(false)
+              }}
+            >
+              <span className="mercoa-sr-only">Close</span>
+              <XMarkIcon className="mercoa-size-5" aria-hidden="true" />
+            </MercoaButton>
+          </div>
+          <div className={'mercoa-px-2 mercoa-pb-2'}>
+            {form}
+            <MercoaButton
+              size="md"
+              className="mercoa-mt-2"
+              isEmphasized
+              onClick={() => {
+                setValue('saveAsStatus', saveAsStatus)
+              }}
+            >
+              Add {name}
+            </MercoaButton>
+          </div>
+        </>
+      ) : (
+        <button type="button" onClick={() => setOpen(true)} className="mercoa-w-full">
+          {addNewButton}
+        </button>
+      )}
+    </div>
+  )
 }

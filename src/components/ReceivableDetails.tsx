@@ -231,10 +231,12 @@ export function ReceivableDetails({
         {documentPosition === 'left' ? invoicePreview : invoiceDetails}
         <Bar
           size={10}
-          className="mercoa-bg-gray-200 mercoa-cursor-ew-resize mercoa-invisible min-[450px]:mercoa-visible"
-        >
-          <div className="mercoa-w-3 mercoa-h-10 mercoa-bg-gray-500 mercoa-absolute mercoa-top-1/2 mercoa-left-1/2 mercoa-transform -mercoa-translate-x-1/2 -mercoa-translate-y-1/2" />
-        </Bar>
+          className="mercoa-cursor-col-resize mercoa-invisible min-[450px]:mercoa-visible"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(229,231,235,1) 48%, rgba(145,145,145,1) 48%, rgba(145,145,145,1) 52%, rgba(229,231,235,1) 52%)',
+          }}
+        />
         {documentPosition === 'right' ? invoicePreview : invoiceDetails}
       </Container>
     </FormProvider>

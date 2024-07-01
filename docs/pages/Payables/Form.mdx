@@ -11,6 +11,7 @@ import {
   PayablePaymentDestination,
   PayableApprovers,
   InvoiceComments,
+  PayableFees,
   PayableActions
 } from '@mercoa/react'
 import { payerEntity, vendorEntities, inv_new_ready } from '../../mockData'
@@ -68,7 +69,7 @@ type PayableFormChildrenProps = {
 type DoucmentCustomizationOptions = {
   downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   viewEmailButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-}
+};
 ```
 
 ## Examples
@@ -79,7 +80,7 @@ type DoucmentCustomizationOptions = {
   <PayableDetails invoiceId={'inv_new_ready'} />
   ```jsx
 <PayableDetails
-  invoiceId={'inv_XXXXX-XXXX-XXXXXX'}   
+  invoiceId={'inv_XXXXX-XXXX-XXXXXX'}
   onRedirect={(invoice) => {
     if (!invoice) {
       router.push(`/dashboard/payers/${entityId}`)
@@ -152,11 +153,14 @@ The default children is the following:
       <PayableOverview />
       <PayableLineItems />
       <PayableMetadata />
-      
+
       <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
       <PayablePaymentSource />
       <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
       <PayablePaymentDestination />
+      <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+
+      <PayableFees />
       <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
 
       <PayableApprovers />
@@ -321,6 +325,24 @@ useEffect(()=>{
   <PayableForm invoice={inv_new_ready}>
   {()=><>
     <PayablePaymentDestination />
+  </>}
+  </PayableForm>
+  ```
+</ComponentContainer>
+
+ ### PayableFees
+
+| Name     | Type      | Required | Description         |
+| :--------| :---------| :--------| :-------------------|
+
+<ComponentContainer display='block'>
+  <PayableForm invoice={inv_new_ready}>
+  {()=><PayableFees />}
+  </PayableForm>
+  ```jsx
+  <PayableForm invoice={inv_new_ready}>
+  {()=><>
+    <PayableFees />
   </>}
   </PayableForm>
   ```

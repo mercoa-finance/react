@@ -2,12 +2,14 @@ import { EnvelopeIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
 import { ReactNode, useState } from 'react'
-import { UseFormRegister, useForm } from 'react-hook-form'
+import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import * as yup from 'yup'
+import { usaStates } from '../lib/locations'
 import {
   AddDialog,
   DefaultPaymentMethodIndicator,
   MercoaButton,
+  MercoaCombobox,
   MercoaInput,
   NoSession,
   stopPropagate,
@@ -176,7 +178,7 @@ export function AddCheck({
     })
     .required()
 
-  const { register, handleSubmit } = useForm({
+  const methods = useForm({
     defaultValues: check,
     resolver: yupResolver(schema),
   })
@@ -196,37 +198,54 @@ export function AddCheck({
 
   if (!mercoaSession.client) return <NoSession componentName="AddCheck" />
   return (
-    <form
-      className="mercoa-space-y-3 mercoa-text-left"
-      onSubmit={stopPropagate(handleSubmit((formOnlySubmit as any) || submitCheck))}
-    >
-      {title || (
-        <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
-          Add Check Address
-        </h3>
-      )}
-      <AddCheckForm register={register} />
-      <div className="mercoa-flex mercoa-justify-end">
-        {actions || <MercoaButton isEmphasized>Add Check Address</MercoaButton>}
-      </div>
-    </form>
+    <FormProvider {...methods}>
+      <form
+        className="mercoa-space-y-3 mercoa-text-left"
+        onSubmit={stopPropagate(methods.handleSubmit((formOnlySubmit as any) || submitCheck))}
+      >
+        {title || (
+          <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+            Add Check Address
+          </h3>
+        )}
+        <AddCheckForm />
+        <div className="mercoa-flex mercoa-justify-end">
+          {actions || <MercoaButton isEmphasized>Add Check Address</MercoaButton>}
+        </div>
+      </form>
+    </FormProvider>
   )
 }
 
-export function AddCheckForm({ register }: { register: UseFormRegister<any> }) {
+export function AddCheckForm({ prefix }: { prefix?: string }) {
+  const { register, setValue, watch } = useFormContext()
+
+  const stateOrProvince = watch(prefix + 'stateOrProvince')
+
   return (
-    <div className="mercoa-mt-2">
+    <div className="mercoa-flex mercoa-flex-col mercoa-gap-y-2">
       <MercoaInput
         register={register}
-        name="payToTheOrderOf"
-        placeholder="Pay To The Order Of"
+        name={prefix + 'payToTheOrderOf'}
+        label="Pay To The Order Of"
         className="mercoa-mt-1"
       />
-      <MercoaInput register={register} name="addressLine1" placeholder="Address Line 1" className="mercoa-mt-1" />
-      <MercoaInput register={register} name="addressLine2" placeholder="Address Line 2" className="mercoa-mt-1" />
-      <MercoaInput register={register} name="city" placeholder="City" className="mercoa-mt-1" />
-      <MercoaInput register={register} name="stateOrProvince" placeholder="State Or Province" className="mercoa-mt-1" />
-      <MercoaInput register={register} name="postalCode" placeholder="Postal Code" className="mercoa-mt-1" />
+      <MercoaInput register={register} name={prefix + 'addressLine1'} label="Address Line 1" className="mercoa-mt-1" />
+      <MercoaInput register={register} name={prefix + 'addressLine2'} label="Address Line 2" className="mercoa-mt-1" />
+      <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-x-4">
+        <MercoaCombobox
+          options={usaStates.map(({ name, abbreviation }) => ({
+            disabled: false,
+            value: abbreviation,
+          }))}
+          label="State"
+          value={stateOrProvince}
+          onChange={(value) => {
+            setValue(prefix + 'stateOrProvince', value, { shouldDirty: true })
+          }}
+        />
+        <MercoaInput register={register} name={prefix + 'postalCode'} label="Postal Code" className="mercoa-mt-1" />
+      </div>
     </div>
   )
 }

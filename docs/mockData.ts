@@ -1132,6 +1132,16 @@ export const mswHandlers = [
   http.get(`${basePath}/paymentMethod/schema`, () => {
     return HttpResponse.json(pmSchemas)
   }),
+
+  // Fees
+  http.post(`${basePath}/fees`, () => {
+    return HttpResponse.json({
+      sourcePlatformMarkupFee: 1,
+      sourcePaymentMethodFee: 1,
+      destinationPlatformMarkupFee: 1,
+      destinationPaymentMethodFee: 1,
+    })
+  }),
 ]
 
 // helper functions

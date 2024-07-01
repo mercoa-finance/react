@@ -836,10 +836,12 @@ export type CounterpartiesChildrenProps = {
 
 export function Counterparties({
   type,
+  network,
   admin,
   children,
 }: {
   type: 'payor' | 'payee'
+  network?: Mercoa.CounterpartyNetworkType[]
   admin?: boolean
   children?: ({
     setSearch,
@@ -876,6 +878,7 @@ export function Counterparties({
           ...(name && { name }),
           paymentMethods: true,
           invoiceMetrics: true,
+          networkType: network ? network : [Mercoa.CounterpartyNetworkType.Entity],
         })
         .then((entities) => {
           if (entities && isCurrent) {
@@ -892,6 +895,7 @@ export function Counterparties({
           ...(name && { name }),
           paymentMethods: true,
           invoiceMetrics: true,
+          networkType: network ? network : [Mercoa.CounterpartyNetworkType.Entity],
         })
         .then((entities) => {
           if (entities && isCurrent) {
