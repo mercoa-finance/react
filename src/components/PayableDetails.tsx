@@ -249,6 +249,7 @@ export type PayableFormChildrenProps = {
   ) => void
   watch: (name: UseFormWatch<Mercoa.InvoiceCreationRequest>) => any
   errors: FieldErrors<Mercoa.InvoiceCreationRequest>
+  isLoading: boolean
 }
 
 export function PayableForm({
@@ -289,6 +290,7 @@ export function PayableForm({
   const mercoaSession = useMercoaSession()
 
   const [selectedVendor, setSelectedVendor] = useState<Mercoa.CounterpartyResponse | undefined>(invoice?.vendor)
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const schema = yup
     .object({
@@ -570,6 +572,16 @@ export function PayableForm({
     }
   }, [ocrResponse])
 
+  async function saveInvoiceLoadingWrapper(data: any) {
+    setIsLoading(true)
+    try {
+      await saveInvoice(data)
+    } catch (e) {
+      console.error(e)
+    }
+    setIsLoading(false)
+  }
+
   async function saveInvoice(data: any) {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
 
@@ -597,11 +609,11 @@ export function PayableForm({
         mercoaSession,
         type: 'payee',
         setError,
-        onSelect: (counterparty) => {
-          mercoaSession.refresh()
+        onSelect: async (counterparty) => {
+          await mercoaSession.refresh()
           setTimeout(() => {
             setSelectedVendor(counterparty)
-          }, 1000)
+          }, 100)
         },
       })
       return
@@ -616,12 +628,12 @@ export function PayableForm({
             accountNumber: data.newBankAccount.accountNumber,
             accountType: data.newBankAccount.accountType,
           })
-          mercoaSession.refresh()
+          await mercoaSession.refresh()
           setTimeout(() => {
             setValue('paymentDestinationType', Mercoa.PaymentMethodType.BankAccount, { shouldDirty: true })
             setValue('paymentDestinationId', pm?.id, { shouldDirty: true })
             setValue('saveAsStatus', 'PAYMENT_METHOD_CREATION_SUCCESS')
-          }, 1000)
+          }, 100)
         } catch (e: any) {
           setError('newBankAccount', { message: e.body ?? 'Invalid Bank Account Data' })
         }
@@ -666,7 +678,6 @@ export function PayableForm({
             type: Mercoa.PaymentMethodType.Custom,
             schemaId: data.paymentDestinationType,
             data: filtered,
-            foreignId: Math.random().toString(36).substring(7), // random string
           })) as Mercoa.PaymentMethodResponse.Custom
           mercoaSession.refresh()
           setTimeout(() => {
@@ -1004,44 +1015,41 @@ export function PayableForm({
     }
 
     if (invoice) {
-      mercoaSession.client?.invoice
-        .update(invoice.id, invoiceDataFinal)
-        .then((resp) => {
-          if (resp) {
-            mercoaSession.debug('invoice/update API response: ', resp)
-            setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
-            toast.success('Invoice updated')
-            refreshInvoice(resp.id)
-          }
-        })
-        .catch((e) => {
-          console.error(e)
-          console.error(e.body)
-          toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
-        })
+      try {
+        const resp = await mercoaSession.client?.invoice.update(invoice.id, invoiceDataFinal)
+        if (resp) {
+          mercoaSession.debug('invoice/update API response: ', resp)
+          setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
+          toast.success('Invoice updated')
+          refreshInvoice(resp.id)
+        } else {
+          toast.error('There was an error updating the invoice')
+        }
+      } catch (e: any) {
+        console.error(e)
+        console.error(e.body)
+        toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+      }
     } else {
-      mercoaSession.client?.invoice
-        .create({
+      try {
+        const resp = await mercoaSession.client?.invoice.create({
           ...invoiceDataFinal,
           creatorUserId: mercoaSession.user?.id,
         })
-        .then((resp) => {
-          if (resp) {
-            mercoaSession.debug('invoice/create API response: ', resp)
-            toast.success('Invoice created')
-            setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
-            refreshInvoice(resp.id)
-            onRedirect(resp)
-          }
-        })
-        .catch((e) => {
-          console.error(e.statusCode)
-          console.error(e.body)
-          toast.error(`There was an error creating the invoice.\n Error: ${e.body}`)
-        })
+        if (resp) {
+          mercoaSession.debug('invoice/update API response: ', resp)
+          setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
+          toast.success('Invoice created')
+          refreshInvoice(resp.id)
+        } else {
+          toast.error('There was an error creating the invoice')
+        }
+      } catch (e: any) {
+        console.error(e)
+        console.error(e.body)
+        toast.error(`There was an error creating the invoice.\n Error: ${e.body}`)
+      }
     }
-    // sleep
-    await new Promise((resolve) => setTimeout(resolve, 10))
   }
 
   async function getVendorPaymentLink() {
@@ -1061,10 +1069,10 @@ export function PayableForm({
     <div style={{ height: `${height}px` }} className="mercoa-overflow-auto mercoa-pr-2 mercoa-pb-10">
       <FormProvider {...methods}>
         <form
-          onSubmit={handleSubmit(saveInvoice)}
-          className={
-            'mercoa-grid-cols-3 mercoa-mt-6 mercoa-grid md:mercoa-gap-x-6 md:mercoa-gap-y-4 mercoa-gap-2 mercoa-p-0.5'
-          }
+          onSubmit={handleSubmit(saveInvoiceLoadingWrapper)}
+          className={`mercoa-grid-cols-3 mercoa-mt-6 mercoa-grid md:mercoa-gap-x-6 md:mercoa-gap-y-4 mercoa-gap-2 mercoa-p-0.5 ${
+            isLoading ? 'mercoa-opacity-50 mercoa-pointer-events-none' : ''
+          }`}
         >
           {children ? (
             children({
@@ -1080,6 +1088,7 @@ export function PayableForm({
               setValue: setValue as any,
               watch,
               errors: errors as any,
+              isLoading,
             })
           ) : (
             <>
@@ -2076,7 +2085,7 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
 
 // Payment Source and Destination
 
-export function SelectPaymentMethod({
+export function PayableSelectPaymentMethod({
   isSource,
   isDestination,
   disableCreation,
@@ -2555,7 +2564,7 @@ export function PayablePaymentSource({ readOnly }: { readOnly?: boolean }) {
       <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-my-5">
         How do you want to pay?
       </h2>
-      <SelectPaymentMethod isSource readOnly={readOnly} />
+      <PayableSelectPaymentMethod isSource readOnly={readOnly} />
       {errors.paymentSourceId?.message && (
         <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentSourceId?.message.toString()}</p>
       )}
@@ -2580,7 +2589,7 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
           <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-my-5">
             How does <span className="mercoa-text-gray-800 mercoa-underline">{vendorName}</span> want to get paid?
           </h2>
-          <SelectPaymentMethod isDestination readOnly={readOnly} />
+          <PayableSelectPaymentMethod isDestination readOnly={readOnly} />
           {errors.paymentDestinationId?.message && (
             <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentDestinationId?.message.toString()}</p>
           )}

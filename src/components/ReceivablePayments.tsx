@@ -386,11 +386,11 @@ export function ReceivablePaymentPdf({ invoice, logo }: { invoice?: Mercoa.Invoi
     <div className="mercoa-flex mercoa-justify-between mercoa-mt-10">
       <div className="mercoa-text-5xl mercoa-font-medium">INVOICE</div>
       <div>
-        <div>
+        <div className="mercoa-flex mercoa-justify-between">
           <span className="mercoa-text-gray-500">Invoice #</span>
           <span className="mercoa-text-gray-800 mercoa-pl-2">{invoice.invoiceNumber}</span>
         </div>
-        <div>
+        <div className="mercoa-flex mercoa-justify-between">
           <span className="mercoa-text-gray-500">Date</span>
           <span className="mercoa-text-gray-800 mercoa-pl-2">{dayjs(invoice.invoiceDate).format('MMM DD, YYYY')}</span>
         </div>

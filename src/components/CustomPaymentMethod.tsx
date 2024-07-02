@@ -239,7 +239,6 @@ export function AddCustomPaymentMethod({
         type: 'custom',
         schemaId: schema?.id,
         data: filtered,
-        foreignId: Math.random().toString(36).substring(7),
       })
       if (!onSubmit) return
       if (resp) onSubmit(resp)

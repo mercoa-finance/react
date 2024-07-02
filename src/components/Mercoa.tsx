@@ -20,7 +20,7 @@ export interface MercoaContext {
   selectedInvoice: Mercoa.InvoiceResponse | undefined
   setSelectedInvoice: Function
   client: MercoaClient | undefined
-  refresh: Function
+  refresh: () => Promise<void>
   refreshId: number
   organization: Mercoa.OrganizationResponse | undefined
   moov: Moov | undefined
@@ -28,7 +28,7 @@ export interface MercoaContext {
   moovAccountId: string | undefined
   iframeOptions: TokenOptions | undefined
   setIframeOptions: Function
-  getNewToken: Function
+  getNewToken: () => Promise<void>
   googleMapsApiKey?: string
   heightOffset: number
   setHeightOffset: Function
@@ -44,7 +44,7 @@ const sessionContext = createContext<MercoaContext>({
   selectedInvoice: undefined,
   setSelectedInvoice: () => {},
   client: undefined,
-  refresh: () => {},
+  refresh: async () => {},
   refreshId: 0,
   organization: undefined,
   moov: undefined,
@@ -52,9 +52,9 @@ const sessionContext = createContext<MercoaContext>({
   moovAccountId: undefined,
   iframeOptions: undefined,
   setIframeOptions: () => {},
-  getNewToken: (expiresIn?: string) => {},
+  getNewToken: async (expiresIn?: string) => {},
   googleMapsApiKey: undefined,
-  heightOffset: 70,
+  heightOffset: 100,
   setHeightOffset: () => {},
   debug: () => {},
 })

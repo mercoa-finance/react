@@ -19,12 +19,15 @@ import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import InvoicePreview from './InvoicePreview'
 import {
+  BankAccount,
+  Card,
+  Check,
   CounterpartySearch,
   InvoiceStatusPill,
   MercoaButton,
+  MercoaCombobox,
   MercoaInput,
   NoSession,
-  SelectPaymentMethod,
   useMercoaSession,
 } from './index'
 
@@ -541,8 +544,10 @@ export function ReceivableForm({
       amount: data.amount,
       payerId: data.payerId,
       vendorId: mercoaSession.entityId,
+      paymentSourceId: data.paymentSourceId,
       paymentDestinationId: data.paymentDestinationId,
       creatorEntityId: mercoaSession.entityId,
+      noteToSelf: data.description,
       lineItems: data.lineItems.map((lineItem: any) => ({
         name: lineItem.name,
         description: lineItem.description,
@@ -800,7 +805,7 @@ export function ReceivableForm({
             Choose existing payment method on file for{' '}
             <span className="mercoa-text-gray-800 mercoa-underline">{payerName}</span>:
           </h2>
-          <SelectPaymentMethod isSource />
+          <ReceivableSelectPaymentMethod isSource />
           {errors.paymentSourceId?.message && (
             <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentSourceId?.message.toString()}</p>
           )}
@@ -815,7 +820,7 @@ export function ReceivableForm({
           <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
             How do you want to get paid?
           </h2>
-          <SelectPaymentMethod isDestination />
+          <ReceivableSelectPaymentMethod isDestination />
           {/* {invoice?.id &&
       invoice?.status != Mercoa.InvoiceStatus.Canceled &&
       invoice?.status != Mercoa.InvoiceStatus.Archived &&
@@ -874,6 +879,281 @@ export function ReceivableForm({
           )}
         </div>
       </form>
+    </div>
+  )
+}
+
+export function ReceivableSelectPaymentMethod({
+  isSource,
+  isDestination,
+}: {
+  isSource?: boolean
+  isDestination?: boolean
+}) {
+  /// Setup (ripped from PayableSelectPaymentMethod)
+  const mercoaSession = useMercoaSession()
+
+  const [paymentMethods, setPaymentMethods] = useState<Array<Mercoa.PaymentMethodResponse>>([])
+  const [firstRender, setFirstRender] = useState(true)
+
+  const { watch, setValue, clearErrors } = useFormContext()
+
+  // Assert valid state for props
+  if (isSource === isDestination) {
+    throw new Error('Must specify exactly one of isSource or isDestination')
+  }
+
+  const payerId = watch('payerId')
+  const entityId = isSource ? payerId : mercoaSession.entity?.id
+
+  // Get payment methods for current dropdown
+  async function refreshPaymentMethods() {
+    if (!mercoaSession.token || !entityId || !mercoaSession.client) return
+    const resp = await mercoaSession.client?.entity.paymentMethod.getAll(entityId)
+    setPaymentMethods(resp)
+  }
+
+  useEffect(() => {
+    if (!mercoaSession.token || !entityId || !mercoaSession.client) return
+    refreshPaymentMethods()
+  }, [mercoaSession.client, entityId, mercoaSession.token])
+
+  // Set utility variables for current dropdown (isSource --> paymentSourceType and paymentDestinationId)
+  const paymentMethodTypeKey = isSource ? 'paymentSourceType' : 'paymentDestinationType'
+  const sourceOrDestination = isSource ? 'paymentSourceId' : 'paymentDestinationId'
+  const selectedType = watch(paymentMethodTypeKey)
+  const paymentId = watch(sourceOrDestination)
+
+  const availableTypes: Array<{ key: string; value: string }> = []
+  if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'bankAccount')) {
+    availableTypes.push({ key: 'bankAccount', value: 'Bank Account' })
+  }
+  if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'card')) {
+    availableTypes.push({ key: 'card', value: 'Card' })
+  }
+  if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'check')) {
+    availableTypes.push({ key: 'check', value: 'Check' })
+  }
+  paymentMethods.forEach((paymentMethod) => {
+    if (paymentMethod.type === 'custom') {
+      if (availableTypes.some((type) => type.key === paymentMethod.schemaId)) return // skip if already added
+      availableTypes.push({ key: paymentMethod.schemaId ?? '', value: paymentMethod.schema.name ?? '' })
+    }
+  })
+
+  // Set a default payment method type
+  useEffect(() => {
+    if (!paymentMethods || paymentMethods.length === 0) return
+    if (!firstRender) return
+    setFirstRender(false)
+    if (paymentId) return
+
+    // Check for default payment method
+    let defaultPm: Mercoa.PaymentMethodResponse | undefined
+    if (isSource) {
+      defaultPm = paymentMethods.find((e) => e.isDefaultSource)
+    } else {
+      defaultPm = paymentMethods.find((e) => e.isDefaultDestination)
+    }
+    if (defaultPm) {
+      if (defaultPm.type === 'custom') {
+        setValue(paymentMethodTypeKey, defaultPm.schemaId)
+      } else {
+        setValue(paymentMethodTypeKey, defaultPm.type)
+      }
+      setValue(sourceOrDestination, defaultPm.id)
+      clearErrors(sourceOrDestination)
+      return
+    }
+
+    // if there is no default payment method, set some sane defaults
+    if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'bankAccount')) {
+      setValue(paymentMethodTypeKey, 'bankAccount')
+      setMethodOnTypeChange('bankAccount')
+    } else if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'card')) {
+      setValue(paymentMethodTypeKey, 'card')
+      setMethodOnTypeChange('card')
+    } else if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'check')) {
+      setValue(paymentMethodTypeKey, 'check')
+      setMethodOnTypeChange('check')
+    } else if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'custom')) {
+      const cpm = paymentMethods.find(
+        (paymentMethod) => paymentMethod.type === 'custom',
+      ) as Mercoa.PaymentMethodResponse.Custom
+      if (cpm.schemaId) {
+        setValue(paymentMethodTypeKey, cpm.schemaId)
+        setMethodOnTypeChange(cpm.schemaId)
+      }
+    }
+  }, [paymentMethods, paymentId, firstRender])
+
+  // If selectedType changes, set the payment method id to the first payment method of that type
+  function setMethodOnTypeChange(selectedType: Mercoa.PaymentMethodType | string) {
+    if (isDestination) {
+      setValue('paymentDestinationOptions', undefined)
+    }
+    if (selectedType === Mercoa.PaymentMethodType.BankAccount) {
+      const account = paymentMethods.find(
+        (paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount,
+      ) as Mercoa.PaymentMethodResponse.BankAccount
+      setValue(sourceOrDestination, account?.id)
+    } else if (selectedType === Mercoa.PaymentMethodType.Card) {
+      setValue(
+        sourceOrDestination,
+        paymentMethods.find((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)?.id,
+      )
+    } else if (selectedType === Mercoa.PaymentMethodType.Check) {
+      setValue(
+        sourceOrDestination,
+        paymentMethods.find((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)?.id,
+      )
+    } else {
+      setValue(
+        sourceOrDestination,
+        paymentMethods.find(
+          (paymentMethod) =>
+            paymentMethod.type === Mercoa.PaymentMethodType.Custom && paymentMethod.schemaId === selectedType,
+        )?.id,
+      )
+    }
+    clearErrors(sourceOrDestination)
+  }
+
+  // Create Off-Platform Payment Method
+  function createOffPlatformPaymentMethod() {
+    const existingOffPlatformPaymentMethod = paymentMethods?.find(
+      (paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.OffPlatform,
+    )
+    if (existingOffPlatformPaymentMethod) {
+      setValue(sourceOrDestination, existingOffPlatformPaymentMethod.id)
+      clearErrors(sourceOrDestination)
+    } else {
+      // if there is no off platform payment method, we need to create one
+      console.log({ entityId })
+      mercoaSession.client?.entity.paymentMethod
+        .create(entityId, {
+          type: Mercoa.PaymentMethodType.OffPlatform,
+        })
+        .then(async (resp) => {
+          if (resp) {
+            await refreshPaymentMethods()
+            setValue(sourceOrDestination, resp.id)
+            setValue(paymentMethodTypeKey, Mercoa.PaymentMethodType.OffPlatform)
+            clearErrors(sourceOrDestination)
+          }
+        })
+    }
+  }
+
+  // For offline payments, we need to set the correct payment method id automatically
+  useEffect(() => {
+    if (selectedType !== Mercoa.PaymentMethodType.OffPlatform) return
+    if (!entityId) return
+    createOffPlatformPaymentMethod()
+  }, [isDestination, entityId, selectedType, paymentMethods])
+
+  // For bank accounts, we need to set check enabled or not
+  useEffect(() => {
+    if (selectedType !== Mercoa.PaymentMethodType.BankAccount) return
+    if (isDestination) return
+    const bankAccount = paymentMethods.find(
+      (paymentMethod) => paymentMethod.id === paymentId,
+    ) as Mercoa.PaymentMethodResponse.BankAccount
+    if (bankAccount) {
+      setValue('paymentSourceCheckEnabled', bankAccount?.checkOptions?.enabled ?? false)
+    }
+  }, [isDestination, selectedType, paymentMethods, paymentId])
+
+  // Reset payment destination on type change
+  useEffect(() => {
+    if (!isDestination) return
+    setValue('paymentDestinationOptions', undefined)
+  }, [isDestination, selectedType])
+
+  // If selected type is custom, find the schema
+  useEffect(() => {
+    if (selectedType === Mercoa.PaymentMethodType.Custom) {
+      const paymentMethod = paymentMethods.find(
+        (paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Custom && paymentMethod.id === paymentId,
+      ) as Mercoa.PaymentMethodResponse.Custom
+      if (paymentMethod?.schemaId) {
+        setValue(paymentMethodTypeKey, paymentMethod.schemaId)
+      }
+    }
+  }, [selectedType, paymentMethods, paymentId])
+
+  const bankAccountJsx = (
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+      {paymentMethods
+        ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)
+        .map((paymentMethod) => (
+          <div key={paymentMethod.id} className="mercoa-mt-1">
+            <BankAccount
+              account={paymentMethod as Mercoa.PaymentMethodResponse.BankAccount}
+              selected={paymentId === paymentMethod.id}
+              onSelect={() => {
+                setValue(sourceOrDestination, paymentMethod.id)
+                clearErrors(sourceOrDestination)
+              }}
+            />
+          </div>
+        ))}
+    </div>
+  )
+
+  const checkJsx = (
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+      {paymentMethods
+        ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)
+        .map((paymentMethod) => (
+          <div key={paymentMethod.id} className="mercoa-mt-1">
+            <Check
+              account={paymentMethod as Mercoa.PaymentMethodResponse.Check}
+              selected={paymentId === paymentMethod.id}
+              onSelect={() => {
+                setValue(sourceOrDestination, paymentMethod.id)
+                clearErrors(sourceOrDestination)
+              }}
+            />
+          </div>
+        ))}
+    </div>
+  )
+
+  const cardJsx = (
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+      {paymentMethods
+        ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
+        .map((paymentMethod) => (
+          <div key={paymentMethod.id} className="mercoa-mt-1">
+            <Card
+              account={paymentMethod as Mercoa.PaymentMethodResponse.Card}
+              selected={paymentId === paymentMethod.id}
+              onSelect={() => {
+                setValue(sourceOrDestination, paymentMethod.id)
+                clearErrors(sourceOrDestination)
+              }}
+            />
+          </div>
+        ))}
+    </div>
+  )
+
+  if (!mercoaSession.client) return <NoSession componentName="SelectPaymentMethod" />
+  return (
+    <div>
+      <MercoaCombobox
+        options={availableTypes.map((type) => ({ value: type, disabled: false }))}
+        onChange={(selected) => {
+          setValue(paymentMethodTypeKey, selected.key)
+          setMethodOnTypeChange(selected.key)
+        }}
+        value={availableTypes.find((type) => type.key === selectedType)}
+        displayIndex="value"
+      />
+      {selectedType === Mercoa.PaymentMethodType.BankAccount && bankAccountJsx}
+      {selectedType === Mercoa.PaymentMethodType.Check && checkJsx}
+      {selectedType === Mercoa.PaymentMethodType.Card && cardJsx}
     </div>
   )
 }

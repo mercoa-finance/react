@@ -64,6 +64,8 @@ type PayableFormChildrenProps = {
 
   watch: (name: UseFormWatch<Mercoa.InvoiceCreationRequest>) => any // react-hook-form hook to get the real-time value of any form component
   errors: FieldErrors<Mercoa.InvoiceCreationRequest> // react-hook-form error object
+
+  isLoading: boolean // If the invoice is being updated / saved, this state will be true
 };
 
 type DoucmentCustomizationOptions = {
