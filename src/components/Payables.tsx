@@ -255,6 +255,7 @@ export type PayablesTableChildrenProps = {
   getPrevious: () => void
   resultsPerPage: number
   setResultsPerPage: (value: number) => void
+  count: number
   selectedInvoiceStatuses: Mercoa.InvoiceStatus[]
   setSelectedInvoiceStatues: (statuses: Mercoa.InvoiceStatus[]) => void
   downloadCSV: () => void
@@ -286,6 +287,7 @@ export function PayablesTable({
     getPrevious,
     resultsPerPage,
     setResultsPerPage,
+    count,
     selectedInvoiceStatuses,
     setSelectedInvoiceStatues,
     downloadCSV,
@@ -724,6 +726,7 @@ export function PayablesTable({
       selectedInvoiceStatuses: currentStatuses,
       setSelectedInvoiceStatues: setCurrentStatuses,
       downloadCSV: downloadAsCSV,
+      count,
     })
   }
 
@@ -1066,29 +1069,30 @@ export function PayablesTable({
                 Delete
               </button>
             )}
-            {currentStatuses.includes(Mercoa.InvoiceStatus.Scheduled) && selectedInvoices.length > 0 && (
-              <button
-                type="button"
-                className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
-                onClick={() => {
-                  if (confirm('Are you sure you want to cancel these payments? This action cannot be undone.')) {
-                    handleCancel()
-                  }
-                }}
-              >
-                Cancel Payment
-              </button>
-            )}
             {currentStatuses.some((e) =>
               [
-                Mercoa.InvoiceStatus.Pending,
-                Mercoa.InvoiceStatus.Paid,
-                Mercoa.InvoiceStatus.Canceled,
-                Mercoa.InvoiceStatus.Refused,
-                Mercoa.InvoiceStatus.Failed,
                 Mercoa.InvoiceStatus.New,
                 Mercoa.InvoiceStatus.Approved,
+                Mercoa.InvoiceStatus.Refused,
+                Mercoa.InvoiceStatus.Scheduled,
+                Mercoa.InvoiceStatus.Failed,
               ].includes(e as any),
+            ) &&
+              selectedInvoices.length > 0 && (
+                <button
+                  type="button"
+                  className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
+                  onClick={() => {
+                    if (confirm('Are you sure you want to cancel these invoices? This action cannot be undone.')) {
+                      handleCancel()
+                    }
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
+            {currentStatuses.some((e) =>
+              [Mercoa.InvoiceStatus.Paid, Mercoa.InvoiceStatus.Canceled].includes(e as any),
             ) &&
               selectedInvoices.length > 0 && (
                 <button

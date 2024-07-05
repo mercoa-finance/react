@@ -48,6 +48,7 @@ function ReceivablesTable({
     setResultsPerPage,
     selectedInvoiceStatuses,
     setSelectedInvoiceStatues,
+    count,
     downloadCSV,
   }: {
     dataLoaded: boolean
@@ -58,6 +59,7 @@ function ReceivablesTable({
     getPrevious: () => void
     resultsPerPage: number
     setResultsPerPage: (value: number) => void
+    count: number
     selectedInvoiceStatuses: Mercoa.InvoiceStatus[]
     setSelectedInvoiceStatues: (statuses: Mercoa.InvoiceStatus[]) => void
     downloadCSV: () => void
@@ -237,6 +239,7 @@ function ReceivablesTable({
       selectedInvoiceStatuses: currentStatuses,
       setSelectedInvoiceStatues: setCurrentStatuses,
       downloadCSV: downloadAsCSV,
+      count,
     })
   }
 

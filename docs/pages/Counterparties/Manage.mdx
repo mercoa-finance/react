@@ -27,10 +27,11 @@ type CounterpartiesChildrenProps = {
 
   setSearch: (search: string) => void // Update the search filter
 
-  hasNext: boolean // Has next page of invoices
-  getNext: () => void // Get next page of invoices
-  hasPrevious: boolean // Has previous page of invoices
-  getPrevious: () => void // Get previous page of invoices
+  hasNext: boolean // Has next page of counterparties
+  getNext: () => void // Get next page of counterparties
+  hasPrevious: boolean // Has previous page of counterparties
+  getPrevious: () => void // Get previous page of counterparties
+  count: number // Total number of counterparties
 
   resultsPerPage: number // Max number of results shown per page
   setResultsPerPage: (value: number) => void // Set max number of results shown per page (1-100)

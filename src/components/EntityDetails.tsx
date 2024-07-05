@@ -97,6 +97,7 @@ export type EntityEmailLogsChildrenProps = {
   getPrevious: () => void
   resultsPerPage: number
   setResultsPerPage: (value: number) => void
+  count: number
 }
 
 export function EntityEmailLogs({
@@ -115,6 +116,7 @@ export function EntityEmailLogs({
     getPrevious,
     resultsPerPage,
     setResultsPerPage,
+    count,
   }: EntityEmailLogsChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
@@ -145,7 +147,7 @@ export function EntityEmailLogs({
     return () => {
       isCurrent = false
     }
-  }, [mercoaSession.client, entitySelected, mercoaSession.refreshId, startingAfter])
+  }, [mercoaSession.client, entitySelected, mercoaSession.refreshId, startingAfter, resultsPerPage])
 
   if (children)
     return children({
@@ -171,6 +173,7 @@ export function EntityEmailLogs({
       },
       resultsPerPage,
       setResultsPerPage,
+      count,
     })
 
   if (!mercoaSession.client) return <NoSession componentName="EntityEmailLogs" />

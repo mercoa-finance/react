@@ -47,6 +47,7 @@ type PayablesTableChildrenProps = {
   getNext: () => void // Get next page of invoices
   hasPrevious: boolean // Has previous page of invoices
   getPrevious: () => void // Get previous page of invoices
+  count: number // // Total number of invoices
 
   resultsPerPage: number // Max number of results shown per page
   setResultsPerPage: (value: number) => void // Set max number of results shown per page (1-100)
