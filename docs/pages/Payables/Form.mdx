@@ -9,12 +9,13 @@ import {
   PayableMetadata,
   PayablePaymentSource,
   PayablePaymentDestination,
+  PaymentDestinationProcessingTime,
   PayableApprovers,
   InvoiceComments,
   PayableFees,
   PayableActions
 } from '@mercoa/react'
-import { payerEntity, vendorEntities, inv_new_ready } from '../../mockData'
+import { payerEntity, vendorEntities, inv_new_ready, inv_scheduled } from '../../mockData'
 import { ComponentContainer } from '../../components/helpers'
 import { Callout } from 'nextra/components'
 import { useEffect } from 'react'
@@ -160,6 +161,7 @@ The default children is the following:
       <PayablePaymentSource />
       <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
       <PayablePaymentDestination />
+      <PaymentDestinationProcessingTime />
       <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
 
       <PayableFees />
@@ -332,10 +334,30 @@ useEffect(()=>{
   ```
 </ComponentContainer>
 
+ ### PaymentDestinationProcessingTime
+
+| Name     | Type                                                                              | Required | Description         |
+| :--------| :---------------------------------------------------------------------------------| :--------| :-------------------|
+| children | `({ timing }: { timing?: Mercoa.CalculatePaymentTimingResponse }) => JSX.Element` |          | Custom Component
+
+<ComponentContainer display='block'>
+  <PayableForm invoice={inv_scheduled}>
+  {()=><PaymentDestinationProcessingTime />}
+  </PayableForm>
+  ```jsx
+  <PayableForm invoice={inv_scheduled}>
+  {()=><>
+    <PaymentDestinationProcessingTime />
+  </>}
+  </PayableForm>
+  ```
+</ComponentContainer>
+
  ### PayableFees
 
-| Name     | Type      | Required | Description         |
-| :--------| :---------| :--------| :-------------------|
+| Name     | Type                                                               | Required | Description         |
+| :--------| :------------------------------------------------------------------| :--------| :-------------------|
+| children | `({ fees }: { fees?: Mercoa.InvoiceFeesResponse }) => JSX.Element` |          | Custom Component
 
 <ComponentContainer display='block'>
   <PayableForm invoice={inv_new_ready}>

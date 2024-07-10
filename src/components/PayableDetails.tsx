@@ -40,7 +40,7 @@ import {
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { addWeekdays, isWeekday } from '../lib/scheduling'
+import { isWeekday } from '../lib/scheduling'
 import {
   AddBankAccountForm,
   AddCheckForm,
@@ -1101,7 +1101,8 @@ export function PayableForm({
               <PayableMetadata /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <PayablePaymentSource />{' '}
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
-              <PayablePaymentDestination />{' '}
+              <PayablePaymentDestination />
+              <PaymentDestinationProcessingTime />
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <PayableFees />
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
@@ -1299,9 +1300,8 @@ export function PayableDocument({
           'application/pdf': ['.pdf'],
           'image/png': ['.png'],
           'image/gif': ['.gif'],
-          'image/tiff': ['.tif', '.tiff'],
           'image/jpeg': ['.jpeg', '.jpg'],
-          'image/bmp': ['.bmp'],
+          'image/heic': ['.heic'],
           'image/webp': ['.webp'],
         }}
       >
@@ -1324,7 +1324,7 @@ export function PayableDocument({
                 </label>
                 <p className="mercoa-pl-1">or drag and drop</p>
               </div>
-              <p className="mercoa-text-xs mercoa-leading-5">PNG, JPG, PDF up to 10MB</p>
+              <p className="mercoa-text-xs mercoa-leading-5">PNG, JPG, WEBP, PDF up to 10MB</p>
             </div>
           </div>
         )}
@@ -2089,13 +2089,11 @@ export function PayableSelectPaymentMethod({
   isSource,
   isDestination,
   disableCreation,
-  disablePaymentTimingDisplay,
   readOnly,
 }: {
   isSource?: boolean
   isDestination?: boolean
   disableCreation?: boolean
-  disablePaymentTimingDisplay?: boolean
   readOnly?: boolean // UNIMPLEMENTED
 }) {
   const mercoaSession = useMercoaSession()
@@ -2550,7 +2548,6 @@ export function PayableSelectPaymentMethod({
             )}
         </>
       )}
-      {isDestination && !disablePaymentTimingDisplay && <PaymentDestinationProcessingTime />}
     </div>
   )
 }
@@ -2560,7 +2557,7 @@ export function PayablePaymentSource({ readOnly }: { readOnly?: boolean }) {
     formState: { errors },
   } = useFormContext()
   return (
-    <div className="mercoa-pb-6 mercoa-col-span-full">
+    <div className="mercoa-col-span-full">
       <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-my-5">
         How do you want to pay?
       </h2>
@@ -2585,7 +2582,7 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
   return (
     <>
       {vendorId && vendorName && paymentSourceType !== 'offPlatform' && (
-        <div className="mercoa-pb-6 mercoa-col-span-full">
+        <div className="mercoa-col-span-full">
           <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-my-5">
             How does <span className="mercoa-text-gray-800 mercoa-underline">{vendorName}</span> want to get paid?
           </h2>
@@ -2599,101 +2596,77 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
   )
 }
 
-export function PaymentDestinationProcessingTime() {
+export function PaymentDestinationProcessingTime({
+  children,
+}: {
+  children?: ({ timing }: { timing?: Mercoa.CalculatePaymentTimingResponse }) => JSX.Element
+}) {
   const mercoaSession = useMercoaSession()
   const { watch } = useFormContext()
 
   const deductionDate = watch('deductionDate') as Date
   const processedAt = watch('processedAt') as Date
-  const paymentDestinationType = watch('paymentDestinationType') as Mercoa.PaymentMethodType
+  const paymentSourceId = watch('paymentSourceId') as Mercoa.PaymentMethodType
+  const paymentDestinationId = watch('paymentDestinationId') as Mercoa.PaymentMethodType
   const paymentDestinationOptions = watch('paymentDestinationOptions') as Mercoa.PaymentDestinationOptions
 
-  const nextWindow = getNextWindow()
-  const processingTime = getProcessingTime()
-  const endDate = addWeekdays(dayjs(nextWindow), processingTime).toDate()
+  const [timing, setTiming] = useState<Mercoa.CalculatePaymentTimingResponse>()
 
-  function getNextWindow() {
-    if (processedAt) {
-      return dayjs(processedAt).toDate()
+  useEffect(() => {
+    if (paymentSourceId && paymentDestinationId && deductionDate) {
+      mercoaSession.client?.calculate
+        .paymentTiming({
+          ...(processedAt ? { processedAt } : { estimatedDeductionDate: deductionDate }),
+          paymentSourceId,
+          paymentDestinationId,
+          paymentDestinationOptions,
+        })
+        .then((timing) => {
+          setTiming(timing)
+        })
+        .catch((e) => {
+          console.error(e)
+        })
     }
+  }, [deductionDate, processedAt, paymentSourceId, paymentDestinationId, paymentDestinationOptions])
 
-    // is it before 11:59 AM PST
-    const isBeforeNoon = dayjs()
-      .tz('America/Los_Angeles')
-      .isBefore(
-        dayjs().tz('America/Los_Angeles').set('hour', 11).set('minute', 59).set('second', 59).set('millisecond', 999),
-      )
+  if (children) return children({ timing })
 
-    let window = dayjs(deductionDate).toDate()
-    if (dayjs(deductionDate).isAfter(dayjs())) {
-      window = dayjs(deductionDate).toDate()
-    } else {
-      if (isBeforeNoon) {
-        window = dayjs().toDate()
-      } else {
-        window = dayjs().add(1, 'day').toDate()
-      }
-    }
-
-    while (!isWeekday(window)) {
-      window = dayjs(window).add(1, 'day').toDate()
-    }
-    return window
-  }
-
-  function getProcessingTime() {
-    if (paymentDestinationType === Mercoa.PaymentMethodType.BankAccount) {
-      if (paymentDestinationOptions?.delivery === 'ACH_STANDARD') {
-        return 3
-      } else {
-        return 2
-      }
-    } else if (paymentDestinationType === Mercoa.PaymentMethodType.Check) {
-      if (paymentDestinationOptions?.delivery === 'PRINT') {
-        return -1
-      } else {
-        return 14
-      }
-    } else {
-      const schema = mercoaSession.customPaymentMethodSchemas.find((e) => e.id === paymentDestinationType)
-      if (!schema) return -1
-      return schema.estimatedProcessingTime
-    }
-  }
-
-  if (processingTime < 0) return null
-  if (!deductionDate) return null
+  if (!timing) return null
+  if (timing.businessDays < 0) return null
 
   return (
-    <div className="mercoa-flex mercoa-items-center mercoa-justify-between mercoa-p-5 mercoa-rounded-md mercoa-text-center mercoa-max-w-[500px] mercoa-m-auto">
-      <div className="mercoa-flex mercoa-items-center">
-        <CalendarDaysIcon className="mercoa-size-5 mercoa-mr-2" />
-        <span className="mercoa-text-gray-900">{dayjs(nextWindow).format('MMM D')}</span>
-      </div>
+    <div className="mercoa-col-span-full">
+      <div className="mercoa-flex mercoa-items-center mercoa-justify-between mercoa-p-5 mercoa-rounded-md mercoa-text-center mercoa-max-w-[500px] mercoa-m-auto">
+        <div className="mercoa-flex mercoa-items-center">
+          <CalendarDaysIcon className="mercoa-size-5 mercoa-mr-2" />
+          <span className="mercoa-text-gray-900">{dayjs(timing.estimatedProcessingDate).format('MMM D')}</span>
+        </div>
 
-      <div className="mercoa-flex mercoa-items-center">
-        <hr className="mercoa-border-t mercoa-border-gray-300 mercoa-w-10" />
-        <ArrowRightIcon className="mercoa-border-t mercoa-border-transparent mercoa-size-5 mercoa-text-gray-300 -mercoa-ml-1" />
-        <Tooltip
-          title={
-            <div className="mercoa-text-xs">
-              Estimated time.
-              <br />
-              Business days are Monday through Friday, excluding holidays.
-            </div>
-          }
-        >
-          <span className="mercoa-text-gray-500 mercoa-mx-4">
-            {processingTime} business days<span className="mercoa-text-xs">*</span>
-          </span>
-        </Tooltip>
-        <hr className="mercoa-border-t mercoa-border-gray-300 mercoa-w-10" />
-        <ArrowRightIcon className="mercoa-border-t mercoa-border-transparent mercoa-size-5 mercoa-text-gray-300 -mercoa-ml-1" />
-      </div>
+        <div className="mercoa-flex mercoa-items-center">
+          <hr className="mercoa-border-t mercoa-border-gray-300 mercoa-w-10" />
+          <ArrowRightIcon className="mercoa-border-t mercoa-border-transparent mercoa-size-5 mercoa-text-gray-300 -mercoa-ml-1" />
+          <Tooltip
+            title={
+              <div className="mercoa-text-xs">
+                Estimated time.
+                <br />
+                Business days are Monday through Friday, excluding holidays.
+              </div>
+            }
+          >
+            <span className="mercoa-text-gray-500 mercoa-mx-4">
+              {timing?.businessDays} business days<span className="mercoa-text-xs">*</span>
+            </span>
+          </Tooltip>
+          <hr className="mercoa-border-t mercoa-border-gray-300 mercoa-w-10" />
+          <ArrowRightIcon className="mercoa-border-t mercoa-border-transparent mercoa-size-5 mercoa-text-gray-300 -mercoa-ml-1" />
+        </div>
 
-      <div className="mercoa-flex mercoa-items-center">
-        <CalendarDaysIcon className="mercoa-size-5 mercoa-mr-2" />
-        <span className="mercoa-text-gray-900">{dayjs(endDate).format('MMM D')}</span>
+        <div className="mercoa-flex mercoa-items-center">
+          <CalendarDaysIcon className="mercoa-size-5 mercoa-mr-2" />
+          <span className="mercoa-text-gray-900">{dayjs(timing.estimatedSettlementDate).format('MMM D')}</span>
+        </div>
       </div>
     </div>
   )
@@ -3683,9 +3656,13 @@ function LineItemRows({ readOnly }: { readOnly?: boolean }) {
 
 // Fees
 
-export function PayableFees() {
+export function PayableFees({
+  children,
+}: {
+  children?: ({ fees }: { fees?: Mercoa.InvoiceFeesResponse }) => JSX.Element
+}) {
   const mercoaSession = useMercoaSession()
-  const { watch } = useFormContext()
+  const { watch, setError, clearErrors } = useFormContext()
 
   const amount = watch('amount')
   const currency = watch('currency')
@@ -3701,17 +3678,28 @@ export function PayableFees() {
       if (typeof amount === 'string') {
         amountNumber = Number(amount.replace(/,/g, ''))
       }
-      mercoaSession.client?.fees
-        .calculate({
+      mercoaSession.client?.calculate
+        .fee({
           amount: amountNumber,
           paymentSourceId,
           paymentDestinationId,
         })
         .then((fees) => {
           setFees(fees)
+          clearErrors('amount')
+        })
+        .catch((e) => {
+          setError('amount', {
+            type: 'manual',
+            message: e.body,
+          })
         })
     }
   }, [amount, paymentSourceId, paymentDestinationId])
+
+  if (children) {
+    return children({ fees: fees })
+  }
 
   if (
     amount &&
@@ -3720,7 +3708,7 @@ export function PayableFees() {
     (fees?.destinationPlatformMarkupFee || fees?.destinationPlatformMarkupFee)
   ) {
     return (
-      <div className="mercoa-pb-6 mercoa-col-span-full">
+      <div className="mercoa-col-span-full">
         <div className="mercoa-flex mercoa-text-gray-700 mercoa-text-md">
           <div className="mercoa-flex-1" />
           Invoice Amount:

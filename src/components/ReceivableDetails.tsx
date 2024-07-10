@@ -597,6 +597,7 @@ export function ReceivableForm({
               type="payor"
               onSelect={(payer) => {
                 mercoaSession.debug({ payer })
+                if (!payer || payer.id === 'new') return
                 setSelectedPayer(payer)
                 setValue('payerId', payer?.id ?? undefined, { shouldTouch: true, shouldDirty: true })
                 setValue('payerName', payer?.name ?? undefined, { shouldTouch: true, shouldDirty: true })

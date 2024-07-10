@@ -24,6 +24,7 @@ import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
 import { postalCodeRegex, usaStates } from '../lib/locations'
+import { mccCodes } from '../lib/mccCodes'
 import {
   AddDialog,
   DisbursementMethods,
@@ -645,6 +646,29 @@ export function EINBlock({
         <p className="mercoa-text-sm mercoa-text-red-500 mercoa-text-left">{errors.taxID?.message.toString()}</p>
       )}
     </div>
+  )
+}
+
+export const mccSchema = {
+  mcc: yup.string().required('MCC is required'),
+}
+
+export function MCCBlock({ watch, setValue }: { watch: Function; setValue: Function }) {
+  const mcc = watch('mcc')
+
+  return (
+    <MercoaCombobox
+      options={mccCodes.map(({ code, name }) => ({
+        disabled: false,
+        value: name,
+      }))}
+      label="Merchant Categorization Code"
+      value={mcc}
+      onChange={(value) => {
+        setValue('mcc', value, { shouldDirty: true })
+      }}
+      labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700 -mercoa-mb-1"
+    />
   )
 }
 
@@ -1599,6 +1623,7 @@ export function EntityOnboardingForm({
         : entity.profile.business?.taxIdProvided
           ? '**-*******'
           : '',
+      mcc: entity.profile.business?.industryCodes?.mcc ?? '',
       dob: new Date(),
 
       legalBusinessName: entity.profile.business?.legalBusinessName ?? '',
@@ -1636,6 +1661,7 @@ export function EntityOnboardingForm({
               ...(onboardingOptions?.business.website.required && websiteSchema),
               ...(onboardingOptions?.business.address.required && addressBlockSchema),
               ...(onboardingOptions?.business.ein.required && einSchema),
+              ...(onboardingOptions?.business.mcc.required && mccSchema),
               ...(onboardingOptions?.business.formationDate.required && formationDateSchema),
               ...(onboardingOptions?.business.description.required && descriptionSchema),
             })
@@ -1831,6 +1857,7 @@ export function EntityOnboardingForm({
                 required={onboardingOptions.business.ein.required}
               />
             )}
+            {onboardingOptions?.business.mcc.show && <MCCBlock watch={watch} setValue={setValue} />}
             {onboardingOptions?.business.formationDate.show && (
               <FormationDateBlock
                 control={control}

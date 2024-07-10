@@ -164,6 +164,11 @@ const organization: Mercoa.OrganizationResponse = {
         show: true,
         required: true,
       },
+      mcc: {
+        edit: true,
+        show: true,
+        required: true,
+      },
     },
     individual: {
       name: {
@@ -264,6 +269,11 @@ const organization: Mercoa.OrganizationResponse = {
         required: true,
       },
       termsOfService: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      mcc: {
         edit: true,
         show: true,
         required: true,
@@ -1140,6 +1150,16 @@ export const mswHandlers = [
       sourcePaymentMethodFee: 1,
       destinationPlatformMarkupFee: 1,
       destinationPaymentMethodFee: 1,
+    })
+  }),
+
+  // Payment Timing
+  http.post(`${basePath}/paymentTiming`, () => {
+    return HttpResponse.json({
+      estimatedProcessingDate: '2024-01-02T00:00:00Z',
+      businessDays: 3,
+      estimatedProcessingTime: 3,
+      estimatedSettlementDate: '2024-01-05T00:00:00Z',
     })
   }),
 ]
