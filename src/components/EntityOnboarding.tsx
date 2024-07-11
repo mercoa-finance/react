@@ -50,6 +50,7 @@ export type OnboardingFormData = {
   suffix?: string
   dob?: Date
   taxID?: string
+  mcc?: string
   phoneNumber?: string
   addressLine1?: string
   addressLine2?: string
@@ -658,14 +659,15 @@ export function MCCBlock({ watch, setValue }: { watch: Function; setValue: Funct
 
   return (
     <MercoaCombobox
-      options={mccCodes.map(({ code, name }) => ({
+      options={mccCodes.map((value) => ({
         disabled: false,
-        value: name,
+        value,
       }))}
+      displayIndex="name"
       label="Merchant Categorization Code"
-      value={mcc}
-      onChange={(value) => {
-        setValue('mcc', value, { shouldDirty: true })
+      value={mccCodes.find((e) => e.code === mcc)}
+      onChange={({ code }) => {
+        setValue('mcc', code, { shouldDirty: true })
       }}
       labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700 -mercoa-mb-1"
     />
@@ -839,6 +841,11 @@ export async function createOrUpdateEntity({
             },
           },
         }),
+      ...(data.mcc && {
+        industryCodes: {
+          mcc: data.mcc,
+        },
+      }),
       ...(data.addressLine1 &&
         data.city &&
         data.stateOrProvince &&
@@ -2334,7 +2341,6 @@ export function EntityOnboarding({
           entity={entity}
           onComplete={async () => {
             setLoading(true)
-            await new Promise((resolve) => setTimeout(resolve, 100))
             if (entity.accountType === 'business') {
               try {
                 await mercoaSession.client?.entity.initiateKyb(entity.id)
@@ -2343,7 +2349,6 @@ export function EntityOnboarding({
               }
             }
             await mercoaSession.refresh()
-            await new Promise((resolve) => setTimeout(resolve, 100))
             setLoading(false)
             setFormState('complete')
           }}
