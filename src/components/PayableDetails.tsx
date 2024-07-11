@@ -71,6 +71,15 @@ dayjs.extend(tz)
 
 const dJSON = require('dirty-json')
 
+const afterScheduledStatus = [
+  Mercoa.InvoiceStatus.Scheduled,
+  Mercoa.InvoiceStatus.Pending,
+  Mercoa.InvoiceStatus.Paid,
+  Mercoa.InvoiceStatus.Canceled,
+  Mercoa.InvoiceStatus.Archived,
+  Mercoa.InvoiceStatus.Refused,
+]
+
 export function PayableDetails({
   invoiceId,
   invoice,
@@ -343,6 +352,8 @@ export function PayableForm({
       '~cpm~~': yup.mixed().nullable(),
       fees: yup.mixed().nullable(),
       failureType: yup.string().nullable(),
+      createdAt: yup.date().nullable(),
+      updatedAt: yup.date().nullable(),
     })
     .required()
 
@@ -375,6 +386,8 @@ export function PayableForm({
       approvalPolicy: invoice?.approvalPolicy ?? { type: 'any', approvers: [] },
       approvers: invoice?.approvers ?? [],
       fees: invoice?.fees,
+      createdAt: invoice?.createdAt,
+      updatedAt: invoice?.updatedAt,
       newBankAccount: {
         routingNumber: '',
         accountNumber: '',
@@ -470,6 +483,8 @@ export function PayableForm({
     setValue('comments', invoice?.comments ?? [])
     setValue('fees', invoice?.fees)
     setValue('failureType', invoice?.failureType ?? '')
+    setValue('createdAt', invoice?.createdAt)
+    setValue('updatedAt', invoice?.updatedAt)
   }, [invoice])
 
   const { fields: lineItems } = useFieldArray({
@@ -585,25 +600,27 @@ export function PayableForm({
   async function saveInvoice(data: any) {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
 
-    let nextInvoiceState: Mercoa.InvoiceStatus = Mercoa.InvoiceStatus.Draft
-
-    if (admin && data.saveAsAdmin) {
-      nextInvoiceState = data.status
-    } else if (invoice?.status === Mercoa.InvoiceStatus.Draft) {
-      nextInvoiceState = Mercoa.InvoiceStatus.New
-    } else if (invoice?.status === Mercoa.InvoiceStatus.New) {
-      nextInvoiceState = Mercoa.InvoiceStatus.Approved
-    } else if (invoice?.status === Mercoa.InvoiceStatus.Approved || invoice?.status === Mercoa.InvoiceStatus.Failed) {
-      nextInvoiceState = Mercoa.InvoiceStatus.Scheduled
-    } else if (invoice?.id) {
-      // Invoice is already scheduled, there is no next state
-      toast.error('This invoice is already scheduled and cannot be edited.')
-      return
-    }
-
     // Special Actions
     mercoaSession.debug({ saveAsStatus: data.saveAsStatus })
-    if (data.saveAsStatus === 'COUNTERPARTY') {
+    if (data.saveAsStatus === Mercoa.InvoiceStatus.Canceled) {
+      if (confirm('Are you sure you want to cancel this invoice? This cannot be undone.')) {
+        await mercoaSession.client?.invoice.update(data.id, {
+          status: Mercoa.InvoiceStatus.Canceled,
+        })
+      }
+      setIsLoading(false)
+      refreshInvoice(data.id)
+      return
+    } else if (data.saveAsStatus === Mercoa.InvoiceStatus.Archived) {
+      if (confirm('Are you sure you want to archive this invoice? This cannot be undone.')) {
+        await mercoaSession.client?.invoice.update(data.id, {
+          status: Mercoa.InvoiceStatus.Archived,
+        })
+      }
+      setIsLoading(false)
+      refreshInvoice(data.id)
+      return
+    } else if (data.saveAsStatus === 'COUNTERPARTY') {
       await onSubmitCounterparty({
         data: data.vendor,
         mercoaSession,
@@ -693,10 +710,13 @@ export function PayableForm({
     } else if (data.saveAsStatus === 'DELETE') {
       if (invoice?.id) {
         try {
-          await mercoaSession.client?.invoice.delete(invoice.id)
-          toast.success('Invoice deleted')
-
-          if (onRedirect) onRedirect(undefined)
+          if (confirm('Are your sure you want to delete this invoice? This cannot be undone.')) {
+            await mercoaSession.client?.invoice.delete(invoice.id)
+            toast.success('Invoice deleted')
+            if (onRedirect) onRedirect(undefined)
+          }
+          setIsLoading(false)
+          return
         } catch (e: any) {
           console.error(e)
           toast.error(`There was an error deleting the invoice.\n Error: ${e.body}`)
@@ -790,6 +810,23 @@ export function PayableForm({
       } else {
         toast.error('There was an error creating the comment')
       }
+      return
+    }
+
+    let nextInvoiceState: Mercoa.InvoiceStatus = Mercoa.InvoiceStatus.Draft
+
+    if (admin && data.saveAsAdmin) {
+      setValue('saveAsAdmin', false)
+      nextInvoiceState = data.status
+    } else if (invoice?.status === Mercoa.InvoiceStatus.Draft) {
+      nextInvoiceState = Mercoa.InvoiceStatus.New
+    } else if (invoice?.status === Mercoa.InvoiceStatus.New) {
+      nextInvoiceState = Mercoa.InvoiceStatus.Approved
+    } else if (invoice?.status === Mercoa.InvoiceStatus.Approved || invoice?.status === Mercoa.InvoiceStatus.Failed) {
+      nextInvoiceState = Mercoa.InvoiceStatus.Scheduled
+    } else if (invoice?.id) {
+      // Invoice is already scheduled, there is no next state
+      toast.error('This invoice is already scheduled and cannot be edited.')
       return
     }
 
@@ -1898,7 +1935,32 @@ export function PayableActions({
   )
 }
 
-export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
+export type PayableOverviewChildrenProps = {
+  readOnly?: boolean
+  amount?: number
+  setAmount?: (amount: number) => void
+  supportedCurrencies?: Array<Mercoa.CurrencyCode>
+  currency?: Mercoa.CurrencyCode
+  setCurrency?: (currency: Mercoa.CurrencyCode) => void
+  dueDate?: Date
+  setDueDate?: (dueDate: Date) => void
+  invoiceDate?: Date
+  setInvoiceDate?: (invoiceDate: Date) => void
+  schedulePaymentDate?: Date
+  setSchedulePaymentDate?: (schedulePaymentDate: Date) => void
+  invoiceNumber?: string
+  setInvoiceNumber?: (invoiceNumber: string) => void
+  description?: string
+  setDescription?: (description: string) => void
+}
+
+export function PayableOverview({
+  readOnly,
+  children,
+}: {
+  readOnly?: boolean
+  children?: (props: PayableOverviewChildrenProps) => JSX.Element
+}) {
   const mercoaSession = useMercoaSession()
 
   const [supportedCurrencies, setSupportedCurrencies] = useState<Array<Mercoa.CurrencyCode>>([])
@@ -1912,6 +1974,8 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
   } = useFormContext()
 
   const currency = watch('currency')
+  const status = watch('status')
+  const notDraft = !!status && status !== Mercoa.InvoiceStatus.Draft
 
   // // Get Supported Currencies
   useEffect(() => {
@@ -1954,6 +2018,27 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
   const wrapperDiv = useRef(null)
   const width = useWidth(wrapperDiv)
 
+  if (children) {
+    return children({
+      readOnly,
+      amount: watch('amount'),
+      setAmount: (amount: number) => setValue('amount', amount),
+      supportedCurrencies,
+      currency,
+      setCurrency: (currency: Mercoa.CurrencyCode) => setValue('currency', currency),
+      dueDate: watch('dueDate'),
+      setDueDate: (dueDate: Date) => setValue('dueDate', dueDate),
+      invoiceDate: watch('invoiceDate'),
+      setInvoiceDate: (invoiceDate: Date) => setValue('invoiceDate', invoiceDate),
+      schedulePaymentDate: watch('schedulePaymentDate'),
+      setSchedulePaymentDate: (schedulePaymentDate: Date) => setValue('schedulePaymentDate', schedulePaymentDate),
+      invoiceNumber: watch('invoiceNumber'),
+      setInvoiceNumber: (invoiceNumber: string) => setValue('invoiceNumber', invoiceNumber),
+      description: watch('description'),
+      setDescription: (description: string) => setValue('description', description),
+    })
+  }
+
   let formCols = 'mercoa-grid-cols-1'
   if (width && width > 300) {
     formCols = 'mercoa-grid-cols-2'
@@ -1987,7 +2072,7 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
         name="invoiceNumber"
         label="Invoice #"
         type="text"
-        readOnly={readOnly}
+        readOnly={readOnly || notDraft}
         className="md:mercoa-col-span-1 mercoa-col-span-full"
       />
 
@@ -1997,7 +2082,7 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
         name="amount"
         label="Amount"
         type="currency"
-        readOnly={readOnly}
+        readOnly={readOnly || notDraft}
         className="md:mercoa-col-span-1 mercoa-col-span-full"
         leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>}
         trailingIcon={
@@ -2026,7 +2111,7 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
         label="Invoice Date"
         placeholder="Invoice Date"
         type="date"
-        readOnly={readOnly}
+        readOnly={readOnly || notDraft}
         className="md:mercoa-col-span-1 mercoa-col-span-full"
         control={control}
         errors={errors}
@@ -2038,7 +2123,7 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
         label="Due Date"
         placeholder="Due Date"
         type="date"
-        readOnly={readOnly}
+        readOnly={readOnly || notDraft}
         className="md:mercoa-col-span-1 mercoa-col-span-full"
         control={control}
         errors={errors}
@@ -2050,7 +2135,7 @@ export function PayableOverview({ readOnly }: { readOnly?: boolean }) {
         label="Scheduled Payment Date"
         placeholder="Scheduled Payment Date"
         type="date"
-        readOnly={readOnly}
+        readOnly={readOnly || (!!status && afterScheduledStatus.includes(status))}
         className="md:mercoa-col-span-1 mercoa-col-span-full"
         control={control}
         errors={errors}
@@ -2094,7 +2179,7 @@ export function PayableSelectPaymentMethod({
   isSource?: boolean
   isDestination?: boolean
   disableCreation?: boolean
-  readOnly?: boolean // UNIMPLEMENTED
+  readOnly?: boolean
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -2326,15 +2411,17 @@ export function PayableSelectPaymentMethod({
   if (!mercoaSession.client) return <NoSession componentName="SelectPaymentMethod" />
   return (
     <div>
-      <MercoaCombobox
-        options={availableTypes.map((type) => ({ value: type, disabled: false }))}
-        onChange={(selected) => {
-          setValue(paymentMethodTypeKey, selected.key)
-          setMethodOnTypeChange(selected.key)
-        }}
-        value={availableTypes.find((type) => type.key === selectedType)}
-        displayIndex="value"
-      />
+      {!readOnly && (
+        <MercoaCombobox
+          options={availableTypes.map((type) => ({ value: type, disabled: false }))}
+          onChange={(selected) => {
+            setValue(paymentMethodTypeKey, selected.key)
+            setMethodOnTypeChange(selected.key)
+          }}
+          value={availableTypes.find((type) => type.key === selectedType)}
+          displayIndex="value"
+        />
+      )}
       {selectedType === Mercoa.PaymentMethodType.BankAccount && (
         <>
           <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
@@ -2355,6 +2442,7 @@ export function PayableSelectPaymentMethod({
           </div>
           {isDestination &&
             !disableCreation &&
+            !readOnly &&
             vendorId &&
             mercoaSession.organization?.paymentMethods?.backupDisbursements.some((e) => {
               if (!e.active) return false
@@ -2427,6 +2515,7 @@ export function PayableSelectPaymentMethod({
           </div>
           {isDestination &&
             !disableCreation &&
+            !readOnly &&
             vendorId &&
             mercoaSession.organization?.paymentMethods?.backupDisbursements.some((e) => {
               if (!e.active) return false
@@ -2521,6 +2610,7 @@ export function PayableSelectPaymentMethod({
           </div>
           {isDestination &&
             !disableCreation &&
+            !readOnly &&
             vendorId &&
             mercoaSession.organization?.paymentMethods?.backupDisbursements.some((e) => {
               if (!e.active) return false
@@ -2554,8 +2644,13 @@ export function PayableSelectPaymentMethod({
 
 export function PayablePaymentSource({ readOnly }: { readOnly?: boolean }) {
   const {
+    watch,
     formState: { errors },
   } = useFormContext()
+
+  const status = watch('status')
+  readOnly = readOnly || (!!status && afterScheduledStatus.includes(status))
+
   return (
     <div className="mercoa-col-span-full">
       <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-my-5">
@@ -2571,9 +2666,12 @@ export function PayablePaymentSource({ readOnly }: { readOnly?: boolean }) {
 
 export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) {
   const {
-    formState: { errors },
     watch,
+    formState: { errors },
   } = useFormContext()
+
+  const status = watch('status')
+  readOnly = readOnly || (!!status && afterScheduledStatus.includes(status))
 
   const paymentSourceType = watch('paymentSourceType')
   const vendorId = watch('vendorId')
@@ -2997,6 +3095,11 @@ export function propagateApprovalPolicy({
 export function PayableMetadata({ skipValidation, readOnly }: { skipValidation?: boolean; readOnly?: boolean }) {
   const mercoaSession = useMercoaSession()
 
+  const { watch } = useFormContext()
+  const status = watch('status')
+
+  readOnly = readOnly || (!!status && status !== Mercoa.InvoiceStatus.Draft)
+
   return (
     <div className="mercoa-col-span-full mercoa-grid-cols-1 mercoa-gap-4 mercoa-hidden has-[div]:mercoa-grid ">
       <label className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700">
@@ -3372,17 +3475,61 @@ function filterMetadataValues(entityMetadata: string[], schema: Mercoa.MetadataS
 // End Metadata
 
 // Line Items
-export function PayableLineItems({ readOnly }: { readOnly?: boolean }) {
-  const mercoaSession = useMercoaSession()
-  const { control, watch } = useFormContext()
 
-  const { append } = useFieldArray({
+export type PayableLineItemChildrenProps = {
+  readOnly?: boolean
+  items: Mercoa.InvoiceLineItemRequest[]
+  addItem: () => void
+  updateItem: (index: number, item: Mercoa.InvoiceLineItemRequest) => void
+  removeItem: (index: number) => void
+}
+
+export function PayableLineItems({
+  readOnly,
+  children,
+}: {
+  readOnly?: boolean
+  children?: (props: PayableLineItemChildrenProps) => JSX.Element
+}) {
+  const mercoaSession = useMercoaSession()
+  const [isHidden, setIsHidden] = useState<boolean>(false)
+
+  const { control, watch, setValue } = useFormContext()
+  const { append, remove } = useFieldArray({
     control,
     name: 'lineItems',
   })
 
+  const status = watch('status')
+  readOnly = readOnly || (!!status && status !== Mercoa.InvoiceStatus.Draft)
   const lineItems = watch('lineItems') as Mercoa.InvoiceLineItemRequest[]
-  const [isHidden, setIsHidden] = useState<boolean>(false)
+
+  const addItem = () => {
+    append({
+      name: '',
+      description: `Line Item ${(lineItems?.length ?? 0) + 1}`,
+      amount: 0,
+      unitPrice: 0,
+      quantity: 1,
+    })
+  }
+
+  const removeItem = (index: number) => {
+    remove(index)
+  }
+
+  if (children) {
+    return children({
+      readOnly,
+      items: lineItems,
+      addItem,
+      updateItem: (index, item) => {
+        setValue(`lineItems.${index}`, item)
+      },
+      removeItem,
+    })
+  }
+
   if (mercoaSession.iframeOptions?.options?.invoice?.lineItems === Mercoa.LineItemAvailabilities.Disabled) return <></>
   return (
     <div
@@ -3395,22 +3542,7 @@ export function PayableLineItems({ readOnly }: { readOnly?: boolean }) {
           <span className="mercoa-font-medium mercoa-text-gray-500 mercoa-text-base">({lineItems?.length ?? 0})</span>
         </h2>
         {!isHidden && !readOnly && (
-          <MercoaButton
-            isEmphasized={false}
-            size="sm"
-            hideOutline
-            color="gray"
-            onClick={() => {
-              append({
-                name: '',
-                description: `Line Item ${(lineItems?.length ?? 0) + 1}`,
-                amount: 0,
-                unitPrice: 0,
-                quantity: 1,
-              })
-            }}
-            type="button"
-          >
+          <MercoaButton isEmphasized={false} size="sm" hideOutline color="gray" onClick={addItem} type="button">
             <Tooltip title="Add line item">
               <PlusCircleIcon
                 className="mercoa-size-5 mercoa-text-gray-400 hover:mercoa-opacity-75"
@@ -3447,20 +3579,7 @@ export function PayableLineItems({ readOnly }: { readOnly?: boolean }) {
       {!isHidden && !readOnly && (lineItems?.length ?? 0) > 0 && (
         <div className="mercoa-col-span-full mercoa-gap-2 mercoa-flex">
           <div className="mercoa-flex-1" />
-          <MercoaButton
-            isEmphasized
-            size="sm"
-            onClick={() => {
-              append({
-                name: '',
-                description: `Line Item ${(lineItems?.length ?? 0) + 1}`,
-                amount: 0,
-                unitPrice: 0,
-                quantity: 1,
-              })
-            }}
-            type="button"
-          >
+          <MercoaButton isEmphasized size="sm" onClick={addItem} type="button">
             <div className="mercoa-flex mercoa-items-center">
               Add Line Item
               <PlusIcon className="mercoa-ml-1 mercoa-size-4" aria-hidden="true" />

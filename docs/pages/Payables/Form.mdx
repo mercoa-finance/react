@@ -234,9 +234,31 @@ Most of the time, this component shouldn't be used directly. Instead, use `Payab
 
  ### PayableOverview
 
-| Name     | Type      | Required | Description         |
-| :--------| :---------| :--------| :-------------------|
-| readOnly | `boolean` |          | Make data read only |
+| Name     | Type                                                     | Required | Description         |
+| :--------| :--------------------------------------------------------| :--------| :-------------------|
+| readOnly | `boolean`                                                |          | Make data read only |
+| children | `( props : PayableOverviewChildrenProps) => JSX.Element` |          | Custom Component    |
+
+```ts
+type PayableOverviewChildrenProps = {
+  readOnly?: boolean
+  amount?: number
+  setAmount?: (amount: number) => void
+  supportedCurrencies?: Array<Mercoa.CurrencyCode>
+  currency?: Mercoa.CurrencyCode
+  setCurrency?: (currency: Mercoa.CurrencyCode) => void
+  dueDate?: Date
+  setDueDate?: (dueDate: Date) => void
+  invoiceDate?: Date
+  setInvoiceDate?: (invoiceDate: Date) => void
+  schedulePaymentDate?: Date
+  setSchedulePaymentDate?: (schedulePaymentDate: Date) => void
+  invoiceNumber?: string
+  setInvoiceNumber?: (invoiceNumber: string) => void
+  description?: string
+  setDescription?: (description: string) => void
+};
+```
 
 <ComponentContainer display='block'>
   <PayableForm>
@@ -253,9 +275,20 @@ Most of the time, this component shouldn't be used directly. Instead, use `Payab
 
  ### PayableLineItems
 
- | Name     | Type      | Required | Description         |
-| :--------| :---------| :--------| :-------------------|
-| readOnly | `boolean` |          | Make data read only |
+| Name     | Type                                                     | Required | Description         |
+| :--------| :--------------------------------------------------------| :--------| :-------------------|
+| readOnly | `boolean`                                                |          | Make data read only |
+| children | `( props : PayableLineItemChildrenProps) => JSX.Element` |          | Custom Component    |
+
+```ts
+type PayableLineItemChildrenProps = {
+  readOnly?: boolean
+  items: Mercoa.InvoiceLineItemRequest[]
+  addItem: () => void
+  updateItem: (index: number, item: Mercoa.InvoiceLineItemRequest) => void
+  removeItem: (index: number) => void
+};
+```
 
 <ComponentContainer display='block'>
   <PayableForm>
@@ -393,9 +426,17 @@ useEffect(()=>{
 
  ### InvoiceComments
 
-| Name     | Type      | Required | Description         |
-| :--------| :---------| :--------| :-------------------|
-| readOnly | `boolean` |          | Make data read only |
+| Name     | Type                                                     | Required | Description         |
+| :--------| :--------------------------------------------------------| :--------| :-------------------|
+| readOnly | `boolean`                                                |          | Make data read only |
+| children | `( props : InvoiceCommentsChildrenProps) => JSX.Element` |          | Custom Component    |
+
+```ts
+type InvoiceCommentsChildrenProps = {
+  comments: Mercoa.CommentResponse[]
+  addComment: (comment: string) => void
+};
+```
 
 <ComponentContainer display='block'>
   <PayableForm invoice={inv_new_ready}>

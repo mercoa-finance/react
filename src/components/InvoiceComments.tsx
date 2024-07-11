@@ -6,7 +6,18 @@ import { useFormContext } from 'react-hook-form'
 import { NoSession, useMercoaSession } from './index'
 dayjs.extend(relativeTime)
 
-export function InvoiceComments({ readOnly }: { readOnly?: boolean }) {
+export type InvoiceCommentsChildrenProps = {
+  comments: Mercoa.CommentResponse[]
+  addComment: (comment: string) => void
+}
+
+export function InvoiceComments({
+  readOnly,
+  children,
+}: {
+  readOnly?: boolean
+  children?: (props: InvoiceCommentsChildrenProps) => JSX.Element
+}) {
   const mercoaSession = useMercoaSession()
 
   const { register, watch, setValue } = useFormContext()
@@ -38,6 +49,7 @@ export function InvoiceComments({ readOnly }: { readOnly?: boolean }) {
   const initialCreationComment = {
     id: watch('id'),
     createdAt: watch('createdAt'),
+    updatedAt: watch('updatedAt'),
     user: watch('creatorUser') ?? {
       id: '',
       name: 'Email',
@@ -50,7 +62,21 @@ export function InvoiceComments({ readOnly }: { readOnly?: boolean }) {
   }
 
   if (!mercoaSession.client) return <NoSession componentName="InvoiceComments" />
-  if (watch('id') === undefined || watch('id') === 'new') return <div className="mercoa-mt-10" />
+
+  const isNew = watch('id') === undefined || watch('id') === 'new'
+
+  if (children) {
+    if (isNew) return null
+    return children({
+      comments: [initialCreationComment, ...filteredComments],
+      addComment: (comment) => {
+        setValue('commentText', comment)
+        setValue('saveAsStatus', 'COMMENT')
+      },
+    })
+  }
+
+  if (isNew) return <div className="mercoa-mt-10" />
   return (
     <div className="mercoa-col-span-full">
       <ul role="list" className="mercoa-space-y-6 mercoa-ml-1">

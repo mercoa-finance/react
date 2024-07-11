@@ -1283,6 +1283,7 @@ export function MercoaInput({
             onChange={onChange}
             placeholder={placeholder}
             className={inClassName}
+            readOnly={readOnly}
           />
         )}
       />
@@ -1302,6 +1303,7 @@ export function MercoaInput({
             onChange={onChange}
             placeholder={placeholder}
             className={inClassName}
+            readOnly={readOnly}
           />
         )}
       />

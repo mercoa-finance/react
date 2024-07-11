@@ -251,6 +251,9 @@ export function PayableCounterpartySearch({
     setEdit(false)
   }, [counterparty])
 
+  const { watch } = useFormContext()
+  const status = watch('status')
+
   return (
     <>
       <div className="sm:mercoa-col-span-3">
@@ -271,6 +274,7 @@ export function PayableCounterpartySearch({
               network={network}
               edit={edit}
               setEdit={setEdit}
+              readOnly={!!status && status !== Mercoa.InvoiceStatus.Draft}
             />
           </div>
         </div>
@@ -404,6 +408,7 @@ function CounterpartySearchBase({
   network,
   edit,
   setEdit,
+  readOnly,
 }: {
   counterparty?: Mercoa.CounterpartyResponse
   disableCreation?: boolean
@@ -412,6 +417,7 @@ function CounterpartySearchBase({
   network?: Mercoa.CounterpartyNetworkType[]
   edit: boolean
   setEdit: (edit: boolean) => any
+  readOnly?: boolean
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -487,27 +493,31 @@ function CounterpartySearchBase({
                   <div className="mercoa-text-sm mercoa-text-gray-500">{selectedCounterparty?.email}</div>
                 )}
               </div>
-              <button
-                onClick={() => {
-                  setSelection(undefined)
-                }}
-                type="button"
-                className="mercoa-ml-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75"
-              >
-                <XCircleIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
-                <span className="mercoa-sr-only">Clear</span>
-              </button>
-              {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation && (
-                <button
-                  onClick={() => {
-                    setEdit(true)
-                  }}
-                  type="button"
-                  className="mercoa-ml-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75"
-                >
-                  <PencilSquareIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
-                  <span className="mercoa-sr-only">Edit</span>
-                </button>
+              {!readOnly && (
+                <>
+                  <button
+                    onClick={() => {
+                      setSelection(undefined)
+                    }}
+                    type="button"
+                    className="mercoa-ml-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75"
+                  >
+                    <XCircleIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
+                    <span className="mercoa-sr-only">Clear</span>
+                  </button>
+                  {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation && (
+                    <button
+                      onClick={() => {
+                        setEdit(true)
+                      }}
+                      type="button"
+                      className="mercoa-ml-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75"
+                    >
+                      <PencilSquareIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
+                      <span className="mercoa-sr-only">Edit</span>
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -1416,7 +1426,9 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center  mercoa-border-t mercoa-border-gray-900/5 ">
           <dd className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
@@ -1426,14 +1438,18 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.Check)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
 
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center mercoa-border-t mercoa-border-gray-900/5 " />
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.Custom)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
       </div>
     )
