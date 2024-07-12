@@ -457,17 +457,23 @@ type InvoiceCommentsChildrenProps = {
  The payable actions is a `position: absolute` component that sticks to the bottom of the form. It should only be used in a `position: relative` container or in `PayableDetails`. It also wraps the `PayableFormErrors` component.
  </Callout>
 
-| Name                | Type                                                     | Required | Description           |
-| :-------------------| :--------------------------------------------------------| :--------| :---------------------|
-| approveButton       |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
-| rejectButton        |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
-| nonApproverButton   |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
-| deleteButton        |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
-| archiveButton       |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
-| cancelButton        |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
-| saveDraftButton     |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
-| printCheckButton    |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
-| createInvoiceButton |  `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.  |
+| Name                    | Type                                                     | Required | Description           |
+| :-----------------------| :--------------------------------------------------------| :--------| :---------------------|
+| approveButton           |  `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.  |
+| rejectButton            |  `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.  |
+| nonApproverButton       |  `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.  |
+| deleteButton            |  `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.  |
+| archiveButton           |  `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.  |
+| cancelButton            |  `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.  |
+| saveDraftButton         |  `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.  |
+| printCheckButton        |  `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.  |
+| createInvoiceButton     |  `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.  |
+| submitForApprovalButton |  `({ onClick, approversAssigned }: { onClick: () => void, approversAssigned: boolean }) => JSX.Element` |          | Override for button.  |
+| nextButton              |  `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.  |
+| markAsPaidButton        |  `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.  |
+| schedulePaymentButton   |  `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.  |
+| retryPaymentButton      |  `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.  |
+
 
 <ComponentContainer display='block'>
   <PayableForm invoice={inv_new_ready}>
