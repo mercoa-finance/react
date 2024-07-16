@@ -1302,8 +1302,8 @@ export function RepresentativeComponent({
         toast.error('Entity not found')
         return
       }
-      mercoaSession.client?.entity.representative?.delete(mercoaSession.entity.id, representative?.id ?? '')
-      mercoaSession.refresh()
+      await mercoaSession.client?.entity.representative?.delete(mercoaSession.entity.id, representative?.id ?? '')
+      await mercoaSession.refresh()
     }
   }
 
@@ -1414,7 +1414,7 @@ export function VerifyOwnersButton({ entity }: { entity: Mercoa.EntityResponse }
         } else if (entity.accountType === 'individual') {
           toast.error('not implemented yet!')
         }
-        mercoaSession.refresh()
+        await mercoaSession.refresh()
       }}
       disabled={!hasController}
       tooltip={hasController ? undefined : 'Please add at least one representative who is a controller'}
@@ -1439,25 +1439,25 @@ export function AcceptToSButton({
   onClose?: Function
   entity: Mercoa.EntityResponse
 }) {
-  const [showAdd, setShowAddLocal] = useState(false)
-  function setShowAdd(state: boolean) {
-    setShowAddLocal(state)
-    if (!state && onClose) onClose()
+  const [show, setShow] = useState(false)
+  function close() {
+    setShow(false)
+    if (onClose) onClose()
   }
 
   return (
     <>
       <MercoaButton
         onClick={() => {
-          setShowAdd(true)
+          setShow(true)
         }}
         isEmphasized
         size="md"
       >
         {buttonText || 'Terms of Service'}
       </MercoaButton>
-      <Transition.Root show={showAdd} as={Fragment}>
-        <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={setShowAdd}>
+      <Transition.Root show={show} as={Fragment}>
+        <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={close}>
           <Transition.Child
             as={Fragment}
             enter="mercoa-ease-out mercoa-duration-300"
@@ -1485,7 +1485,12 @@ export function AcceptToSButton({
                   <Dialog.Title className="mercoa-mb-3 mercoa-w-full mercoa-text-center mercoa-text-xl mercoa-text-gray-800 mercoa-underline">
                     {title || 'Terms of Service'}
                   </Dialog.Title>
-                  <AcceptTosForm entity={entity} onComplete={setShowAdd} />
+                  <AcceptTosForm
+                    entity={entity}
+                    onComplete={async () => {
+                      close
+                    }}
+                  />
                 </Dialog.Panel>
               </Transition.Child>
             </div>
@@ -1501,7 +1506,7 @@ export function AcceptTosForm({
   onComplete,
 }: {
   entity: Mercoa.EntityResponse
-  onComplete?: (val: boolean) => void
+  onComplete: () => Promise<void>
 }) {
   const mercoaSession = useMercoaSession()
   const { register, watch, handleSubmit } = useForm()
@@ -1518,9 +1523,8 @@ export function AcceptTosForm({
         }
         await mercoaSession.client?.entity.acceptTermsOfService(entity.id)
         if (onComplete) {
-          onComplete(false)
+          await onComplete()
         }
-        mercoaSession.refresh()
       })}
     >
       <div className="mercoa-mb-10 mercoa-text-sm">
@@ -1721,7 +1725,7 @@ export function EntityOnboardingForm({
         if (onOnboardingSubmit) {
           onOnboardingSubmit(entityData)
         } else {
-          mercoaSession.refresh()
+          await mercoaSession.refresh()
         }
       })}
     >
@@ -2124,11 +2128,14 @@ export function EntityOnboarding({
     if (!mercoaSession.organization) return
     if (!mercoaSession.client) return
     if (!entity) return
+    // Representatives transition function
     if (formState === 'representatives') {
+      // Skip representatives, transition to payments if entity is individual
       if (entityData?.accountType === 'individual') {
         setFormState('payments')
         return
       }
+      // If not, still transition if business representatives is not shown
       if (type === 'payee') {
         if (!mercoaSession.organization.payeeOnboardingOptions?.business.representatives.show) {
           setFormState('payments')
@@ -2142,46 +2149,55 @@ export function EntityOnboarding({
         }
       }
     }
+    // Payments transition function
     if (formState === 'payments') {
+      // Skip payments, transition to TOS if paymentMethod not set in onboarding options
       if (type === 'payee') {
         if (!mercoaSession.organization.payeeOnboardingOptions?.paymentMethod) {
-          onSubmit()
-          setFormState('complete')
+          setFormState('tos')
           return
         }
       } else if (type === 'payor') {
         if (!mercoaSession.organization.payorOnboardingOptions?.paymentMethod) {
-          onSubmit()
-          setFormState('complete')
+          setFormState('tos')
           return
         }
       }
     }
-    if (formState === 'complete' && !entity.acceptedTos) {
-      if (type === 'payee') {
-        if (entity.accountType === 'business') {
-          if (mercoaSession.organization.payeeOnboardingOptions?.business.termsOfService.required) {
-            setFormState('tos')
-          }
-        } else {
-          if (mercoaSession.organization.payeeOnboardingOptions?.individual.termsOfService.required) {
-            setFormState('tos')
-          }
+    // TOS transition function
+    if (formState === 'tos' && !needsToAcceptTos()) {
+      onSubmit()
+    }
+  }, [mercoaSession.organization, mercoaSession.client, entity, entityData, formState, type])
+
+  function needsToAcceptTos() {
+    if (entity?.acceptedTos) {
+      return false
+    }
+    if (type === 'payee') {
+      if (entity?.accountType === 'business') {
+        if (!mercoaSession.organization?.payeeOnboardingOptions?.business.termsOfService.required) {
+          return false
         }
-      }
-      if (type === 'payor') {
-        if (entity.accountType === 'business') {
-          if (mercoaSession.organization.payorOnboardingOptions?.business.termsOfService.required) {
-            setFormState('tos')
-          }
-        } else {
-          if (mercoaSession.organization.payorOnboardingOptions?.individual.termsOfService.required) {
-            setFormState('tos')
-          }
+      } else {
+        if (!mercoaSession.organization?.payeeOnboardingOptions?.individual.termsOfService.required) {
+          return false
         }
       }
     }
-  }, [mercoaSession.organization, mercoaSession.client, entity, entityData, formState, type])
+    if (type === 'payor') {
+      if (entity?.accountType === 'business') {
+        if (!mercoaSession.organization?.payorOnboardingOptions?.business.termsOfService.required) {
+          return false
+        }
+      } else {
+        if (!mercoaSession.organization?.payorOnboardingOptions?.individual.termsOfService.required) {
+          return false
+        }
+      }
+    }
+    return true
+  }
 
   async function onSubmit(method?: Mercoa.PaymentMethodResponse) {
     if (!entity) return
@@ -2205,7 +2221,6 @@ export function EntityOnboarding({
         defaultDestination: true,
       })
     }
-
     setFormState('complete')
   }
 
@@ -2327,9 +2342,15 @@ export function EntityOnboarding({
           <DisbursementMethods
             type={type === 'payor' ? 'payment' : 'disbursement'}
             entity={entity}
-            onSelect={onSubmit}
-            goToPreviousStep={() => {
-              mercoaSession.refresh()
+            onSelect={() => {
+              if (needsToAcceptTos()) {
+                setFormState('tos')
+              } else {
+                setFormState('complete')
+              }
+            }}
+            goToPreviousStep={async () => {
+              await mercoaSession.refresh()
               setFormState('entity')
             }}
           />
@@ -2362,8 +2383,8 @@ export function EntityOnboarding({
           className="mercoa-mt-10"
           isEmphasized
           size="md"
-          onClick={() => {
-            mercoaSession.refresh()
+          onClick={async () => {
+            await mercoaSession.refresh()
             setFormState('entity')
           }}
         >

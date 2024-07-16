@@ -1,7 +1,6 @@
 import {
   ArrowDownTrayIcon,
   BuildingLibraryIcon,
-  CreditCardIcon,
   DevicePhoneMobileIcon,
   LockClosedIcon,
   MapPinIcon,
@@ -11,7 +10,7 @@ import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { AddBankAccount, AddCard, LoadingSpinnerIcon, MercoaButton, useMercoaSession } from './index'
+import { AddBankAccount, LoadingSpinnerIcon, MercoaButton, useMercoaSession } from './index'
 
 export function ReceivablePaymentPortal({
   logo,
@@ -177,9 +176,9 @@ export function ReceivablePaymentPortal({
         </p>
         <SelectPaymentMethodButtons />
         <div className="mercoa-w-full mercoa-mt-5">
-          {selectedPaymentType === Mercoa.PaymentMethodType.Card && (
+          {/* {selectedPaymentType === Mercoa.PaymentMethodType.Card && (
             <AddCard title={<></>} actions={payAction} onSubmit={updateInvoice} />
-          )}
+          )} */}
           {selectedPaymentType === Mercoa.PaymentMethodType.BankAccount && (
             <AddBankAccount title={<></>} actions={payAction} onSubmit={updateInvoice} />
           )}
@@ -246,7 +245,7 @@ export function ReceivablePaymentPortal({
             Bank Account
           </p>
         </button>
-        <button
+        {/* <button
           className="mercoa-w-[150px]"
           onClick={() => {
             setSelectedPaymentType(Mercoa.PaymentMethodType.Card)
@@ -268,7 +267,7 @@ export function ReceivablePaymentPortal({
           >
             Card
           </p>
-        </button>
+        </button> */}
       </div>
     )
   }

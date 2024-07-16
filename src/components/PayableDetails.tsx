@@ -51,7 +51,6 @@ import {
   CustomPaymentMethod,
   InvoiceComments,
   InvoiceStatusPill,
-  LoadingSpinner,
   LoadingSpinnerIcon,
   MercoaButton,
   MercoaCombobox,
@@ -80,6 +79,18 @@ const afterScheduledStatus = [
   Mercoa.InvoiceStatus.Refused,
 ]
 
+export type PayableDetailsChildrenProps = {
+  invoice?: Mercoa.InvoiceResponse
+  ocrResponse?: Mercoa.OcrResponse
+  uploadedDocument?: string
+  onRedirect: (invoice: Mercoa.InvoiceResponse | undefined) => void
+  setUploadedDocument: (e?: string) => void
+  height: number
+  refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
+  invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
+  onOcrComplete: (ocrResponse?: Mercoa.OcrResponse) => void
+}
+
 export function PayableDetails({
   invoiceId,
   invoice,
@@ -87,9 +98,8 @@ export function PayableDetails({
   heightOffset,
   admin,
   documentPosition = 'left',
-  documentCustomization,
-  children,
   invoicePreSubmit,
+  children,
 }: {
   invoiceId?: Mercoa.InvoiceId
   invoice?: Mercoa.InvoiceResponse
@@ -97,24 +107,8 @@ export function PayableDetails({
   heightOffset?: number
   admin?: boolean
   documentPosition?: 'right' | 'left' | 'none'
-  documentCustomization?: {
-    downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-    viewEmailButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  }
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
-  children?: ({
-    invoice,
-    refreshInvoice,
-    ocrResponse,
-    uploadedDocument,
-    setUploadedDocument,
-    height,
-    setSelectedVendor,
-    selectedVendor,
-    getVendorPaymentLink,
-    setValue,
-    watch,
-  }: PayableFormChildrenProps) => JSX.Element
+  children?: (props: PayableDetailsChildrenProps) => JSX.Element[]
 }) {
   const mercoaSession = useMercoaSession()
   const contentHeightOffset = heightOffset ?? mercoaSession.heightOffset
@@ -125,7 +119,6 @@ export function PayableDetails({
   const [height, setHeight] = useState<number>(
     typeof window !== 'undefined' ? window.innerHeight - contentHeightOffset : 0,
   )
-  const [isViewingInvoiceMobile, setIsViewingInvoiceMobile] = useState<boolean>(false)
 
   async function refreshInvoice(invoiceId: Mercoa.InvoiceId) {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
@@ -153,14 +146,37 @@ export function PayableDetails({
     }
   }, [contentHeightOffset])
 
-  if (!invoiceLocal && invoiceId) {
-    return <LoadingSpinner />
-  }
-
   if (!mercoaSession.client) return <NoSession componentName="PayableDetails" />
 
-  if (documentPosition === 'none')
-    return (
+  let leftComponent: JSX.Element | undefined
+  let rightComponent: JSX.Element | undefined
+  if (children) {
+    const childrenArray = children({
+      invoice: invoiceLocal,
+      ocrResponse,
+      uploadedDocument,
+      setUploadedDocument,
+      height,
+      refreshInvoice,
+      invoicePreSubmit,
+      onOcrComplete: setOcrResponse,
+      onRedirect,
+    })
+    leftComponent = childrenArray[0]
+    rightComponent = childrenArray[1]
+  } else {
+    leftComponent = (
+      <PayableDocument
+        onOcrComplete={setOcrResponse}
+        onDocumentUpload={(e) => {
+          setUploadedDocument(e.fileReaderObj)
+        }}
+        height={height}
+        invoice={invoiceLocal}
+      />
+    )
+
+    rightComponent = (
       <PayableForm
         invoice={invoiceLocal}
         ocrResponse={ocrResponse}
@@ -171,63 +187,19 @@ export function PayableDetails({
         height={height}
         admin={admin}
         invoicePreSubmit={invoicePreSubmit}
-      >
-        {children}
-      </PayableForm>
+      />
     )
+  }
 
-  const document = (
-    <PayableDocument
-      onOCRComplete={setOcrResponse}
-      onDocumentUpload={(e) => {
-        setUploadedDocument(e.fileReaderObj)
-      }}
-      height={height}
-      invoice={invoiceLocal}
-      downloadButton={documentCustomization?.downloadButton}
-      viewEmailButton={documentCustomization?.viewEmailButton}
-    />
-  )
-
-  const invoiceUpload = <Section minSize={0}>{document}</Section>
-  const invoiceDetails = (
-    <Section className={`mercoa-relative ${documentPosition === 'left' ? 'mercoa-pl-5' : 'mercoa-pr-5'}`} minSize={400}>
-      <div className="mercoa-flex mercoa-w-full mercoa-flex-row-reverse mercoa-visible min-[450px]:mercoa-invisible mercoa-absolute mercoa-top-2">
-        <MercoaButton
-          isEmphasized
-          size="sm"
-          type="button"
-          onClick={() => {
-            setIsViewingInvoiceMobile(!isViewingInvoiceMobile)
-          }}
-          className="mercoa-mr-7 mercoa-z-20"
-        >
-          View {isViewingInvoiceMobile ? 'Form' : 'Invoice'}
-        </MercoaButton>
-      </div>
-      {isViewingInvoiceMobile ? (
-        <div className="mercoa-mt-20">{document}</div>
-      ) : (
-        <PayableForm
-          invoice={invoiceLocal}
-          ocrResponse={ocrResponse}
-          uploadedDocument={uploadedDocument}
-          setUploadedDocument={setUploadedDocument}
-          onRedirect={onRedirect}
-          refreshInvoice={refreshInvoice}
-          height={height}
-          admin={admin}
-          invoicePreSubmit={invoicePreSubmit}
-        >
-          {children}
-        </PayableForm>
-      )}
-    </Section>
-  )
+  if (documentPosition === 'none' || !rightComponent) {
+    return rightComponent ?? leftComponent ?? <></>
+  }
 
   return (
     <Container>
-      {documentPosition === 'left' ? invoiceUpload : invoiceDetails}
+      <Section className={`mercoa-relative mercoa-px-5`} minSize={0}>
+        {documentPosition === 'left' ? leftComponent : rightComponent}
+      </Section>
       <Bar
         size={10}
         className="mercoa-cursor-col-resize mercoa-invisible min-[450px]:mercoa-visible"
@@ -236,7 +208,9 @@ export function PayableDetails({
             'linear-gradient(180deg, rgba(229,231,235,1) 48%, rgba(145,145,145,1) 48%, rgba(145,145,145,1) 52%, rgba(229,231,235,1) 52%)',
         }}
       />
-      {documentPosition === 'right' ? invoiceUpload : invoiceDetails}
+      <Section className={`mercoa-relative mercoa-px-5`} minSize={400}>
+        {documentPosition === 'right' ? leftComponent : rightComponent}
+      </Section>
     </Container>
   )
 }
@@ -282,19 +256,7 @@ export function PayableForm({
   height: number
   admin?: boolean
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
-  children?: ({
-    invoice,
-    refreshInvoice,
-    ocrResponse,
-    uploadedDocument,
-    setUploadedDocument,
-    height,
-    setSelectedVendor,
-    selectedVendor,
-    getVendorPaymentLink,
-    setValue,
-    watch,
-  }: PayableFormChildrenProps) => JSX.Element
+  children?: (props: PayableFormChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1251,33 +1213,65 @@ export function PayableFormErrors() {
 
 // Document
 
+export type PayableDocumentChildrenProps = {
+  documents?: Array<{ fileReaderObj: string; mimeType: string }>
+  sourceEmails?: Mercoa.EmailLog[]
+  ocrProcessing: boolean
+  invoice?: Mercoa.InvoiceResponse
+  height: number
+  downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  viewEmailButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  theme?: 'light' | 'dark'
+  onFileUpload: (fileReaderObj: string, mimeType: string) => void
+}
+
 export function PayableDocument({
-  onOCRComplete,
+  onOcrComplete,
   onDocumentUpload,
   invoice,
   height,
   downloadButton,
   viewEmailButton,
   theme,
+  children,
 }: {
-  onOCRComplete?: (ocrResponse?: Mercoa.OcrResponse) => void
-  onDocumentUpload?: ({ fileReaderObj, mimeType }: { fileReaderObj: string; mimeType: string }) => void
+  onOcrComplete?: (ocrResponse?: Mercoa.OcrResponse) => void
+  onDocumentUpload?: (document: { fileReaderObj: string; mimeType: string }) => void
   invoice?: Mercoa.InvoiceResponse
   height: number
   downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   viewEmailButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   theme?: 'light' | 'dark'
+  children?: (props: PayableDocumentChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 
-  const [uploadedFile, setUploadedFile] = useState<{ fileReaderObj: string; mimeType: string }>()
   const [ocrProcessing, setOcrProcessing] = useState<boolean>(false)
+  const [documents, setDocuments] = useState<Array<{ fileReaderObj: string; mimeType: string }> | undefined>()
+  const [sourceEmails, setSourceEmail] = useState<Mercoa.EmailLog[]>()
+
+  useEffect(() => {
+    if (invoice && invoice.hasDocuments) {
+      mercoaSession.client?.invoice.document.getAll(invoice.id).then((documents) => {
+        if (documents && documents.length > 0) {
+          setDocuments(documents.map((document) => ({ fileReaderObj: document.uri, mimeType: document.mimeType })))
+        }
+      })
+    }
+    if (invoice && invoice.hasSourceEmail) {
+      mercoaSession.client?.invoice.document.getSourceEmail(invoice.id).then((sourceEmail) => {
+        if (sourceEmail) {
+          setSourceEmail(sourceEmail.data)
+        }
+      })
+    }
+  }, [invoice])
 
   async function refreshOcrJob(ocrJobId: string) {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
     const resp = await mercoaSession.client?.ocr.getAsyncOcr(ocrJobId)
     if (resp && resp.status === Mercoa.OcrJobStatus.Success) {
-      if (onOCRComplete) onOCRComplete(resp.data)
+      if (onOcrComplete) onOcrComplete(resp.data)
       setOcrProcessing(false)
     } else if (resp && resp.status === Mercoa.OcrJobStatus.Failed) {
       toast.error('OCR failed')
@@ -1288,7 +1282,7 @@ export function PayableDocument({
   }
 
   async function onFileUpload(fileReaderObj: string, mimeType: string) {
-    setUploadedFile({ fileReaderObj, mimeType })
+    setDocuments([{ fileReaderObj, mimeType }])
     if (onDocumentUpload) onDocumentUpload({ fileReaderObj, mimeType })
     // Run OCR on file upload
     setOcrProcessing(true)
@@ -1312,86 +1306,106 @@ export function PayableDocument({
     }
   }
 
-  function DocumentUploadBox({ onFileUpload }: { onFileUpload: (fileReaderObj: string, mimeType: string) => void }) {
-    const blobToDataUrl = (blob: Blob) =>
-      new Promise<string>((resolve, reject) => {
-        const reader = new FileReader()
-        reader.onload = () => resolve(String(reader.result))
-        reader.onerror = reject
-        reader.readAsDataURL(blob)
-      })
+  if (!mercoaSession.client) return <NoSession componentName="PayableDocument" />
 
-    return (
-      <Dropzone
-        onDropAccepted={(acceptedFiles) => {
-          blobToDataUrl(acceptedFiles[0]).then((fileReaderObj) => {
-            onFileUpload(fileReaderObj, acceptedFiles[0].type)
-          })
-        }}
-        onDropRejected={() => {
-          toast.error('Invalid file type')
-        }}
-        minSize={0}
-        maxSize={10_000_000}
-        accept={{
-          'application/pdf': ['.pdf'],
-          'image/png': ['.png'],
-          'image/gif': ['.gif'],
-          'image/jpeg': ['.jpeg', '.jpg'],
-          'image/heic': ['.heic'],
-          'image/webp': ['.webp'],
-        }}
-      >
-        {({ getRootProps, getInputProps, isDragActive }) => (
-          <div
-            className={`mercoa-mt-2 mercoa-flex mercoa-justify-center mercoa-rounded-mercoa mercoa-border mercoa-border-dashed mercoa-border-gray-900/25 ${
-              theme === 'dark' ? 'mercoa-text-gray-100' : 'mercoa-text-gray-600'
-            } ${isDragActive ? 'mercoa-border-mercoa-primary' : 'mercoa-border-gray-300'} mercoa-px-6 mercoa-py-10`}
-            {...getRootProps()}
-          >
-            <div className="mercoa-text-center">
-              <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
-              <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm">
-                <label
-                  htmlFor="file-upload"
-                  className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-mercoa mercoa-font-semibold mercoa-text-mercoa-primary focus-within:mercoa-outline-none focus-within:mercoa-ring-1 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2"
-                >
-                  <span>Upload an invoice</span>
-                  <input {...getInputProps()} />
-                </label>
-                <p className="mercoa-pl-1">or drag and drop</p>
-              </div>
-              <p className="mercoa-text-xs mercoa-leading-5">PNG, JPG, WEBP, PDF up to 10MB</p>
-            </div>
-          </div>
-        )}
-      </Dropzone>
-    )
+  if (children) {
+    return children({
+      documents,
+      sourceEmails,
+      ocrProcessing,
+      invoice,
+      height,
+      downloadButton,
+      viewEmailButton,
+      theme,
+      onFileUpload,
+    })
   }
 
   return (
     <div className={`mercoa-p-5 mercoa-rounded-mercoa`}>
-      {uploadedFile || invoice?.hasDocuments ? (
+      {documents ? (
         <>
-          <div className={`mercoa-text-center ${ocrProcessing ? 'mercoa-block mercoa-mb-5' : 'mercoa-hidden'}`}>
-            <span className="mercoa-text-gray-800 mercoa-w-full"> Extracting Invoice Details </span>
-            <ProgressBar />
-          </div>
+          <OcrProgressBar ocrProcessing={ocrProcessing} />
           <PayableDocumentDisplay
-            documents={uploadedFile ? new Array(uploadedFile) : undefined}
+            documents={documents}
             invoice={invoice}
             height={height}
             showSourceEmail
+            sourceEmails={sourceEmails}
             downloadButton={downloadButton}
             viewEmailButton={viewEmailButton}
           />
         </>
       ) : (
         <div className={`mercoa-min-w-[340px]`}>
-          <DocumentUploadBox onFileUpload={onFileUpload} />
+          <DocumentUploadBox onFileUpload={onFileUpload} theme={theme} />
         </div>
       )}
     </div>
+  )
+}
+
+export function DocumentUploadBox({
+  onFileUpload,
+  theme,
+}: {
+  onFileUpload: (fileReaderObj: string, mimeType: string) => void
+  theme?: 'light' | 'dark'
+}) {
+  const blobToDataUrl = (blob: Blob) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(String(reader.result))
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+
+  return (
+    <Dropzone
+      onDropAccepted={(acceptedFiles) => {
+        blobToDataUrl(acceptedFiles[0]).then((fileReaderObj) => {
+          onFileUpload(fileReaderObj, acceptedFiles[0].type)
+        })
+      }}
+      onDropRejected={() => {
+        toast.error('Invalid file type')
+      }}
+      minSize={0}
+      maxSize={10_000_000}
+      accept={{
+        'application/pdf': ['.pdf'],
+        'image/png': ['.png'],
+        'image/gif': ['.gif'],
+        'image/jpeg': ['.jpeg', '.jpg'],
+        'image/heic': ['.heic'],
+        'image/webp': ['.webp'],
+      }}
+    >
+      {({ getRootProps, getInputProps, isDragActive }) => (
+        <div
+          className={`mercoa-mt-2 mercoa-flex mercoa-justify-center mercoa-rounded-mercoa mercoa-border mercoa-border-dashed mercoa-border-gray-900/25 ${
+            theme === 'dark' ? 'mercoa-text-gray-100' : 'mercoa-text-gray-600'
+          } ${isDragActive ? 'mercoa-border-mercoa-primary' : 'mercoa-border-gray-300'} mercoa-px-6 mercoa-py-10`}
+          {...getRootProps()}
+        >
+          <div className="mercoa-text-center">
+            <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
+            <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm">
+              <label
+                htmlFor="file-upload"
+                className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-mercoa mercoa-font-semibold mercoa-text-mercoa-primary focus-within:mercoa-outline-none focus-within:mercoa-ring-1 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2"
+              >
+                <span>Upload an invoice</span>
+                <input {...getInputProps()} />
+              </label>
+              <p className="mercoa-pl-1">or drag and drop</p>
+            </div>
+            <p className="mercoa-text-xs mercoa-leading-5">PNG, JPG, WEBP, PDF up to 10MB</p>
+          </div>
+        </div>
+      )}
+    </Dropzone>
   )
 }
 
@@ -1400,6 +1414,7 @@ export function PayableDocumentDisplay({
   invoice,
   height,
   showSourceEmail,
+  sourceEmails,
   downloadButton,
   viewEmailButton,
 }: {
@@ -1407,41 +1422,22 @@ export function PayableDocumentDisplay({
   invoice?: Mercoa.InvoiceResponse
   height: number
   showSourceEmail?: boolean
+  sourceEmails?: Mercoa.EmailLog[]
   downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   viewEmailButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
-  const [localDocuments, setLocalDocuments] = useState<Array<{ fileReaderObj: string; mimeType: string }> | undefined>(
-    documents,
-  )
-  const [sourceEmails, setSourceEmail] = useState<Mercoa.EmailLog[]>()
-  const [view, setView] = useState<'document' | 'email'>('document')
 
-  useEffect(() => {
-    if (invoice && invoice.hasDocuments) {
-      mercoaSession.client?.invoice.document.getAll(invoice.id).then((documents) => {
-        if (documents && documents.length > 0) {
-          setLocalDocuments(documents.map((document) => ({ fileReaderObj: document.uri, mimeType: document.mimeType })))
-        }
-      })
-    }
-    if (invoice && invoice.hasSourceEmail) {
-      mercoaSession.client?.invoice.document.getSourceEmail(invoice.id).then((sourceEmail) => {
-        if (sourceEmail) {
-          setSourceEmail(sourceEmail.data)
-        }
-      })
-    }
-  }, [invoice])
+  const [view, setView] = useState<'document' | 'email'>('document')
 
   if (!mercoaSession.client) return <NoSession componentName="PayableDocumentDisplay" />
   if (!documents && !invoice)
     return <div>One of invoice or documents must be passed as a prop to PayableDocumentDisplay</div>
   return (
     <div className="mercoa-overflow-y-auto mercoa-overflow-x-hidden" style={{ height: `${height}px` }}>
-      {view === 'document' && localDocuments && localDocuments.length > 0 && (
+      {view === 'document' && documents && documents.length > 0 && (
         <div className="mercoa-w-full">
-          {localDocuments.map((document, i) => (
+          {documents.map((document, i) => (
             <div key={i}>
               <div className="mercoa-flex mercoa-flex-row-reverse mercoa-gap-4 mercoa-mb-4">
                 {showSourceEmail &&
@@ -1528,7 +1524,7 @@ export function PayableDocumentDisplay({
   )
 }
 
-const ProgressBar = () => {
+export function OcrProgressBar({ ocrProcessing }: { ocrProcessing: boolean }) {
   const [progressPercentage, setProgressPercentage] = useState(0)
 
   useEffect(() => {
@@ -1545,11 +1541,14 @@ const ProgressBar = () => {
   }, [])
 
   return (
-    <div className="mercoa-h-2 mercoa-w-full mercoa-bg-gray-300">
-      <div
-        style={{ width: `${progressPercentage}%` }}
-        className={`mercoa-rounded-sm mercoa-h-full mercoa-bg-mercoa-primary`}
-      ></div>
+    <div className={`mercoa-text-center ${ocrProcessing ? 'mercoa-block mercoa-mb-5' : 'mercoa-hidden'}`}>
+      <span className="mercoa-text-gray-800 mercoa-w-full"> Extracting Invoice Details </span>
+      <div className="mercoa-h-2 mercoa-w-full mercoa-bg-gray-300">
+        <div
+          style={{ width: `${progressPercentage}%` }}
+          className={`mercoa-rounded-sm mercoa-h-full mercoa-bg-mercoa-primary`}
+        ></div>
+      </div>
     </div>
   )
 }
@@ -1573,6 +1572,7 @@ export function PayableActions({
   schedulePaymentButton,
   retryPaymentButton,
   admin,
+  children,
 }: {
   approveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   rejectButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
@@ -1595,7 +1595,9 @@ export function PayableActions({
   schedulePaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   retryPaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   admin?: boolean
+  children?: ({ isSaving, buttons }: { isSaving: boolean; buttons: JSX.Element[] }) => JSX.Element
 }) {
+  const mercoaSession = useMercoaSession()
   const [isSaving, setIsSaving] = useState(false)
   const { setValue, watch, formState } = useFormContext()
 
@@ -1612,8 +1614,11 @@ export function PayableActions({
   const id = watch('id')
   const status = watch('status') as Mercoa.InvoiceStatus | undefined
   const approverSlots = watch('approvers') as Mercoa.ApprovalSlot[]
+  const approverSlot = approverSlots.find((e) => e.assignedUserId === mercoaSession.user?.id)
 
-  const buttons: React.ReactNode[] = []
+  const buttons: JSX.Element[] = []
+
+  if (!mercoaSession.client) return <NoSession componentName="PayableActions" />
 
   const deleteButtonComponent = deleteButton ? (
     deleteButton({
@@ -1828,6 +1833,40 @@ export function PayableActions({
     </MercoaButton>
   )
 
+  const nonApproverButtonComponent = nonApproverButton ? (
+    nonApproverButton({ onClick: () => {} })
+  ) : (
+    <MercoaButton disabled color="gray" isEmphasized type="button">
+      Waiting for approval
+    </MercoaButton>
+  )
+
+  const rejectButtonComponent = rejectButton ? (
+    rejectButton({ onClick: () => setValue('saveAsStatus', 'REJECT') })
+  ) : (
+    <MercoaButton
+      disabled={approverSlot?.action === Mercoa.ApproverAction.Reject}
+      color="red"
+      isEmphasized
+      onClick={() => setValue('saveAsStatus', 'REJECT')}
+    >
+      Reject
+    </MercoaButton>
+  )
+
+  const approveButtonComponent = approveButton ? (
+    approveButton({ onClick: () => setValue('saveAsStatus', 'APPROVE') })
+  ) : (
+    <MercoaButton
+      disabled={approverSlot?.action === Mercoa.ApproverAction.Approve}
+      color="green"
+      isEmphasized
+      onClick={() => setValue('saveAsStatus', 'APPROVE')}
+    >
+      Approve
+    </MercoaButton>
+  )
+
   // Creating a brand new invoice
   if (!id) {
     buttons.push(createInvoiceButtonComponent)
@@ -1844,15 +1883,12 @@ export function PayableActions({
         break
 
       case Mercoa.InvoiceStatus.New:
-        buttons.push(
-          <ApproverActionButtons
-            approveButton={approveButton}
-            rejectButton={rejectButton}
-            nonApproverButton={nonApproverButton}
-          />,
-          cancelButtonComponent,
-        )
-
+        if (!approverSlot) {
+          buttons.push(nonApproverButtonComponent)
+        } else {
+          buttons.push(approveButtonComponent, rejectButtonComponent)
+        }
+        buttons.push(cancelButtonComponent)
         break
 
       case Mercoa.InvoiceStatus.Approved:
@@ -1908,6 +1944,10 @@ export function PayableActions({
         </MercoaButton>,
       )
     }
+  }
+
+  if (children) {
+    return children({ isSaving, buttons })
   }
 
   return (
@@ -2946,34 +2986,7 @@ function ApproverActionButtons({
     )
   }
 
-  return (
-    <div className="mercoa-flex mercoa-items-center mercoa-justify-end mercoa-gap-x-2">
-      {rejectButton ? (
-        rejectButton({ onClick: () => setValue('saveAsStatus', 'REJECT') })
-      ) : (
-        <MercoaButton
-          disabled={approverSlot.action === Mercoa.ApproverAction.Reject}
-          color="red"
-          isEmphasized
-          onClick={() => setValue('saveAsStatus', 'REJECT')}
-        >
-          Reject
-        </MercoaButton>
-      )}
-      {approveButton ? (
-        approveButton({ onClick: () => setValue('saveAsStatus', 'APPROVE') })
-      ) : (
-        <MercoaButton
-          disabled={approverSlot.action === Mercoa.ApproverAction.Approve}
-          color="green"
-          isEmphasized
-          onClick={() => setValue('saveAsStatus', 'APPROVE')}
-        >
-          Approve
-        </MercoaButton>
-      )}
-    </div>
-  )
+  return <div className="mercoa-flex mercoa-items-center mercoa-justify-end mercoa-gap-x-2"></div>
 }
 
 export function filterApproverOptions({
