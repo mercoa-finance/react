@@ -63,6 +63,16 @@ Once you get the key, pass it to the MercoaSession:
 <MercoaSession googleMapsApiKey={'YOUR_API_KEY'} />
 ```
 
+### Remix
+
+To use this package with Remix, you will need to add it to the [serverDependenciesToBundle](https://remix.run/docs/en/main/file-conventions/remix-config#serverdependenciestobundle) in your `remix.config.js`
+
+```js
+module.exports = {
+  serverDependenciesToBundle: ['@mercoa/react']
+}
+```
+
 ## Theme
 
 You can setup the theme in your [Mercoa Developer Settings](https://mercoa.com/dashboard/developers#customizations), the the components will pull theme information from the JWT used to authenticate.
