@@ -687,7 +687,11 @@ export function PayableForm({
       return
     } else if (data.saveAsStatus === 'PRINT_CHECK') {
       if (!invoice?.id) return
-      if (invoice?.paymentDestinationOptions?.delivery === Mercoa.CheckDeliveryMethod.Print) {
+      const paymentDestinationOptions = invoice?.paymentDestinationOptions
+      if (
+        paymentDestinationOptions?.type === Mercoa.PaymentMethodType.Check &&
+        paymentDestinationOptions?.delivery === Mercoa.CheckDeliveryMethod.Print
+      ) {
         if (confirm('Do you want to create a live check? This will mark the invoice as paid cannot be undone.')) {
           const resp = await mercoaSession.client?.invoice.update(invoice?.id, { status: Mercoa.InvoiceStatus.Paid })
           if (resp) {
@@ -1710,7 +1714,10 @@ export function PayableActions({
         setValue('saveAsStatus', 'PRINT_CHECK')
       }}
     >
-      {paymentDestinationOptions?.delivery === Mercoa.CheckDeliveryMethod.Print ? 'Print Check' : 'View Mailed Check'}
+      {(paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery ===
+      Mercoa.CheckDeliveryMethod.Print
+        ? 'Print Check'
+        : 'View Mailed Check'}
     </MercoaButton>
   )
 
@@ -2526,7 +2533,7 @@ export function PayableSelectPaymentMethod({
                   }}
                   displayIndex="value"
                   value={() => {
-                    return destOption?.delivery === 'ACH_STANDARD'
+                    return (destOption as Mercoa.PaymentDestinationOptions.BankAccount)?.delivery === 'ACH_STANDARD'
                       ? { key: 'ACH_STANDARD', value: 'Standard ACH (3-5 Days)' }
                       : { key: 'ACH_SAME_DAY', value: 'Same-Day ACH (2 Days)' }
                   }}
@@ -2599,7 +2606,7 @@ export function PayableSelectPaymentMethod({
                   }}
                   displayIndex="value"
                   value={() => {
-                    return destOption?.delivery === 'PRINT'
+                    return (destOption as Mercoa.PaymentDestinationOptions.Check)?.delivery === 'PRINT'
                       ? { key: 'PRINT', value: 'Print it myself' }
                       : { key: 'MAIL', value: 'Mail it for me' }
                   }}
@@ -3163,7 +3170,7 @@ export function MetadataSelection({
     mercoaSession.client?.entity.metadata.get(mercoaSession.entityId, schema.key).then((e) => {
       setEntityMetadata(filterMetadataValues(e, schema))
     })
-  }, [mercoaSession.entityId])
+  }, [mercoaSession.entityId, schema.key])
 
   if (
     !skipValidation &&
@@ -3349,17 +3356,20 @@ export function MetadataSelection({
           register={register}
         />
       )}
-      {((entityMetadata && schema.type === Mercoa.MetadataType.String) ||
-        schema.type === Mercoa.MetadataType.KeyValue) && (
-        <MetadataCombobox
-          schema={schema}
-          values={entityMetadata ?? []}
-          value={watch(field)}
-          setValue={(e) => {
-            setValue(field, e)
-          }}
-        />
-      )}
+      {entityMetadata &&
+        (schema.type === Mercoa.MetadataType.String || schema.type === Mercoa.MetadataType.KeyValue) &&
+        (entityMetadata.length > 0 ? (
+          <MetadataCombobox
+            schema={schema}
+            values={entityMetadata}
+            value={watch(field)}
+            setValue={(e) => {
+              setValue(field, e)
+            }}
+          />
+        ) : (
+          <>No Options Available</>
+        ))}
       {schema.type === Mercoa.MetadataType.Boolean && (
         <MetadataBoolean
           value={watch(field)}
