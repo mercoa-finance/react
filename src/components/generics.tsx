@@ -705,7 +705,7 @@ export function MercoaCombobox({
       ? options
       : [
           ...options.filter((option) => {
-            const value = displayIndex ? option.value[displayIndex] : option.value
+            const value = displayIndex ? option.value?.[displayIndex] : option.value
             return value?.toLowerCase().includes(query.toLowerCase())
           }),
           ...(freeText ? [{ value: query, disabled: false }] : []),

@@ -692,16 +692,20 @@ function Rule({
   noTrigger?: boolean
 }) {
   const [firstRender, setFirstRender] = useState(true)
+  const [ruleIdType, setRuleIdType] = useState('rolesList')
 
-  const ruleIdType = watch(`policies.${index}.rule.identifierList.type`)
+  const ruleIdTypeWatch = watch(`policies.${index}.rule.identifierList.type`)
 
   useEffect(() => {
     if (!firstRender) {
       setValue(`policies.${index}.rule.type`, 'approver')
-      setValue(`policies.${index}.rule.identifierList.value`, [])
     }
+    setValue(`policies.${index}.rule.identifierList.value`, [])
+    setTimeout(() => {
+      setRuleIdType(ruleIdTypeWatch)
+    }, 100)
     setFirstRender(false)
-  }, [ruleIdType])
+  }, [ruleIdTypeWatch])
 
   return (
     <div className="mercoa-grid mercoa-grid-cols-1 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-mercoa mercoa-relative mercoa-mt-5 mercoa-ml-10 mercoa-bg-white">

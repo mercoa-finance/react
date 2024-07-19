@@ -256,6 +256,10 @@ export type PayablesTableChildrenProps = {
   resultsPerPage: number
   setResultsPerPage: (value: number) => void
   count: number
+  orderBy: Mercoa.InvoiceOrderByField
+  setOrderBy: (value: Mercoa.InvoiceOrderByField) => void
+  orderDirection: Mercoa.OrderDirection
+  setOrderDirection: (value: Mercoa.OrderDirection) => void
   selectedInvoiceStatuses: Mercoa.InvoiceStatus[]
   setSelectedInvoiceStatues: (statuses: Mercoa.InvoiceStatus[]) => void
   downloadCSV: () => void
@@ -278,20 +282,7 @@ export function PayablesTable({
   endDate?: Date
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
   columns?: InvoiceTableColumn[]
-  children?: ({
-    dataLoaded,
-    invoices,
-    hasNext,
-    getNext,
-    hasPrevious,
-    getPrevious,
-    resultsPerPage,
-    setResultsPerPage,
-    count,
-    selectedInvoiceStatuses,
-    setSelectedInvoiceStatues,
-    downloadCSV,
-  }: PayablesTableChildrenProps) => ReactElement | null
+  children?: (props: PayablesTableChildrenProps) => ReactElement | null
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -723,6 +714,10 @@ export function PayablesTable({
       },
       resultsPerPage,
       setResultsPerPage,
+      orderBy,
+      setOrderBy,
+      orderDirection,
+      setOrderDirection,
       selectedInvoiceStatuses: currentStatuses,
       setSelectedInvoiceStatues: setCurrentStatuses,
       downloadCSV: downloadAsCSV,

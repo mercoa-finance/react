@@ -49,6 +49,12 @@ type PayablesTableChildrenProps = {
   getPrevious: () => void // Get previous page of invoices
   count: number // // Total number of invoices
 
+
+  orderBy: Mercoa.InvoiceOrderByField // Current orderBy field
+  setOrderBy: (value: Mercoa.InvoiceOrderByField) => void // Set order by AMOUNT, DUE_DATE, CREATED_AT, UPDATED_AT, INVOICE_NUMBER, VENDOR_NAME, PAYER_NAME
+  orderDirection: Mercoa.OrderDirection // Current order direction
+  setOrderDirection: (value: Mercoa.OrderDirection) => void // Set ASC or DESC
+
   resultsPerPage: number // Max number of results shown per page
   setResultsPerPage: (value: number) => void // Set max number of results shown per page (1-100)
 

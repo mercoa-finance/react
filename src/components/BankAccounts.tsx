@@ -79,7 +79,7 @@ export function BankAccounts({
           addAccount={
             bankAccounts && showAdd ? (
               <>
-                <AddBankAccountDialog
+                <AddBankAccountButton
                   onSelect={(account: Mercoa.PaymentMethodResponse.BankAccount) => {
                     if (
                       !bankAccounts.find(
@@ -435,7 +435,7 @@ export function BankAccount({
   }
 }
 
-export function AddBankAccountDialog({
+export function AddBankAccountButton({
   entityId,
   onSelect,
   bankAccount,

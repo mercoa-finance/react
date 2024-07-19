@@ -168,9 +168,7 @@ export function PayableDetails({
     leftComponent = (
       <PayableDocument
         onOcrComplete={setOcrResponse}
-        onDocumentUpload={(e) => {
-          setUploadedDocument(e.fileReaderObj)
-        }}
+        setUploadedDocument={setUploadedDocument}
         height={height}
         invoice={invoiceLocal}
       />
@@ -400,6 +398,10 @@ export function PayableForm({
 
   useEffect(() => {
     if (!invoice) return
+
+    if (invoice.vendor && !selectedVendor) {
+      setSelectedVendor(invoice.vendor)
+    }
 
     if (invoice.paymentDestination?.type === 'custom') {
       setValue(
@@ -1231,7 +1233,7 @@ export type PayableDocumentChildrenProps = {
 
 export function PayableDocument({
   onOcrComplete,
-  onDocumentUpload,
+  setUploadedDocument,
   invoice,
   height,
   downloadButton,
@@ -1240,7 +1242,7 @@ export function PayableDocument({
   children,
 }: {
   onOcrComplete?: (ocrResponse?: Mercoa.OcrResponse) => void
-  onDocumentUpload?: (document: { fileReaderObj: string; mimeType: string }) => void
+  setUploadedDocument?: (fileReaderObj: string) => void
   invoice?: Mercoa.InvoiceResponse
   height: number
   downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
@@ -1287,7 +1289,7 @@ export function PayableDocument({
 
   async function onFileUpload(fileReaderObj: string, mimeType: string) {
     setDocuments([{ fileReaderObj, mimeType }])
-    if (onDocumentUpload) onDocumentUpload({ fileReaderObj, mimeType })
+    if (setUploadedDocument) setUploadedDocument(fileReaderObj)
     // Run OCR on file upload
     setOcrProcessing(true)
     try {

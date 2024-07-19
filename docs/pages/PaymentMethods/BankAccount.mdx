@@ -1,4 +1,4 @@
-import { BankAccounts, BankAccount, MercoaSession } from '@mercoa/react'
+import { BankAccounts, BankAccount, AddBankAccountButton, MercoaSession } from '@mercoa/react'
 import { payerEntity, payerBankAccount } from '../../mockData'
 import { ComponentContainer } from '../../components/helpers'
 
@@ -143,15 +143,15 @@ The `<BankAccount>` component can be used to select and manage (create/edit) a b
   ```
 </ComponentContainer>
 
-#### Show Add
+#### Standalone Add Bank Account Button
 
 <ComponentContainer>
 <div>
-  <BankAccount />
+  <AddBankAccountButton />
 </div>
   ```jsx
 <div>
-  <BankAccount />
+  <AddBankAccountButton />
 </div>
   ```
 </ComponentContainer>
