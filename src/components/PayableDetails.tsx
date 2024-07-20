@@ -2205,7 +2205,7 @@ export function PayableOverview({
         <div className="mercoa-mt-2">
           <textarea
             id="description"
-            readOnly={readOnly}
+            readOnly={readOnly || (!!status && afterScheduledStatus.includes(status))}
             {...register('description')}
             rows={3}
             className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
@@ -2476,12 +2476,14 @@ export function PayableSelectPaymentMethod({
           <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)
+              .filter((e) => (readOnly ? (e.id = sourceOrDestination) : true))
               .map((paymentMethod) => (
                 <div key={paymentMethod.id} className="mercoa-mt-1">
                   <BankAccount
                     account={paymentMethod as Mercoa.PaymentMethodResponse.BankAccount}
                     selected={paymentId === paymentMethod.id}
                     onSelect={() => {
+                      if (readOnly) return
                       setValue(sourceOrDestination, paymentMethod.id)
                       clearErrors(sourceOrDestination)
                     }}
@@ -2549,12 +2551,14 @@ export function PayableSelectPaymentMethod({
           <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)
+              .filter((e) => (readOnly ? (e.id = sourceOrDestination) : true))
               .map((paymentMethod) => (
                 <div key={paymentMethod.id} className="mercoa-mt-1">
                   <Check
                     account={paymentMethod as Mercoa.PaymentMethodResponse.Check}
                     selected={paymentId === paymentMethod.id}
                     onSelect={() => {
+                      if (readOnly) return
                       setValue(sourceOrDestination, paymentMethod.id)
                       clearErrors(sourceOrDestination)
                     }}
@@ -2622,12 +2626,14 @@ export function PayableSelectPaymentMethod({
           <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
+              .filter((e) => (readOnly ? (e.id = sourceOrDestination) : true))
               .map((paymentMethod) => (
                 <div key={paymentMethod.id} className="mercoa-mt-1">
                   <Card
                     account={paymentMethod as Mercoa.PaymentMethodResponse.Card}
                     selected={paymentId === paymentMethod.id}
                     onSelect={() => {
+                      if (readOnly) return
                       setValue(sourceOrDestination, paymentMethod.id)
                       clearErrors(sourceOrDestination)
                     }}
@@ -2644,12 +2650,14 @@ export function PayableSelectPaymentMethod({
               ?.filter(
                 (paymentMethod) => (paymentMethod as Mercoa.PaymentMethodResponse.Custom).schemaId === selectedType,
               )
+              .filter((e) => (readOnly ? (e.id = sourceOrDestination) : true))
               .map((paymentMethod) => (
                 <div key={paymentMethod.id} className="mercoa-mt-1">
                   <CustomPaymentMethod
                     account={paymentMethod as Mercoa.PaymentMethodResponse.Custom}
                     selected={paymentId === paymentMethod.id}
                     onSelect={() => {
+                      if (readOnly) return
                       setValue(sourceOrDestination, paymentMethod.id)
                       clearErrors(sourceOrDestination)
                     }}
@@ -2703,7 +2711,7 @@ export function PayablePaymentSource({ readOnly }: { readOnly?: boolean }) {
   return (
     <div className="mercoa-col-span-full">
       <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-my-5">
-        How do you want to pay?
+        {readOnly ? 'Paying from:' : 'How do you want to pay?'}
       </h2>
       <PayableSelectPaymentMethod isSource readOnly={readOnly} />
       {errors.paymentSourceId?.message && (
@@ -2731,7 +2739,13 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
       {vendorId && vendorName && paymentSourceType !== 'offPlatform' && (
         <div className="mercoa-col-span-full">
           <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-my-5">
-            How does <span className="mercoa-text-gray-800 mercoa-underline">{vendorName}</span> want to get paid?
+            {readOnly ? (
+              `Paying to ${vendorName}:`
+            ) : (
+              <>
+                How does <span className="mercoa-text-gray-800 mercoa-underline">{vendorName}</span> want to get paid?
+              </>
+            )}
           </h2>
           <PayableSelectPaymentMethod isDestination readOnly={readOnly} />
           {errors.paymentDestinationId?.message && (
