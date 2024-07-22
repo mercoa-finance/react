@@ -12,6 +12,7 @@ export * from './EntityOnboarding'
 export * from './EntityPortal'
 export * from './EntityUser'
 export * from './ExternalAccountingSystem'
+export * from './generics'
 export * from './InvoiceComments'
 export * from './Mercoa'
 export * from './PayableDetails'
@@ -20,7 +21,6 @@ export * from './PaymentMethods'
 export * from './ReceivableDetails'
 export * from './ReceivablePayments'
 export * from './Receivables'
-export * from './generics'
 
 export type onCloseFunction = (value: boolean) => void
 

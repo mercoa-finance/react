@@ -5,12 +5,16 @@ import {
   ArrowRightIcon,
   CalendarDaysIcon,
   CheckCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   DocumentIcon,
   EllipsisVerticalIcon,
   EnvelopeIcon,
   ExclamationCircleIcon,
   EyeIcon,
   EyeSlashIcon,
+  MagnifyingGlassMinusIcon,
+  MagnifyingGlassPlusIcon,
   PlusCircleIcon,
   PlusIcon,
   XCircleIcon,
@@ -37,6 +41,7 @@ import {
   useForm,
   useFormContext,
 } from 'react-hook-form'
+import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
@@ -44,10 +49,12 @@ import { isWeekday } from '../lib/scheduling'
 import {
   AddBankAccountForm,
   AddCheckForm,
+  AddCounterpartyAccount,
   AddCustomPaymentMethodForm,
   BankAccount,
   Card,
   Check,
+  CounterpartyAccount,
   CustomPaymentMethod,
   InvoiceComments,
   InvoiceStatusPill,
@@ -57,11 +64,13 @@ import {
   MercoaInput,
   NoSession,
   PayableCounterpartySearch,
-  PaymentMethodInlineForm,
+  PayablesInlineForm,
   Tooltip,
   counterpartyYupValidation,
+  inputClassName,
   onSubmitCounterparty,
   removeThousands,
+  useDebounce,
   useMercoaSession,
 } from './index'
 dayjs.extend(utc)
@@ -69,6 +78,8 @@ dayjs.extend(minMax)
 dayjs.extend(tz)
 
 const dJSON = require('dirty-json')
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
 
 const afterScheduledStatus = [
   Mercoa.InvoiceStatus.Scheduled,
@@ -382,6 +393,7 @@ export function PayableForm({
             : invoice?.vendor?.profile?.individual?.email,
         website: invoice?.vendor?.profile?.business?.website,
         description: invoice?.vendor?.profile?.business?.description,
+        accounts: [] as Mercoa.CounterpartyCustomizationAccount[],
       },
     },
   })
@@ -485,6 +497,24 @@ export function PayableForm({
       clearErrors('vendorName')
     }
   }, [selectedVendor])
+
+  // Get list of accounts on the active payor/payee relationship
+  useEffect(() => {
+    if (mercoaSession.entity?.id && vendorId) {
+      mercoaSession.client?.entity.counterparty
+        .findPayees(mercoaSession.entity.id, {
+          counterpartyId: vendorId,
+        })
+        .then((resp) => {
+          if (resp.data.length > 0) {
+            const accounts = resp.data[0].accounts
+            if (accounts) {
+              setValue('vendor.accounts', accounts)
+            }
+          }
+        })
+    }
+  }, [mercoaSession.entity?.id, vendorId])
 
   // OCR Merge
   useEffect(() => {
@@ -613,10 +643,61 @@ export function PayableForm({
           setTimeout(() => {
             setValue('paymentDestinationType', Mercoa.PaymentMethodType.BankAccount, { shouldDirty: true })
             setValue('paymentDestinationId', pm?.id, { shouldDirty: true })
-            setValue('saveAsStatus', 'PAYMENT_METHOD_CREATION_SUCCESS')
+            setValue('saveAsStatus', 'CLOSE_INLINE_FORM')
           }, 100)
         } catch (e: any) {
           setError('newBankAccount', { message: e.body ?? 'Invalid Bank Account Data' })
+        }
+        return
+      }
+    } else if (data.saveAsStatus === 'CREATE_COUNTERPARTY_ACCOUNT') {
+      if (vendorId) {
+        try {
+          // TODO: Optimize this to one network request when patch adding counterparty accounts is supported in API
+          const resp = await mercoaSession.client?.entity.counterparty.findPayees(mercoaSession.entity.id, {
+            counterpartyId: vendorId,
+          })
+          let accounts = resp?.data[0].accounts
+          if (accounts) {
+            accounts?.push({
+              accountId: data.newCounterpartyAccount.accountId,
+              postalCode: data.newCounterpartyAccount.postalCode,
+              nameOnAccount: data.newCounterpartyAccount.nameOnAccount,
+            })
+          } else {
+            accounts = [
+              {
+                accountId: data.newCounterpartyAccount.accountId,
+                postalCode: data.newCounterpartyAccount.postalCode,
+                nameOnAccount: data.newCounterpartyAccount.nameOnAccount,
+              },
+            ]
+          }
+          await mercoaSession.client?.entity.counterparty.addPayees(mercoaSession.entity.id, {
+            payees: [vendorId],
+            customizations: [
+              {
+                counterpartyId: vendorId,
+                accounts,
+              },
+            ],
+          })
+          await mercoaSession.refresh()
+
+          setValue('vendor.accounts', accounts)
+
+          setTimeout(() => {
+            setValue('saveAsStatus', 'CLOSE_INLINE_FORM')
+            setTimeout(() => {
+              setValue('paymentDestinationType', Mercoa.PaymentMethodType.Utility, { shouldDirty: true })
+              setValue('paymentDestinationOptions', {
+                type: 'utility',
+                accountId: data.newCounterpartyAccount.accountId,
+              })
+            }, 100)
+          }, 100)
+        } catch (e: any) {
+          setError('vendor', { message: e.body ?? 'Invalid Utility Account Data' })
         }
         return
       }
@@ -637,7 +718,7 @@ export function PayableForm({
           setTimeout(() => {
             setValue('paymentDestinationType', Mercoa.PaymentMethodType.Check, { shouldDirty: true })
             setValue('paymentDestinationId', pm?.id, { shouldDirty: true })
-            setValue('saveAsStatus', 'PAYMENT_METHOD_CREATION_SUCCESS')
+            setValue('saveAsStatus', 'CLOSE_INLINE_FORM')
           }, 1000)
         } catch (e: any) {
           setError('newCheck', { message: e.body ?? 'Invalid Check Data' })
@@ -664,7 +745,7 @@ export function PayableForm({
           setTimeout(() => {
             setValue('paymentDestinationType', pm.schemaId, { shouldDirty: true })
             setValue('paymentDestinationId', pm.id, { shouldDirty: true })
-            setValue('saveAsStatus', 'PAYMENT_METHOD_CREATION_SUCCESS')
+            setValue('saveAsStatus', 'CLOSE_INLINE_FORM')
           }, 1000)
         } catch (e: any) {
           setError('~cpm~~', { message: e.body ?? 'Invalid Data' })
@@ -1225,8 +1306,6 @@ export type PayableDocumentChildrenProps = {
   ocrProcessing: boolean
   invoice?: Mercoa.InvoiceResponse
   height: number
-  downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  viewEmailButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   theme?: 'light' | 'dark'
   onFileUpload: (fileReaderObj: string, mimeType: string) => void
 }
@@ -1236,8 +1315,6 @@ export function PayableDocument({
   setUploadedDocument,
   invoice,
   height,
-  downloadButton,
-  viewEmailButton,
   theme,
   children,
 }: {
@@ -1245,8 +1322,6 @@ export function PayableDocument({
   setUploadedDocument?: (fileReaderObj: string) => void
   invoice?: Mercoa.InvoiceResponse
   height: number
-  downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  viewEmailButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   theme?: 'light' | 'dark'
   children?: (props: PayableDocumentChildrenProps) => JSX.Element
 }) {
@@ -1321,8 +1396,6 @@ export function PayableDocument({
       ocrProcessing,
       invoice,
       height,
-      downloadButton,
-      viewEmailButton,
       theme,
       onFileUpload,
     })
@@ -1339,8 +1412,6 @@ export function PayableDocument({
             height={height}
             showSourceEmail
             sourceEmails={sourceEmails}
-            downloadButton={downloadButton}
-            viewEmailButton={viewEmailButton}
           />
         </>
       ) : (
@@ -1421,72 +1492,155 @@ export function PayableDocumentDisplay({
   height,
   showSourceEmail,
   sourceEmails,
-  downloadButton,
-  viewEmailButton,
 }: {
   documents?: Array<{ fileReaderObj: string; mimeType: string }>
   invoice?: Mercoa.InvoiceResponse
   height: number
   showSourceEmail?: boolean
   sourceEmails?: Mercoa.EmailLog[]
-  downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  viewEmailButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 
   const [view, setView] = useState<'document' | 'email'>('document')
+  const [numPages, setNumPages] = useState<number>()
+  const [pageNumber, setPageNumber] = useState<number>(1)
+  const [zoomLevel, setZoomLevel] = useState<number>(1)
+  const [debouncedWidth, setDebouncedWidth] = useDebounce(0, 20)
+
+  const wrapperDiv = useRef(null)
+
+  useLayoutEffect(() => {
+    if (wrapperDiv.current === null) return
+    setDebouncedWidth((wrapperDiv.current as any).getBoundingClientRect().width)
+  }, [wrapperDiv])
+
+  useResizeObserver(wrapperDiv, (entry) => {
+    if (debouncedWidth && Math.abs(debouncedWidth - entry.contentRect.width) < 20) return
+    setDebouncedWidth(entry.contentRect.width)
+  })
 
   if (!mercoaSession.client) return <NoSession componentName="PayableDocumentDisplay" />
   if (!documents && !invoice)
     return <div>One of invoice or documents must be passed as a prop to PayableDocumentDisplay</div>
   return (
-    <div className="mercoa-overflow-y-auto mercoa-overflow-x-hidden" style={{ height: `${height}px` }}>
+    <div className="mercoa-overflow-auto mercoa-min-w-[300px]" style={{ height: `${height}px` }} ref={wrapperDiv}>
       {view === 'document' && documents && documents.length > 0 && (
         <div className="mercoa-w-full">
           {documents.map((document, i) => (
-            <div key={i}>
-              <div className="mercoa-flex mercoa-flex-row-reverse mercoa-gap-4 mercoa-mb-4">
-                {showSourceEmail &&
-                  sourceEmails &&
-                  (viewEmailButton ? (
-                    viewEmailButton({ onClick: () => setView('email') })
-                  ) : (
-                    <MercoaButton
+            <div key={i} className="mercoa-rounded-mercoa mercoa-border mercoa-shadow-lg mercoa-w-full">
+              {document.mimeType === 'application/pdf' && (
+                <div className="mercoa-grid mercoa-grid-cols-3 mercoa-px-1 mercoa-bg-gray-100 mercoa-border-b">
+                  <div className="mercoa-flex">
+                    <button
                       type="button"
-                      isEmphasized={false}
-                      className="mercoa-mt-2"
-                      onClick={() => setView('email')}
+                      disabled={pageNumber <= 1}
+                      onClick={() => setPageNumber(Math.max(pageNumber - 1, 1))}
+                      className="mercoa-p-1 mercoa-text-gray-600 disabled:mercoa-text-gray-200"
                     >
-                      <span className="mercoa-hidden xl:mercoa-inline">
-                        <EnvelopeIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-size-5" /> View
-                        Email
-                      </span>
-                    </MercoaButton>
-                  ))}
-                <a href={document.fileReaderObj} target="_blank" rel="noreferrer" download>
-                  {downloadButton ? (
-                    downloadButton({ onClick: () => {} })
-                  ) : (
-                    <MercoaButton type="button" isEmphasized={false} className="mercoa-mt-2">
-                      <span className="mercoa-hidden xl:mercoa-inline">
-                        <ArrowDownTrayIcon className="-mercoa-ml-1 mercoa-mr-2 mercoa-inline-flex mercoa-size-5" />{' '}
-                        Download Invoice
-                      </span>
-                      <span className="mercoa-inline xl:mercoa-hidden">Download</span>
-                    </MercoaButton>
-                  )}
-                </a>
-              </div>
-
-              <div className="mercoa-rounded-mercoa mercoa-border mercoa-shadow-lg mercoa-w-full">
+                      <span className="mercoa-sr-only">Previous</span>
+                      <ChevronUpIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
+                    </button>
+                    <div className="mercoa-flex mercoa-items-center mercoa-justify-center mercoa-py-2 mercoa-gap-x-1 mercoa-text-gray-400">
+                      <input
+                        type="number"
+                        min={1}
+                        max={numPages ?? 1}
+                        value={pageNumber}
+                        onChange={(e) => setPageNumber(parseInt(e.target.value))}
+                        className={inputClassName({ width: 'mercoa-w-[50px]' })}
+                      />{' '}
+                      / {numPages}
+                    </div>
+                    <button
+                      type="button"
+                      disabled={pageNumber >= (numPages ?? 1)}
+                      onClick={() => setPageNumber(Math.min(pageNumber + 1, numPages ?? 1))}
+                      className="mercoa-p-1 mercoa-text-gray-600 disabled:mercoa-text-gray-200"
+                    >
+                      <span className="mercoa-sr-only">Next</span>
+                      <ChevronDownIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
+                    </button>
+                  </div>
+                  <div className="mercoa-flex mercoa-items-center mercoa-justify-center">
+                    <button
+                      type="button"
+                      disabled={zoomLevel === 0.1}
+                      onClick={() => setZoomLevel(Math.max(zoomLevel - 0.1, 0.1))}
+                      className="mercoa-p-1 mercoa-text-gray-600 disabled:mercoa-text-gray-200"
+                    >
+                      <span className="mercoa-sr-only">Zoom Out</span>
+                      <MagnifyingGlassMinusIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
+                    </button>
+                    <div className="mercoa-flex mercoa-items-center mercoa-justify-center mercoa-py-2 mercoa-gap-x-1 mercoa-text-gray-400">
+                      <span>{Math.floor(zoomLevel * 100)}%</span>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={zoomLevel === 5}
+                      onClick={() => setZoomLevel(Math.min(zoomLevel + 0.1, 5))}
+                      className="mercoa-p-1 mercoa-text-gray-600 disabled:mercoa-text-gray-200"
+                    >
+                      <span className="mercoa-sr-only">Zoom In</span>
+                      <MagnifyingGlassPlusIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
+                    </button>
+                  </div>
+                  <div className="mercoa-flex mercoa-items-center mercoa-justify-end mercoa-gap-x-1">
+                    <a
+                      href={document.fileReaderObj}
+                      target="_blank"
+                      rel="noreferrer"
+                      download
+                      className="mercoa-p-1 mercoa-text-gray-600 disabled:mercoa-text-gray-200"
+                    >
+                      <span className="mercoa-sr-only">Download Invoice</span>
+                      <ArrowDownTrayIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
+                    </a>
+                    {showSourceEmail && sourceEmails && (
+                      <button
+                        type="button"
+                        onClick={() => setView('email')}
+                        className="mercoa-p-1 mercoa-text-gray-600 disabled:mercoa-text-gray-200"
+                      >
+                        <span className="mercoa-sr-only">View Email</span>
+                        <EnvelopeIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+              <div className="mercoa-overflow-x-auto ">
                 {document.mimeType === 'application/pdf' ? (
-                  <embed
-                    src={document.fileReaderObj}
+                  <Document
+                    loading={
+                      <div
+                        className="mercoa-flex mercoa-w-full mercoa-items-center mercoa-justify-center"
+                        style={{ height: '700px' }}
+                      >
+                        <LoadingSpinnerIcon />
+                      </div>
+                    }
+                    file={document.fileReaderObj}
                     key={document.fileReaderObj}
-                    height={height - 90}
-                    className="mercoa-object-contain mercoa-object-top mercoa-w-full"
-                    type="application/pdf"
-                  />
+                    onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                    error={
+                      <embed
+                        src={document.fileReaderObj}
+                        key={document.fileReaderObj}
+                        height={height}
+                        width={debouncedWidth - 5}
+                        type="application/pdf"
+                      />
+                    }
+                  >
+                    <Page
+                      pageNumber={pageNumber}
+                      className="mercoa-m-0 mercoa-w-full mercoa-p-0"
+                      renderTextLayer={false}
+                      renderAnnotationLayer={false}
+                      width={debouncedWidth - 5}
+                      scale={zoomLevel}
+                    />
+                  </Document>
                 ) : (
                   <img src={document.fileReaderObj} className="mercoa-object-contain mercoa-object-top mercoa-w-full" />
                 )}
@@ -2270,6 +2424,9 @@ export function PayableSelectPaymentMethod({
   if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'check')) {
     availableTypes.push({ key: 'check', value: 'Check' })
   }
+  if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'utility')) {
+    availableTypes.push({ key: 'utility', value: 'Utility' })
+  }
   paymentMethods.forEach((paymentMethod) => {
     if (paymentMethod.type === 'custom') {
       if (availableTypes.some((type) => type.key === paymentMethod.schemaId)) return // skip if already added
@@ -2315,7 +2472,8 @@ export function PayableSelectPaymentMethod({
 
   const selectedType = watch(paymentMethodTypeKey)
   const paymentId = watch(sourceOrDestination)
-  const destOption = watch('paymentDestinationOptions')
+  const destinationOptions = watch('paymentDestinationOptions')
+  const counterpartyAccounts: Array<Mercoa.CounterpartyCustomizationAccount> = watch('vendor.accounts')
 
   // set a default payment method type
   useEffect(() => {
@@ -2352,6 +2510,9 @@ export function PayableSelectPaymentMethod({
     } else if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'check')) {
       setValue(paymentMethodTypeKey, 'check')
       setMethodOnTypeChange('check')
+    } else if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'utility')) {
+      setValue(paymentMethodTypeKey, 'utility')
+      setMethodOnTypeChange('utility')
     } else if (paymentMethods.some((paymentMethod) => paymentMethod.type === 'custom')) {
       const cpm = paymentMethods.find(
         (paymentMethod) => paymentMethod.type === 'custom',
@@ -2382,6 +2543,11 @@ export function PayableSelectPaymentMethod({
       setValue(
         sourceOrDestination,
         paymentMethods.find((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)?.id,
+      )
+    } else if (selectedType === Mercoa.PaymentMethodType.Utility) {
+      setValue(
+        sourceOrDestination,
+        paymentMethods.find((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Utility)?.id,
       )
     } else {
       setValue(
@@ -2502,7 +2668,7 @@ export function PayableSelectPaymentMethod({
             }) && (
               <>
                 <div className="mercoa-col-span-full mercoa-mt-1">
-                  <PaymentMethodInlineForm
+                  <PayablesInlineForm
                     form={<AddBankAccountForm prefix="newBankAccount." />}
                     name="Bank Account"
                     addNewButton={<BankAccount />}
@@ -2537,7 +2703,8 @@ export function PayableSelectPaymentMethod({
                   }}
                   displayIndex="value"
                   value={() => {
-                    return (destOption as Mercoa.PaymentDestinationOptions.BankAccount)?.delivery === 'ACH_STANDARD'
+                    return (destinationOptions as Mercoa.PaymentDestinationOptions.BankAccount)?.delivery ===
+                      'ACH_STANDARD'
                       ? { key: 'ACH_STANDARD', value: 'Standard ACH (3-5 Days)' }
                       : { key: 'ACH_SAME_DAY', value: 'Same-Day ACH (2 Days)' }
                   }}
@@ -2577,7 +2744,7 @@ export function PayableSelectPaymentMethod({
             }) && (
               <>
                 <div className="mercoa-col-span-full mercoa-mt-1">
-                  <PaymentMethodInlineForm
+                  <PayablesInlineForm
                     form={<AddCheckForm prefix="newCheck." />}
                     name="Check Address"
                     addNewButton={<Check />}
@@ -2612,7 +2779,7 @@ export function PayableSelectPaymentMethod({
                   }}
                   displayIndex="value"
                   value={() => {
-                    return (destOption as Mercoa.PaymentDestinationOptions.Check)?.delivery === 'PRINT'
+                    return (destinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery === 'PRINT'
                       ? { key: 'PRINT', value: 'Print it myself' }
                       : { key: 'MAIL', value: 'Mail it for me' }
                   }}
@@ -2641,6 +2808,54 @@ export function PayableSelectPaymentMethod({
                 </div>
               ))}
           </div>
+        </>
+      )}
+      {selectedType === Mercoa.PaymentMethodType.Utility && (
+        <>
+          {isDestination && !disableCreation && !readOnly && vendorId && (
+            <>
+              <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+                {counterpartyAccounts.map((account) => (
+                  <div key={account.accountId} className="mercoa-mt-1">
+                    <CounterpartyAccount
+                      account={account}
+                      selected={destinationOptions?.accountId === account.accountId}
+                      onSelect={() => {
+                        setValue('paymentDestinationOptions', {
+                          type: 'utility',
+                          accountId: account.accountId,
+                        })
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="mercoa-col-span-full mercoa-mt-1">
+                <PayablesInlineForm
+                  form={<AddCounterpartyAccount prefix="newCounterpartyAccount." />}
+                  name="Utility Account"
+                  addNewButton={<CounterpartyAccount />}
+                  saveAsStatus="CREATE_COUNTERPARTY_ACCOUNT"
+                />
+              </div>
+              <div className="mercoa-mt-2" />
+              {/* <MercoaCombobox
+                label="Account ID"
+                displaySelectedAs="pill"
+                options={payorPayeeAccounts.map((account) => ({
+                  value: account.accountId,
+                  disabled: false,
+                }))}
+                onChange={(selected) => {
+                  setValue('paymentDestinationOptions', {
+                    type: 'utility',
+                    accountId: selected,
+                  })
+                }}
+                value={destOption?.accountId}
+              /> */}
+            </>
+          )}
         </>
       )}
       {selectedType.startsWith('cpms_') && (
@@ -2676,7 +2891,7 @@ export function PayableSelectPaymentMethod({
             }) && (
               <>
                 <div className="mercoa-col-span-full mercoa-mt-1">
-                  <PaymentMethodInlineForm
+                  <PayablesInlineForm
                     form={
                       <AddCustomPaymentMethodForm
                         schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}

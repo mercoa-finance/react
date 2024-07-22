@@ -1,5 +1,6 @@
 import { Combobox, Dialog, Transition } from '@headlessui/react'
 import {
+  BoltIcon,
   ChevronUpDownIcon,
   DevicePhoneMobileIcon,
   EnvelopeIcon,
@@ -148,6 +149,13 @@ export const counterpartyYupValidation = {
   suffix: yup.string(),
   website: yup.string().url('Website must start with http:// or https:// and be a valid URL'),
   description: yup.string(),
+  accounts: yup.array().of(
+    yup.object().shape({
+      accountId: yup.string(),
+      postalCode: yup.string().nullable(),
+      nameOnAccount: yup.string().nullable(),
+    }),
+  ),
 }
 
 export function CounterpartySearch({
@@ -1444,6 +1452,130 @@ export function CounterpartyDetails({
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.Custom)
             ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+        </div>
+      </div>
+    )
+  }
+}
+
+export function AddCounterpartyAccount({ prefix }: { prefix?: string }) {
+  const {
+    register,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useFormContext()
+
+  if (!prefix) prefix = ''
+
+  return (
+    <div className="mercoa-flex mercoa-flex-col mercoa-gap-y-2">
+      <MercoaInput register={register} name={prefix + 'accountId'} label="Account ID" className="mercoa-mt-1" />
+      <MercoaInput
+        register={register}
+        name={prefix + 'postalCode'}
+        label="Postal Code"
+        className="mercoa-mt-1"
+        errors={errors}
+      />
+      <MercoaInput
+        register={register}
+        name={prefix + 'nameOnAccount'}
+        label="Name On Account"
+        className="mercoa-mt-1"
+        errors={errors}
+      />
+    </div>
+  )
+}
+
+export function CounterpartyAccount({
+  account,
+  onSelect,
+  selected,
+}: {
+  account?: Mercoa.CounterpartyCustomizationAccount
+  onSelect?: (account?: Mercoa.CounterpartyCustomizationAccount) => void
+  selected?: boolean
+}) {
+  const mercoaSession = useMercoaSession()
+
+  if (!mercoaSession.client) return <NoSession componentName="CheckComponent" />
+  if (account) {
+    return (
+      <div
+        onClick={() => {
+          if (onSelect) onSelect(account)
+        }}
+        key={account.accountId}
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
+          selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
+        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
+          onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
+        }`}
+      >
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          <BoltIcon className="mercoa-size-5" />
+        </div>
+        <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between mercoa-group">
+          <div className="mercoa-flex">
+            <div>
+              <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
+              <p
+                className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
+                  selected ? 'mercoa-underline' : ''
+                }`}
+              >
+                Account ID: {account.accountId}
+              </p>
+              <p
+                className={`mercoa-text-xs mercoa-font-medium mercoa-text-gray-800 ${
+                  selected ? 'mercoa-underline' : ''
+                }`}
+              >
+                Postal Code: {account?.postalCode}
+              </p>
+              <p
+                className={`mercoa-text-xs mercoa-font-medium mercoa-text-gray-800 ${
+                  selected ? 'mercoa-underline' : ''
+                }`}
+              >
+                Name On Account: {account?.nameOnAccount}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  } else {
+    return (
+      <div
+        onClick={() => {
+          if (onSelect) onSelect()
+        }}
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
+          onSelect ? 'mercoa-cursor-pointer ' : ''
+        }`}
+      >
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          <PlusIcon className="mercoa-size-5" />
+        </div>
+        <div className="mercoa-min-w-0 mercoa-flex-1">
+          <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
+          <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">Add new utility account</p>
+          <p className="mercoa-truncate mercoa-text-sm mercoa-text-gray-500"></p>
         </div>
       </div>
     )

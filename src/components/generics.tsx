@@ -668,7 +668,7 @@ export function MercoaCombobox({
 }: {
   onChange: (val: any) => any
   options: { value: any; disabled: boolean; color?: string }[]
-  value: any
+  value?: any // TODO: why was this required? and why were we passing a function to it???
   label?: string
   placeholder?: string
   displayIndex?: string
@@ -1108,12 +1108,14 @@ export function inputClassName({
   leadingIconSize,
   noBorder,
   align,
+  width,
 }: {
   leadingIcon?: boolean
   leadingIconSize?: 'sm' | 'md'
   trailingIcon?: boolean
   noBorder?: boolean
   align?: 'left' | 'center' | 'right'
+  width?: string
 }) {
   let pl = 'mercoa-pl-2'
   if (leadingIcon) {
@@ -1122,7 +1124,7 @@ export function inputClassName({
       pl = 'mercoa-pl-10'
     }
   }
-  return `mercoa-block mercoa-w-full mercoa-flex-1 mercoa-rounded-mercoa mercoa-py-1.5 ${pl} ${
+  return `mercoa-block ${width ?? 'mercoa-w-full'} mercoa-flex-1 mercoa-rounded-mercoa mercoa-py-1.5 ${pl} ${
     trailingIcon ? 'mercoa-pr-[4.4rem]' : 'mercoa-pr-2'
   } mercoa-text-gray-900 sm:mercoa-text-sm sm:mercoa-leading-6
   ${noBorder ? 'mercoa-ring-0' : 'mercoa-ring-1'}
@@ -1419,7 +1421,7 @@ export function removeThousands(_value: any, originalValue: string | number) {
   return typeof originalValue === 'string' ? Number(originalValue?.replace(/,/g, '')) : originalValue
 }
 
-export function PaymentMethodInlineForm({
+export function PayablesInlineForm({
   name,
   saveAsStatus,
   addNewButton,
@@ -1437,7 +1439,7 @@ export function PaymentMethodInlineForm({
   const status = watch('saveAsStatus')
 
   useEffect(() => {
-    if (status === 'PAYMENT_METHOD_CREATION_SUCCESS') {
+    if (status === 'CLOSE_INLINE_FORM') {
       setOpen(false)
     }
   }, [status])
