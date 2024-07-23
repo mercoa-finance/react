@@ -396,7 +396,7 @@ export function ReceivableForm({
 
   watch((data, { name, type }) => {
     if (name === 'currency') {
-      const lineItems = data.lineItems as Mercoa.InvoiceLineItemRequest[]
+      const lineItems = data.lineItems as Mercoa.InvoiceLineItemUpdateRequest[]
       lineItems.forEach((lineItem, index) => {
         setValue(`lineItems.${index}.currency`, data.currency ?? 'USD')
       })
@@ -405,7 +405,7 @@ export function ReceivableForm({
     if (!name?.startsWith('lineItems')) return
     if (name.endsWith('amount')) return
 
-    const lineItems = data.lineItems as Mercoa.InvoiceLineItemRequest[]
+    const lineItems = data.lineItems as Mercoa.InvoiceLineItemUpdateRequest[]
     let amount = lineItems.reduce((acc, lineItem, index) => {
       // TODO: Use a library to handle rounding
       lineItem.amount = Math.floor((lineItem.quantity ?? 1) * (lineItem.unitPrice ?? 1) * 100) / 100
@@ -1030,7 +1030,6 @@ export function ReceivableSelectPaymentMethod({
       clearErrors(sourceOrDestination)
     } else {
       // if there is no off platform payment method, we need to create one
-      console.log({ entityId })
       mercoaSession.client?.entity.paymentMethod
         .create(entityId, {
           type: Mercoa.PaymentMethodType.OffPlatform,

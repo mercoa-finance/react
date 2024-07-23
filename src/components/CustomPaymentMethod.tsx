@@ -93,77 +93,81 @@ export function CustomPaymentMethod({
     const { accountName, accountNumber } = findCustomPaymentMethodAccountNameAndNumber(account)
     if (!mercoaSession.client) return <NoSession componentName="CustomPaymentMethod" />
     return (
-      <div
-        onClick={() => {
-          if (onSelect) onSelect(account)
-        }}
-        key={account?.id}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
-          selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
-        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
-          onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
-        }`}
-      >
+      <div className={account.frozen ? 'mercoa-line-through pointer-events-none' : ''}>
         <div
-          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
-            selected
-              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
-              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          onClick={() => {
+            if (onSelect) onSelect(account)
+          }}
+          key={account?.id}
+          className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
+            selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
+          } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
+            onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
           }`}
         >
-          <BuildingLibraryIcon className="mercoa-size-5" />
-        </div>
-        <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
-          <div>
-            {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
-            <p
-              className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}
-            >{`${capitalize(accountName)} ${accountNumber ? `••••${String(accountNumber).slice(-4)}` : ''}`}</p>
+          <div
+            className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+              selected
+                ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+                : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+            }`}
+          >
+            <BuildingLibraryIcon className="mercoa-size-5" />
           </div>
-        </div>
-        <div className="mercoa-flex">
-          {showEdit ? (
-            <>
-              <DefaultPaymentMethodIndicator paymentMethod={account} />
-              <MercoaButton
-                size="sm"
-                isEmphasized={false}
-                className="mercoa-mr-2 mercoa-px-[4px] mercoa-py-[4px]"
-                onClick={async () => {
-                  const newBalance = prompt('Enter new balance', `${account?.availableBalance}`)
-                  if (newBalance && mercoaSession.entityId) {
-                    await mercoaSession.client?.entity.paymentMethod.update(mercoaSession.entityId, account?.id, {
-                      type: 'custom',
-                      availableBalance: Number(newBalance),
-                    })
-                    mercoaSession.refresh()
-                    toast.success('Successfully updated balance')
-                  }
-                }}
-              >
-                <Tooltip title="Edit">
-                  <PencilIcon className="mercoa-size-4" />
-                </Tooltip>
-              </MercoaButton>
-            </>
-          ) : (
-            <>
-              {account?.availableBalance && (
-                <Tooltip title="Available balance" offset={30}>
-                  <p
-                    className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
-                      selected ? 'mercoa-underline' : ''
-                    }`}
-                  >
-                    {accounting.formatMoney(
-                      account?.availableBalance ?? '',
-                      currencyCodeToSymbol(account.supportedCurrencies[0]),
-                    )}
-                  </p>
-                </Tooltip>
-              )}
-            </>
-          )}
+          <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
+            <div>
+              {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
+              <p
+                className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
+                  selected ? 'mercoa-underline' : ''
+                }`}
+              >{`${capitalize(accountName)} ${accountNumber ? `••••${String(accountNumber).slice(-4)}` : ''}`}</p>
+            </div>
+          </div>
+          <div className="mercoa-flex">
+            {showEdit ? (
+              <>
+                <DefaultPaymentMethodIndicator paymentMethod={account} />
+                <MercoaButton
+                  size="sm"
+                  isEmphasized={false}
+                  className="mercoa-mr-2 mercoa-px-[4px] mercoa-py-[4px]"
+                  onClick={async () => {
+                    const newBalance = prompt('Enter new balance', `${account?.availableBalance}`)
+                    if (newBalance && mercoaSession.entityId) {
+                      await mercoaSession.client?.entity.paymentMethod.update(mercoaSession.entityId, account?.id, {
+                        type: 'custom',
+                        availableBalance: Number(newBalance),
+                      })
+                      mercoaSession.refresh()
+                      toast.success('Successfully updated balance')
+                    }
+                  }}
+                >
+                  <Tooltip title="Edit">
+                    <PencilIcon className="mercoa-size-4" />
+                  </Tooltip>
+                </MercoaButton>
+              </>
+            ) : (
+              <>
+                {account?.availableBalance && (
+                  <Tooltip title="Available balance" offset={30}>
+                    <p
+                      className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
+                        selected ? 'mercoa-underline' : ''
+                      }`}
+                    >
+                      {accounting.formatMoney(
+                        account?.availableBalance ?? '',
+                        currencyCodeToSymbol(account.supportedCurrencies[0]),
+                      )}
+                    </p>
+                  </Tooltip>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     )

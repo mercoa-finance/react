@@ -906,7 +906,7 @@ export function PayableForm({
         },
       }),
       lineItems: data.lineItems.map((lineItem: any) => {
-        const out: Mercoa.InvoiceLineItemRequest = {
+        const out: Mercoa.InvoiceLineItemUpdateRequest = {
           ...(lineItem.id && { id: lineItem.id }),
           description: lineItem.description,
           amount: Number(lineItem.amount),
@@ -3732,9 +3732,9 @@ function filterMetadataValues(entityMetadata: string[], schema: Mercoa.MetadataS
 
 export type PayableLineItemChildrenProps = {
   readOnly?: boolean
-  items: Mercoa.InvoiceLineItemRequest[]
+  items: Mercoa.InvoiceLineItemUpdateRequest[]
   addItem: () => void
-  updateItem: (index: number, item: Mercoa.InvoiceLineItemRequest) => void
+  updateItem: (index: number, item: Mercoa.InvoiceLineItemUpdateRequest) => void
   removeItem: (index: number) => void
 }
 
@@ -3756,7 +3756,7 @@ export function PayableLineItems({
 
   const status = watch('status')
   readOnly = readOnly || (!!status && status !== Mercoa.InvoiceStatus.Draft)
-  const lineItems = watch('lineItems') as Mercoa.InvoiceLineItemRequest[]
+  const lineItems = watch('lineItems') as Mercoa.InvoiceLineItemUpdateRequest[]
 
   const addItem = () => {
     append({
@@ -3848,7 +3848,7 @@ export function PayableLineItems({
 
 function LineItemOptions() {
   const { watch, clearErrors, setValue, setFocus } = useFormContext()
-  const lineItems = watch('lineItems') as Mercoa.InvoiceLineItemRequest[]
+  const lineItems = watch('lineItems') as Mercoa.InvoiceLineItemUpdateRequest[]
 
   // Auto-calculate line item amounts and total amount
   function calculateTotalAmountFromLineItems() {
@@ -3955,7 +3955,7 @@ function LineItemRows({ readOnly }: { readOnly?: boolean }) {
   })
 
   const currency = watch('currency')
-  const lineItems = watch('lineItems') as Mercoa.InvoiceLineItemRequest[]
+  const lineItems = watch('lineItems') as Mercoa.InvoiceLineItemUpdateRequest[]
 
   const filteredMetadata = mercoaSession.organization?.metadataSchema?.filter((schema) => schema.lineItem) ?? []
 

@@ -207,39 +207,43 @@ export function Card({
 
   if (account) {
     return (
-      <div
-        onClick={() => {
-          if (onSelect) onSelect(account)
-        }}
-        key={`${account?.id}`}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
-          selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
-        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
-          onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
-        }`}
-      >
+      <div className={account.frozen ? 'mercoa-line-through pointer-events-none' : ''}>
         <div
-          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
-            selected
-              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
-              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          onClick={() => {
+            if (onSelect) onSelect(account)
+          }}
+          key={`${account?.id}`}
+          className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
+            selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
+          } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
+            onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
           }`}
         >
-          <CreditCardIcon className="mercoa-size-5" />
-        </div>
-        <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
-          <div>
-            {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
-            <p
-              className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}
-            >{`${capitalize(brand)} ••••${account?.lastFour}`}</p>
+          <div
+            className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+              selected
+                ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+                : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+            }`}
+          >
+            <CreditCardIcon className="mercoa-size-5" />
           </div>
-        </div>
-        {showEdit && (
-          <div className="mercoa-flex">
-            <DefaultPaymentMethodIndicator paymentMethod={account} />
+          <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
+            <div>
+              {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
+              <p
+                className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
+                  selected ? 'mercoa-underline' : ''
+                }`}
+              >{`${capitalize(brand)} ••••${account?.lastFour}`}</p>
+            </div>
           </div>
-        )}
+          {showEdit && (
+            <div className="mercoa-flex">
+              <DefaultPaymentMethodIndicator paymentMethod={account} />
+            </div>
+          )}
+        </div>
       </div>
     )
   } else {
