@@ -79,7 +79,7 @@ dayjs.extend(tz)
 
 const dJSON = require('dirty-json')
 
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
 const afterScheduledStatus = [
   Mercoa.InvoiceStatus.Scheduled,
