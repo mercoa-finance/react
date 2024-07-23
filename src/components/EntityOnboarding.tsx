@@ -14,13 +14,13 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { Fragment, useEffect, useState } from 'react'
 import { usePlacesWidget } from 'react-google-autocomplete'
 import { Control, Controller, UseFormRegister, useForm } from 'react-hook-form'
 import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
 import { postalCodeRegex, usaStates } from '../lib/locations'
@@ -677,7 +677,15 @@ export function MCCBlock({ watch, setValue }: { watch: Function; setValue: Funct
 export const websiteSchema = {
   website: yup
     .string()
-    .url('Website must start with http:// or https:// and be a valid URL')
+    .url('Website must be a valid URL')
+    .transform((currentValue) => {
+      const doesNotStartWithHttp =
+        currentValue && !currentValue.startsWith('http://') && !currentValue.startsWith('https://')
+      if (doesNotStartWithHttp) {
+        return `https://${currentValue}`
+      }
+      return currentValue
+    })
     .required('Website is required'),
 }
 
@@ -1632,8 +1640,8 @@ export function EntityOnboardingForm({
       taxID: entity.profile.individual?.governmentIdProvided
         ? '****'
         : entity.profile.business?.taxIdProvided
-        ? '**-*******'
-        : '',
+          ? '**-*******'
+          : '',
       mcc: entity.profile.business?.industryCodes?.mcc ?? '',
       dob: new Date(),
 

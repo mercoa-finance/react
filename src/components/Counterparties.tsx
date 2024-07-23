@@ -147,7 +147,17 @@ export const counterpartyYupValidation = {
   lastName: yup.string(),
   middleName: yup.string(),
   suffix: yup.string(),
-  website: yup.string().url('Website must start with http:// or https:// and be a valid URL'),
+  website: yup
+    .string()
+    .url('Website must be a valid URL')
+    .transform((currentValue) => {
+      const doesNotStartWithHttp =
+        currentValue && !currentValue.startsWith('http://') && !currentValue.startsWith('https://')
+      if (doesNotStartWithHttp) {
+        return `http://${currentValue}`
+      }
+      return currentValue
+    }),
   description: yup.string(),
   accounts: yup.array().of(
     yup.object().shape({
@@ -1434,7 +1444,9 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center  mercoa-border-t mercoa-border-gray-900/5 ">
           <dd className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
@@ -1444,14 +1456,18 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.Check)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
 
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center mercoa-border-t mercoa-border-gray-900/5 " />
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.Custom)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
       </div>
     )
