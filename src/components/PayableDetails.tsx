@@ -440,6 +440,7 @@ export function PayableForm({
     setValue('invoiceDate', invoice.invoiceDate ? dayjs(invoice.invoiceDate).toDate() : undefined)
     setValue('dueDate', invoice.dueDate ? dayjs(invoice.dueDate).toDate() : undefined)
     setValue('deductionDate', invoice.deductionDate ? dayjs(invoice.deductionDate).toDate() : undefined)
+    setValue('processedAt', invoice.processedAt ? dayjs(invoice.processedAt).toDate() : undefined)
     setValue('lineItems', (invoice.lineItems ?? []) as any)
     setValue('paymentDestinationId', invoice.paymentDestination?.id)
     setValue('paymentDestinationOptions', invoice.paymentDestinationOptions)
@@ -1725,6 +1726,7 @@ export function PayableActions({
   cancelButton,
   saveDraftButton,
   printCheckButton,
+  viewCheckButton,
   createInvoiceButton,
   submitForApprovalButton,
   nextButton,
@@ -1742,6 +1744,7 @@ export function PayableActions({
   cancelButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   saveDraftButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   printCheckButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  viewCheckButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   createInvoiceButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   submitForApprovalButton?: ({
     onClick,
@@ -1868,6 +1871,37 @@ export function PayableActions({
       isEmphasized
       onClick={() => {
         setValue('saveAsStatus', 'PRINT_CHECK')
+      }}
+    >
+      {(paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery ===
+      Mercoa.CheckDeliveryMethod.Print
+        ? 'Print Check'
+        : 'View Mailed Check'}
+    </MercoaButton>
+  )
+
+  const viewCheckButtonComponent = viewCheckButton ? (
+    viewCheckButton({
+      onClick: async () => {
+        const pdf = await mercoaSession.client?.invoice.document.generateCheckPdf(id)
+        if (pdf) {
+          window.open(pdf.uri, '_blank')
+        } else {
+          toast.error('There was an error generating the check PDF')
+        }
+      },
+    })
+  ) : (
+    <MercoaButton
+      type="button"
+      isEmphasized
+      onClick={async () => {
+        const pdf = await mercoaSession.client?.invoice.document.generateCheckPdf(id)
+        if (pdf) {
+          window.open(pdf.uri, '_blank')
+        } else {
+          toast.error('There was an error generating the check PDF')
+        }
       }}
     >
       {(paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery ===
@@ -2076,7 +2110,7 @@ export function PayableActions({
 
       case Mercoa.InvoiceStatus.Paid:
         if (paymentDestinationType === Mercoa.PaymentMethodType.Check) {
-          buttons.push(printCheckButtonComponent)
+          buttons.push(viewCheckButtonComponent)
         }
         buttons.push(archiveButtonComponent)
         break
@@ -2387,6 +2421,7 @@ export function PayableSelectPaymentMethod({
   const mercoaSession = useMercoaSession()
 
   const [paymentMethods, setPaymentMethods] = useState<Array<Mercoa.PaymentMethodResponse>>([])
+  const [offPlatformDestinationMethod, setOffPlatformDestinationMethod] = useState<Mercoa.PaymentMethodResponse>()
   const [firstRender, setFirstRender] = useState(true)
 
   const { watch, setValue, clearErrors } = useFormContext()
@@ -2401,9 +2436,19 @@ export function PayableSelectPaymentMethod({
     setPaymentMethods(resp)
   }
 
+  // Get off-platform destination payment methods only when current selector is source
+  async function refreshOffPlatformDestinationMethod() {
+    if (!mercoaSession.token || !vendorId || !mercoaSession.client || isDestination) return
+    const resp = await mercoaSession.client?.entity.paymentMethod.getAll(vendorId, {
+      type: Mercoa.PaymentMethodType.OffPlatform,
+    })
+    setOffPlatformDestinationMethod(resp[0])
+  }
+
   useEffect(() => {
     if (!mercoaSession.token || !entityId || !mercoaSession.client) return
     refreshPaymentMethods()
+    refreshOffPlatformDestinationMethod()
   }, [mercoaSession.client, entityId, mercoaSession.token])
 
   let paymentMethodTypeKey: 'paymentSourceType' | 'paymentDestinationType' = 'paymentSourceType'
@@ -2583,6 +2628,28 @@ export function PayableSelectPaymentMethod({
             clearErrors(sourceOrDestination)
           }
         })
+    }
+    // create Off-Platform Payment Method for destination in case source is Off-Platform
+    if (!isDestination) {
+      if (offPlatformDestinationMethod) {
+        setValue('paymentDestinationId', offPlatformDestinationMethod.id)
+        setValue('paymentDestinationOptions', undefined)
+        clearErrors('paymentDestinationId')
+      } else {
+        mercoaSession.client?.entity.paymentMethod
+          .create(vendorId, {
+            type: Mercoa.PaymentMethodType.OffPlatform,
+          })
+          .then(async (resp) => {
+            if (resp) {
+              await refreshOffPlatformDestinationMethod()
+              setValue('paymentDestinationId', resp.id)
+              setValue('paymentDestinationType', Mercoa.PaymentMethodType.OffPlatform)
+              setValue('paymentDestinationOptions', undefined)
+              clearErrors('paymentDestinationId')
+            }
+          })
+      }
     }
   }
 
