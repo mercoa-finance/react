@@ -6,6 +6,7 @@ import {
   ExclamationCircleIcon,
   InformationCircleIcon,
   LockClosedIcon,
+  PhotoIcon,
   PlusIcon,
   TrashIcon,
   UserGroupIcon,
@@ -17,6 +18,7 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { Fragment, useEffect, useState } from 'react'
+import Dropzone from 'react-dropzone'
 import { usePlacesWidget } from 'react-google-autocomplete'
 import { Control, Controller, UseFormRegister, useForm } from 'react-hook-form'
 import { PatternFormat } from 'react-number-format'
@@ -68,6 +70,81 @@ export type OnboardingFormData = {
 }
 
 // Onboarding Blocks //////////////////////////////////////////////////////////
+
+export function LogoBlock() {
+  const mercoaSession = useMercoaSession()
+  const blobToDataUrl = (blob: Blob) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(String(reader.result))
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+
+  return (
+    <div className="mercoa-col-span-full">
+      <Dropzone
+        onDropAccepted={(acceptedFiles) => {
+          blobToDataUrl(acceptedFiles[0]).then((fileReaderObj) => {
+            mercoaSession.debug(fileReaderObj)
+            if (mercoaSession.entityId) {
+              mercoaSession.client?.entity
+                .update(mercoaSession.entityId, {
+                  logo: fileReaderObj,
+                })
+                .then(() => {
+                  mercoaSession.refresh()
+                  toast.success('Logo Updated')
+                })
+            }
+          })
+        }}
+        onDropRejected={() => {
+          toast.error('Invalid file type')
+        }}
+        minSize={0}
+        maxSize={100_000}
+        accept={{
+          'image/png': ['.png'],
+        }}
+      >
+        {({ getRootProps, getInputProps, isDragActive }) => (
+          <div
+            className={`mercoa-mt-2 mercoa-flex mercoa-justify-center mercoa-rounded-lg mercoa-border mercoa-border-dashed mercoa-border-gray-900/25 ${
+              isDragActive ? 'mercoa-border-primary' : 'mercoa-border-gray-300'
+            } mercoa-px-6 mercoa-py-10`}
+            {...getRootProps()}
+          >
+            <div className="mercoa-text-center">
+              {mercoaSession.entity?.logo ? (
+                <img className="mercoa-mx-auto mercoa-h-12" src={mercoaSession.entity?.logo} />
+              ) : (
+                <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
+              )}
+              <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm mercoa-text-gray-600">
+                <label
+                  htmlFor="file-upload"
+                  className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-bg-white mercoa-font-semibold mercoa-primary-text focus-within:mercoa-outline-none focus-within:mercoa-ring-2 focus-within:mercoa-ring-primary focus-within:mercoa-ring-offset-2 hover:mercoa-text-indigo-500"
+                >
+                  <span>Upload New Logo</span>
+                  <input
+                    {...getInputProps()}
+                    id="file-upload"
+                    name="file-upload"
+                    type="file"
+                    className="mercoa-sr-only"
+                  />
+                </label>
+                <p className="mercoa-pl-1">or drag and drop</p>
+              </div>
+              <p className="mercoa-text-xs mercoa-leading-5 mercoa-text-gray-600">PNG up to 1MB</p>
+            </div>
+          </div>
+        )}
+      </Dropzone>
+    </div>
+  )
+}
 
 export const addressBlockSchema = {
   addressLine1: yup
@@ -1806,6 +1883,7 @@ export function EntityOnboardingForm({
         )}
         {accountType === 'business' && (
           <>
+            {onboardingOptions?.business.logo.edit && <LogoBlock />}
             {onboardingOptions?.business.name.show && (
               <LegalBusinessNameBlock
                 register={register}

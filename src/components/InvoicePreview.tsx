@@ -44,8 +44,6 @@ export default function InvoicePreview({ selectedPayer }: { selectedPayer?: Merc
     updatedAt: new Date(),
   }
 
-  const logo = 'https://storage.googleapis.com/mercoa-partner-logos/mercoa-logo.png'
-
   const tabs: Array<{
     name: string
     action: PreviewType
@@ -86,17 +84,17 @@ export default function InvoicePreview({ selectedPayer }: { selectedPayer?: Merc
           style={{ transform: 'scale(0.75)' }}
           className="mercoa-w-full mercoa-grow mercoa-border mercoa-rounded-mercoa mercoa-shadow-md mercoa-p-10"
         >
-          {previewType === 'pdf' && <InvoicePreviewPdf invoice={invoice} logo={logo} />}
+          {previewType === 'pdf' && <InvoicePreviewPdf invoice={invoice} />}
           {previewType === 'email' && <InvoicePreviewEmail invoice={invoice} />}
-          {previewType === 'paymentPage' && <InvoicePreviewPaymentPage invoice={invoice} logo={logo} />}
+          {previewType === 'paymentPage' && <InvoicePreviewPaymentPage invoice={invoice} />}
         </div>
       </div>
     </div>
   )
 }
 
-export function InvoicePreviewPdf({ invoice, logo }: { invoice: Mercoa.InvoiceResponse; logo: string }) {
-  return <ReceivablePaymentPdf invoice={invoice} logo={logo} />
+export function InvoicePreviewPdf({ invoice }: { invoice: Mercoa.InvoiceResponse }) {
+  return <ReceivablePaymentPdf invoice={invoice} />
 }
 
 // TODO: This is left in a partial state until the generatePaymentLinkEmail endpoint is refactored
@@ -116,7 +114,7 @@ export function InvoicePreviewEmail({ invoice }: { invoice: Mercoa.InvoiceRespon
   return <div dangerouslySetInnerHTML={{ __html: html }} />
 }
 
-export function InvoicePreviewPaymentPage({ invoice, logo }: { invoice: Mercoa.InvoiceResponse; logo: string }) {
+export function InvoicePreviewPaymentPage({ invoice }: { invoice: Mercoa.InvoiceResponse }) {
   const [selectedPaymentType, setSelectedPaymentType] = useState<Mercoa.PaymentMethodType | string>(
     Mercoa.PaymentMethodType.BankAccount,
   )
@@ -127,7 +125,6 @@ export function InvoicePreviewPaymentPage({ invoice, logo }: { invoice: Mercoa.I
 
   return (
     <ReceivablePaymentPortal
-      logo={logo}
       invoice={invoice}
       supportEmail={supportEmail}
       totalDisplay={totalDisplay}

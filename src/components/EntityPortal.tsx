@@ -346,7 +346,7 @@ export function EntityPortal({ token }: { token: string }) {
       {screen === 'invoice' && (
         <PayableDetails
           invoice={invoice}
-          onRedirect={(invoice) => {
+          onUpdate={(invoice) => {
             if (!invoice) {
               mercoaSession.refresh()
               setScreen('inbox')

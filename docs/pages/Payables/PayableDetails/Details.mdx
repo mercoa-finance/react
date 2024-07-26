@@ -35,7 +35,7 @@ The `<PayableDetails>` component is used to let users create and manage payable 
 | Name                  | Type                                                                                 | Required | Description                                                                                                                                           |
 | :---------------------| :------------------------------------------------------------------------------------| :--------| :-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | invoiceId             | `string`                                                                             |          | The ID of the invoice to edit. Leave blank if creating a new invoice                                                                                  |
-| onRedirect            | `(invoice: InvoiceResponse \| undefined) => void`                                    | ✅       | When the invoice is created, updated, or deleted, this callback is triggered                                                                          |
+| onUpdate              | `(invoice: InvoiceResponse \| undefined) => void`                                    |          | When the invoice is created, updated, or deleted, this callback is triggered                                                                          |
 | heightOffset          | `number`                                                                             |          | This component uses the screen size to set its height. If you have other elements on the screen, increase the height offset to shrink this component. |
 | documentPosition      | `'right' \| 'left' \| 'none'`                                                        |          | Control where to place the invoice doucment (or hide it). Default is `left`                                                                           |
 | invoicePreSubmit      | `(invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>` |          | This function is called after frontend validations are complete, and before the API call to create/update the invoice is sent.                        |
@@ -46,7 +46,7 @@ type PayableDetailsChildrenProps = {
   invoice?: Mercoa.InvoiceResponse
   ocrResponse?: Mercoa.OcrResponse
   uploadedDocument?: string
-  onRedirect: (invoice: Mercoa.InvoiceResponse | undefined) => void
+  onUpdate: (invoice: Mercoa.InvoiceResponse | undefined) => void
   setUploadedDocument: (e?: string) => void
   height: number
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
@@ -64,7 +64,7 @@ type PayableDetailsChildrenProps = {
   ```jsx
 <PayableDetails
   invoiceId={'inv_XXXXX-XXXX-XXXXXX'}
-  onRedirect={(invoice) => {
+  onUpdate={(invoice) => {
     if (!invoice) {
       router.push(`/dashboard/payers/${entityId}`)
       return
@@ -81,7 +81,7 @@ type PayableDetailsChildrenProps = {
   <PayableDetails />
   ```jsx
 <PayableDetails 
-  onRedirect={(invoice) => {
+  onUpdate={(invoice) => {
     if (!invoice) {
       router.push(`/dashboard/payers/${entityId}`)
       return
@@ -100,7 +100,7 @@ type PayableDetailsChildrenProps = {
 <PayableDetails
   documentPosition="right"
   invoiceId={'inv_XXXXX-XXXX-XXXXXX'}   
-  onRedirect={(invoice) => {
+  onUpdate={(invoice) => {
     if (!invoice) {
       router.push(`/dashboard/payers/${entityId}`)
       return

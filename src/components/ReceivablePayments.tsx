@@ -6,14 +6,13 @@ import {
   MapPinIcon,
   PrinterIcon,
 } from '@heroicons/react/24/outline'
+import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
-import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { AddBankAccount, LoadingSpinnerIcon, MercoaButton, useMercoaSession } from './index'
 
 export function ReceivablePaymentPortal({
-  logo,
   complete,
   invoice,
   supportEmail,
@@ -22,7 +21,6 @@ export function ReceivablePaymentPortal({
   updateInvoice,
   setSelectedPaymentType,
 }: {
-  logo: string
   complete?: boolean
   invoice: Mercoa.InvoiceResponse
   supportEmail?: string
@@ -31,6 +29,8 @@ export function ReceivablePaymentPortal({
   updateInvoice: (invoice: Mercoa.PaymentMethodResponse) => void
   setSelectedPaymentType: (paymentMethodType: Mercoa.PaymentMethodType | string) => void
 }) {
+  const logo = invoice.vendor?.logo ?? 'https://storage.googleapis.com/mercoa-partner-logos/mercoa-logo.png'
+
   return (
     <div className="mercoa-min-h-full">
       <div className="mercoa-h-28">
@@ -339,13 +339,14 @@ export function ReceivablePaymentPortal({
   }
 }
 
-export function ReceivablePaymentPdf({ invoice, logo }: { invoice?: Mercoa.InvoiceResponse; logo: string }) {
+export function ReceivablePaymentPdf({ invoice }: { invoice?: Mercoa.InvoiceResponse }) {
   const mercoaSession = useMercoaSession()
 
   if (!invoice) return <LoadingSpinnerIcon />
 
   const payerAddress = invoice.payer?.profile?.individual?.address ?? invoice.payer?.profile?.business?.address
   const vendorAddress = invoice.vendor?.profile?.individual?.address ?? invoice.vendor?.profile?.business?.address
+  const logo = invoice.vendor?.logo
 
   const invoiceHeader = (
     <div className="mercoa-flex mercoa-justify-between mercoa-mt-10">

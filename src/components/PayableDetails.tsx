@@ -94,7 +94,7 @@ export type PayableDetailsChildrenProps = {
   invoice?: Mercoa.InvoiceResponse
   ocrResponse?: Mercoa.OcrResponse
   uploadedDocument?: string
-  onRedirect: (invoice: Mercoa.InvoiceResponse | undefined) => void
+  onUpdate?: (invoice: Mercoa.InvoiceResponse | undefined) => void
   setUploadedDocument: (e?: string) => void
   height: number
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
@@ -105,7 +105,7 @@ export type PayableDetailsChildrenProps = {
 export function PayableDetails({
   invoiceId,
   invoice,
-  onRedirect,
+  onUpdate,
   heightOffset,
   admin,
   documentPosition = 'left',
@@ -114,7 +114,7 @@ export function PayableDetails({
 }: {
   invoiceId?: Mercoa.InvoiceId
   invoice?: Mercoa.InvoiceResponse
-  onRedirect: (invoice: Mercoa.InvoiceResponse | undefined) => void
+  onUpdate?: (invoice: Mercoa.InvoiceResponse | undefined) => void
   heightOffset?: number
   admin?: boolean
   documentPosition?: 'right' | 'left' | 'none'
@@ -136,6 +136,7 @@ export function PayableDetails({
     const resp = await mercoaSession.client?.invoice.get(invoiceId)
     if (resp) {
       setInvoice(resp)
+      if (onUpdate) onUpdate(resp)
     }
   }
 
@@ -171,7 +172,7 @@ export function PayableDetails({
       refreshInvoice,
       invoicePreSubmit,
       onOcrComplete: setOcrResponse,
-      onRedirect,
+      onUpdate,
     })
     leftComponent = childrenArray[0]
     rightComponent = childrenArray[1]
@@ -191,7 +192,7 @@ export function PayableDetails({
         ocrResponse={ocrResponse}
         uploadedDocument={uploadedDocument}
         setUploadedDocument={setUploadedDocument}
-        onRedirect={onRedirect}
+        onUpdate={onUpdate}
         refreshInvoice={refreshInvoice}
         height={height}
         admin={admin}
@@ -249,7 +250,7 @@ export function PayableForm({
   ocrResponse,
   uploadedDocument,
   setUploadedDocument,
-  onRedirect,
+  onUpdate,
   refreshInvoice,
   height,
   admin,
@@ -260,7 +261,7 @@ export function PayableForm({
   ocrResponse?: Mercoa.OcrResponse
   uploadedDocument?: string
   setUploadedDocument: (e?: string) => void
-  onRedirect: (invoice: Mercoa.InvoiceResponse | undefined) => void
+  onUpdate?: (invoice: Mercoa.InvoiceResponse | undefined) => void
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
   height: number
   admin?: boolean
@@ -759,7 +760,7 @@ export function PayableForm({
           if (confirm('Are your sure you want to delete this invoice? This cannot be undone.')) {
             await mercoaSession.client?.invoice.delete(invoice.id)
             toast.success('Invoice deleted')
-            if (onRedirect) onRedirect(undefined)
+            if (onUpdate) onUpdate(undefined)
           }
           setIsLoading(false)
           return
@@ -804,7 +805,6 @@ export function PayableForm({
           userId: mercoaSession.user?.id,
         })
         toast.success('Invoice approved')
-        if (onRedirect) onRedirect(undefined)
       } catch (e: any) {
         console.error(e)
         toast.error(`There was an error approving the invoice.\n Error: ${e.body}`)
@@ -821,8 +821,6 @@ export function PayableForm({
           userId: mercoaSession.user?.id,
         })
         toast.success('Invoice rejected')
-
-        if (onRedirect) onRedirect(undefined)
       } catch (e: any) {
         console.error(e)
         toast.error(`There was an error rejecting the invoice.\n Error: ${e.body}`)
@@ -834,8 +832,6 @@ export function PayableForm({
         if (confirm('Are you sure you want to mark this invoice as paid? This cannot be undone.')) {
           await mercoaSession.client?.invoice.update(invoice.id, { status: Mercoa.InvoiceStatus.Paid })
           toast.success('Invoice marked as paid')
-
-          if (onRedirect) onRedirect(undefined)
         }
       } catch (e: any) {
         console.error(e)
