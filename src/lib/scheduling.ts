@@ -34,3 +34,19 @@ export function isWeekday(date: Date) {
   }
   return true
 }
+
+export function isSupportedScheduleDate(supportedScheduleDate: Array<'Weekend' | 'Past' | 'Holiday'>) {
+  return (date: Date) => {
+    const day = dayjs(date).day()
+    if ((day === 0 || day === 6) && !supportedScheduleDate.includes('Weekend')) {
+      return false
+    }
+    if (
+      holidays.find((holiday) => dayjs(holiday.date).isSame(date, 'day')) &&
+      !supportedScheduleDate.includes('Holiday')
+    ) {
+      return false
+    }
+    return true
+  }
+}

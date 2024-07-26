@@ -166,9 +166,10 @@ The default children is the following:
  ### PayableOverview
 
 | Name     | Type                                                     | Required | Description         |
-| :--------| :--------------------------------------------------------| :--------| :-------------------|
-| readOnly | `boolean`                                                |          | Make data read only |
-| children | `( props : PayableOverviewChildrenProps) => JSX.Element` |          | Custom Component    |
+| :-------------------------------| :--------------------------------------------------------| :--------| :-------------------|
+| readOnly                        | `boolean`                                                |          | Make data read only |
+| supportedSchedulePaymentDates   | `Array \<'Weekend' \| 'Past' \| 'Holiday'\>`             |          | Set overrides for dates to be enabled for the scheduled payment date |
+| children                        | `( props : PayableOverviewChildrenProps) => JSX.Element` |          | Custom Component    |
 
 ```ts
 type PayableOverviewChildrenProps = {
@@ -184,6 +185,7 @@ type PayableOverviewChildrenProps = {
   setInvoiceDate?: (invoiceDate: Date) => void
   schedulePaymentDate?: Date
   setSchedulePaymentDate?: (schedulePaymentDate: Date) => void
+  supportedSchedulePaymentDates?: Array<'Weekend' | 'Past' | 'Holiday'>
   invoiceNumber?: string
   setInvoiceNumber?: (invoiceNumber: string) => void
   description?: string

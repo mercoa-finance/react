@@ -45,7 +45,7 @@ import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { isWeekday } from '../lib/scheduling'
+import { isSupportedScheduleDate, isWeekday } from '../lib/scheduling'
 import {
   AddBankAccountForm,
   AddCheckForm,
@@ -2179,6 +2179,7 @@ export type PayableOverviewChildrenProps = {
   setDueDate?: (dueDate: Date) => void
   invoiceDate?: Date
   setInvoiceDate?: (invoiceDate: Date) => void
+  supportedSchedulePaymentDates?: Array<'Weekend' | 'Past' | 'Holiday'>
   schedulePaymentDate?: Date
   setSchedulePaymentDate?: (schedulePaymentDate: Date) => void
   invoiceNumber?: string
@@ -2189,9 +2190,11 @@ export type PayableOverviewChildrenProps = {
 
 export function PayableOverview({
   readOnly,
+  supportedSchedulePaymentDates,
   children,
 }: {
   readOnly?: boolean
+  supportedSchedulePaymentDates?: Array<'Weekend' | 'Past' | 'Holiday'>
   children?: (props: PayableOverviewChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
@@ -2263,6 +2266,7 @@ export function PayableOverview({
       setDueDate: (dueDate: Date) => setValue('dueDate', dueDate),
       invoiceDate: watch('invoiceDate'),
       setInvoiceDate: (invoiceDate: Date) => setValue('invoiceDate', invoiceDate),
+      supportedSchedulePaymentDates,
       schedulePaymentDate: watch('schedulePaymentDate'),
       setSchedulePaymentDate: (schedulePaymentDate: Date) => setValue('schedulePaymentDate', schedulePaymentDate),
       invoiceNumber: watch('invoiceNumber'),
@@ -2373,8 +2377,10 @@ export function PayableOverview({
         control={control}
         errors={errors}
         dateOptions={{
-          minDate: dayjs().toDate(),
-          filterDate: isWeekday,
+          minDate: !supportedSchedulePaymentDates?.includes('Past') ? dayjs().toDate() : undefined,
+          filterDate: supportedSchedulePaymentDates
+            ? isSupportedScheduleDate(supportedSchedulePaymentDates)
+            : isWeekday,
         }}
       />
 
@@ -2629,6 +2635,7 @@ export function PayableSelectPaymentMethod({
     if (!isDestination) {
       if (offPlatformDestinationMethod) {
         setValue('paymentDestinationId', offPlatformDestinationMethod.id)
+        setValue('paymentDestinationType', Mercoa.PaymentMethodType.OffPlatform)
         setValue('paymentDestinationOptions', undefined)
         clearErrors('paymentDestinationId')
       } else {
