@@ -2712,7 +2712,7 @@ export function PayableSelectPaymentMethod({
           <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)
-              .filter((e) => (readOnly ? (e.id = sourceOrDestination) : true))
+              .filter((e) => (readOnly ? e.id === paymentId : true))
               .map((paymentMethod) => (
                 <div key={paymentMethod.id} className="mercoa-mt-1">
                   <BankAccount
@@ -2788,7 +2788,7 @@ export function PayableSelectPaymentMethod({
           <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)
-              .filter((e) => (readOnly ? (e.id = sourceOrDestination) : true))
+              .filter((e) => (readOnly ? e.id === paymentId : true))
               .map((paymentMethod) => (
                 <div key={paymentMethod.id} className="mercoa-mt-1">
                   <Check
@@ -2863,7 +2863,7 @@ export function PayableSelectPaymentMethod({
           <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
-              .filter((e) => (readOnly ? (e.id = sourceOrDestination) : true))
+              .filter((e) => (readOnly ? e.id === paymentId : true))
               .map((paymentMethod) => (
                 <div key={paymentMethod.id} className="mercoa-mt-1">
                   <Card
@@ -2935,7 +2935,7 @@ export function PayableSelectPaymentMethod({
               ?.filter(
                 (paymentMethod) => (paymentMethod as Mercoa.PaymentMethodResponse.Custom).schemaId === selectedType,
               )
-              .filter((e) => (readOnly ? (e.id = sourceOrDestination) : true))
+              .filter((e) => (readOnly ? e.id === paymentId : true))
               .map((paymentMethod) => (
                 <div key={paymentMethod.id} className="mercoa-mt-1">
                   <CustomPaymentMethod
