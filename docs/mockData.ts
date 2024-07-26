@@ -169,6 +169,11 @@ const organization: Mercoa.OrganizationResponse = {
         show: true,
         required: true,
       },
+      logo: {
+        edit: true,
+        show: true,
+        required: true,
+      },
     },
     individual: {
       name: {
@@ -274,6 +279,11 @@ const organization: Mercoa.OrganizationResponse = {
         required: true,
       },
       mcc: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      logo: {
         edit: true,
         show: true,
         required: true,
@@ -442,6 +452,8 @@ export const payerBankAccount: Mercoa.PaymentMethodResponse.BankAccount = {
   updatedAt: new Date('2021-01-02'),
   isDefaultDestination: true,
   isDefaultSource: true,
+  frozen: false,
+  metadata: {},
   checkOptions: {
     enabled: true,
     initialCheckNumber: 1000,
@@ -463,6 +475,8 @@ export const payerBankAccount2: Mercoa.PaymentMethodResponse.BankAccount = {
   updatedAt: new Date('2021-01-02'),
   isDefaultDestination: false,
   isDefaultSource: false,
+  frozen: false,
+  metadata: {},
   checkOptions: {
     enabled: true,
     initialCheckNumber: 1000,
@@ -483,6 +497,8 @@ export const payerCreditCard: Mercoa.PaymentMethodResponse.Card = {
   updatedAt: new Date('2021-01-02'),
   isDefaultDestination: false,
   isDefaultSource: false,
+  frozen: false,
+  metadata: {},
 }
 
 export const payerCreditCard2: Mercoa.PaymentMethodResponse.Card = {
@@ -498,6 +514,8 @@ export const payerCreditCard2: Mercoa.PaymentMethodResponse.Card = {
   updatedAt: new Date('2021-01-02'),
   isDefaultDestination: false,
   isDefaultSource: false,
+  frozen: false,
+  metadata: {},
 }
 
 export const vendorCheck: Mercoa.PaymentMethodResponse.Check = {
@@ -515,6 +533,8 @@ export const vendorCheck: Mercoa.PaymentMethodResponse.Check = {
   updatedAt: new Date('2021-01-02'),
   isDefaultDestination: false,
   isDefaultSource: false,
+  frozen: false,
+  metadata: {},
 }
 
 export const vendorCheck2: Mercoa.PaymentMethodResponse.Check = {
@@ -531,6 +551,8 @@ export const vendorCheck2: Mercoa.PaymentMethodResponse.Check = {
   updatedAt: new Date('2021-01-02'),
   isDefaultDestination: false,
   isDefaultSource: false,
+  frozen: false,
+  metadata: {},
 }
 
 export const vendorPaymentMethods: Mercoa.PaymentMethodResponse[] = vendorEntities.map((vendor, index) => ({
@@ -547,6 +569,8 @@ export const vendorPaymentMethods: Mercoa.PaymentMethodResponse[] = vendorEntiti
   updatedAt: new Date('2021-01-02'),
   isDefaultDestination: true,
   isDefaultSource: true,
+  frozen: false,
+  metadata: {},
 }))
 
 export const mockToken = sign(
