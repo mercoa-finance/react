@@ -243,7 +243,7 @@ export type InvoiceTableColumn = {
   title: string
   field: keyof Mercoa.InvoiceResponse | `${'metadata.'}${string}`
   orderBy?: Mercoa.InvoiceOrderByField
-  format?: (value: string | number | Date, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
+  format?: (value: string | number | Date | any, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
 }
 
 export type PayablesTableChildrenProps = {
@@ -787,6 +787,22 @@ export function PayablesTable({
             })}
           </div>
         )
+      },
+    },
+    {
+      title: 'Payment Destination',
+      field: 'paymentDestination',
+      format: (pm) => {
+        pm = pm as Mercoa.PaymentMethodResponse
+        if (!pm || !pm.type) return null
+        if (pm.type === Mercoa.PaymentMethodType.BankAccount) {
+          return `${pm?.bankName} ••••${String(pm?.accountNumber).slice(-4)}`
+        } else if (pm.type === Mercoa.PaymentMethodType.Check) {
+          return `Check • ${String(pm?.addressLine1).slice(-10)}`
+        } else if (pm.type === Mercoa.PaymentMethodType.Custom) {
+          return `${pm?.accountName} ••••${String(pm?.accountNumber).slice(-4)}`
+        }
+        return null
       },
     },
     {

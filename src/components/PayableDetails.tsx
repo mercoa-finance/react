@@ -804,6 +804,7 @@ export function PayableForm({
         await mercoaSession.client?.invoice.approval.approve(invoice.id, {
           userId: mercoaSession.user?.id,
         })
+        refreshInvoice(invoice.id)
         toast.success('Invoice approved')
       } catch (e: any) {
         console.error(e)
@@ -830,7 +831,11 @@ export function PayableForm({
       if (!invoice?.id) return
       try {
         if (confirm('Are you sure you want to mark this invoice as paid? This cannot be undone.')) {
-          await mercoaSession.client?.invoice.update(invoice.id, { status: Mercoa.InvoiceStatus.Paid })
+          await mercoaSession.client?.invoice.update(invoice.id, {
+            status: Mercoa.InvoiceStatus.Paid,
+            deductionDate: data.deductionDate,
+          })
+          refreshInvoice(invoice.id)
           toast.success('Invoice marked as paid')
         }
       } catch (e: any) {
@@ -1503,6 +1508,7 @@ export function PayableDocumentDisplay({
   const [pageNumber, setPageNumber] = useState<number>(1)
   const [zoomLevel, setZoomLevel] = useState<number>(1)
   const [debouncedWidth, setDebouncedWidth] = useDebounce(0, 20)
+  const [numRenders, setNumRenders] = useState<number>(0)
 
   const wrapperDiv = useRef(null)
 
@@ -1512,9 +1518,14 @@ export function PayableDocumentDisplay({
   }, [wrapperDiv])
 
   useResizeObserver(wrapperDiv, (entry) => {
+    if (numRenders > 100) return
     if (debouncedWidth && Math.abs(debouncedWidth - entry.contentRect.width) < 20) return
     setDebouncedWidth(entry.contentRect.width)
   })
+
+  useEffect(() => {
+    setNumRenders(numRenders + 1)
+  }, [debouncedWidth])
 
   if (!mercoaSession.client) return <NoSession componentName="PayableDocumentDisplay" />
   if (!documents && !invoice)
@@ -2048,7 +2059,9 @@ export function PayableActions({
   )
 
   const approveButtonComponent = approveButton ? (
-    approveButton({ onClick: () => setValue('saveAsStatus', 'APPROVE') })
+    approveButton({
+      onClick: () => setValue('saveAsStatus', 'APPROVE'),
+    })
   ) : (
     <MercoaButton
       disabled={approverSlot?.action === Mercoa.ApproverAction.Approve}
@@ -2101,6 +2114,9 @@ export function PayableActions({
         break
 
       case Mercoa.InvoiceStatus.Scheduled:
+        if (paymentDestinationType === Mercoa.PaymentMethodType.OffPlatform) {
+          buttons.push(markPaidButtonComponent)
+        }
         buttons.push(cancelButtonComponent)
         break
 
@@ -4111,6 +4127,7 @@ export function PayableFees({
   const currency = watch('currency')
   const paymentSourceId = watch('paymentSourceId')
   const paymentDestinationId = watch('paymentDestinationId')
+  const paymentDestinationOptions = watch('paymentDestinationOptions')
 
   const [fees, setFees] = useState<Mercoa.InvoiceFeesResponse>()
 
@@ -4126,6 +4143,7 @@ export function PayableFees({
           amount: amountNumber,
           paymentSourceId,
           paymentDestinationId,
+          paymentDestinationOptions: paymentDestinationOptions?.type ? paymentDestinationOptions : undefined,
         })
         .then((fees) => {
           setFees(fees)
@@ -4138,7 +4156,7 @@ export function PayableFees({
           })
         })
     }
-  }, [amount, paymentSourceId, paymentDestinationId])
+  }, [amount, paymentSourceId, paymentDestinationId, paymentDestinationOptions])
 
   if (children) {
     return children({ fees: fees })

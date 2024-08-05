@@ -20,6 +20,7 @@ import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { capitalize, constructFullName } from '../lib/lib'
+import { usaStates } from '../lib/locations'
 import {
   BankAccount,
   Card,
@@ -29,6 +30,7 @@ import {
   EntityOnboardingForm,
   LoadingSpinnerIcon,
   MercoaButton,
+  MercoaCombobox,
   MercoaContext,
   MercoaInput,
   NoSession,
@@ -86,15 +88,25 @@ export async function onSubmitCounterparty({
       description: data.description,
       website: data.website,
       legalBusinessName: data.name,
+      ...(data.addressLine1 && {
+        address: {
+          addressLine1: data.addressLine1,
+          addressLine2: data.addressLine2,
+          city: data.city,
+          stateOrProvince: data.stateOrProvince,
+          postalCode: data.postalCode,
+          country: 'US',
+        },
+      }),
     }
-    if (!profile.business.legalBusinessName) {
+    if (!profile.business?.legalBusinessName) {
       setError('vendor.name', {
         type: 'manual',
         message: 'Name is required',
       })
       return
     }
-    if (!profile.business.website && !profile.business.description) {
+    if (!profile.business?.website && !profile.business?.description) {
       setError('vendor.website', {
         type: 'manual',
         message: 'Website or description is required',
@@ -660,6 +672,8 @@ function CounterpartyAddOrEditForm({
   onComplete: (counterparty?: Mercoa.CounterpartyResponse) => any
   onExit?: (counterparty?: any) => any
 }) {
+  const [addMore, setAddMore] = useState(false)
+
   const {
     register,
     watch,
@@ -834,6 +848,60 @@ function CounterpartyAddOrEditForm({
           </div>
         </div>
       )}
+
+      {addMore ? (
+        <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-3 mercoa-mb-5">
+          <MercoaInput
+            label={'Address'}
+            register={register}
+            name="vendor.addressLine1"
+            className="mercoa-mt-1 mercoa-col-span-2"
+            errors={errors}
+          />
+          <MercoaInput
+            label="Apartment, suite, etc."
+            register={register}
+            name="addressLine2"
+            className="mercoa-mt-1"
+            errors={errors}
+          />
+
+          <MercoaInput label="City" register={register} name="vendor.city" className="mercoa-mt-1" errors={errors} />
+
+          <div className="mercoa-mt-1">
+            <MercoaCombobox
+              options={usaStates.map(({ name, abbreviation }) => ({
+                disabled: false,
+                value: abbreviation,
+              }))}
+              label="State"
+              value={watch('vendor.stateOrProvince')}
+              onChange={(value) => {
+                setValue('vendor.stateOrProvince', value, { shouldDirty: true })
+              }}
+              labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700 -mercoa-mb-1"
+            />
+          </div>
+          <MercoaInput
+            label="Postal Code"
+            register={register}
+            name="vendor.postalCode"
+            className="mercoa-mt-1"
+            errors={errors}
+          />
+        </div>
+      ) : (
+        <a
+          href="#"
+          className="mercoa-mt-2 mercoa-block mercoa-text-mercoa-primary mercoa-text-xs hover:mercoa-underline"
+          onClick={() => {
+            setAddMore(true)
+          }}
+        >
+          Add Address
+        </a>
+      )}
+
       {accountType && (
         <MercoaButton
           isEmphasized
@@ -1267,7 +1335,7 @@ export function CounterpartyDetails({
     )
   }
 
-  if (isEditing && mercoaSession.organization) {
+  if (isEditing) {
     return (
       <div className="mercoa-p-6 ">
         <EntityOnboardingForm
@@ -1444,7 +1512,9 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center  mercoa-border-t mercoa-border-gray-900/5 ">
           <dd className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
@@ -1454,14 +1524,18 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.Check)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
 
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center mercoa-border-t mercoa-border-gray-900/5 " />
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.Custom)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
       </div>
     )

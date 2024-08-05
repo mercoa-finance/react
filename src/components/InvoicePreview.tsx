@@ -7,7 +7,13 @@ import { ReceivableFormValues, ReceivablePaymentPdf, ReceivablePaymentPortal, us
 
 export type PreviewType = 'pdf' | 'email' | 'paymentPage'
 
-export default function InvoicePreview({ selectedPayer }: { selectedPayer?: Mercoa.CounterpartyResponse }) {
+export default function InvoicePreview({
+  selectedPayer,
+  paymentDestination,
+}: {
+  selectedPayer?: Mercoa.CounterpartyResponse
+  paymentDestination?: Mercoa.PaymentMethodResponse
+}) {
   const [previewType, setPreviewType] = useState<PreviewType>('pdf')
   const mercoaSession = useMercoaSession()
 
@@ -27,6 +33,7 @@ export default function InvoicePreview({ selectedPayer }: { selectedPayer?: Merc
     dueDate: fieldValues.dueDate,
     lineItems: fieldValues.lineItems,
     deductionDate: fieldValues.deductionDate,
+    paymentDestination: paymentDestination,
     paymentDestinationId: fieldValues.paymentDestinationId,
     paymentDestinationOptions: fieldValues.paymentDestinationOptions,
     paymentSourceId: fieldValues.paymentSourceId,

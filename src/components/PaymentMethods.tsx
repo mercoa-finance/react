@@ -26,7 +26,7 @@ export function PaymentMethods() {
         (e) => e.type === Mercoa.PaymentMethodType.Custom && e.active,
       ) && (
         <>
-          <h3 className="mercoa-mt-8"></h3>
+          <h3 className="mercoa-mt-8">Custom Payment Methods</h3>
           <CustomPaymentMethods showEdit />
         </>
       )}

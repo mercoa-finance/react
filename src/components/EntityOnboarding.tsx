@@ -1722,6 +1722,7 @@ export function EntityOnboardingForm({
       mcc: entity.profile.business?.industryCodes?.mcc ?? '',
       dob: new Date(),
 
+      businessType: entity.profile.business?.businessType,
       legalBusinessName: entity.profile.business?.legalBusinessName ?? '',
       doingBusinessAs: entity.profile.business?.doingBusinessAs,
       description: entity.profile.business?.description,
@@ -2173,10 +2174,12 @@ export function EntityOnboarding({
   entityId,
   connectedEntityName,
   type,
+  onComplete,
 }: {
   type: 'payee' | 'payor'
   connectedEntityName?: string
   entityId?: Mercoa.EntityId
+  onComplete?: () => void
 }) {
   const [entity, setEntity] = useState<Mercoa.EntityResponse>()
   const [representatives, setRepresentatives] = useState<Mercoa.RepresentativeResponse[]>([])
@@ -2253,6 +2256,9 @@ export function EntityOnboarding({
     // TOS transition function
     if (formState === 'tos' && !needsToAcceptTos()) {
       onSubmit()
+    }
+    if (formState === 'complete') {
+      onComplete?.()
     }
   }, [mercoaSession.organization, mercoaSession.client, entity, entityData, formState, type])
 

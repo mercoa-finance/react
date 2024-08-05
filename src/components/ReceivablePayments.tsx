@@ -9,6 +9,7 @@ import {
 import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
+import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { AddBankAccount, LoadingSpinnerIcon, MercoaButton, useMercoaSession } from './index'
 
@@ -30,6 +31,8 @@ export function ReceivablePaymentPortal({
   setSelectedPaymentType: (paymentMethodType: Mercoa.PaymentMethodType | string) => void
 }) {
   const logo = invoice.vendor?.logo ?? 'https://storage.googleapis.com/mercoa-partner-logos/mercoa-logo.png'
+
+  const mercoaSession = useMercoaSession()
 
   return (
     <div className="mercoa-min-h-full">
@@ -76,6 +79,17 @@ export function ReceivablePaymentPortal({
     </div>
   )
 
+  async function getPDFLink() {
+    if (!invoice?.id) return
+    const pdfLink = await mercoaSession.client?.invoice.document.generateInvoicePdf(invoice.id)
+    if (pdfLink?.uri) {
+      // open in new window
+      window.open(pdfLink.uri, '_blank')
+    } else {
+      toast.error('There was an issue generating the Invoice PDF. Please refresh and try again.')
+    }
+  }
+
   function InvoiceDetailsCard({ invoice }: { invoice: Mercoa.InvoiceResponse }) {
     return (
       <div className="mercoa-flex-1 mercoa-shadow-sm mercoa-bg-white mercoa-rounded-mercoa mercoa-px-3 mercoa-py-4 mercoa-border mercoa-border-gray-300">
@@ -96,15 +110,12 @@ export function ReceivablePaymentPortal({
         </p>
         <hr className="mercoa-my-3" />
         <div className="mercoa-flex mercoa-items-center">
-          <MercoaButton isEmphasized={false} size="sm">
-            View invoice
-          </MercoaButton>
           <div className="mercoa-flex-1" />
-          <MercoaButton isEmphasized={false} size="sm">
+          <MercoaButton isEmphasized={false} size="sm" onClick={getPDFLink}>
             <ArrowDownTrayIcon className="mercoa-size-4" />
           </MercoaButton>
           <MercoaButton isEmphasized={false} size="sm" className="mercoa-ml-3">
-            <PrinterIcon className="mercoa-size-4" />
+            <PrinterIcon className="mercoa-size-4" onClick={getPDFLink} />
           </MercoaButton>
         </div>
       </div>
@@ -497,48 +508,33 @@ export function ReceivablePaymentPdf({ invoice }: { invoice?: Mercoa.InvoiceResp
     </div>
   )
 
-  function PaymentDetails({
-    paymentDestination,
-    vendor,
-  }: {
-    paymentDestination: Mercoa.PaymentMethodResponse
-    vendor: Mercoa.EntityResponse
-  }) {
-    if (paymentDestination?.type === Mercoa.PaymentMethodType.BankAccount) {
-      return (
-        <table>
-          <tbody>
-            <tr>
-              <td className="mercoa-text-gray-500">Beneficiary Holder</td>
-              <td className="mercoa-text-gray-800 mercoa-pl-2">{vendor.name}</td>
-            </tr>
-            <tr>
-              <td className="mercoa-text-gray-500">Bank Name</td>
-              <td className="mercoa-text-gray-800 mercoa-pl-2">{paymentDestination.bankName}</td>
-            </tr>
-            <tr>
-              <td className="mercoa-text-gray-500">Account Number</td>
-              <td className="mercoa-text-gray-800 mercoa-pl-2">{paymentDestination.accountNumber}</td>
-            </tr>
-            <tr>
-              <td className="mercoa-text-gray-500">Routing Number</td>
-              <td className="mercoa-text-gray-800 mercoa-pl-2">{paymentDestination.routingNumber}</td>
-            </tr>
-          </tbody>
-        </table>
-      )
-    }
-    return null
-  }
-
   return (
     <div className="mercoa-container mercoa-mx-auto mercoa-mt-10">
       {invoiceHeader}
       {invoiceNumberAndDate}
       <LineItems lineItems={invoice.lineItems ?? []} />
       {invoiceTotal}
-      {invoice.paymentDestination && invoice.vendor && (
-        <PaymentDetails paymentDestination={invoice.paymentDestination} vendor={invoice.vendor} />
+      {invoice.paymentDestination?.type === Mercoa.PaymentMethodType.BankAccount && invoice.vendor && (
+        <table>
+          <tbody>
+            <tr>
+              <td className="mercoa-text-gray-500">Beneficiary Holder</td>
+              <td className="mercoa-text-gray-800 mercoa-pl-2">{invoice.vendor.name}</td>
+            </tr>
+            <tr>
+              <td className="mercoa-text-gray-500">Bank Name</td>
+              <td className="mercoa-text-gray-800 mercoa-pl-2">{invoice.paymentDestination.bankName}</td>
+            </tr>
+            <tr>
+              <td className="mercoa-text-gray-500">Account Number</td>
+              <td className="mercoa-text-gray-800 mercoa-pl-2">{invoice.paymentDestination.accountNumber}</td>
+            </tr>
+            <tr>
+              <td className="mercoa-text-gray-500">Routing Number</td>
+              <td className="mercoa-text-gray-800 mercoa-pl-2">{invoice.paymentDestination.routingNumber}</td>
+            </tr>
+          </tbody>
+        </table>
       )}
     </div>
   )

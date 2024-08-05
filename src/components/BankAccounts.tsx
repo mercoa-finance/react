@@ -78,20 +78,18 @@ export function BankAccounts({
           showEdit={showEdit}
           addAccount={
             bankAccounts && showAdd ? (
-              <>
-                <AddBankAccountButton
-                  onSelect={(account: Mercoa.PaymentMethodResponse.BankAccount) => {
-                    if (
-                      !bankAccounts.find(
-                        (e) => e.accountNumber === account.accountNumber && e.routingNumber === account.routingNumber,
-                      )
-                    ) {
-                      setBankAccounts([...bankAccounts, account])
-                    }
-                    if (onSelect) onSelect(account)
-                  }}
-                />
-              </>
+              <AddBankAccountButton
+                onSelect={(account: Mercoa.PaymentMethodResponse.BankAccount) => {
+                  if (
+                    !bankAccounts.find(
+                      (e) => e.accountNumber === account.accountNumber && e.routingNumber === account.routingNumber,
+                    )
+                  ) {
+                    setBankAccounts([...bankAccounts, account])
+                  }
+                  if (onSelect) onSelect(account)
+                }}
+              />
             ) : undefined
           }
           formatAccount={(account: Mercoa.PaymentMethodResponse.BankAccount) => (

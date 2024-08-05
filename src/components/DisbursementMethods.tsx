@@ -1,4 +1,4 @@
-import { BuildingLibraryIcon, CreditCardIcon, EnvelopeIcon } from '@heroicons/react/24/outline'
+import { BuildingLibraryIcon, CreditCardIcon, EnvelopeIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
 import { Fragment, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
@@ -120,12 +120,27 @@ export function DisbursementMethods({
       icon = <EnvelopeIcon className="mercoa-size-5" />
     } else if (method.type === Mercoa.PaymentMethodType.VirtualCard) {
       icon = <CreditCardIcon className="mercoa-size-5" />
+    } else if (method.type === Mercoa.PaymentMethodType.OffPlatform) {
+      icon = <QuestionMarkCircleIcon className="mercoa-size-5" />
     }
 
     return (
       <button
         className="mercoa-cursor-pointer  mercoa-rounded-mercoa mercoa-border mercoa-border-gray-100 mercoa-bg-white mercoa-shadow-lg hover:mercoa-shadow-xl"
-        onClick={() => setSelectedMethod(method)}
+        onClick={async () => {
+          if (method.type === Mercoa.PaymentMethodType.OffPlatform) {
+            const pm = await mercoaSession.client?.entity.paymentMethod.create(entity.id, {
+              type: Mercoa.PaymentMethodType.OffPlatform,
+            })
+            if (pm) {
+              onSelect(pm)
+            } else {
+              toast.error('There was an issue adding your payment details. Please try again later.')
+            }
+          } else {
+            setSelectedMethod(method)
+          }
+        }}
       >
         <div className="mercoa-px-4 mercoa-py-5 mercoa-text-center sm:mercoa-p-6">
           <p className="mercoa-flex mercoa-items-center mercoa-justify-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">

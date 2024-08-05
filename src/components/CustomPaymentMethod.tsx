@@ -24,11 +24,13 @@ import {
 export function CustomPaymentMethods({
   children,
   onSelect,
+  showAdd,
   showEdit,
   schema,
 }: {
   children?: Function
   onSelect?: Function
+  showAdd?: boolean
   showEdit?: boolean
   schema?: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
@@ -44,7 +46,7 @@ export function CustomPaymentMethods({
     }
   }, [mercoaSession.entity?.id, mercoaSession.token, showDialog, mercoaSession.refreshId])
 
-  const onClose = (account: Mercoa.PaymentMethodRequest) => {
+  const onClose = (account: Mercoa.PaymentMethodResponse) => {
     setShowDialog(false)
     if (onSelect && account) onSelect(account)
   }
@@ -62,6 +64,26 @@ export function CustomPaymentMethods({
         <PaymentMethodList
           accounts={paymentMethods}
           showEdit={showEdit}
+          // TODO: Implement AddCustomPaymentMethod component, incorporate it correctly here
+          // addAccount={
+          //   paymentMethods && showAdd ? (
+          //     <div className="mercoa-mt-2">
+          //       <AddDialog
+          //         show={showDialog}
+          //         onClose={onClose}
+          //         component={
+          //           <AddCustomPaymentMethod
+          //             onSubmit={(data) => {
+          //               onClose(data)
+          //             }}
+          //             schema={paymentMethods[0].schema}
+          //           />
+          //         }
+          //       />
+          //       <CustomPaymentMethod onSelect={() => setShowDialog(true)} />
+          //     </div>
+          //   ) : undefined
+          // }
           formatAccount={(account: Mercoa.PaymentMethodResponse.Custom) => (
             <CustomPaymentMethod account={account} onSelect={onSelect} schema={schema} showEdit={showEdit} />
           )}
@@ -88,6 +110,8 @@ export function CustomPaymentMethod({
   schema?: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
   const mercoaSession = useMercoaSession()
+
+  const [showNameEdit, setShowNameEdit] = useState(false)
 
   if (account) {
     const { accountName, accountNumber } = findCustomPaymentMethodAccountNameAndNumber(account)
@@ -117,6 +141,11 @@ export function CustomPaymentMethod({
           <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
             <div>
               {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
+              <AddDialog
+                component={<EditCustomPaymentMethod account={account} onSubmit={() => setShowNameEdit(false)} />}
+                onClose={() => setShowNameEdit(false)}
+                show={showNameEdit}
+              />
               <p
                 className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
                   selected ? 'mercoa-underline' : ''
@@ -132,17 +161,7 @@ export function CustomPaymentMethod({
                   size="sm"
                   isEmphasized={false}
                   className="mercoa-mr-2 mercoa-px-[4px] mercoa-py-[4px]"
-                  onClick={async () => {
-                    const newBalance = prompt('Enter new balance', `${account?.availableBalance}`)
-                    if (newBalance && mercoaSession.entityId) {
-                      await mercoaSession.client?.entity.paymentMethod.update(mercoaSession.entityId, account?.id, {
-                        type: 'custom',
-                        availableBalance: Number(newBalance),
-                      })
-                      mercoaSession.refresh()
-                      toast.success('Successfully updated balance')
-                    }
-                  }}
+                  onClick={() => setShowNameEdit(true)}
                 >
                   <Tooltip title="Edit">
                     <PencilIcon className="mercoa-size-4" />
@@ -268,10 +287,9 @@ export function AddCustomPaymentMethod({
 }
 
 export function AddCustomPaymentMethodForm({ schema }: { schema?: Mercoa.CustomPaymentMethodSchemaResponse }) {
-  const mercoaSession = useMercoaSession()
   const [schemaFields, setSchemaFields] = useState<Mercoa.CustomPaymentMethodSchemaField[]>()
 
-  const { register, control } = useFormContext()
+  const { watch, register, setValue, control } = useFormContext()
 
   const { append, fields } = useFieldArray({
     control,
@@ -292,6 +310,27 @@ export function AddCustomPaymentMethodForm({ schema }: { schema?: Mercoa.CustomP
       })
     }
   }, [schemaFields])
+
+  const bankAccountData = watch('newBankAccount')
+
+  useEffect(() => {
+    if (bankAccountData?.accountNumber) {
+      const index = schemaFields?.findIndex(
+        (field) => field.type === Mercoa.CustomPaymentMethodSchemaFieldType.UsBankAccountNumber,
+      )
+      if (index !== undefined && index > -1) {
+        setValue(`~cpm~~.${index}.value`, bankAccountData.accountNumber)
+      }
+    }
+    if (bankAccountData?.routingNumber) {
+      const index = schemaFields?.findIndex(
+        (field) => field.type === Mercoa.CustomPaymentMethodSchemaFieldType.UsBankRoutingNumber,
+      )
+      if (index !== undefined && index > -1) {
+        setValue(`~cpm~~.${index}.value`, bankAccountData.routingNumber)
+      }
+    }
+  }, [bankAccountData, schemaFields])
 
   return (
     <div className="mercoa-mt-2">
@@ -479,5 +518,86 @@ export function AddCustomPaymentMethodDialog({
       />
       <CustomPaymentMethod onSelect={() => setShowDialog(true)} schema={schema} />
     </div>
+  )
+}
+
+export function EditCustomPaymentMethod({
+  account,
+  onSubmit,
+}: {
+  account: Mercoa.CustomPaymentMethodResponse
+  onSubmit?: Function
+}) {
+  const mercoaSession = useMercoaSession()
+
+  const methods = useForm({
+    defaultValues: {
+      accountName: account.accountName,
+      accountNumber: account.accountNumber,
+      availableBalance: account.availableBalance,
+      data: account.data,
+    },
+  })
+
+  const { register, handleSubmit, watch, setValue } = methods
+
+  function onUpdate(updateRequest: Mercoa.CustomPaymentMethodUpdateRequest) {
+    if (mercoaSession.entity?.id) {
+      const data: Record<string, string> = {}
+      // @ts-ignore: ~cpm~~ key is set by AddCustomPaymentMethodForm
+      updateRequest['~cpm~~']?.forEach(({ name, value, type }) => {
+        if (value) {
+          if (type === Mercoa.CustomPaymentMethodSchemaFieldType.Date) {
+            data[name] = new Date(value).toISOString()
+          } else {
+            data[name] = value
+          }
+        }
+      })
+      mercoaSession.client?.entity.paymentMethod
+        .update(mercoaSession.entity?.id, account.id, {
+          type: Mercoa.PaymentMethodType.Custom,
+          ...(updateRequest.accountName && { accountName: updateRequest.accountName }),
+          ...(updateRequest.accountNumber && { accountNumber: updateRequest.accountNumber }),
+          ...(updateRequest.availableBalance && { availableBalance: Number(updateRequest.availableBalance) }),
+          ...(data && { data }),
+        })
+        .then(() => {
+          toast.success('Custom payment method updated')
+          if (onSubmit) onSubmit(updateRequest)
+          mercoaSession.refresh()
+        })
+        .catch((err) => {
+          console.error(err)
+          toast.error('There was an error updating your custom payment method')
+        })
+    }
+  }
+
+  if (!mercoaSession.client) return <NoSession componentName="EditBankAccount" />
+  return (
+    <FormProvider {...methods}>
+      <form onSubmit={handleSubmit(onUpdate)}>
+        <MercoaInput label="Account Name" name="accountName" register={register} optional />
+        <MercoaInput label="Account Number" name="accountNumber" register={register} optional />
+        <MercoaInput label="Available Balance" name="availableBalance" register={register} optional />
+        <div className="mercoa-bg-gray-100 mercoa-p-2 mercoa-rounded-mercoa mercoa-mt-2">
+          <span className="mercoa-text-md mercoa-text-black-500">Custom Payment Method Data</span>
+          <AddCustomPaymentMethodForm schema={account.schema} />
+        </div>
+        <div className="mercoa-flex mercoa-justify-between mercoa-mt-5">
+          <MercoaButton
+            isEmphasized={false}
+            onClick={() => {
+              if (onSubmit) onSubmit()
+            }}
+            type="button"
+          >
+            Back
+          </MercoaButton>
+          <MercoaButton isEmphasized>Update</MercoaButton>
+        </div>
+      </form>
+    </FormProvider>
   )
 }

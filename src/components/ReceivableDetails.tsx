@@ -1,6 +1,7 @@
 import { Bar, Container, Section } from '@column-resizer/react'
 import { DocumentDuplicateIcon, EnvelopeIcon, GlobeAltIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { useEffect, useState } from 'react'
@@ -14,7 +15,6 @@ import {
   useFormContext,
 } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import InvoicePreview from './InvoicePreview'
@@ -65,14 +65,14 @@ export type ReceivableFormValues = {
 export function ReceivableDetails({
   invoiceId,
   invoice,
-  onRedirect,
+  onUpdate,
   admin,
   documentPosition = 'left',
   children,
 }: {
   invoiceId?: Mercoa.InvoiceId
   invoice?: Mercoa.InvoiceResponse
-  onRedirect: (invoice: Mercoa.InvoiceResponse | undefined) => void
+  onUpdate: (invoice: Mercoa.InvoiceResponse | undefined) => void
   admin?: boolean
   documentPosition?: 'right' | 'left' | 'none'
   children?: ({
@@ -186,7 +186,7 @@ export function ReceivableDetails({
       <FormProvider {...methods}>
         <ReceivableForm
           invoice={invoiceLocal}
-          onRedirect={onRedirect}
+          onUpdate={onUpdate}
           refreshInvoice={refreshInvoice}
           admin={admin}
           supportedCurrencies={supportedCurrencies}
@@ -203,16 +203,21 @@ export function ReceivableDetails({
     )
   }
 
+  const paymentDestinationId = methods.watch('paymentDestinationId')
+
   const invoicePreview = (
     <Section minSize={0} maxSize={800}>
-      <InvoicePreview selectedPayer={selectedPayer} />
+      <InvoicePreview
+        selectedPayer={selectedPayer}
+        paymentDestination={destinationPaymentMethods.find((e) => e.id === paymentDestinationId)}
+      />
     </Section>
   )
   const invoiceDetails = (
     <Section className={`mercoa-relative ${documentPosition === 'left' ? 'mercoa-pl-5' : 'mercoa-pr-5'}`} minSize={400}>
       <ReceivableForm
         invoice={invoiceLocal}
-        onRedirect={onRedirect}
+        onUpdate={onUpdate}
         refreshInvoice={refreshInvoice}
         admin={admin}
         supportedCurrencies={supportedCurrencies}
@@ -262,7 +267,7 @@ export type ReceivableFormChildrenProps = {
 
 export function ReceivableForm({
   invoice,
-  onRedirect,
+  onUpdate,
   refreshInvoice,
   // height,              TODO: Is used in PayableDetails but not used at all here, implement
   admin,
@@ -277,7 +282,7 @@ export function ReceivableForm({
   children,
 }: {
   invoice?: Mercoa.InvoiceResponse
-  onRedirect: (invoice: Mercoa.InvoiceResponse | undefined) => void
+  onUpdate: (invoice: Mercoa.InvoiceResponse | undefined) => void
   refreshInvoice: (invoice: Mercoa.InvoiceId) => void
   admin?: boolean
   supportedCurrencies: Mercoa.CurrencyCode[]
@@ -516,17 +521,10 @@ export function ReceivableForm({
       await mercoaSession.client?.invoice.update(invoice.id, {
         status: Mercoa.InvoiceStatus.Approved,
       })
-      const url = await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(invoice.id)
-      if (url) {
-        navigator.clipboard.writeText(url).then(
-          function () {
-            toast.info('Email Sent')
-          },
-          function (err) {
-            toast.error('There was an issue generating the email. Please refresh and try again.')
-          },
-        )
-      } else {
+      try {
+        await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(invoice.id)
+        toast.info('Email Sent')
+      } catch (e) {
         toast.error('There was an issue generating the email. Please refresh and try again.')
       }
     } catch (e: any) {
@@ -566,8 +564,8 @@ export function ReceivableForm({
     mercoaSession.debug(response)
     if (response?.id) {
       toast.success('Invoice created')
-      if (onRedirect) {
-        onRedirect(response)
+      if (onUpdate) {
+        onUpdate(response)
       }
     } else {
       toast.error('Invoice failed to create')
@@ -749,7 +747,7 @@ export function ReceivableForm({
           <table className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-4 mercoa-gap-4 mercoa-items-start mercoa-p-0.5">
             <MercoaInput
               name="amount"
-              label="Invoice Total Amount"
+              label="Total Amount"
               type="currency"
               readOnly
               errors={errors}
@@ -781,7 +779,7 @@ export function ReceivableForm({
                 htmlFor="description"
                 className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 "
               >
-                Notes
+                Internal Notes
               </label>
               <div className="mercoa-mt-1">
                 <textarea
@@ -841,16 +839,13 @@ export function ReceivableForm({
           )}
         </div>
 
-        <div className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-4 mercoa-gap-4 mercoa-items-end mercoa-p-0.5">
+        <div className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-1 mercoa-gap-2 mercoa-items-end mercoa-p-0.5">
           {!invoice?.id ? (
             <MercoaButton className="mercoa-mt-5" isEmphasized>
               Create Invoice
             </MercoaButton>
           ) : (
             <>
-              {invoice.status === Mercoa.InvoiceStatus.Draft && (
-                <MercoaButton isEmphasized={false}>Update Draft</MercoaButton>
-              )}
               <MercoaButton
                 isEmphasized={false}
                 onClick={getPDFLink}
@@ -867,6 +862,9 @@ export function ReceivableForm({
               >
                 <GlobeAltIcon className="mercoa-size-5 md:mercoa-mr-2" /> Get Payment Link
               </MercoaButton>
+              {invoice.status === Mercoa.InvoiceStatus.Draft && (
+                <MercoaButton isEmphasized={false}>Save Draft</MercoaButton>
+              )}
               <MercoaButton
                 isEmphasized
                 onClick={sendEmail}
