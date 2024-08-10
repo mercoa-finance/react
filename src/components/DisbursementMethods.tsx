@@ -279,26 +279,21 @@ export function DisbursementMethods({
 
     return (
       <div className="mercoa-m-auto mercoa-w-96 mercoa-text-left">
-        <div
-          className="mercoa-mt-3 mercoa-rounded-mercoa mercoa-bg-white mercoa-p-5 mercoa-text-center mercoa-shadow-lg"
-          style={{ minHeight: '300px' }}
-        >
-          {selectedMethod?.type === Mercoa.PaymentMethodType.BankAccount && (
-            <AddBankViaPlaidOrManual title={<></>} actions={actions} onSubmit={onNewPMSubmit} />
-          )}
-          {selectedMethod?.type === Mercoa.PaymentMethodType.Check && (
-            <AddCheck
-              title={<></>}
-              actions={actions}
-              onSubmit={(e) => {
-                if (e) onNewPMSubmit(e)
-              }}
-            />
-          )}
-          {schema && selectedMethod?.type === Mercoa.PaymentMethodType.Custom && (
-            <AddCustomPaymentMethod title={<></>} actions={actions} onSubmit={onNewPMSubmit} schema={schema} />
-          )}
-        </div>
+        {selectedMethod?.type === Mercoa.PaymentMethodType.BankAccount && (
+          <AddBankViaPlaidOrManual title={<></>} actions={actions} onSubmit={onNewPMSubmit} />
+        )}
+        {selectedMethod?.type === Mercoa.PaymentMethodType.Check && (
+          <AddCheck
+            title={<></>}
+            actions={actions}
+            onSubmit={(e) => {
+              if (e) onNewPMSubmit(e)
+            }}
+          />
+        )}
+        {schema && selectedMethod?.type === Mercoa.PaymentMethodType.Custom && (
+          <AddCustomPaymentMethod title={<></>} actions={actions} onSubmit={onNewPMSubmit} schema={schema} />
+        )}
       </div>
     )
   }

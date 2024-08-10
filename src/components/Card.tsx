@@ -8,6 +8,7 @@ import {
   LoadingSpinnerIcon,
   MercoaButton,
   NoSession,
+  PaymentMethodButton,
   PaymentMethodList,
   useMercoaSession,
 } from './index'
@@ -248,29 +249,13 @@ export function Card({
     )
   } else {
     return (
-      <div
-        onClick={() => {
-          if (onSelect) onSelect(account)
-        }}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
-          onSelect ? 'mercoa-cursor-pointer ' : ''
-        }`}
-      >
-        <div
-          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
-            selected
-              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
-              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
-          }`}
-        >
-          <PlusIcon className="mercoa-size-5" />
-        </div>
-        <div className="mercoa-min-w-0 mercoa-flex-1">
-          <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
-          <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">Add new card</p>
-          <p className="mercoa-truncate mercoa-text-sm mercoa-text-gray-500"></p>
-        </div>
-      </div>
+      <PaymentMethodButton
+        onSelect={onSelect}
+        account={account}
+        selected={selected}
+        icon={<PlusIcon className="mercoa-size-5" />}
+        text="Add new card"
+      />
     )
   }
 }

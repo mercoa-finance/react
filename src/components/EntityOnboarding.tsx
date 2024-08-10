@@ -37,6 +37,7 @@ import {
   MercoaInput,
   MercoaInputLabel,
   NoSession,
+  PaymentMethodButton,
   Tooltip,
   inputClassName,
   useMercoaSession,
@@ -844,6 +845,72 @@ export function FormationDateBlock({
   )
 }
 
+export function TosBlock({
+  register,
+  errors,
+  readOnly,
+  required,
+}: {
+  register: UseFormRegister<any>
+  errors: any
+  required?: boolean
+  readOnly?: boolean
+}) {
+  const mercoaSession = useMercoaSession()
+  return (
+    <div className="mercoa-text-left mercoa-p-4 mercoa-text-sm mercoa-rounded-mercoa mercoa-bg-gray-50 mercoa-items-center">
+      <div>
+        <b>{capitalize(mercoaSession?.organization?.name)}</b> has partnered with Mercoa to provide financial services.
+        By clicking the button below, you agree to the{' '}
+        <a
+          href="https://mercoa.com/legal/platform-agreement/"
+          target="_blank"
+          rel="noreferrer"
+          className="mercoa-text-blue-500 mercoa-underline"
+        >
+          Platform Agreement
+        </a>{' '}
+        and{' '}
+        <a
+          href="https://mercoa.com/legal/privacy-policy/"
+          target="_blank"
+          rel="noreferrer"
+          className="mercoa-text-blue-500 mercoa-underline"
+        >
+          Privacy Policy
+        </a>
+        .
+      </div>
+      <div className="mercoa-relative mercoa-my-4 mercoa-flex mercoa-items-start mercoa-items-center">
+        <div className="mercoa-flex mercoa-h-5 mercoa-items-center">
+          <input
+            {...register('tos')}
+            id="tos"
+            type="checkbox"
+            readOnly={readOnly}
+            required={required}
+            className="mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
+          />
+        </div>
+        <div className="mercoa-ml-3 mercoa-text-sm">
+          <label htmlFor="tos" className="mercoa-font-bold mercoa-text-gray-800 mercoa-cursor-pointer">
+            I have read and accept the{' '}
+            <a
+              href="https://mercoa.com/legal/platform-agreement/"
+              target="_blank"
+              rel="noreferrer"
+              className="mercoa-text-blue-500 mercoa-underline"
+            >
+              {' '}
+              terms of service
+            </a>
+          </label>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export async function createOrUpdateEntity({
   entityId,
   onClose,
@@ -1288,7 +1355,7 @@ export function Representatives({
   showEdit,
 }: {
   children?: Function
-  onSelect?: Function
+  onSelect?: (rep?: Mercoa.RepresentativeResponse) => void
   showAdd?: boolean
   showEdit?: boolean
 }) {
@@ -1375,7 +1442,7 @@ export function RepresentativeComponent({
 }: {
   children?: Function
   representative?: Mercoa.RepresentativeResponse
-  onSelect?: Function
+  onSelect?: (rep?: Mercoa.RepresentativeResponse) => void
   showEdit?: boolean
   selected?: boolean
 }) {
@@ -1446,29 +1513,13 @@ export function RepresentativeComponent({
     )
   } else {
     return (
-      <div
-        onClick={() => {
-          if (onSelect) onSelect(representative)
-        }}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
-          onSelect ? 'mercoa-cursor-pointer ' : ''
-        }`}
-      >
-        <div
-          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
-            selected
-              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
-              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
-          }`}
-        >
-          <PlusIcon className="mercoa-size-5" />
-        </div>
-        <div className="mercoa-min-w-0 mercoa-flex-1">
-          <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
-          <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">Add new representative</p>
-          <p className="mercoa-truncate mercoa-text-sm mercoa-text-gray-500"></p>
-        </div>
-      </div>
+      <PaymentMethodButton
+        onSelect={onSelect}
+        account={representative}
+        selected={selected}
+        icon={<PlusIcon className="mercoa-size-5" />}
+        text="Add newrepresentative"
+      />
     )
   }
 }
@@ -1613,11 +1664,7 @@ export function AcceptTosForm({
       })}
     >
       <div className="mercoa-mb-10 mercoa-text-sm">
-        <b>{capitalize(mercoaSession.organization?.name)}</b> has partnered with{' '}
-        <a href="https://mercoa.com" target="_blank" rel="noreferrer" className="mercoa-text-blue-500 mercoa-underline">
-          Mercoa
-        </a>{' '}
-        to provide financial services.
+        <b>{capitalize(mercoaSession.organization?.name)}</b> has partnered with Mercoa to provide financial services.
         <br />
         <br />
         By clicking the button below, you agree to the{' '}
@@ -1627,7 +1674,7 @@ export function AcceptTosForm({
           rel="noreferrer"
           className="mercoa-text-blue-500 mercoa-underline"
         >
-          Mercoa Platform Agreement
+          Platform Agreement
         </a>{' '}
         and{' '}
         <a
@@ -1649,7 +1696,7 @@ export function AcceptTosForm({
           />
         </div>
         <div className="mercoa-ml-3 mercoa-text-sm">
-          <label htmlFor="isController" className="mercoa-font-medium mercoa-text-gray-700">
+          <label htmlFor="mercoa" className="mercoa-font-medium mercoa-text-gray-700">
             I have read and accept the{' '}
             <a
               href="https://mercoa.com/legal/platform-agreement/"
@@ -1658,7 +1705,7 @@ export function AcceptTosForm({
               className="mercoa-text-blue-500 mercoa-underline"
             >
               {' '}
-              Mercoa terms of service
+              terms of service
             </a>
           </label>
         </div>
@@ -1721,6 +1768,7 @@ export function EntityOnboardingForm({
           : '',
       mcc: entity.profile.business?.industryCodes?.mcc ?? '',
       dob: new Date(),
+      tos: entity.acceptedTos,
 
       businessType: entity.profile.business?.businessType,
       legalBusinessName: entity.profile.business?.legalBusinessName ?? '',
@@ -1805,6 +1853,9 @@ export function EntityOnboardingForm({
           isPayee: admin ? entityData.isPayee : type === 'payee',
           isPayor: admin ? entityData.isPayor : type === 'payor',
         })
+        if (entityData.tos && !entity.acceptedTos) {
+          await mercoaSession.client?.entity.acceptTermsOfService(entity.id)
+        }
         if (admin) {
           toast.success('Entity Updated')
         }
@@ -1879,6 +1930,16 @@ export function EntityOnboardingForm({
                 readOnly={!onboardingOptions.individual.ssn.edit}
                 required={onboardingOptions.individual.ssn.required}
               />
+            )}
+            {onboardingOptions?.individual.termsOfService.show && (
+              <div className="mercoa-col-span-2">
+                <TosBlock
+                  register={register}
+                  errors={errors}
+                  readOnly={!onboardingOptions.individual.termsOfService.edit}
+                  required={onboardingOptions.individual.termsOfService.required}
+                />
+              </div>
             )}
           </>
         )}
@@ -1971,6 +2032,16 @@ export function EntityOnboardingForm({
                   errors={errors}
                   readOnly={!onboardingOptions.business.description.edit}
                   required={onboardingOptions.business.description.required}
+                />
+              </div>
+            )}
+            {onboardingOptions?.business.termsOfService.show && (
+              <div className="mercoa-col-span-2">
+                <TosBlock
+                  register={register}
+                  errors={errors}
+                  readOnly={!onboardingOptions.business.termsOfService.edit}
+                  required={onboardingOptions.business.termsOfService.required}
                 />
               </div>
             )}
@@ -2184,8 +2255,7 @@ export function EntityOnboarding({
   const [entity, setEntity] = useState<Mercoa.EntityResponse>()
   const [representatives, setRepresentatives] = useState<Mercoa.RepresentativeResponse[]>([])
   const [entityData, setEntityData] = useState<OnboardingFormData>()
-  const [formState, setFormState] = useState<'entity' | 'representatives' | 'payments' | 'tos' | 'complete'>('entity')
-  const [loading, setLoading] = useState(false)
+  const [formState, setFormState] = useState<'entity' | 'representatives' | 'payments' | 'complete'>('entity')
 
   const mercoaSession = useMercoaSession()
 
@@ -2217,6 +2287,7 @@ export function EntityOnboarding({
     if (!mercoaSession.organization) return
     if (!mercoaSession.client) return
     if (!entity) return
+    console.log({ formState })
     // Representatives transition function
     if (formState === 'representatives') {
       // Skip representatives, transition to payments if entity is individual
@@ -2243,80 +2314,25 @@ export function EntityOnboarding({
       // Skip payments, transition to TOS if paymentMethod not set in onboarding options
       if (type === 'payee') {
         if (!mercoaSession.organization.payeeOnboardingOptions?.paymentMethod) {
-          setFormState('tos')
+          setFormState('complete')
           return
         }
       } else if (type === 'payor') {
         if (!mercoaSession.organization.payorOnboardingOptions?.paymentMethod) {
-          setFormState('tos')
+          setFormState('complete')
           return
         }
       }
     }
-    // TOS transition function
-    if (formState === 'tos' && !needsToAcceptTos()) {
-      onSubmit()
-    }
     if (formState === 'complete') {
+      if (entity.acceptedTos) {
+        mercoaSession.client?.entity.initiateKyb(entity.id)
+      }
       onComplete?.()
     }
   }, [mercoaSession.organization, mercoaSession.client, entity, entityData, formState, type])
 
-  function needsToAcceptTos() {
-    if (entity?.acceptedTos) {
-      return false
-    }
-    if (type === 'payee') {
-      if (entity?.accountType === 'business') {
-        if (!mercoaSession.organization?.payeeOnboardingOptions?.business.termsOfService.required) {
-          return false
-        }
-      } else {
-        if (!mercoaSession.organization?.payeeOnboardingOptions?.individual.termsOfService.required) {
-          return false
-        }
-      }
-    }
-    if (type === 'payor') {
-      if (entity?.accountType === 'business') {
-        if (!mercoaSession.organization?.payorOnboardingOptions?.business.termsOfService.required) {
-          return false
-        }
-      } else {
-        if (!mercoaSession.organization?.payorOnboardingOptions?.individual.termsOfService.required) {
-          return false
-        }
-      }
-    }
-    return true
-  }
-
-  async function onSubmit(method?: Mercoa.PaymentMethodResponse) {
-    if (!entity) return
-    if (!entityData) return
-    if (!mercoaSession.client) return
-
-    const isPayee = type === 'payee' || entity.isPayee
-    const isPayor = type === 'payor' || entity.isPayor
-
-    await createOrUpdateEntity({
-      data: entityData,
-      entityId: entity.id,
-      mercoaClient: mercoaSession.client,
-      isPayee,
-      isPayor,
-    })
-
-    if (method) {
-      await mercoaSession.client.entity.paymentMethod.update(entity.id, method.id, {
-        type: method.type,
-        defaultDestination: true,
-      })
-    }
-    setFormState('complete')
-  }
-
-  if (loading || !entity || !mercoaSession.organization || !mercoaSession.client)
+  if (!entity || !mercoaSession.organization || !mercoaSession.client)
     return (
       <div className="mercoa-text-center mercoa-pt-20 mercoa-w-full">
         <LoadingSpinnerIcon />
@@ -2435,11 +2451,7 @@ export function EntityOnboarding({
             type={type === 'payor' ? 'payment' : 'disbursement'}
             entity={entity}
             onSelect={() => {
-              if (needsToAcceptTos()) {
-                setFormState('tos')
-              } else {
-                setFormState('complete')
-              }
+              setFormState('complete')
             }}
             goToPreviousStep={async () => {
               await mercoaSession.refresh()
@@ -2448,25 +2460,6 @@ export function EntityOnboarding({
           />
         </div>
       )}
-
-      <div className={formState === 'tos' ? 'p-8 mercoa-text-center mercoa-text-lg' : 'mercoa-hidden'}>
-        <AcceptTosForm
-          entity={entity}
-          onComplete={async () => {
-            setLoading(true)
-            if (entity.accountType === 'business') {
-              try {
-                await mercoaSession.client?.entity.initiateKyb(entity.id)
-              } catch (e) {
-                console.error(e)
-              }
-            }
-            await mercoaSession.refresh()
-            setLoading(false)
-            setFormState('complete')
-          }}
-        />
-      </div>
 
       <div className={formState === 'complete' ? 'p-8 mercoa-text-center mercoa-text-lg' : 'mercoa-hidden'}>
         <h1 className="mercoa-text-2xl mercoa-font-medium mercoa-text-gray-900">Thank you!</h1>

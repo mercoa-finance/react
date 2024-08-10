@@ -895,18 +895,25 @@ export function PayableForm({
       approvers: data.approvers.filter((e: { assignedUserId: string }) => e.assignedUserId),
       vendorId: data.vendorId,
       paymentDestinationId: data.paymentDestinationId,
-      ...(data.paymentDestinationType === 'check' && {
+      ...(data.paymentDestinationType === Mercoa.PaymentMethodType.Check && {
         paymentDestinationOptions: data.paymentDestinationOptions ?? {
           type: 'check',
           delivery: 'MAIL',
         },
       }),
-      ...(data.paymentDestinationType === 'bankAccount' && {
+      ...(data.paymentDestinationType === Mercoa.PaymentMethodType.BankAccount && {
         paymentDestinationOptions: data.paymentDestinationOptions ?? {
           type: 'bankAccount',
           delivery: 'ACH_SAME_DAY',
         },
       }),
+      ...(data.paymentDestinationType === Mercoa.PaymentMethodType.Utility &&
+        data.paymentDestinationOptions && {
+          paymentDestinationOptions: {
+            type: 'utility',
+            accountId: data.paymentDestinationOptions.accountId,
+          },
+        }),
       lineItems: data.lineItems.map((lineItem: any) => {
         const out: Mercoa.InvoiceLineItemUpdateRequest = {
           ...(lineItem.id && { id: lineItem.id }),
@@ -1092,6 +1099,16 @@ export function PayableForm({
           id = newPm?.id
         }
         invoiceData.paymentDestinationId = id
+      }
+    }
+
+    //if the payment destination is utility, make sure the source is bankAccount or custom
+    if (data.paymentDestinationType === 'utility') {
+      if (data.paymentSourceType !== 'bankAccount' && !data.paymentSourceType.startsWith('cpms_')) {
+        setError('paymentSourceId', {
+          type: 'manual',
+          message: 'Please select a payment source that can make utility payments',
+        })
       }
     }
 
@@ -2631,6 +2648,8 @@ export function PayableSelectPaymentMethod({
     )
     if (existingOffPlatformPaymentMethod) {
       setValue(sourceOrDestination, existingOffPlatformPaymentMethod.id)
+      setValue(paymentMethodTypeKey, Mercoa.PaymentMethodType.OffPlatform)
+      setValue('paymentDestinationOptions', undefined)
       clearErrors(sourceOrDestination)
     } else {
       // if there is no off platform payment method, we need to create one
@@ -2643,6 +2662,7 @@ export function PayableSelectPaymentMethod({
             await refreshPaymentMethods()
             setValue(sourceOrDestination, resp.id)
             setValue(paymentMethodTypeKey, Mercoa.PaymentMethodType.OffPlatform)
+            setValue('paymentDestinationOptions', undefined)
             clearErrors(sourceOrDestination)
           }
         })

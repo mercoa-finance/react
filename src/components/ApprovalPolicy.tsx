@@ -45,6 +45,7 @@ export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
   const [users, setUsers] = useState<Mercoa.EntityUserResponse[]>([])
   const [roles, setRoles] = useState<string[]>([])
   const [counterparties, setCounterparties] = useState<Mercoa.CounterpartyResponse[]>([])
+  const [isSaving, setIsSaving] = useState(false)
 
   const methods = useForm({
     defaultValues: {
@@ -93,6 +94,8 @@ export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
   }, [mercoaSession.entity?.id, mercoaSession.refreshId, mercoaSession.token])
 
   async function onSubmit(data: { policies: Mercoa.ApprovalPolicyResponse[] }) {
+    if (isSaving) return
+    setIsSaving(true)
     const toasts: { id: string; success: boolean }[] = []
 
     // Delete policies that are no longer in the form
@@ -201,6 +204,7 @@ export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
         }
       }),
     )
+    setIsSaving(false)
     if (toasts.every((e) => e.success)) {
       toast('Approval Policies Saved', {
         type: 'success',
@@ -235,7 +239,7 @@ export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
           formPolicies={formPolicies}
           upstreamPolicyId="root"
         />
-        <MercoaButton isEmphasized size="md" className="mercoa-mt-5">
+        <MercoaButton isEmphasized size="md" className="mercoa-mt-5" disabled={isSaving}>
           Save Rules
         </MercoaButton>
       </form>

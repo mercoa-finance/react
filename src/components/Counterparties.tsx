@@ -34,6 +34,7 @@ import {
   MercoaContext,
   MercoaInput,
   NoSession,
+  PaymentMethodButton,
   TableNavigation,
   Tooltip,
   inputClassName,
@@ -1512,9 +1513,7 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
-            ?.map((method) => (
-              <PaymentMethodCard method={method} key={method.id} />
-            ))}
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
         </div>
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center  mercoa-border-t mercoa-border-gray-900/5 ">
           <dd className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
@@ -1524,18 +1523,14 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.Check)
-            ?.map((method) => (
-              <PaymentMethodCard method={method} key={method.id} />
-            ))}
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
         </div>
 
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center mercoa-border-t mercoa-border-gray-900/5 " />
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.Custom)
-            ?.map((method) => (
-              <PaymentMethodCard method={method} key={method.id} />
-            ))}
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
         </div>
       </div>
     )
@@ -1639,29 +1634,13 @@ export function CounterpartyAccount({
     )
   } else {
     return (
-      <div
-        onClick={() => {
-          if (onSelect) onSelect()
-        }}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
-          onSelect ? 'mercoa-cursor-pointer ' : ''
-        }`}
-      >
-        <div
-          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
-            selected
-              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
-              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
-          }`}
-        >
-          <PlusIcon className="mercoa-size-5" />
-        </div>
-        <div className="mercoa-min-w-0 mercoa-flex-1">
-          <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
-          <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">Add new utility account</p>
-          <p className="mercoa-truncate mercoa-text-sm mercoa-text-gray-500"></p>
-        </div>
-      </div>
+      <PaymentMethodButton
+        onSelect={onSelect}
+        account={account}
+        selected={selected}
+        icon={<PlusIcon className="mercoa-size-5" />}
+        text="Add new utility account"
+      />
     )
   }
 }
