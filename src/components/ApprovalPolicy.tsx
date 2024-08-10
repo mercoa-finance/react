@@ -80,7 +80,7 @@ export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
     if (!mercoaSession.users) return
     setUsers(mercoaSession.users)
     setRoles([...new Set(mercoaSession.users.map((user) => user.roles).flat())])
-  }, [mercoaSession.users])
+  }, [mercoaSession.users, mercoaSession.entity?.id, mercoaSession.refreshId, mercoaSession.token])
 
   useEffect(() => {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return

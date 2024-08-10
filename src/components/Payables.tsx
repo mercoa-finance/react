@@ -1574,10 +1574,12 @@ export function Payables({
   statuses,
   onSelectInvoice,
   statusSelectionStyle,
+  columns,
 }: {
   statuses?: Array<Mercoa.InvoiceStatus>
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
   statusSelectionStyle?: 'tabs' | 'dropdown'
+  columns?: InvoiceTableColumn[]
 }) {
   const [selectedStatuses, setSelectedStatuses] = useState<Mercoa.InvoiceStatus[]>([Mercoa.InvoiceStatus.Draft])
   const [search, setSearch] = useState<string>('')
@@ -1600,7 +1602,7 @@ export function Payables({
         <StatusTabs statuses={statuses} search={search} onStatusChange={setSelectedStatuses} excludeReceivables />
       )}
       <InvoiceMetrics statuses={selectedStatuses} search={search} excludeReceivables />
-      <PayablesTable statuses={selectedStatuses} search={search} onSelectInvoice={onSelectInvoice} />
+      <PayablesTable statuses={selectedStatuses} search={search} onSelectInvoice={onSelectInvoice} columns={columns} />
     </div>
   )
 }
