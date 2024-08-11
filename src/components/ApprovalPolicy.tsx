@@ -7,11 +7,12 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../lib/currency'
 import {
+  LoadingSpinnerIcon,
   MercoaButton,
   MercoaCombobox,
   MercoaInput,
@@ -41,68 +42,86 @@ function ArrowDownLeftIcon({ className }: { className?: string }) {
 export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
   const mercoaSession = useMercoaSession()
 
-  const [policies, setPolicies] = useState<Mercoa.ApprovalPolicyResponse[]>([])
-  const [users, setUsers] = useState<Mercoa.EntityUserResponse[]>([])
-  const [roles, setRoles] = useState<string[]>([])
-  const [counterparties, setCounterparties] = useState<Mercoa.CounterpartyResponse[]>([])
+  const [policies, setPolicies] = useState<Mercoa.ApprovalPolicyResponse[]>()
+  const [counterparties, setCounterparties] = useState<Mercoa.CounterpartyResponse[]>()
   const [isSaving, setIsSaving] = useState(false)
+
+  const roles = useMemo(() => [...new Set(mercoaSession.users.map((user) => user.roles).flat())], [mercoaSession.users])
 
   const methods = useForm({
     defaultValues: {
-      policies,
+      policies: policies ?? [],
     },
   })
 
   const { register, handleSubmit, watch, setValue, control, reset } = methods
 
-  const { append, remove, fields } = useFieldArray({
+  const { append, remove } = useFieldArray({
     control,
     name: 'policies',
   })
 
   const formPolicies = watch('policies')
 
-  useEffect(() => {
+  async function getPolicies() {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    reset({
-      policies,
-    })
-  }, [policies])
-
-  useEffect(() => {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    mercoaSession.client?.entity.approvalPolicy.getAll(mercoaSession.entity.id).then((resp) => {
-      if (resp) setPolicies(resp)
-    })
-  }, [mercoaSession.entity?.id, mercoaSession.refreshId, mercoaSession.token])
-
-  useEffect(() => {
-    if (!mercoaSession.users) return
-    setUsers(mercoaSession.users)
-    setRoles([...new Set(mercoaSession.users.map((user) => user.roles).flat())])
-  }, [mercoaSession.users, mercoaSession.entity?.id, mercoaSession.refreshId, mercoaSession.token])
-
-  useEffect(() => {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    mercoaSession.client?.entity.counterparty
-      .findPayees(mercoaSession.entity.id, {
-        limit: 100,
+    const resp = await mercoaSession.client?.entity.approvalPolicy.getAll(mercoaSession.entity.id)
+    if (resp) {
+      setPolicies(resp)
+      reset({
+        policies: resp,
       })
-      .then((resp) => {
-        if (resp) setCounterparties(resp.data)
-      })
-  }, [mercoaSession.entity?.id, mercoaSession.refreshId, mercoaSession.token])
+    }
+  }
+
+  async function getCounterparties() {
+    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    const resp = await mercoaSession.client?.entity.counterparty.findPayees(mercoaSession.entity.id, {
+      limit: 100,
+    })
+    if (resp) setCounterparties(resp.data)
+  }
+
+  useEffect(() => {
+    getPolicies()
+    getCounterparties()
+  }, [mercoaSession.entity?.id, mercoaSession.token])
 
   async function onSubmit(data: { policies: Mercoa.ApprovalPolicyResponse[] }) {
-    if (isSaving) return
+    if (isSaving || !policies) return
     setIsSaving(true)
     const toasts: { id: string; success: boolean }[] = []
+
+    const validRules = data.policies.every((policy, index) => {
+      if (policy.rule.identifierList.value.filter((e) => e).length < 1) {
+        toast(`Error With Rule ${index + 1}: Number of approvers cannot be less than 1`, {
+          type: 'error',
+        })
+        return false
+      }
+
+      if (
+        policy.rule.identifierList.type === 'userList' &&
+        policy.rule.numApprovers > policy.rule.identifierList.value.length
+      ) {
+        toast(`Error With Rule ${index + 1}: Number of approvers cannot be more than number of users`, {
+          type: 'error',
+        })
+        return false
+      }
+      return true
+    })
+
+    if (!validRules) {
+      setIsSaving(false)
+      return
+    }
 
     // Delete policies that are no longer in the form
     await Promise.all(
       policies.map(async (policy) => {
         if (!mercoaSession.entity?.id) return
-        if (!data.policies.find((e) => e.id == policy.id)) {
+        if (!data.policies.find((e) => e.id === policy.id)) {
           try {
             await mercoaSession.client?.entity.approvalPolicy.delete(mercoaSession.entity.id, policy.id)
             toasts.push({ id: policy.id, success: true })
@@ -119,7 +138,7 @@ export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
       root: 'root',
     }
     data.policies.forEach((e) => {
-      idMap[e.id] = e.id.indexOf('~') ? '' : e.id
+      idMap[e.id] = e.id.includes('~') ? '' : e.id
     })
 
     await Promise.all(
@@ -168,23 +187,6 @@ export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
           },
         }
 
-        if (policy.rule.identifierList.value.filter((e) => e).length < 1) {
-          toast(`Error With Rule ${index + 1}: Number of approvers cannot be less than 1`, {
-            type: 'error',
-          })
-          return
-        }
-
-        if (
-          data.rule.identifierList.type === 'userList' &&
-          policy.rule.numApprovers > policy.rule.identifierList.value.length
-        ) {
-          toast(`Error With Rule ${index + 1}: Number of approvers cannot be more than number of users`, {
-            type: 'error',
-          })
-          return
-        }
-
         try {
           let updatedPolicy: Mercoa.ApprovalPolicyResponse | undefined
           if (data?.id && data?.id.indexOf('~') < 0 && data?.id != 'fallback') {
@@ -204,36 +206,37 @@ export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
         }
       }),
     )
-    setIsSaving(false)
+    await getPolicies()
     if (toasts.every((e) => e.success)) {
       toast('Approval Policies Saved', {
         type: 'success',
       })
       if (onSave) onSave()
-      mercoaSession.refresh()
     } else {
       console.error(toasts)
       toast('Error Saving Some Approval Policies', {
         type: 'error',
       })
     }
+    setIsSaving(false)
   }
 
   if (!mercoaSession.client) return <NoSession componentName="ApprovalPolicies" />
+
+  if (!policies || !counterparties || !formPolicies) return <LoadingSpinnerIcon />
 
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <Level
           level={0}
-          fields={formPolicies}
           remove={remove}
           append={append}
           control={control}
           watch={watch}
           register={register}
           setValue={setValue}
-          users={users}
+          users={mercoaSession.users}
           roles={roles}
           counterparties={counterparties}
           formPolicies={formPolicies}
@@ -250,7 +253,6 @@ export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
 function Level({
   level,
   upstreamPolicyId,
-  fields,
   remove,
   append,
   control,
@@ -264,7 +266,6 @@ function Level({
 }: {
   level: number
   upstreamPolicyId: string
-  fields: Mercoa.ApprovalPolicyResponse[]
   remove: any
   append: any
   control: any
@@ -276,7 +277,7 @@ function Level({
   counterparties: Mercoa.CounterpartyResponse[]
   formPolicies: Mercoa.ApprovalPolicyResponse[]
 }) {
-  const policies = fields.filter((e) => e.upstreamPolicyId === upstreamPolicyId)
+  const policies = formPolicies.filter((e) => e.upstreamPolicyId === upstreamPolicyId)
   return (
     <ul role="list" className={`mercoa-space-y-6 mercoa-max-w-[800px] ${nestedBg[level]}`}>
       <li className={`mercoa-relative mercoa-flex mercoa-gap-x-4 ${upstreamPolicyId === 'root' ? '' : 'mercoa-mt-1'}`}>
@@ -321,7 +322,7 @@ function Level({
                   <button
                     className="mercoa-absolute mercoa-top-2 mercoa-right-2 mercoa-text-gray-400 hover:mercoa-text-gray-500"
                     type="button"
-                    onClick={() => remove(fields.findIndex((e) => e.id == policy.id))}
+                    onClick={() => remove(formPolicies.findIndex((e) => e.id == policy.id))}
                   >
                     <span className="mercoa-sr-only">Remove</span>
                     <XMarkIcon className="mercoa-size-5" />
@@ -333,7 +334,7 @@ function Level({
                     register={register}
                     setValue={setValue}
                     counterparties={counterparties}
-                    index={fields.findIndex((e) => e.id == policy.id)}
+                    index={formPolicies.findIndex((e) => e.id == policy.id)}
                   />
                 </div>
                 <Rule
@@ -342,13 +343,12 @@ function Level({
                   setValue={setValue}
                   users={users}
                   roles={roles}
-                  index={fields.findIndex((e) => e.id == policy.id)}
-                  remove={() => remove(fields.findIndex((e) => e.id == policy.id))}
+                  index={formPolicies.findIndex((e) => e.id == policy.id)}
+                  remove={() => remove(formPolicies.findIndex((e) => e.id == policy.id))}
                 />
                 <div className="mercoa-ml-10">
                   <Level
                     level={level + 1}
-                    fields={formPolicies}
                     remove={remove}
                     append={append}
                     control={control}
@@ -410,20 +410,20 @@ function Level({
                 </span>
               </p>
             </div>
-            {fields.map((policy, index) => {
+            {formPolicies.map((policy, index) => {
               if (policy.trigger.length > 0) return <></>
               return (
                 <div className="mercoa-ml-10" key={index}>
                   <Rule
-                    key={fields.findIndex((e) => e.id == policy.id)}
+                    key={formPolicies.findIndex((e) => e.id == policy.id)}
                     watch={watch}
                     register={register}
                     setValue={setValue}
                     users={users}
                     roles={roles}
-                    index={fields.findIndex((e) => e.id == policy.id)}
+                    index={formPolicies.findIndex((e) => e.id == policy.id)}
                     noTrigger
-                    remove={() => remove(fields.findIndex((e) => e.id == policy.id))}
+                    remove={() => remove(formPolicies.findIndex((e) => e.id == policy.id))}
                   />
                 </div>
               )
@@ -695,20 +695,22 @@ function Rule({
   remove: () => void
   noTrigger?: boolean
 }) {
-  const [firstRender, setFirstRender] = useState(true)
   const [ruleIdType, setRuleIdType] = useState('rolesList')
 
   const ruleIdTypeWatch = watch(`policies.${index}.rule.identifierList.type`)
 
+  const listValueName = `policies.${index}.rule.identifierList.value`
+  const listValue = watch(listValueName)
+
   useEffect(() => {
-    if (!firstRender) {
-      setValue(`policies.${index}.rule.type`, 'approver')
+    if (ruleIdTypeWatch === 'rolesList' && listValue?.[0]?.startsWith('user_')) {
+      setValue(listValueName, [])
+    } else if (ruleIdTypeWatch === 'userList' && !listValue?.[0]?.startsWith('user_')) {
+      setValue(listValueName, [])
     }
-    setValue(`policies.${index}.rule.identifierList.value`, [])
     setTimeout(() => {
       setRuleIdType(ruleIdTypeWatch)
-    }, 100)
-    setFirstRender(false)
+    }, 10)
   }, [ruleIdTypeWatch])
 
   return (
@@ -762,14 +764,14 @@ function Rule({
             onChange={(e: string[]) => {
               if (e.length == 0) return
               setValue(
-                `policies.${index}.rule.identifierList.value`,
+                listValueName,
                 e.filter((e) => e),
                 {
                   shouldDirty: true,
                 },
               )
             }}
-            value={watch(`policies.${index}.rule.identifierList.value`)}
+            value={listValue}
             multiple
             displaySelectedAs="pill"
           />
