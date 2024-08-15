@@ -1,12 +1,12 @@
 import { Dialog } from '@headlessui/react'
 import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
-import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import Papa from 'papaparse'
 import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { classNames } from '../lib/lib'
 import { isWeekday } from '../lib/scheduling'
@@ -255,6 +255,8 @@ export type PayablesTableChildrenProps = {
   getPrevious: () => void
   resultsPerPage: number
   setResultsPerPage: (value: number) => void
+  page: number
+  setPage: (value: number) => void
   count: number
   orderBy: Mercoa.InvoiceOrderByField
   setOrderBy: (value: Mercoa.InvoiceOrderByField) => void
@@ -714,6 +716,11 @@ export function PayablesTable({
       },
       resultsPerPage,
       setResultsPerPage,
+      page,
+      setPage : (page: number)=>{
+        if (!invoices) return
+        setPage(page)
+      }, 
       orderBy,
       setOrderBy,
       orderDirection,
@@ -1047,6 +1054,22 @@ export function PayablesTable({
                   />
                 </>
               )}
+            {currentStatuses.includes(Mercoa.InvoiceStatus.Scheduled) && selectedInvoices.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
+                  onClick={() => setShowBatchScheduleModal(true)}
+                >
+                  Reschedule Payment
+                </button>
+                <SchedulePaymentModal
+                  open={showBatchScheduleModal}
+                  onClose={() => setShowBatchScheduleModal(false)}
+                  setDate={handleSchedulePayment}
+                />
+              </>
+            )}
             {currentStatuses.includes(Mercoa.InvoiceStatus.New) &&
               selectedInvoices.length > 0 &&
               selectedInvoices.some((e) => e.approvers.some((e) => e.assignedUserId === mercoaSession.user?.id)) && (

@@ -189,7 +189,7 @@ export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
 
         try {
           let updatedPolicy: Mercoa.ApprovalPolicyResponse | undefined
-          if (data?.id && data?.id.indexOf('~') < 0 && data?.id != 'fallback') {
+          if (data?.id && data?.id.indexOf('~') < 0 && !data?.id.startsWith('fallback')) {
             updatedPolicy = await mercoaSession.client?.entity.approvalPolicy.update(
               mercoaSession.entity.id,
               data.id,
@@ -401,11 +401,9 @@ function Level({
               </div>
               <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500 mercoa-ml-4">
                 <span className="mercoa-font-medium mercoa-text-gray-900 ">
-                  Always apply the following rule:
+                  Always apply the following rules:
                   <div className="mercoa-mt-1">
-                    {formPolicies.filter((e) => e.trigger.length === 0).length === 0 && (
-                      <AddRule upstreamPolicyId="root" append={append} trigger={[]} id="fallback" />
-                    )}
+                    <AddRule upstreamPolicyId="root" append={append} trigger={[]} id={'fallback-' + Math.random()} />
                   </div>
                 </span>
               </p>

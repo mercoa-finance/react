@@ -45,6 +45,7 @@ import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
+import { classNames } from '../lib/lib'
 import { isSupportedScheduleDate, isWeekday } from '../lib/scheduling'
 import {
   AddBankAccountForm,
@@ -65,6 +66,7 @@ import {
   NoSession,
   PayableCounterpartySearch,
   PayablesInlineForm,
+  Switch,
   Tooltip,
   counterpartyYupValidation,
   inputClassName,
@@ -73,6 +75,7 @@ import {
   useDebounce,
   useMercoaSession,
 } from './index'
+import { RecurringSchedule } from './RecurringSchedule'
 dayjs.extend(utc)
 dayjs.extend(minMax)
 dayjs.extend(tz)
@@ -82,13 +85,14 @@ const dJSON = require('dirty-json')
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
 const afterScheduledStatus = [
-  Mercoa.InvoiceStatus.Scheduled,
   Mercoa.InvoiceStatus.Pending,
   Mercoa.InvoiceStatus.Paid,
   Mercoa.InvoiceStatus.Canceled,
   Mercoa.InvoiceStatus.Archived,
   Mercoa.InvoiceStatus.Refused,
 ]
+
+const afterApprovedStatus = [...afterScheduledStatus, Mercoa.InvoiceStatus.Scheduled]
 
 export type PayableDetailsChildrenProps = {
   invoice?: Mercoa.InvoiceResponse
@@ -243,6 +247,7 @@ export type PayableFormChildrenProps = {
   watch: (name: UseFormWatch<Mercoa.InvoiceCreationRequest>) => any
   errors: FieldErrors<Mercoa.InvoiceCreationRequest>
   isLoading: boolean
+  submitForm: () => void
 }
 
 export function PayableForm({
@@ -310,6 +315,7 @@ export function PayableForm({
       paymentSourceType: yup.string(),
       paymentSourceCheckEnabled: yup.boolean().nullable(),
       paymentSourceSchemaId: yup.string().nullable(),
+      paymentSchedule: yup.mixed().nullable(),
       hasDocuments: yup.boolean().nullable(),
       saveAsStatus: yup.string().nullable(),
       saveAsAdmin: yup.boolean(),
@@ -376,6 +382,7 @@ export function PayableForm({
         country: 'US',
       },
       '~cpm~~': {} as any,
+      paymentSchedule: invoice?.paymentSchedule,
       failureType: invoice?.failureType ?? '',
       commentText: '',
       comments: invoice?.comments ?? [],
@@ -463,6 +470,7 @@ export function PayableForm({
     setValue('failureType', invoice?.failureType ?? '')
     setValue('createdAt', invoice?.createdAt)
     setValue('updatedAt', invoice?.updatedAt)
+    setValue('paymentSchedule', invoice?.paymentSchedule)
   }, [invoice])
 
   const { fields: lineItems } = useFieldArray({
@@ -881,6 +889,87 @@ export function PayableForm({
       return
     }
 
+    if (data.paymentSchedule?.type) {
+      if (data.paymentSchedule.ends) {
+        data.paymentSchedule.ends = dayjs(data.paymentSchedule.ends).toISOString()
+      }
+      if (
+        Number.isNaN(data.paymentSchedule.repeatEvery) ||
+        data.paymentSchedule.repeatEvery < 1 ||
+        !data.paymentSchedule.repeatEvery
+      ) {
+        data.paymentSchedule.repeatEvery = 1
+      }
+      if (!data.paymentSchedule) {
+        toast.error('Please select a payment schedule')
+        return
+      }
+      if (data.paymentSchedule.type === 'weekly') {
+        if (data.paymentSchedule.repeatOn === undefined || data.paymentSchedule.repeatOn.length === 0) {
+          toast.error('Please select a day of the week')
+          return
+        }
+        const out: Mercoa.PaymentSchedule = {
+          type: 'weekly',
+          repeatOn: data.paymentSchedule.repeatOn,
+          repeatEvery: Number(data.paymentSchedule.repeatEvery),
+          ends: data.paymentSchedule.ends,
+        }
+        data.paymentSchedule = out
+      } else if (data.paymentSchedule.type === 'monthly') {
+        if (
+          Number.isNaN(data.paymentSchedule.dayOffset) ||
+          data.paymentSchedule.dayOffset < 1 ||
+          !data.paymentSchedule.dayOffset
+        ) {
+          data.paymentSchedule.dayOffset = 1
+        }
+        const out: Mercoa.PaymentSchedule = {
+          type: 'monthly',
+          offsetType: data.paymentSchedule.offsetType ?? 'start',
+          dayOffset: Number(data.paymentSchedule.dayOffset),
+          repeatEvery: Number(data.paymentSchedule.repeatEvery),
+          ends: data.paymentSchedule.ends,
+        }
+        data.paymentSchedule = out
+      } else if (data.paymentSchedule.type === 'yearly') {
+        if (
+          Number.isNaN(data.paymentSchedule.repeatOnDay) ||
+          data.paymentSchedule.repeatOnDay < 1 ||
+          !data.paymentSchedule.repeatOnDay
+        ) {
+          data.paymentSchedule.repeatOnDay = 1
+        }
+        if (
+          Number.isNaN(data.paymentSchedule.repeatOnMonth) ||
+          data.paymentSchedule.repeatOnMonth < 1 ||
+          !data.paymentSchedule.repeatOnMonth
+        ) {
+          data.paymentSchedule.repeatOnMonth = 1
+        }
+        const out: Mercoa.PaymentSchedule = {
+          type: 'yearly',
+          repeatOnDay: Number(data.paymentSchedule.repeatOnDay),
+          repeatOnMonth: Number(data.paymentSchedule.repeatOnMonth),
+          repeatEvery: Number(data.paymentSchedule.repeatEvery),
+          ends: data.paymentSchedule.ends,
+        }
+        data.paymentSchedule = out
+      } else {
+        const out: Mercoa.PaymentSchedule = {
+          type: 'daily',
+          repeatEvery: Number(data.paymentSchedule.repeatEvery),
+          ends: data.paymentSchedule.ends,
+        }
+        data.paymentSchedule = out
+      }
+    } else {
+      data.paymentSchedule = {
+        type: 'oneTime',
+        repeatEvery: 1,
+      }
+    }
+
     const invoiceData: Mercoa.InvoiceCreationRequest = {
       status: data.saveAsStatus || nextInvoiceState,
       amount: Number(data.amount),
@@ -894,6 +983,7 @@ export function PayableForm({
       paymentSourceId: data.paymentSourceId,
       approvers: data.approvers.filter((e: { assignedUserId: string }) => e.assignedUserId),
       vendorId: data.vendorId,
+      paymentSchedule: data.paymentSchedule.type ? data.paymentSchedule : undefined,
       paymentDestinationId: data.paymentDestinationId,
       ...(data.paymentDestinationType === Mercoa.PaymentMethodType.Check && {
         paymentDestinationOptions: data.paymentDestinationOptions ?? {
@@ -1084,9 +1174,9 @@ export function PayableForm({
       }
     }
 
-    //if the payment source is off-platform, make sure the destination is also off-platform
+    //if the payment source is off-platform, make the payment destination destination off-platform too (only if a vendor exists)
     if (data.paymentSourceType === 'offPlatform') {
-      if (data.paymentDestinationType !== 'offPlatform') {
+      if (data.vendorId && data.paymentDestinationType !== 'offPlatform') {
         const existingVendorPaymentMethods = await mercoaSession.client?.entity.paymentMethod.getAll(data.vendorId, {
           type: Mercoa.PaymentMethodType.OffPlatform,
         })
@@ -1174,6 +1264,7 @@ export function PayableForm({
     <div style={{ height: `${height}px` }} className="mercoa-overflow-auto mercoa-pr-2 mercoa-pb-10">
       <FormProvider {...methods}>
         <form
+          id="payable-form"
           onSubmit={handleSubmit(saveInvoiceLoadingWrapper)}
           className={`mercoa-grid-cols-3 mercoa-mt-6 mercoa-grid md:mercoa-gap-x-6 md:mercoa-gap-y-4 mercoa-gap-2 mercoa-p-0.5 ${
             isLoading ? 'mercoa-opacity-50 mercoa-pointer-events-none' : ''
@@ -1194,6 +1285,9 @@ export function PayableForm({
               watch,
               errors: errors as any,
               isLoading,
+              submitForm: () => {
+                handleSubmit(saveInvoiceLoadingWrapper)()
+              },
             })
           ) : (
             <>
@@ -1210,13 +1304,13 @@ export function PayableForm({
               <PaymentDestinationProcessingTime />
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <PayableFees />
+              <PayableRecurringSchedule />
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <PayableApprovers /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <InvoiceComments />
-              <PayableActions admin={admin} />
+              <PayableActions admin={admin} submitForm={handleSubmit(saveInvoiceLoadingWrapper)} />
             </>
           )}
-          <div className="mercoa-mt-20" />
         </form>
       </FormProvider>
     </div>
@@ -1336,6 +1430,7 @@ export function PayableDocument({
   height,
   theme,
   children,
+  renderCustom,
 }: {
   onOcrComplete?: (ocrResponse?: Mercoa.OcrResponse) => void
   setUploadedDocument?: (fileReaderObj: string) => void
@@ -1343,6 +1438,7 @@ export function PayableDocument({
   height: number
   theme?: 'light' | 'dark'
   children?: (props: PayableDocumentChildrenProps) => JSX.Element
+  renderCustom?: { uploadBanner: () => React.ReactNode }
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1435,7 +1531,7 @@ export function PayableDocument({
         </>
       ) : (
         <div className={`mercoa-min-w-[340px]`}>
-          <DocumentUploadBox onFileUpload={onFileUpload} theme={theme} />
+          <DocumentUploadBox onFileUpload={onFileUpload} theme={theme} renderCustom={renderCustom} />
         </div>
       )}
     </div>
@@ -1445,9 +1541,11 @@ export function PayableDocument({
 export function DocumentUploadBox({
   onFileUpload,
   theme,
+  renderCustom,
 }: {
   onFileUpload: (fileReaderObj: string, mimeType: string) => void
   theme?: 'light' | 'dark'
+  renderCustom?: { uploadBanner: () => React.ReactNode }
 }) {
   const blobToDataUrl = (blob: Blob) =>
     new Promise<string>((resolve, reject) => {
@@ -1480,25 +1578,32 @@ export function DocumentUploadBox({
     >
       {({ getRootProps, getInputProps, isDragActive }) => (
         <div
-          className={`mercoa-mt-2 mercoa-flex mercoa-justify-center mercoa-rounded-mercoa mercoa-border mercoa-border-dashed mercoa-border-gray-900/25 ${
-            theme === 'dark' ? 'mercoa-text-gray-100' : 'mercoa-text-gray-600'
-          } ${isDragActive ? 'mercoa-border-mercoa-primary' : 'mercoa-border-gray-300'} mercoa-px-6 mercoa-py-10`}
+          className={classNames(
+            `mercoa-mt-2 mercoa-flex mercoa-justify-center mercoa-rounded-mercoa mercoa-border mercoa-border-dashed mercoa-border-gray-900/25 ${
+              isDragActive ? 'mercoa-border-mercoa-primary' : 'mercoa-border-gray-300'
+            } mercoa-px-6 mercoa-py-10`,
+            renderCustom?.uploadBanner ? 'mercoa-border-none' : '',
+          )}
           {...getRootProps()}
         >
-          <div className="mercoa-text-center">
-            <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
-            <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm">
-              <label
-                htmlFor="file-upload"
-                className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-mercoa mercoa-font-semibold mercoa-text-mercoa-primary focus-within:mercoa-outline-none focus-within:mercoa-ring-1 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2"
-              >
-                <span>Upload an invoice</span>
-                <input {...getInputProps()} />
-              </label>
-              <p className="mercoa-pl-1">or drag and drop</p>
+          <input {...getInputProps()} />
+          {renderCustom?.uploadBanner ? (
+            renderCustom.uploadBanner()
+          ) : (
+            <div className="mercoa-text-center">
+              <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
+              <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm">
+                <label
+                  htmlFor="file-upload"
+                  className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-mercoa mercoa-font-semibold mercoa-text-mercoa-primary focus-within:mercoa-outline-none focus-within:mercoa-ring-1 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2"
+                >
+                  <span>Upload an invoice</span>
+                </label>
+                <p className="mercoa-pl-1">or drag and drop</p>
+              </div>
+              <p className="mercoa-text-xs mercoa-leading-5">PNG, JPG, WEBP, PDF up to 10MB</p>
             </div>
-            <p className="mercoa-text-xs mercoa-leading-5">PNG, JPG, WEBP, PDF up to 10MB</p>
-          </div>
+          )}
         </div>
       )}
     </Dropzone>
@@ -1757,6 +1862,7 @@ export function PayableActions({
   markAsPaidButton,
   schedulePaymentButton,
   retryPaymentButton,
+  submitForm,
   admin,
   children,
 }: {
@@ -1781,8 +1887,19 @@ export function PayableActions({
   markAsPaidButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   schedulePaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   retryPaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  submitForm?: () => void
   admin?: boolean
-  children?: ({ isSaving, buttons }: { isSaving: boolean; buttons: JSX.Element[] }) => JSX.Element
+  children?: ({
+    isSaving,
+    buttons,
+    setStatus,
+    submitForm,
+  }: {
+    isSaving: boolean
+    buttons?: JSX.Element[]
+    setStatus: (status: Mercoa.InvoiceStatus) => void
+    submitForm?: () => void
+  }) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
   const [isSaving, setIsSaving] = useState(false)
@@ -2173,7 +2290,7 @@ export function PayableActions({
   }
 
   if (children) {
-    return children({ isSaving, buttons })
+    return children({ isSaving, buttons, setStatus: (status) => setValue('saveAsStatus', status), submitForm })
   }
 
   return (
@@ -2277,7 +2394,9 @@ export function PayableOverview({
     const [width, setWidth] = useState<number>(0)
 
     useLayoutEffect(() => {
-      setWidth(target.current.getBoundingClientRect().width)
+      if (target.current) {
+        setWidth(target.current.getBoundingClientRect().width)
+      }
     }, [target])
 
     useResizeObserver(target, (entry) => setWidth(entry.contentRect.width))
@@ -2428,7 +2547,7 @@ export function PayableOverview({
         <div className="mercoa-mt-2">
           <textarea
             id="description"
-            readOnly={readOnly || (!!status && afterScheduledStatus.includes(status))}
+            readOnly={readOnly || (!!status && afterApprovedStatus.includes(status))}
             {...register('description')}
             rows={3}
             className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
@@ -2674,7 +2793,7 @@ export function PayableSelectPaymentMethod({
         setValue('paymentDestinationType', Mercoa.PaymentMethodType.OffPlatform)
         setValue('paymentDestinationOptions', undefined)
         clearErrors('paymentDestinationId')
-      } else {
+      } else if (vendorId) {
         mercoaSession.client?.entity.paymentMethod
           .create(vendorId, {
             type: Mercoa.PaymentMethodType.OffPlatform,
@@ -2920,22 +3039,27 @@ export function PayableSelectPaymentMethod({
         <>
           {isDestination && !disableCreation && !readOnly && vendorId && (
             <>
-              <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
-                {counterpartyAccounts.map((account) => (
-                  <div key={account.accountId} className="mercoa-mt-1">
-                    <CounterpartyAccount
-                      account={account}
-                      selected={destinationOptions?.accountId === account.accountId}
-                      onSelect={() => {
-                        setValue('paymentDestinationOptions', {
-                          type: 'utility',
-                          accountId: account.accountId,
-                        })
-                      }}
-                    />
-                  </div>
-                ))}
+              <div className="mercoa-mt-4">
+                <MercoaCombobox
+                  label="Utility Account"
+                  displaySelectedAs="pill"
+                  options={counterpartyAccounts.map((account) => ({
+                    value: {
+                      accountId: account.accountId,
+                      displayName: `${account.accountId} - ${account.nameOnAccount}`,
+                    },
+                    disabled: false,
+                  }))}
+                  onChange={(selected) => {
+                    setValue('paymentDestinationOptions', {
+                      type: 'utility',
+                      accountId: selected.accountId,
+                    })
+                  }}
+                  displayIndex="displayName"
+                />
               </div>
+
               <div className="mercoa-col-span-full mercoa-mt-1">
                 <PayablesInlineForm
                   form={<AddCounterpartyAccount prefix="newCounterpartyAccount." />}
@@ -2945,21 +3069,6 @@ export function PayableSelectPaymentMethod({
                 />
               </div>
               <div className="mercoa-mt-2" />
-              {/* <MercoaCombobox
-                label="Account ID"
-                displaySelectedAs="pill"
-                options={payorPayeeAccounts.map((account) => ({
-                  value: account.accountId,
-                  disabled: false,
-                }))}
-                onChange={(selected) => {
-                  setValue('paymentDestinationOptions', {
-                    type: 'utility',
-                    accountId: selected,
-                  })
-                }}
-                value={destOption?.accountId}
-              /> */}
             </>
           )}
         </>
@@ -3027,7 +3136,7 @@ export function PayablePaymentSource({ readOnly }: { readOnly?: boolean }) {
   } = useFormContext()
 
   const status = watch('status')
-  readOnly = readOnly || (!!status && afterScheduledStatus.includes(status))
+  readOnly = readOnly || (!!status && afterApprovedStatus.includes(status))
 
   return (
     <div className="mercoa-col-span-full">
@@ -3049,7 +3158,7 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
   } = useFormContext()
 
   const status = watch('status')
-  readOnly = readOnly || (!!status && afterScheduledStatus.includes(status))
+  readOnly = readOnly || (!!status && afterApprovedStatus.includes(status))
 
   const paymentSourceType = watch('paymentSourceType')
   const vendorId = watch('vendorId')
@@ -4229,4 +4338,18 @@ export function PayableFees({
   }
 
   return null
+}
+
+export function PayableRecurringSchedule() {
+  const { watch, register } = useFormContext()
+  const type = watch('paymentSchedule.type')
+  return (
+    <div className="mercoa-col-span-full">
+      <div className="mercoa-flex mercoa-mb-3">
+        <div className="mercoa-flex-1" />
+        <Switch register={register} name="paymentSchedule.type" label="Recurring Payment" />
+      </div>
+      {!!type && <RecurringSchedule />}
+    </div>
+  )
 }

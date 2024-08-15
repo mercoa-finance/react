@@ -262,16 +262,29 @@ export function CounterpartySearch({
   )
 }
 
+interface PayableCounterpartySearchChildrenProps {
+  counterparty?: Mercoa.CounterpartyResponse
+  disableCreation?: boolean
+  onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
+  network?: Mercoa.CounterpartyNetworkType[]
+  edit: boolean
+  setEdit: React.Dispatch<React.SetStateAction<boolean>>
+  status: any
+  errors: any
+}
+
 export function PayableCounterpartySearch({
   counterparty,
   disableCreation,
   onSelect,
   network,
+  children,
 }: {
   counterparty?: Mercoa.CounterpartyResponse
   disableCreation?: boolean
   onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
   network?: Mercoa.CounterpartyNetworkType[]
+  children?: (props: PayableCounterpartySearchChildrenProps) => React.ReactNode
 }) {
   const [edit, setEdit] = useState<boolean>(false)
   const {
@@ -286,34 +299,37 @@ export function PayableCounterpartySearch({
   const status = watch('status')
 
   return (
-    <>
-      <div className="sm:mercoa-col-span-3">
-        <label
-          htmlFor="vendor-name"
-          className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700"
-        >
-          Vendor
-        </label>
-
-        <div className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-left">
-          <div className="mercoa-p-3 mercoa-bg-gray-100 mercoa-rounded-mercoa mercoa-relative mercoa-w-full">
-            <CounterpartySearchBase
-              counterparty={counterparty}
-              disableCreation={disableCreation}
-              onSelect={onSelect}
-              type={'payee'}
-              network={network}
-              edit={edit}
-              setEdit={setEdit}
-              readOnly={!!status && status !== Mercoa.InvoiceStatus.Draft}
-            />
+    <div className="sm:mercoa-col-span-3">
+      {children ? (
+        children({ counterparty, disableCreation, onSelect, network, edit, setEdit, status, errors })
+      ) : (
+        <>
+          <label
+            htmlFor="vendor-name"
+            className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700"
+          >
+            Vendor
+          </label>
+          <div className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-left">
+            <div className="mercoa-p-3 mercoa-bg-gray-100 mercoa-rounded-mercoa mercoa-relative mercoa-w-full">
+              <CounterpartySearchBase
+                counterparty={counterparty}
+                disableCreation={disableCreation}
+                onSelect={onSelect}
+                type={'payee'}
+                network={network}
+                edit={edit}
+                setEdit={setEdit}
+                readOnly={!!status && status !== Mercoa.InvoiceStatus.Draft}
+              />
+            </div>
           </div>
-        </div>
-        {errors.vendorId?.message && (
-          <p className="mercoa-text-sm mercoa-text-red-500">{errors.vendorId?.message.toString()}</p>
-        )}
-      </div>
-    </>
+          {errors.vendorId?.message && (
+            <p className="mercoa-text-sm mercoa-text-red-500">{errors.vendorId?.message.toString()}</p>
+          )}
+        </>
+      )}
+    </div>
   )
 }
 
@@ -431,7 +447,7 @@ export function AddCounterpartyModal({
   )
 }
 
-function CounterpartySearchBase({
+export function CounterpartySearchBase({
   counterparty,
   disableCreation,
   onSelect,
@@ -440,6 +456,7 @@ function CounterpartySearchBase({
   edit,
   setEdit,
   readOnly,
+  renderCustom,
 }: {
   counterparty?: Mercoa.CounterpartyResponse
   disableCreation?: boolean
@@ -449,6 +466,20 @@ function CounterpartySearchBase({
   edit: boolean
   setEdit: (edit: boolean) => any
   readOnly?: boolean
+  renderCustom?: {
+    selectedCounterparty?: (props: {
+      selectedCounterparty?: Mercoa.CounterpartyResponse
+      clearSelection: () => void
+      readOnly?: boolean
+      disableCreation?: boolean
+    }) => JSX.Element
+    counterpartySearchDropdown?: (props: {
+      counterparties: Mercoa.CounterpartyResponse[]
+      onSearchChangeCb: (search: string) => void
+      selectedCounterparty: Mercoa.CounterpartyResponse | undefined
+      setSelectedCounterparty: (counterparty: Mercoa.CounterpartyResponse | undefined) => void
+    }) => JSX.Element
+  }
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -513,46 +544,57 @@ function CounterpartySearchBase({
   if (selectedCounterparty?.id && selectedCounterparty?.id !== 'new' && !edit) {
     return (
       <>
-        <div className="mercoa-w-full mercoa-flex mercoa-items-center">
-          <div className="mercoa-flex-auto">
-            <div className="mercoa-flex mercoa-items-center mercoa-bg-gray-50 mercoa-rounded-mercoa">
-              <div className="mercoa-flex-auto mercoa-p-3">
-                <div className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">
-                  {selectedCounterparty?.name}
-                </div>
-                {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation && (
-                  <div className="mercoa-text-sm mercoa-text-gray-500">{selectedCounterparty?.email}</div>
-                )}
-              </div>
-              {!readOnly && (
-                <>
-                  <button
-                    onClick={() => {
-                      setSelection(undefined)
-                    }}
-                    type="button"
-                    className="mercoa-ml-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75"
-                  >
-                    <XCircleIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
-                    <span className="mercoa-sr-only">Clear</span>
-                  </button>
+        {renderCustom?.selectedCounterparty ? (
+          renderCustom.selectedCounterparty({
+            selectedCounterparty,
+            clearSelection: () => {
+              setSelection(undefined)
+            },
+            readOnly,
+            disableCreation,
+          })
+        ) : (
+          <div className="mercoa-w-full mercoa-flex mercoa-items-center">
+            <div className="mercoa-flex-auto">
+              <div className="mercoa-flex mercoa-items-center  mercoa-rounded-mercoa">
+                <div className="mercoa-flex-auto mercoa-p-3">
+                  <div className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">
+                    {selectedCounterparty?.name}
+                  </div>
                   {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation && (
+                    <div className="mercoa-text-sm mercoa-text-gray-500">{selectedCounterparty?.email}</div>
+                  )}
+                </div>
+                {!readOnly && (
+                  <>
                     <button
                       onClick={() => {
-                        setEdit(true)
+                        setSelection(undefined)
                       }}
                       type="button"
                       className="mercoa-ml-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75"
                     >
-                      <PencilSquareIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
-                      <span className="mercoa-sr-only">Edit</span>
+                      <XCircleIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
+                      <span className="mercoa-sr-only">Clear</span>
                     </button>
-                  )}
-                </>
-              )}
+                    {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation && (
+                      <button
+                        onClick={() => {
+                          setEdit(true)
+                        }}
+                        type="button"
+                        className="mercoa-ml-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75"
+                      >
+                        <PencilSquareIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
+                        <span className="mercoa-sr-only">Edit</span>
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </>
     )
   }
@@ -600,65 +642,81 @@ function CounterpartySearchBase({
 
   // Search for a counterparty
   return (
-    <Combobox as="div" value={selectedCounterparty} onChange={setSelection} nullable className="mercoa-w-full">
-      {({ open }) => (
-        <div className="mercoa-relative mercoa-mt-2 mercoa-w-full">
-          <Combobox.Input
-            placeholder="Enter a company name..."
-            autoComplete="off"
-            className="mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-10 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
-            onFocus={() => {
-              if (open) return // don't click button if already open, as it will close it
-              setSearchTerm(undefined) // reset filter
-              buttonRef.current?.click() // simulate click on button to open dropdown
-            }}
-            onChange={(event) => {
-              setInput(event.target.value)
-              setSearchTerm(event.target.value?.toLowerCase() ?? '')
-            }}
-            displayValue={(e: Mercoa.CounterpartyResponse) => e?.name ?? ''}
-          />
-          <Combobox.Button
-            className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none"
-            ref={buttonRef}
-          >
-            <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
-          </Combobox.Button>
-
-          <Combobox.Options className="mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-mercoa mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm">
-            {counterparties.map((cp) => (
-              <Combobox.Option
-                key={cp.id}
-                value={cp}
-                className={({ active }) =>
-                  `mercoa-relative mercoa-cursor-pointer  mercoa-py-2 mercoa-pl-3 mercoa-pr-9 ${
-                    active ? 'mercoa-bg-mercoa-primary mercoa-text-mercoa-primary-text-invert' : 'mercoa-text-gray-900'
-                  }`
-                }
+    <>
+      {renderCustom?.counterpartySearchDropdown ? (
+        renderCustom?.counterpartySearchDropdown({
+          counterparties,
+          selectedCounterparty,
+          onSearchChangeCb: (search) => {
+            setInput(search)
+            setSearchTerm(search.toLowerCase() ?? '')
+          },
+          setSelectedCounterparty: setSelection,
+        })
+      ) : (
+        <Combobox as="div" value={selectedCounterparty} onChange={setSelection} nullable className="mercoa-w-full">
+          {({ open }) => (
+            <div className="mercoa-relative mercoa-mt-2 mercoa-w-full">
+              <Combobox.Input
+                placeholder="Enter a company name..."
+                autoComplete="off"
+                className="mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-10 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
+                onFocus={() => {
+                  if (open) return // don't click button if already open, as it will close it
+                  setSearchTerm(undefined) // reset filter
+                  buttonRef.current?.click() // simulate click on button to open dropdown
+                }}
+                onChange={(event) => {
+                  setInput(event.target.value)
+                  setSearchTerm(event.target.value?.toLowerCase() ?? '')
+                }}
+                displayValue={(e: Mercoa.CounterpartyResponse) => e?.name ?? ''}
+              />
+              <Combobox.Button
+                className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none"
+                ref={buttonRef}
               >
-                <span>{cp.name}</span>
-              </Combobox.Option>
-            ))}
-            {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation && (
-              <Combobox.Option value={{ id: 'new' }}>
-                {({ active }) => (
-                  <div
-                    className={`mercoa-flex mercoa-items-center mercoa-cursor-pointer  mercoa-py-2 mercoa-pl-3 mercoa-pr-9 ${
-                      active
-                        ? 'mercoa-bg-mercoa-primary mercoa-text-mercoa-primary-text-invert'
-                        : 'mercoa-text-gray-900'
-                    }`}
+                <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
+              </Combobox.Button>
+
+              <Combobox.Options className="mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-mercoa mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm">
+                {counterparties.map((cp) => (
+                  <Combobox.Option
+                    key={cp.id}
+                    value={cp}
+                    className={({ active }) =>
+                      `mercoa-relative mercoa-cursor-pointer  mercoa-py-2 mercoa-pl-3 mercoa-pr-9 ${
+                        active
+                          ? 'mercoa-bg-mercoa-primary mercoa-text-mercoa-primary-text-invert'
+                          : 'mercoa-text-gray-900'
+                      }`
+                    }
                   >
-                    <PlusIcon className="mercoa-size-5 mercoa-pr-1" />
-                    Add New
-                  </div>
+                    <span>{cp.name}</span>
+                  </Combobox.Option>
+                ))}
+                {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation && (
+                  <Combobox.Option value={{ id: 'new' }}>
+                    {({ active }) => (
+                      <div
+                        className={`mercoa-flex mercoa-items-center mercoa-cursor-pointer  mercoa-py-2 mercoa-pl-3 mercoa-pr-9 ${
+                          active
+                            ? 'mercoa-bg-mercoa-primary mercoa-text-mercoa-primary-text-invert'
+                            : 'mercoa-text-gray-900'
+                        }`}
+                      >
+                        <PlusIcon className="mercoa-size-5 mercoa-pr-1" />
+                        Add New
+                      </div>
+                    )}
+                  </Combobox.Option>
                 )}
-              </Combobox.Option>
-            )}
-          </Combobox.Options>
-        </div>
+              </Combobox.Options>
+            </div>
+          )}
+        </Combobox>
       )}
-    </Combobox>
+    </>
   )
 }
 
