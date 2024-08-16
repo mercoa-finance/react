@@ -779,7 +779,7 @@ function CounterpartyAddOrEditForm({
       setValue('vendor.firstName', 'business')
       setValue('vendor.lastName', 'business')
     } else {
-      const { firstName, suffix, lastName, middleName } = human.parseName(nameInput)
+      const { firstName, suffix, lastName, middleName } = human.parseName(nameInput ?? '')
       setValue('vendor.firstName', firstName)
       setValue('vendor.lastName', lastName)
       setValue('vendor.middleName', middleName)
