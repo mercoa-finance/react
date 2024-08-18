@@ -114,6 +114,7 @@ export function PayableDetails({
   admin,
   documentPosition = 'left',
   invoicePreSubmit,
+  onInvoiceSubmit,
   children,
 }: {
   invoiceId?: Mercoa.InvoiceId
@@ -123,6 +124,7 @@ export function PayableDetails({
   admin?: boolean
   documentPosition?: 'right' | 'left' | 'none'
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
+  onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   children?: (props: PayableDetailsChildrenProps) => JSX.Element[]
 }) {
   const mercoaSession = useMercoaSession()
@@ -201,6 +203,7 @@ export function PayableDetails({
         height={height}
         admin={admin}
         invoicePreSubmit={invoicePreSubmit}
+        onInvoiceSubmit={onInvoiceSubmit}
       />
     )
   }
@@ -260,6 +263,8 @@ export function PayableForm({
   height,
   admin,
   invoicePreSubmit,
+  onInvoiceSubmit,
+  fullWidth,
   children,
 }: {
   invoice?: Mercoa.InvoiceResponse
@@ -271,6 +276,8 @@ export function PayableForm({
   height: number
   admin?: boolean
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
+  onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
+  fullWidth?: boolean
   children?: (props: PayableFormChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
@@ -1216,6 +1223,7 @@ export function PayableForm({
           mercoaSession.debug('invoice/update API response: ', resp)
           setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
           toast.success('Invoice updated')
+          onInvoiceSubmit?.(resp)
           refreshInvoice(resp.id)
         } else {
           toast.error('There was an error updating the invoice')
@@ -1235,6 +1243,7 @@ export function PayableForm({
           mercoaSession.debug('invoice/update API response: ', resp)
           setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
           toast.success('Invoice created')
+          onInvoiceSubmit?.(resp)
           refreshInvoice(resp.id)
         } else {
           toast.error('There was an error creating the invoice')
@@ -1260,15 +1269,19 @@ export function PayableForm({
   }
 
   if (!mercoaSession.client) return <NoSession componentName="PayableForm" />
+
   return (
     <div style={{ height: `${height}px` }} className="mercoa-overflow-auto mercoa-pr-2 mercoa-pb-10">
       <FormProvider {...methods}>
         <form
           id="payable-form"
           onSubmit={handleSubmit(saveInvoiceLoadingWrapper)}
-          className={`mercoa-grid-cols-3 mercoa-mt-6 mercoa-grid md:mercoa-gap-x-6 md:mercoa-gap-y-4 mercoa-gap-2 mercoa-p-0.5 ${
-            isLoading ? 'mercoa-opacity-50 mercoa-pointer-events-none' : ''
-          }`}
+          className={classNames(
+            `mercoa-grid-cols-3 mercoa-mt-6 mercoa-grid md:mercoa-gap-x-6 md:mercoa-gap-y-4 mercoa-gap-2 mercoa-p-0.5 ${
+              isLoading ? 'mercoa-opacity-50 mercoa-pointer-events-none' : ''
+            }`,
+            fullWidth ? 'mercoa-grid-cols-none' : '',
+          )}
         >
           {children ? (
             children({
@@ -2419,8 +2432,8 @@ export function PayableOverview({
       invoiceDate: watch('invoiceDate'),
       setInvoiceDate: (invoiceDate: Date) => setValue('invoiceDate', invoiceDate),
       supportedSchedulePaymentDates,
-      schedulePaymentDate: watch('schedulePaymentDate'),
-      setSchedulePaymentDate: (schedulePaymentDate: Date) => setValue('schedulePaymentDate', schedulePaymentDate),
+      schedulePaymentDate: watch('deductionDate'),
+      setSchedulePaymentDate: (schedulePaymentDate: Date) => setValue('deductionDate', schedulePaymentDate),
       invoiceNumber: watch('invoiceNumber'),
       setInvoiceNumber: (invoiceNumber: string) => setValue('invoiceNumber', invoiceNumber),
       description: watch('description'),
@@ -3591,6 +3604,7 @@ export function MetadataSelection({
   readOnly,
   lineItem,
   hideLabel,
+  renderCustom,
 }: {
   schema: Mercoa.MetadataSchema
   field: string
@@ -3598,6 +3612,14 @@ export function MetadataSelection({
   readOnly?: boolean
   lineItem?: boolean
   hideLabel?: boolean
+  renderCustom?: {
+    metadataCombobox: (props: {
+      schema: Mercoa.MetadataSchema
+      setValue: (value: string) => void
+      value: string
+      values: string[]
+    }) => JSX.Element
+  }
 }) {
   const mercoaSession = useMercoaSession()
   const methods = useFormContext()
@@ -3805,14 +3827,27 @@ export function MetadataSelection({
       {entityMetadata &&
         (schema.type === Mercoa.MetadataType.String || schema.type === Mercoa.MetadataType.KeyValue) &&
         (entityMetadata.length > 0 ? (
-          <MetadataCombobox
-            schema={schema}
-            values={entityMetadata}
-            value={watch(field)}
-            setValue={(e) => {
-              setValue(field, e)
-            }}
-          />
+          <>
+            {renderCustom?.metadataCombobox ? (
+              renderCustom.metadataCombobox({
+                schema: schema,
+                value: watch(field),
+                setValue: (e) => {
+                  setValue(field, e)
+                },
+                values: entityMetadata,
+              })
+            ) : (
+              <MetadataCombobox
+                schema={schema}
+                values={entityMetadata}
+                value={watch(field)}
+                setValue={(e) => {
+                  setValue(field, e)
+                }}
+              />
+            )}
+          </>
         ) : (
           <>No Options Available</>
         ))}
@@ -4161,7 +4196,7 @@ function LineItemOptions() {
   )
 }
 
-function LineItemRows({ readOnly }: { readOnly?: boolean }) {
+export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
   const mercoaSession = useMercoaSession()
   const { register, control, watch, setValue } = useFormContext()
   const { remove } = useFieldArray({
@@ -4341,15 +4376,23 @@ export function PayableFees({
 }
 
 export function PayableRecurringSchedule() {
-  const { watch, register } = useFormContext()
+  const { watch, register, setValue } = useFormContext()
   const type = watch('paymentSchedule.type')
+
+  useEffect(() => {
+    if (!type) return
+    if (type === 'oneTime') {
+      setValue('paymentSchedule.type', undefined)
+    }
+  }, [type])
+
   return (
     <div className="mercoa-col-span-full">
       <div className="mercoa-flex mercoa-mb-3">
         <div className="mercoa-flex-1" />
         <Switch register={register} name="paymentSchedule.type" label="Recurring Payment" />
       </div>
-      {!!type && <RecurringSchedule />}
+      {!!type && type != 'oneTime' && <RecurringSchedule />}
     </div>
   )
 }
