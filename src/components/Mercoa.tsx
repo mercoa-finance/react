@@ -10,6 +10,7 @@ import { jwtDecode } from 'jwt-decode'
 import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { ToastContainer } from 'react-toastify'
 import { EntityPortal, TokenOptions, getAllUsers } from './index'
+
 export interface MercoaContext {
   token?: string
   entityId?: string
@@ -103,7 +104,7 @@ export function MercoaSession({
         endpoint,
         isAdmin,
         googleMapsApiKey,
-        heightOffset: heightOffset ?? 70,
+        heightOffset: heightOffset ?? 100,
         debug: debug ?? false,
       })}
     >
@@ -115,7 +116,7 @@ export function MercoaSession({
             const type = options?.type || 'default'
             return (
               contextClass[type] +
-              ' mercoa-relative mercoa-flex mercoa-p-1 mercoa-min-h-10 mercoa-rounded-md mercoa-justify-between mercoa-overflow-hidden mercoa-cursor-pointer '
+              'mercoa-relative mercoa-flex mercoa-p-1 mercoa-min-h-10 mercoa-rounded-mercoa mercoa-justify-between mercoa-overflow-hidden mercoa-cursor-pointer'
             )
           }}
           bodyClassName={() =>
@@ -129,28 +130,25 @@ export function MercoaSession({
               case 'error':
                 return (
                   <div className="mercoa-flex-shrink-0">
-                    <XCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-red-400" aria-hidden="true" />
+                    <XCircleIcon className="mercoa-size-5 mercoa-text-red-400" aria-hidden="true" />
                   </div>
                 )
               case 'info':
                 return (
                   <div className="mercoa-flex-shrink-0">
-                    <InformationCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-blue-400" aria-hidden="true" />
+                    <InformationCircleIcon className="mercoa-size-5 mercoa-text-blue-400" aria-hidden="true" />
                   </div>
                 )
               case 'success':
                 return (
                   <div className="mercoa-flex-shrink-0">
-                    <CheckCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-green-400" aria-hidden="true" />
+                    <CheckCircleIcon className="mercoa-size-5 mercoa-text-green-400" aria-hidden="true" />
                   </div>
                 )
               case 'warning':
                 return (
                   <div className="mercoa-flex-shrink-0">
-                    <ExclamationTriangleIcon
-                      className="mercoa-h-5 mercoa-w-5 mercoa-text-yellow-400"
-                      aria-hidden="true"
-                    />
+                    <ExclamationTriangleIcon className="mercoa-size-5 mercoa-text-yellow-400" aria-hidden="true" />
                   </div>
                 )
               case 'default':
@@ -209,21 +207,48 @@ function useProvideSession({
     setHeightOffset(heightOffset)
   }, [heightOffset])
 
+  let defaultEndpoint = 'https://api.mercoa.com'
+
   const client = useMemo(() => {
+    if (typeof window !== 'undefined' && window && window.location && window.location.href) {
+      if (window.location.href.includes('staging.mercoa.com')) {
+        defaultEndpoint = 'https://api.staging.mercoa.com'
+      }
+    }
+
+    // validate token
+    if (tokenLocal && tokenLocal.indexOf('.') > -1) {
+      try {
+        const token = jwtDecode(String(tokenLocal)) as TokenOptions
+        if (!token.organizationId) {
+          throw new Error('Invalid token')
+        }
+        if (!token.entityId && !token.userId && !token.invoiceId && !token.counterpartyId) {
+          throw new Error('Invalid token')
+        }
+        if (Date.now() >= token.exp * 1000) {
+          throw new Error('Token expired')
+        }
+      } catch (e) {
+        console.error(e)
+        throw new Error('Invalid token')
+      }
+    }
+
     return new MercoaClient({
-      environment: endpoint ?? 'https://api.mercoa.com',
+      environment: endpoint ?? defaultEndpoint,
       token: tokenLocal,
     })
   }, [tokenLocal])
 
   async function refresh() {
-    if (!token) return
+    if (!tokenLocal) return
 
     // get entity Id from passed prop or token
     let eid = entityId
     if (!eid) {
       try {
-        const { entityId } = jwtDecode(String(token)) as TokenOptions
+        const { entityId } = jwtDecode(String(tokenLocal)) as TokenOptions
         eid = entityId
       } catch (e) {
         console.error(e)
@@ -266,7 +291,7 @@ function useProvideSession({
       let uid = entityUserId
       if (!uid) {
         try {
-          const { userId } = jwtDecode(String(token)) as TokenOptions
+          const { userId } = jwtDecode(String(tokenLocal)) as TokenOptions
           uid = userId
         } catch (e) {
           console.error(e)
@@ -368,6 +393,7 @@ function useProvideSession({
   }, [organization?.colorScheme?.primaryColor])
 
   useEffect(() => {
+    setMoov(undefined)
     refresh()
   }, [token, entityId])
 
@@ -380,6 +406,7 @@ function useProvideSession({
     entity,
     user,
     users,
+    customPaymentMethodSchemas: customPaymentMethodSchemas ?? [],
     selectedInvoice,
     setSelectedInvoice,
     client,
@@ -392,7 +419,6 @@ function useProvideSession({
     getNewToken,
     googleMapsApiKey,
     setHeightOffset,
-    customPaymentMethodSchemas: customPaymentMethodSchemas ?? [],
     heightOffset: heightOffsetLocal,
     debug: (val: any) => {
       if (debug) {

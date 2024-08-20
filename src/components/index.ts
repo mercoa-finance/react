@@ -32,4 +32,6 @@ export interface TokenOptions {
   invoiceId?: string
   counterpartyId?: string
   options: Mercoa.TokenGenerationOptions
+  exp: number
+  iat: number
 }

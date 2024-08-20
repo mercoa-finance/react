@@ -1,7 +1,7 @@
 {
   "name": "@mercoa/react",
   "description": "Mercoa React Component Library",
-  "version": "0.0.54-rc6",
+  "version": "0.0.54-rc7",
   "author": "Sandeep Dinesh <sandeep@mercoa.com>",
   "license": "MIT",
   "repository": {
@@ -78,7 +78,7 @@
     "react-draggable": "^4.4.6",
     "react-dropzone": "^14.2.3",
     "react-google-autocomplete": "^2.7.3",
-    "react-hook-form": "^7.49.2",
+    "react-hook-form": "^7.52.2",
     "react-number-format": "^5.3.4",
     "react-pdf": "^9.1.0",
     "react-plaid-link": "^3.5.1",

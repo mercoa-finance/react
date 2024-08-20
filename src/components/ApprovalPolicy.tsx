@@ -470,7 +470,7 @@ function Trigger({
     name: trigger,
   })
 
-  const triggerWatch = watch(trigger) as Mercoa.Trigger[] | undefined
+  const triggerWatch = watch(trigger) as Mercoa.Trigger[] | undefined | Array<undefined>
 
   mercoaSession.debug({ render: true, triggerWatch })
 
@@ -480,7 +480,7 @@ function Trigger({
         If these conditions are true:
       </div>
       {fields.map((field, triggerIndex) => {
-        const previousTriggers: string[] = triggerWatch?.slice(0, triggerIndex).map((t) => t.type) ?? []
+        const previousTriggers: string[] = triggerWatch?.slice(0, triggerIndex).map((t) => t?.type ?? '') ?? []
         return (
           <div
             key={triggerIndex}
@@ -537,28 +537,30 @@ function Trigger({
                 }
               }}
               value={() => {
-                if (triggerWatch?.[triggerIndex]?.type === 'amount')
+                if (triggerWatch?.[triggerIndex]?.type === 'amount') {
                   return {
                     displayName: 'Amount',
                     key: '~mercoa~amount',
                   }
-                if (triggerWatch?.[triggerIndex]?.type === 'vendor')
+                } else if (triggerWatch?.[triggerIndex]?.type === 'vendor') {
                   return {
                     displayName: 'Vendor',
                     key: '~mercoa~vendor',
                   }
-                return (
-                  mercoaSession.organization?.metadataSchema?.find(
+                } else if (triggerWatch?.[triggerIndex]?.type === 'metadata') {
+                  return mercoaSession.organization?.metadataSchema?.find(
                     (e) => e.key == (triggerWatch?.[triggerIndex] as Mercoa.Trigger.Metadata)?.key,
-                  ) ?? {
+                  )
+                } else {
+                  return {
                     displayName: 'Amount',
                     key: '~mercoa~amount',
                   }
-                )
+                }
               }}
               displayIndex="displayName"
             />
-            {triggerWatch?.[triggerIndex]?.type == 'amount' && (
+            {triggerWatch?.[triggerIndex]?.type === 'amount' && (
               <>
                 <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2">
                   more than or equal to
@@ -592,7 +594,7 @@ function Trigger({
               </>
             )}
 
-            {triggerWatch?.[triggerIndex]?.type == 'vendor' && (
+            {triggerWatch?.[triggerIndex]?.type === 'vendor' && (
               <>
                 <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2 mercoa-w-[100px]">
                   is one of
@@ -623,7 +625,7 @@ function Trigger({
               </>
             )}
 
-            {triggerWatch?.[triggerIndex]?.type == 'metadata' && (
+            {triggerWatch?.[triggerIndex]?.type === 'metadata' && (
               <>
                 <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2">
                   is
@@ -662,13 +664,21 @@ function Trigger({
           className="mercoa-flex"
           onClick={() => {
             mercoaSession.debug({ onClick: true, triggerWatch })
-            if (triggerWatch?.every((e: { type: string } | undefined) => e?.type != 'amount')) {
+            if (
+              triggerWatch &&
+              Array.isArray(triggerWatch) &&
+              (triggerWatch as Mercoa.Trigger[]).filter((e) => e).every((e) => e?.type != 'amount')
+            ) {
               append({
                 type: 'amount',
                 amount: 100,
                 currency: Mercoa.CurrencyCode.Usd,
               })
-            } else if (triggerWatch?.every((e: { type: string } | undefined) => e?.type != 'vendor')) {
+            } else if (
+              triggerWatch &&
+              Array.isArray(triggerWatch) &&
+              (triggerWatch as Mercoa.Trigger[]).filter((e) => e).every((e) => e?.type != 'vendor')
+            ) {
               append({
                 type: 'vendor',
                 vendorIds: [],

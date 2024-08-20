@@ -4494,7 +4494,10 @@ export function PayableRecurringSchedule() {
           </span>
         </label>
       </div>
-      {type !== 'oneTime' && <RecurringSchedule />}
+      <div className="mercoa-flex">
+        <div className="mercoa-flex-1" />
+        {type !== 'oneTime' && <RecurringSchedule />}
+      </div>
     </div>
   )
 }
