@@ -470,7 +470,9 @@ function Trigger({
     name: trigger,
   })
 
-  const triggerWatch = watch(trigger)
+  const triggerWatch = watch(trigger) as Mercoa.Trigger[] | undefined
+
+  mercoaSession.debug({ render: true, triggerWatch })
 
   return (
     <>
@@ -478,7 +480,7 @@ function Trigger({
         If these conditions are true:
       </div>
       {fields.map((field, triggerIndex) => {
-        const previousTriggers: string[] = triggerWatch.slice(0, triggerIndex).map((t: Mercoa.Trigger) => t.type)
+        const previousTriggers: string[] = triggerWatch?.slice(0, triggerIndex).map((t) => t.type) ?? []
         return (
           <div
             key={triggerIndex}
@@ -535,21 +537,28 @@ function Trigger({
                 }
               }}
               value={() => {
-                if (triggerWatch[triggerIndex]?.type === 'amount')
+                if (triggerWatch?.[triggerIndex]?.type === 'amount')
                   return {
                     displayName: 'Amount',
                     key: '~mercoa~amount',
                   }
-                if (triggerWatch[triggerIndex]?.type === 'vendor')
+                if (triggerWatch?.[triggerIndex]?.type === 'vendor')
                   return {
                     displayName: 'Vendor',
                     key: '~mercoa~vendor',
                   }
-                return mercoaSession.organization?.metadataSchema?.find((e) => e.key == triggerWatch[triggerIndex]?.key)
+                return (
+                  mercoaSession.organization?.metadataSchema?.find(
+                    (e) => e.key == (triggerWatch?.[triggerIndex] as Mercoa.Trigger.Metadata)?.key,
+                  ) ?? {
+                    displayName: 'Amount',
+                    key: '~mercoa~amount',
+                  }
+                )
               }}
               displayIndex="displayName"
             />
-            {triggerWatch[triggerIndex]?.type == 'amount' && (
+            {triggerWatch?.[triggerIndex]?.type == 'amount' && (
               <>
                 <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2">
                   more than or equal to
@@ -583,7 +592,7 @@ function Trigger({
               </>
             )}
 
-            {triggerWatch[triggerIndex]?.type == 'vendor' && (
+            {triggerWatch?.[triggerIndex]?.type == 'vendor' && (
               <>
                 <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2 mercoa-w-[100px]">
                   is one of
@@ -604,7 +613,9 @@ function Trigger({
                       },
                     )
                   }}
-                  value={counterparties.filter((e) => triggerWatch[triggerIndex]?.vendorIds?.includes(e.id))}
+                  value={counterparties.filter((e) =>
+                    (triggerWatch[triggerIndex] as Mercoa.Trigger.Vendor)?.vendorIds?.includes(e.id),
+                  )}
                   displayIndex="name"
                   multiple
                   displaySelectedAs="pill"
@@ -612,7 +623,7 @@ function Trigger({
               </>
             )}
 
-            {triggerWatch[triggerIndex]?.type == 'metadata' && (
+            {triggerWatch?.[triggerIndex]?.type == 'metadata' && (
               <>
                 <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2">
                   is
@@ -623,7 +634,7 @@ function Trigger({
                   skipValidation
                   schema={
                     mercoaSession.organization?.metadataSchema?.find(
-                      (e) => e.key === triggerWatch[triggerIndex]?.key,
+                      (e) => e.key === (triggerWatch[triggerIndex] as Mercoa.Trigger.Metadata)?.key,
                     ) ?? { key: '', displayName: '', type: 'STRING' }
                   }
                 />
@@ -650,14 +661,14 @@ function Trigger({
           type="button"
           className="mercoa-flex"
           onClick={() => {
-            mercoaSession.debug({ triggerWatch })
-            if (triggerWatch.every((e: { type: string }) => e.type != 'amount')) {
+            mercoaSession.debug({ onClick: true, triggerWatch })
+            if (triggerWatch?.every((e: { type: string } | undefined) => e?.type != 'amount')) {
               append({
                 type: 'amount',
                 amount: 100,
                 currency: Mercoa.CurrencyCode.Usd,
               })
-            } else if (triggerWatch.every((e: { type: string }) => e.type != 'vendor')) {
+            } else if (triggerWatch?.every((e: { type: string } | undefined) => e?.type != 'vendor')) {
               append({
                 type: 'vendor',
                 vendorIds: [],

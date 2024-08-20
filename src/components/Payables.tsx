@@ -1,12 +1,12 @@
 import { Dialog } from '@headlessui/react'
 import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
+import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import Papa from 'papaparse'
 import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { classNames } from '../lib/lib'
 import { isWeekday } from '../lib/scheduling'
@@ -39,6 +39,7 @@ function invoiceStatusToName(
 
 function invoiceStatusToPayableName(name: Mercoa.InvoiceStatus, approvalPolicies?: Mercoa.ApprovalPolicyResponse[]) {
   const out = {
+    UNASSIGNED: 'Unassigned',
     DRAFT: 'Inbox',
     NEW: 'Ready for Review',
     APPROVED: approvalPolicies?.length ? 'Approved' : 'Ready for Payment',
@@ -55,6 +56,7 @@ function invoiceStatusToPayableName(name: Mercoa.InvoiceStatus, approvalPolicies
 
 function invoiceStatusToReceivableName(name: Mercoa.InvoiceStatus, approvalPolicies?: Mercoa.ApprovalPolicyResponse[]) {
   const out = {
+    UNASSIGNED: 'Unassigned',
     DRAFT: 'Draft',
     NEW: 'Ready for Review',
     APPROVED: 'Awaiting Payment',
@@ -717,10 +719,10 @@ export function PayablesTable({
       resultsPerPage,
       setResultsPerPage,
       page,
-      setPage : (page: number)=>{
+      setPage: (page: number) => {
         if (!invoices) return
         setPage(page)
-      }, 
+      },
       orderBy,
       setOrderBy,
       orderDirection,
@@ -1473,6 +1475,7 @@ export function StatusTabs({
           name="tabs"
           className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-gray-300 mercoa-py-1 mercoa-pl-3 mercoa-pr-10 mercoa-text-base focus:mercoa-border-mercoa-primary focus:mercoa-outline-none focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
           defaultValue={selectedStatuses}
+          multiple
           onChange={(e) => {
             setSelectedStatuses([e.target.value as Mercoa.InvoiceStatus])
           }}
@@ -1550,6 +1553,7 @@ export function StatusDropdown({
   ]
 
   const tabToColor = {
+    UNASSIGNED: '#E0E7FF',
     DRAFT: '#E0E7FF',
     NEW: '#E0F2FE',
     APPROVED: '#BEF264',

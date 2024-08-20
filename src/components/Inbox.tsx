@@ -26,6 +26,7 @@ import {
 
 function invoiceStatusToName(name: Mercoa.InvoiceStatus, approvalPolicies?: Mercoa.ApprovalPolicyResponse[]) {
   const out = {
+    UNASSIGNED: 'Unassigned',
     DRAFT: 'Inbox',
     NEW: 'Ready for Review',
     APPROVED: approvalPolicies?.length ? 'Approved' : 'Ready for Payment',
@@ -1422,6 +1423,7 @@ export function StatusDropdown({
   ]
 
   const tabToColor = {
+    UNASSIGNED: '#E0E7FF',
     DRAFT: '#E0E7FF',
     NEW: '#E0F2FE',
     APPROVED: '#BEF264',

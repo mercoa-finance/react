@@ -684,15 +684,15 @@ export function MercoaCombobox({
   readOnly?: boolean
 }) {
   const [query, setQuery] = useState('')
-  const [selectedValue, setSelectedValue] = useState(value)
+  const [selectedValue, setSelectedValue] = useState(value ?? (multiple ? [] : ''))
 
   if (!displaySelectedAs) {
     displaySelectedAs = 'input'
   }
 
   useEffect(() => {
-    setSelectedValue(value)
-  }, [value])
+    setSelectedValue(value ?? (multiple ? [] : ''))
+  }, [value, multiple])
 
   useEffect(() => {
     if (freeText && query !== '') {

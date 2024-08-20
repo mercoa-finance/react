@@ -3,6 +3,7 @@ import {
   BuildingLibraryIcon,
   CheckCircleIcon,
   ClockIcon,
+  DocumentIcon,
   ExclamationCircleIcon,
   InformationCircleIcon,
   LockClosedIcon,
@@ -72,7 +73,7 @@ export type OnboardingFormData = {
 
 // Onboarding Blocks //////////////////////////////////////////////////////////
 
-export function LogoBlock() {
+export function UploadBlock({ type }: { type: 'W9' | '1099' | 'Logo' }) {
   const mercoaSession = useMercoaSession()
   const blobToDataUrl = (blob: Blob) =>
     new Promise<string>((resolve, reject) => {
@@ -82,6 +83,23 @@ export function LogoBlock() {
       reader.readAsDataURL(blob)
     })
 
+  let defaultIcon = (
+    <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
+  )
+  if (type === 'W9') {
+    defaultIcon = (
+      <DocumentIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
+    )
+  } else if (type === '1099') {
+    defaultIcon = (
+      <DocumentIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
+    )
+  } else if (type === 'Logo') {
+    if (mercoaSession.entity?.logo) {
+      defaultIcon = <img className="mercoa-mx-auto mercoa-h-12" src={mercoaSession.entity?.logo} />
+    }
+  }
+
   return (
     <div className="mercoa-col-span-full">
       <Dropzone
@@ -89,14 +107,36 @@ export function LogoBlock() {
           blobToDataUrl(acceptedFiles[0]).then((fileReaderObj) => {
             mercoaSession.debug(fileReaderObj)
             if (mercoaSession.entityId) {
-              mercoaSession.client?.entity
-                .update(mercoaSession.entityId, {
-                  logo: fileReaderObj,
-                })
-                .then(() => {
-                  mercoaSession.refresh()
-                  toast.success('Logo Updated')
-                })
+              if (type === 'Logo') {
+                mercoaSession.client?.entity
+                  .update(mercoaSession.entityId, {
+                    logo: fileReaderObj,
+                  })
+                  .then(() => {
+                    mercoaSession.refresh()
+                    toast.success('Logo Updated')
+                  })
+              } else if (type === 'W9') {
+                mercoaSession.client?.entity.document
+                  .upload(mercoaSession.entityId, {
+                    document: fileReaderObj,
+                    type: 'W9',
+                  })
+                  .then(() => {
+                    mercoaSession.refresh()
+                    toast.success('W9 Updated')
+                  })
+              } else if (type === '1099') {
+                mercoaSession.client?.entity.document
+                  .upload(mercoaSession.entityId, {
+                    document: fileReaderObj,
+                    type: 'TEN_NINETY_NINE',
+                  })
+                  .then(() => {
+                    mercoaSession.refresh()
+                    toast.success('1099 Updated')
+                  })
+              }
             }
           })
         }}
@@ -105,9 +145,15 @@ export function LogoBlock() {
         }}
         minSize={0}
         maxSize={100_000}
-        accept={{
-          'image/png': ['.png'],
-        }}
+        accept={
+          type === 'Logo'
+            ? {
+                'image/png': ['.png'],
+              }
+            : {
+                'application/pdf': ['.pdf'],
+              }
+        }
       >
         {({ getRootProps, getInputProps, isDragActive }) => (
           <div
@@ -117,17 +163,13 @@ export function LogoBlock() {
             {...getRootProps()}
           >
             <div className="mercoa-text-center">
-              {mercoaSession.entity?.logo ? (
-                <img className="mercoa-mx-auto mercoa-h-12" src={mercoaSession.entity?.logo} />
-              ) : (
-                <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
-              )}
+              {defaultIcon}
               <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm mercoa-text-gray-600">
                 <label
                   htmlFor="file-upload"
                   className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-bg-white mercoa-font-semibold mercoa-primary-text focus-within:mercoa-outline-none focus-within:mercoa-ring-2 focus-within:mercoa-ring-primary focus-within:mercoa-ring-offset-2 hover:mercoa-text-indigo-500"
                 >
-                  <span>Upload New Logo</span>
+                  <span>Upload New {type}</span>
                   <input
                     {...getInputProps()}
                     id="file-upload"
@@ -138,7 +180,9 @@ export function LogoBlock() {
                 </label>
                 <p className="mercoa-pl-1">or drag and drop</p>
               </div>
-              <p className="mercoa-text-xs mercoa-leading-5 mercoa-text-gray-600">PNG up to 1MB</p>
+              <p className="mercoa-text-xs mercoa-leading-5 mercoa-text-gray-600">
+                {type === 'Logo' ? 'PNG' : 'PDF'} up to 1MB
+              </p>
             </div>
           </div>
         )}
@@ -748,6 +792,93 @@ export function MCCBlock({ watch, setValue }: { watch: Function; setValue: Funct
         setValue('mcc', code, { shouldDirty: true })
       }}
       labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700 -mercoa-mb-1"
+    />
+  )
+}
+
+export const maxTransactionSizeSchema = {
+  maxTransactionSize: yup.number().required('Max Transaction Size is required'),
+}
+
+export function MaxTransactionSizeBlock({
+  register,
+  errors,
+  readOnly,
+  required,
+}: {
+  register: UseFormRegister<any>
+  errors: any
+  readOnly?: boolean
+  required?: boolean
+}) {
+  return (
+    <MercoaInput
+      label="Max Transaction Size"
+      register={register}
+      name="maxTransactionSize"
+      type="number"
+      errors={errors}
+      readOnly={readOnly}
+      required={required}
+      leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">$</span>}
+    />
+  )
+}
+
+export const averageMonthlyTransactionVolumeSchema = {
+  averageMonthlyTransactionVolume: yup.number().required('Avg Transaction Volume is required'),
+}
+
+export function AverageMonthlyTransactionVolumeBlock({
+  register,
+  errors,
+  readOnly,
+  required,
+}: {
+  register: UseFormRegister<any>
+  errors: any
+  readOnly?: boolean
+  required?: boolean
+}) {
+  return (
+    <MercoaInput
+      label="Avg Transaction Volume (per month)"
+      register={register}
+      name="averageMonthlyTransactionVolume"
+      type="number"
+      errors={errors}
+      readOnly={readOnly}
+      required={required}
+      leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">$</span>}
+    />
+  )
+}
+
+export const averageTransactionSizeSchema = {
+  averageTransactionSize: yup.number().required('Avg Transaction Size is required'),
+}
+
+export function AverageTransactionSizeBlock({
+  register,
+  errors,
+  readOnly,
+  required,
+}: {
+  register: UseFormRegister<any>
+  errors: any
+  readOnly?: boolean
+  required?: boolean
+}) {
+  return (
+    <MercoaInput
+      label="Avg Transaction Size"
+      register={register}
+      name="averageTransactionSize"
+      type="number"
+      errors={errors}
+      readOnly={readOnly}
+      required={required}
+      leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">$</span>}
     />
   )
 }
@@ -1807,6 +1938,10 @@ export function EntityOnboardingForm({
               ...(onboardingOptions?.business.address.required && addressBlockSchema),
               ...(onboardingOptions?.business.ein.required && einSchema),
               ...(onboardingOptions?.business.mcc.required && mccSchema),
+              ...(onboardingOptions?.business.maxTransactionSize.required && maxTransactionSizeSchema),
+              ...(onboardingOptions?.business.averageMonthlyTransactionVolume.required &&
+                averageMonthlyTransactionVolumeSchema),
+              ...(onboardingOptions?.business.averageTransactionSize.required && averageTransactionSizeSchema),
               ...(onboardingOptions?.business.formationDate.required && formationDateSchema),
               ...(onboardingOptions?.business.description.required && descriptionSchema),
             })
@@ -1945,7 +2080,7 @@ export function EntityOnboardingForm({
         )}
         {accountType === 'business' && (
           <>
-            {onboardingOptions?.business.logo.edit && <LogoBlock />}
+            {onboardingOptions?.business.logo.edit && <UploadBlock type="Logo" />}
             {onboardingOptions?.business.name.show && (
               <LegalBusinessNameBlock
                 register={register}
@@ -2017,6 +2152,30 @@ export function EntityOnboardingForm({
               />
             )}
             {onboardingOptions?.business.mcc.show && <MCCBlock watch={watch} setValue={setValue} />}
+            {onboardingOptions?.business.maxTransactionSize.show && (
+              <MaxTransactionSizeBlock
+                register={register}
+                errors={errors}
+                readOnly={!onboardingOptions.business.maxTransactionSize.edit}
+                required={onboardingOptions.business.maxTransactionSize.required}
+              />
+            )}
+            {onboardingOptions?.business.averageMonthlyTransactionVolume.show && (
+              <AverageMonthlyTransactionVolumeBlock
+                register={register}
+                errors={errors}
+                readOnly={!onboardingOptions.business.averageMonthlyTransactionVolume.edit}
+                required={onboardingOptions.business.averageMonthlyTransactionVolume.required}
+              />
+            )}
+            {onboardingOptions?.business.averageTransactionSize.show && (
+              <AverageTransactionSizeBlock
+                register={register}
+                errors={errors}
+                readOnly={!onboardingOptions.business.averageTransactionSize.edit}
+                required={onboardingOptions.business.averageTransactionSize.required}
+              />
+            )}
             {onboardingOptions?.business.formationDate.show && (
               <FormationDateBlock
                 control={control}
@@ -2035,6 +2194,8 @@ export function EntityOnboardingForm({
                 />
               </div>
             )}
+            {onboardingOptions?.business.w9.show && <UploadBlock type="W9" />}
+            {onboardingOptions?.business.tenNinetyNine.show && <UploadBlock type="1099" />}
             {onboardingOptions?.business.termsOfService.show && (
               <div className="mercoa-col-span-2">
                 <TosBlock
@@ -2287,7 +2448,6 @@ export function EntityOnboarding({
     if (!mercoaSession.organization) return
     if (!mercoaSession.client) return
     if (!entity) return
-    console.log({ formState })
     // Representatives transition function
     if (formState === 'representatives') {
       // Skip representatives, transition to payments if entity is individual

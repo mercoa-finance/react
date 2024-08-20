@@ -33,8 +33,12 @@ import utc from 'dayjs/plugin/utc'
 import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Dropzone from 'react-dropzone'
 import {
+  Control,
   FieldErrors,
   FormProvider,
+  UseFormClearErrors,
+  UseFormReturn,
+  UseFormSetError,
   UseFormSetValue,
   UseFormWatch,
   useFieldArray,
@@ -66,7 +70,6 @@ import {
   NoSession,
   PayableCounterpartySearch,
   PayablesInlineForm,
-  Switch,
   Tooltip,
   counterpartyYupValidation,
   inputClassName,
@@ -116,6 +119,7 @@ export function PayableDetails({
   invoicePreSubmit,
   onInvoiceSubmit,
   children,
+  renderCustom,
 }: {
   invoiceId?: Mercoa.InvoiceId
   invoice?: Mercoa.InvoiceResponse
@@ -126,6 +130,12 @@ export function PayableDetails({
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   children?: (props: PayableDetailsChildrenProps) => JSX.Element[]
+  renderCustom?: {
+    toast?: {
+      success: (message: string) => void
+      error: (message: string) => void
+    }
+  }
 }) {
   const mercoaSession = useMercoaSession()
   const contentHeightOffset = heightOffset ?? mercoaSession.heightOffset
@@ -138,7 +148,7 @@ export function PayableDetails({
   )
 
   async function refreshInvoice(invoiceId: Mercoa.InvoiceId) {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    if (!mercoaSession.token) return
     const resp = await mercoaSession.client?.invoice.get(invoiceId)
     if (resp) {
       setInvoice(resp)
@@ -147,11 +157,11 @@ export function PayableDetails({
   }
 
   useEffect(() => {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    if (!mercoaSession.token) return
     if (!invoice && invoiceId) {
       refreshInvoice(invoiceId)
     }
-  }, [invoice, invoiceId, mercoaSession.token, mercoaSession.entity?.id])
+  }, [invoice, invoiceId, mercoaSession.token])
 
   function handleResize() {
     setHeight(window.innerHeight - contentHeightOffset)
@@ -242,11 +252,15 @@ export type PayableFormChildrenProps = {
   setSelectedVendor: (e?: Mercoa.CounterpartyResponse) => void
   selectedVendor?: Mercoa.CounterpartyResponse
   getVendorPaymentLink: () => Promise<string | undefined>
+  formMethods: UseFormReturn<Mercoa.InvoiceCreationRequest>
   setValue: (
     name: UseFormSetValue<Mercoa.InvoiceCreationRequest>,
     value: any,
     options?: { shouldValidate?: boolean; shouldDirty?: boolean },
   ) => void
+  setError: UseFormSetError<Mercoa.InvoiceCreationRequest>
+  clearErrors: UseFormClearErrors<Mercoa.InvoiceCreationRequest>
+  control: Control<Mercoa.InvoiceCreationRequest>
   watch: (name: UseFormWatch<Mercoa.InvoiceCreationRequest>) => any
   errors: FieldErrors<Mercoa.InvoiceCreationRequest>
   isLoading: boolean
@@ -266,6 +280,7 @@ export function PayableForm({
   onInvoiceSubmit,
   fullWidth,
   children,
+  renderCustom,
 }: {
   invoice?: Mercoa.InvoiceResponse
   ocrResponse?: Mercoa.OcrResponse
@@ -279,6 +294,12 @@ export function PayableForm({
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   fullWidth?: boolean
   children?: (props: PayableFormChildrenProps) => JSX.Element
+  renderCustom?: {
+    toast?: {
+      success: (message: string) => void
+      error: (message: string) => void
+    }
+  }
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -774,14 +795,16 @@ export function PayableForm({
         try {
           if (confirm('Are your sure you want to delete this invoice? This cannot be undone.')) {
             await mercoaSession.client?.invoice.delete(invoice.id)
-            toast.success('Invoice deleted')
+            renderCustom?.toast ? renderCustom.toast.success('Invoice created') : toast.success('Invoice deleted')
             if (onUpdate) onUpdate(undefined)
           }
           setIsLoading(false)
           return
         } catch (e: any) {
           console.error(e)
-          toast.error(`There was an error deleting the invoice.\n Error: ${e.body}`)
+          renderCustom?.toast
+            ? renderCustom?.toast.error(`There was an error deleting the invoice.\n Error: ${e.body}`)
+            : toast.error(`There was an error deleting the invoice.\n Error: ${e.body}`)
         }
       }
       return
@@ -795,7 +818,9 @@ export function PayableForm({
         if (confirm('Do you want to create a live check? This will mark the invoice as paid cannot be undone.')) {
           const resp = await mercoaSession.client?.invoice.update(invoice?.id, { status: Mercoa.InvoiceStatus.Paid })
           if (resp) {
-            toast.success('Invoice marked as paid. Live check created.')
+            renderCustom?.toast
+              ? renderCustom.toast.success('Invoice created')
+              : toast.success('Invoice marked as paid. Live check created.')
             refreshInvoice(resp.id)
           }
         } else {
@@ -806,7 +831,9 @@ export function PayableForm({
       if (pdf) {
         window.open(pdf.uri, '_blank')
       } else {
-        toast.error('There was an error generating the check PDF')
+        renderCustom?.toast
+          ? renderCustom?.toast.error('There was an error generating the check PDF')
+          : toast.error('There was an error generating the check PDF')
       }
       return
     } else if (data.saveAsStatus === 'APPROVE') {
@@ -820,10 +847,12 @@ export function PayableForm({
           userId: mercoaSession.user?.id,
         })
         refreshInvoice(invoice.id)
-        toast.success('Invoice approved')
+        renderCustom?.toast ? renderCustom.toast.success('Invoice created') : toast.success('Invoice approved')
       } catch (e: any) {
         console.error(e)
-        toast.error(`There was an error approving the invoice.\n Error: ${e.body}`)
+        renderCustom?.toast
+          ? renderCustom?.toast.error(`There was an error approving the invoice.\n Error: ${e.body}`)
+          : toast.error(`There was an error approving the invoice.\n Error: ${e.body}`)
       }
       return
     } else if (data.saveAsStatus === 'REJECT') {
@@ -839,7 +868,9 @@ export function PayableForm({
         toast.success('Invoice rejected')
       } catch (e: any) {
         console.error(e)
-        toast.error(`There was an error rejecting the invoice.\n Error: ${e.body}`)
+        renderCustom?.toast
+          ? renderCustom?.toast.error(`There was an error rejecting the invoice.\n Error: ${e.body}`)
+          : toast.error(`There was an error rejecting the invoice.\n Error: ${e.body}`)
       }
       return
     } else if (data.saveAsStatus === 'MARK_PAID') {
@@ -851,16 +882,20 @@ export function PayableForm({
             deductionDate: data.deductionDate,
           })
           refreshInvoice(invoice.id)
-          toast.success('Invoice marked as paid')
+          renderCustom?.toast ? renderCustom.toast.success('Invoice created') : toast.success('Invoice marked as paid')
         }
       } catch (e: any) {
         console.error(e)
-        toast.error(`There was an error marking the invoice as paid.\n Error: ${e.body}`)
+        renderCustom?.toast
+          ? renderCustom?.toast.error(`There was an error marking the invoice as paid.\n Error: ${e.body}`)
+          : toast.error(`There was an error marking the invoice as paid.\n Error: ${e.body}`)
       }
       return
     } else if (data.saveAsStatus === 'COMMENT') {
       if (!mercoaSession.user?.id) {
-        toast.error('Please login as a user to comment')
+        renderCustom?.toast
+          ? renderCustom?.toast.error('Please login as a user to comment')
+          : toast.error('Please login as a user to comment')
         return
       }
       if (!mercoaSession.token || !invoice?.id) return
@@ -874,7 +909,9 @@ export function PayableForm({
         setValue('comments', [...(invoice?.comments ?? []), comment])
         setValue('commentText', '')
       } else {
-        toast.error('There was an error creating the comment')
+        renderCustom?.toast
+          ? renderCustom?.toast.error('There was an error creating the comment')
+          : toast.error('There was an error creating the comment')
       }
       return
     }
@@ -892,7 +929,9 @@ export function PayableForm({
       nextInvoiceState = Mercoa.InvoiceStatus.Scheduled
     } else if (invoice?.id) {
       // Invoice is already scheduled, there is no next state
-      toast.error('This invoice is already scheduled and cannot be edited.')
+      renderCustom?.toast
+        ? renderCustom?.toast.error('This invoice is already scheduled and cannot be edited.')
+        : toast.error('This invoice is already scheduled and cannot be edited.')
       return
     }
 
@@ -901,19 +940,23 @@ export function PayableForm({
         data.paymentSchedule.ends = dayjs(data.paymentSchedule.ends).toISOString()
       }
       if (
-        Number.isNaN(data.paymentSchedule.repeatEvery) ||
+        isNaN(data.paymentSchedule.repeatEvery) ||
         data.paymentSchedule.repeatEvery < 1 ||
         !data.paymentSchedule.repeatEvery
       ) {
         data.paymentSchedule.repeatEvery = 1
       }
       if (!data.paymentSchedule) {
-        toast.error('Please select a payment schedule')
+        renderCustom?.toast
+          ? renderCustom?.toast.error('Please select a payment schedule')
+          : toast.error('Please select a payment schedule')
         return
       }
       if (data.paymentSchedule.type === 'weekly') {
         if (data.paymentSchedule.repeatOn === undefined || data.paymentSchedule.repeatOn.length === 0) {
-          toast.error('Please select a day of the week')
+          renderCustom?.toast
+            ? renderCustom?.toast.error('Please select a day of the week')
+            : toast.error('Please select a day of the week')
           return
         }
         const out: Mercoa.PaymentSchedule = {
@@ -925,11 +968,11 @@ export function PayableForm({
         data.paymentSchedule = out
       } else if (data.paymentSchedule.type === 'monthly') {
         if (
-          Number.isNaN(data.paymentSchedule.dayOffset) ||
+          isNaN(data.paymentSchedule.dayOffset) ||
           data.paymentSchedule.dayOffset < 1 ||
           !data.paymentSchedule.dayOffset
         ) {
-          data.paymentSchedule.dayOffset = 1
+          data.paymentSchedule.dayOffset = 0
         }
         const out: Mercoa.PaymentSchedule = {
           type: 'monthly',
@@ -941,14 +984,14 @@ export function PayableForm({
         data.paymentSchedule = out
       } else if (data.paymentSchedule.type === 'yearly') {
         if (
-          Number.isNaN(data.paymentSchedule.repeatOnDay) ||
+          isNaN(data.paymentSchedule.repeatOnDay) ||
           data.paymentSchedule.repeatOnDay < 1 ||
           !data.paymentSchedule.repeatOnDay
         ) {
           data.paymentSchedule.repeatOnDay = 1
         }
         if (
-          Number.isNaN(data.paymentSchedule.repeatOnMonth) ||
+          isNaN(data.paymentSchedule.repeatOnMonth) ||
           data.paymentSchedule.repeatOnMonth < 1 ||
           !data.paymentSchedule.repeatOnMonth
         ) {
@@ -962,19 +1005,26 @@ export function PayableForm({
           ends: data.paymentSchedule.ends,
         }
         data.paymentSchedule = out
-      } else {
+      } else if (data.paymentSchedule.type === 'daily') {
         const out: Mercoa.PaymentSchedule = {
           type: 'daily',
           repeatEvery: Number(data.paymentSchedule.repeatEvery),
           ends: data.paymentSchedule.ends,
         }
         data.paymentSchedule = out
+      } else {
+        const out: Mercoa.PaymentSchedule = {
+          type: 'oneTime',
+          repeatEvery: 1,
+        }
+        data.paymentSchedule = out
       }
     } else {
-      data.paymentSchedule = {
+      const out: Mercoa.PaymentSchedule = {
         type: 'oneTime',
         repeatEvery: 1,
       }
+      data.paymentSchedule = out
     }
 
     const invoiceData: Mercoa.InvoiceCreationRequest = {
@@ -990,7 +1040,7 @@ export function PayableForm({
       paymentSourceId: data.paymentSourceId,
       approvers: data.approvers.filter((e: { assignedUserId: string }) => e.assignedUserId),
       vendorId: data.vendorId,
-      paymentSchedule: data.paymentSchedule.type ? data.paymentSchedule : undefined,
+      paymentSchedule: data.paymentSchedule,
       paymentDestinationId: data.paymentDestinationId,
       ...(data.paymentDestinationType === Mercoa.PaymentMethodType.Check && {
         paymentDestinationOptions: data.paymentDestinationOptions ?? {
@@ -1052,7 +1102,9 @@ export function PayableForm({
           ) {
             const regex = new RegExp(metadataSchema.validationRules.regex)
             if (!regex.test(value)) {
-              toast.error(metadataSchema.validationRules.errorMessage)
+              renderCustom?.toast
+                ? renderCustom?.toast.error(metadataSchema.validationRules.errorMessage)
+                : toast.error(metadataSchema.validationRules.errorMessage)
               setError('metadata', { type: 'manual', message: metadataSchema.validationRules.errorMessage })
               return
             }
@@ -1141,7 +1193,9 @@ export function PayableForm({
 
       // check that amount is at least 0.01
       if (Number(data.amount) < 0.01) {
-        toast.error('Amount must be at least 0.01')
+        renderCustom?.toast
+          ? renderCustom?.toast.error(`'Amount must be at least 0.01'`)
+          : toast.error('Amount must be at least 0.01')
         setError('amount', { type: 'manual', message: 'Amount must be at least 0.01' })
 
         return
@@ -1149,13 +1203,17 @@ export function PayableForm({
 
       // Check if payment methods are selected
       if (!data.paymentSourceId && invoice?.id) {
-        toast.error('Please select a payment source')
+        renderCustom?.toast
+          ? renderCustom?.toast.error('Please select a payment source')
+          : toast.error('Please select a payment source')
         setError('paymentSourceId', { type: 'manual', message: 'Please select how you want to pay' })
 
         return
       }
       if (!data.paymentDestinationId && invoice?.id) {
-        toast.error('Please select a payment destination')
+        renderCustom?.toast
+          ? renderCustom?.toast.error('Please select a payment destination')
+          : toast.error('Please select a payment destination')
         setError('paymentDestinationId', { type: 'manual', message: 'Please select how the vendor wants to get paid' })
 
         return
@@ -1164,7 +1222,9 @@ export function PayableForm({
       // Check if approvers are assigned
       if (invoiceData.status !== Mercoa.InvoiceStatus.Draft) {
         if (invoiceData.approvers?.length !== invoice?.approvers.length) {
-          toast.error('Please assign all approvers for this invoice.')
+          renderCustom?.toast
+            ? renderCustom?.toast.error('Please assign all approvers for this invoice.')
+            : toast.error('Please assign all approvers for this invoice.')
           setError('approvers', { type: 'manual', message: 'Please assign all approvers for this invoice.' })
 
           return
@@ -1173,7 +1233,9 @@ export function PayableForm({
 
       if (nextInvoiceState === Mercoa.InvoiceStatus.Scheduled) {
         if (!invoiceData.deductionDate) {
-          toast.error('Please select a payment date')
+          renderCustom?.toast
+            ? renderCustom?.toast.error('Please select a payment date')
+            : toast.error('Please select a payment date')
           setError('deductionDate', { type: 'manual', message: 'Please select a payment date' })
 
           return
@@ -1226,12 +1288,16 @@ export function PayableForm({
           onInvoiceSubmit?.(resp)
           refreshInvoice(resp.id)
         } else {
-          toast.error('There was an error updating the invoice')
+          renderCustom?.toast
+            ? renderCustom?.toast.error('There was an error updating the invoice')
+            : toast.error('There was an error updating the invoice')
         }
       } catch (e: any) {
         console.error(e)
         console.error(e.body)
-        toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+        renderCustom?.toast
+          ? renderCustom?.toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+          : toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
       }
     } else {
       try {
@@ -1242,16 +1308,20 @@ export function PayableForm({
         if (resp) {
           mercoaSession.debug('invoice/update API response: ', resp)
           setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
-          toast.success('Invoice created')
+          renderCustom?.toast ? renderCustom.toast.success('Invoice created') : toast.success('Invoice created')
           onInvoiceSubmit?.(resp)
           refreshInvoice(resp.id)
         } else {
-          toast.error('There was an error creating the invoice')
+          renderCustom?.toast
+            ? renderCustom?.toast.error('There was an error creating the invoice')
+            : toast.error('There was an error creating the invoice')
         }
       } catch (e: any) {
         console.error(e)
         console.error(e.body)
-        toast.error(`There was an error creating the invoice.\n Error: ${e.body}`)
+        renderCustom?.toast
+          ? renderCustom?.toast.error(`There was an error creating the invoice.\n Error: ${e.body}`)
+          : toast.error(`There was an error creating the invoice.\n Error: ${e.body}`)
       }
     }
   }
@@ -1294,9 +1364,13 @@ export function PayableForm({
               setSelectedVendor,
               selectedVendor,
               getVendorPaymentLink,
+              formMethods: methods as any,
               setValue: setValue as any,
               watch,
+              control: control as any,
               errors: errors as any,
+              clearErrors: clearErrors as any,
+              setError: setError as any,
               isLoading,
               submitForm: () => {
                 handleSubmit(saveInvoiceLoadingWrapper)()
@@ -1451,7 +1525,13 @@ export function PayableDocument({
   height: number
   theme?: 'light' | 'dark'
   children?: (props: PayableDocumentChildrenProps) => JSX.Element
-  renderCustom?: { uploadBanner: () => React.ReactNode }
+  renderCustom?: {
+    uploadBanner?: () => React.ReactNode
+    toast?: {
+      success: (message: string) => void
+      error: (message: string) => void
+    }
+  }
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1477,13 +1557,13 @@ export function PayableDocument({
   }, [invoice])
 
   async function refreshOcrJob(ocrJobId: string) {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    if (!mercoaSession.token) return
     const resp = await mercoaSession.client?.ocr.getAsyncOcr(ocrJobId)
     if (resp && resp.status === Mercoa.OcrJobStatus.Success) {
       if (onOcrComplete) onOcrComplete(resp.data)
       setOcrProcessing(false)
     } else if (resp && resp.status === Mercoa.OcrJobStatus.Failed) {
-      toast.error('OCR failed')
+      renderCustom?.toast ? renderCustom?.toast.error('OCR failed') : toast.error('OCR failed')
       setOcrProcessing(false)
     } else {
       setTimeout(() => refreshOcrJob(ocrJobId), 2500)
@@ -1505,12 +1585,12 @@ export function PayableDocument({
       if (ocrResponse) {
         refreshOcrJob(ocrResponse.jobId)
       } else {
-        toast.error('OCR failed')
+        renderCustom?.toast ? renderCustom?.toast.error('OCR failed') : toast.error('OCR failed')
         setOcrProcessing(false)
       }
     } catch (e) {
       console.error(e)
-      toast.error('OCR failed')
+      renderCustom?.toast ? renderCustom?.toast.error('OCR failed') : toast.error('OCR failed')
       setOcrProcessing(false)
     }
   }
@@ -1558,7 +1638,13 @@ export function DocumentUploadBox({
 }: {
   onFileUpload: (fileReaderObj: string, mimeType: string) => void
   theme?: 'light' | 'dark'
-  renderCustom?: { uploadBanner: () => React.ReactNode }
+  renderCustom?: {
+    uploadBanner?: () => React.ReactNode
+    toast?: {
+      success: (message: string) => void
+      error: (message: string) => void
+    }
+  }
 }) {
   const blobToDataUrl = (blob: Blob) =>
     new Promise<string>((resolve, reject) => {
@@ -1576,7 +1662,7 @@ export function DocumentUploadBox({
         })
       }}
       onDropRejected={() => {
-        toast.error('Invalid file type')
+        renderCustom?.toast ? renderCustom.toast.error('Invalid file type') : toast.success('Invalid file type')
       }}
       minSize={0}
       maxSize={10_000_000}
@@ -2353,16 +2439,20 @@ export type PayableOverviewChildrenProps = {
 
 export function PayableOverview({
   readOnly,
+  supportedCurrencies,
   supportedSchedulePaymentDates,
   children,
 }: {
   readOnly?: boolean
+  supportedCurrencies?: Array<Mercoa.CurrencyCode>
   supportedSchedulePaymentDates?: Array<'Weekend' | 'Past' | 'Holiday'>
   children?: (props: PayableOverviewChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 
-  const [supportedCurrencies, setSupportedCurrencies] = useState<Array<Mercoa.CurrencyCode>>([])
+  const [finalSupportedCurrencies, setSupportedCurrencies] = useState<Array<Mercoa.CurrencyCode>>(
+    supportedCurrencies ?? [],
+  )
 
   const {
     register,
@@ -2379,29 +2469,29 @@ export function PayableOverview({
   // // Get Supported Currencies
   useEffect(() => {
     // Figure out what currencies are supported by C1 -------------------------------
-    let supportedCurrencies: Mercoa.CurrencyCode[] = []
+    let derivedSupportedCurrencies: Mercoa.CurrencyCode[] = []
     const hasMercoaPaymentRails = mercoaSession.organization?.paymentMethods?.payerPayments.some(
       (p) => p.active && (p.type === 'bankAccount' || p.type === 'card'),
     )
     // dedupe and add supported currencies
     if (hasMercoaPaymentRails) {
-      supportedCurrencies.push('USD')
+      derivedSupportedCurrencies.push('USD')
     }
     mercoaSession.customPaymentMethodSchemas.forEach((p) => {
       if (p.supportedCurrencies) {
-        supportedCurrencies = [...new Set([...supportedCurrencies, ...p.supportedCurrencies])]
+        derivedSupportedCurrencies = [...new Set([...derivedSupportedCurrencies, ...p.supportedCurrencies])]
       }
     })
-    setSupportedCurrencies(supportedCurrencies)
+    setSupportedCurrencies([...new Set([...derivedSupportedCurrencies, ...(supportedCurrencies ?? [])])])
   }, [mercoaSession.client, mercoaSession.customPaymentMethodSchemas, mercoaSession.organization?.paymentMethods])
 
   // Reset currency dropdown
   useEffect(() => {
     if (currency) return
-    if (supportedCurrencies.length > 0) {
-      setValue('currency', supportedCurrencies[0])
+    if (finalSupportedCurrencies.length > 0) {
+      setValue('currency', finalSupportedCurrencies[0])
     }
-  }, [supportedCurrencies, currency])
+  }, [finalSupportedCurrencies, currency])
 
   const useWidth = (target: any) => {
     const [width, setWidth] = useState<number>(0)
@@ -2424,7 +2514,7 @@ export function PayableOverview({
       readOnly,
       amount: watch('amount'),
       setAmount: (amount: number) => setValue('amount', amount),
-      supportedCurrencies,
+      supportedCurrencies: finalSupportedCurrencies,
       currency,
       setCurrency: (currency: Mercoa.CurrencyCode) => setValue('currency', currency),
       dueDate: watch('dueDate'),
@@ -2496,7 +2586,7 @@ export function PayableOverview({
               {...register('currency')}
               className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
             >
-              {supportedCurrencies.map((option: Mercoa.CurrencyCode, index: number) => (
+              {finalSupportedCurrencies.map((option: Mercoa.CurrencyCode, index: number) => (
                 <option key={index} value={option}>
                   {option}
                 </option>
@@ -4005,6 +4095,7 @@ export function PayableLineItems({
   })
 
   const status = watch('status')
+  const currency = watch('currency')
   readOnly = readOnly || (!!status && status !== Mercoa.InvoiceStatus.Draft)
   const lineItems = watch('lineItems') as Mercoa.InvoiceLineItemUpdateRequest[]
 
@@ -4015,6 +4106,7 @@ export function PayableLineItems({
       amount: 0,
       unitPrice: 0,
       quantity: 1,
+      currency: currency,
     })
   }
 
@@ -4376,23 +4468,33 @@ export function PayableFees({
 }
 
 export function PayableRecurringSchedule() {
-  const { watch, register, setValue } = useFormContext()
+  const { watch, setValue } = useFormContext()
   const type = watch('paymentSchedule.type')
-
-  useEffect(() => {
-    if (!type) return
-    if (type === 'oneTime') {
-      setValue('paymentSchedule.type', undefined)
-    }
-  }, [type])
 
   return (
     <div className="mercoa-col-span-full">
       <div className="mercoa-flex mercoa-mb-3">
         <div className="mercoa-flex-1" />
-        <Switch register={register} name="paymentSchedule.type" label="Recurring Payment" />
+        <label className="mercoa-relative mercoa-inline-flex mercoa-cursor-pointer  mercoa-items-center mercoa-mt-2">
+          <input
+            type="checkbox"
+            value=""
+            className="mercoa-peer mercoa-sr-only"
+            checked={type !== 'oneTime'}
+            onChange={(e) => setValue('paymentSchedule.type', e.target.checked ? 'daily' : 'oneTime')}
+          />
+          <div
+            className="mercoa-peer mercoa-h-6 mercoa-w-11 mercoa-rounded-full mercoa-bg-gray-300 after:mercoa-absolute after:mercoa-top-0.5 after:mercoa-left-[2px]
+                after:mercoa-h-5 after:mercoa-w-5 after:mercoa-rounded-full
+                after:border after:mercoa-border-gray-300 after:mercoa-bg-white after:mercoa-transition-all after:mercoa-content-[''] peer-checked:mercoa-bg-mercoa-primary peer-checked:after:mercoa-translate-x-full
+                peer-checked:after:mercoa-border-white peer-focus:mercoa-ring-4 peer-focus:mercoa-ring-mercoa-primary-300 peer-disabled:mercoa-bg-red-100 peer-disabled:after:mercoa-bg-red-50"
+          />
+          <span className="mercoa-ml-3 mercoa-flex mercoa-items-center mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">
+            Is Recurring
+          </span>
+        </label>
       </div>
-      {!!type && type != 'oneTime' && <RecurringSchedule />}
+      {type !== 'oneTime' && <RecurringSchedule />}
     </div>
   )
 }
