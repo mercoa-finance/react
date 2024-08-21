@@ -114,10 +114,7 @@ export function MercoaSession({
         <ToastContainer
           toastClassName={(options) => {
             const type = options?.type || 'default'
-            return (
-              contextClass[type] +
-              'mercoa-relative mercoa-flex mercoa-p-1 mercoa-min-h-10 mercoa-rounded-mercoa mercoa-justify-between mercoa-overflow-hidden mercoa-cursor-pointer'
-            )
+            return `${contextClass[type]} mercoa-relative mercoa-flex mercoa-p-1 mercoa-min-h-10 mercoa-rounded-mercoa mercoa-justify-between mercoa-overflow-hidden mercoa-cursor-pointer`
           }}
           bodyClassName={() =>
             'mercoa-text-sm mercoa-font-medium mercoa-p-3 mercoa-m-0 mercoa-flex mercoa-items-center'
