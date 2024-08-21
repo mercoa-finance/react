@@ -836,6 +836,7 @@ export function PayablesTable({
     {
       title: 'Deduction Date',
       field: 'deductionDate',
+      orderBy: Mercoa.InvoiceOrderByField.DeductionDate,
     },
   ]
 
