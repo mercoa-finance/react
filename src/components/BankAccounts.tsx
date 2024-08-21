@@ -558,28 +558,27 @@ export function AddBankViaPlaidOrManual({
   onSubmit,
   entityId,
   bankAccount,
+  mode,
 }: {
   title?: ReactNode
   actions?: ReactNode
   onSubmit: (data: Mercoa.PaymentMethodResponse) => void
   entityId?: Mercoa.EntityId
   bankAccount?: Mercoa.BankAccountRequest
+  mode?: 'option' | 'plaid' | 'manual'
 }) {
   const mercoaSession = useMercoaSession()
-  const [showManual, setShowManual] = useState<boolean | null>(null)
+  const [selectedMode, setSelectedMode] = useState<'option' | 'plaid' | 'manual'>(mode ?? 'option')
 
   useEffect(() => {
     if (!mercoaSession.entityId) return
     if (entityId && entityId != mercoaSession.entityId) {
-      setShowManual(true)
+      setSelectedMode('manual')
     }
-    // else {
-    //   setShowManual(false)
-    // }
   }, [mercoaSession.entityId, entityId])
 
   if (!mercoaSession.client) return <NoSession componentName="AddBankViaPlaidOrManual" />
-  if (showManual) {
+  if (selectedMode === 'manual') {
     return (
       <AddBankAccount
         title={title}
@@ -589,7 +588,7 @@ export function AddBankViaPlaidOrManual({
         bankAccount={bankAccount}
       />
     )
-  } else if (showManual === false) {
+  } else if (selectedMode === 'plaid') {
     return (
       <PlaidPopup
         onSubmit={onSubmit}
@@ -597,7 +596,7 @@ export function AddBankViaPlaidOrManual({
           if (err) {
             toast.error('There was an error adding your bank account automatically. Please try again or add manually.')
           }
-          setShowManual(true)
+          setSelectedMode('manual')
         }}
       />
     )
@@ -606,7 +605,7 @@ export function AddBankViaPlaidOrManual({
       <div>
         <PaymentMethodButton
           onSelect={() => {
-            setShowManual(false)
+            setSelectedMode('plaid')
           }}
           selected={false}
           icon={<MagnifyingGlassIcon className="mercoa-size-5" />}
@@ -615,7 +614,7 @@ export function AddBankViaPlaidOrManual({
         <div className="mercoa-mt-2" />
         <PaymentMethodButton
           onSelect={() => {
-            setShowManual(true)
+            setSelectedMode('manual')
           }}
           selected={false}
           icon={<PencilSquareIcon className="mercoa-size-5" />}

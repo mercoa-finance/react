@@ -4480,7 +4480,7 @@ export function PayableRecurringSchedule() {
             type="checkbox"
             value=""
             className="mercoa-peer mercoa-sr-only"
-            checked={type !== 'oneTime'}
+            checked={type && type !== 'oneTime'}
             onChange={(e) => setValue('paymentSchedule.type', e.target.checked ? 'daily' : 'oneTime')}
           />
           <div
@@ -4496,7 +4496,7 @@ export function PayableRecurringSchedule() {
       </div>
       <div className="mercoa-flex">
         <div className="mercoa-flex-1" />
-        {type !== 'oneTime' && <RecurringSchedule />}
+        {type && type !== 'oneTime' && <RecurringSchedule />}
       </div>
     </div>
   )
