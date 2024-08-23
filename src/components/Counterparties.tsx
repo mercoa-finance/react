@@ -757,6 +757,7 @@ function CounterpartyAddOrEditForm({
   } = useFormContext()
 
   let counterpartyName = name
+  let address = counterparty?.profile?.business?.address
   if (!counterpartyName && counterparty?.accountType === 'business') {
     counterpartyName = counterparty?.profile?.business?.legalBusinessName
   } else if (!counterpartyName && counterparty?.accountType === 'individual' && counterparty?.profile?.individual) {
@@ -766,6 +767,7 @@ function CounterpartyAddOrEditForm({
       counterparty.profile.individual.name.middleName,
       counterparty.profile.individual.name.suffix,
     )}`
+    address = counterparty?.profile?.individual?.address
   }
 
   useEffect(() => {
@@ -784,6 +786,13 @@ function CounterpartyAddOrEditForm({
     )
     setValue('vendor.website', counterparty?.profile?.business?.website)
     setValue('vendor.description', counterparty?.profile?.business?.description)
+    setValue('vendor.add', counterparty?.accountType)
+    setValue('vendor.addressLine1', address?.addressLine1)
+    setValue('vendor.addressLine2', address?.addressLine2)
+    setValue('vendor.city', address?.city)
+    setValue('vendor.stateOrProvince', address?.stateOrProvince)
+    setValue('vendor.postalCode', address?.postalCode)
+    setValue('vendor.country', address?.country)
   }, [counterparty])
 
   const accountType = watch('vendor.accountType')
@@ -1587,7 +1596,9 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center  mercoa-border-t mercoa-border-gray-900/5 ">
           <dd className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
@@ -1597,14 +1608,18 @@ export function CounterpartyDetails({
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.Check)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
 
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center mercoa-border-t mercoa-border-gray-900/5 " />
         <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.Custom)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => (
+              <PaymentMethodCard method={method} key={method.id} />
+            ))}
         </div>
       </div>
     )

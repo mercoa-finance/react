@@ -205,19 +205,18 @@ export function BankAccount({
                   </>
                 )}
               </div>
-              {showEdit &&
-                (account?.status === Mercoa.BankStatus.New || account?.status === Mercoa.BankStatus.Pending) && (
-                  <MercoaButton isEmphasized size="md" className="mercoa-ml-2" onClick={() => setVerify(true)}>
-                    {account?.status === Mercoa.BankStatus.New && 'Start Verification'}
-                    {account?.status === Mercoa.BankStatus.Pending && 'Complete Verification'}
-                  </MercoaButton>
-                )}
             </div>
           </div>
           {showEdit && (
             <>
               <div className="mercoa-flex mercoa-items-center mercoa-gap-x-1">
                 <DefaultPaymentMethodIndicator paymentMethod={account} />
+                {(account?.status === Mercoa.BankStatus.New || account?.status === Mercoa.BankStatus.Pending) && (
+                  <MercoaButton isEmphasized size="sm" className="mercoa-mr-2" onClick={() => setVerify(true)}>
+                    {account?.status === Mercoa.BankStatus.New && 'Start Verification'}
+                    {account?.status === Mercoa.BankStatus.Pending && 'Complete Verification'}
+                  </MercoaButton>
+                )}
                 <div>
                   {account?.status === Mercoa.BankStatus.New && (
                     /* @ts-ignore:next-line */
@@ -335,6 +334,7 @@ export function BankAccount({
                                         account?.id,
                                       )
                                       setVerify(false)
+                                      toast.info('Micro-deposits sent')
                                       mercoaSession.refresh()
                                     }
                                   }}
@@ -357,7 +357,9 @@ export function BankAccount({
                                       },
                                     )
                                     setVerify(false)
-                                    mercoaSession.refresh()
+                                    toast.info('Micro-deposits verified. Waiting for confirmation...')
+                                    await mercoaSession.refresh()
+                                    setTimeout(() => mercoaSession.refresh(), 5000)
                                   }
                                 })}
                               >
@@ -807,6 +809,10 @@ export function EditBankAccount({
     let signatureImage
     if (data.checkOptions?.useSignatureImage) {
       signatureImage = sigRef.current?.getTrimmedCanvas().toDataURL('image/png') ?? ''
+    }
+    if ((data.checkOptions?.signatoryName?.length ?? 0) > 30) {
+      toast.error('Signatory name must be less than 30 characters. Use the signature image instead.')
+      return
     }
     if (mercoaSession.entity?.id) {
       mercoaSession.client?.entity.paymentMethod

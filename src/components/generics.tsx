@@ -969,10 +969,7 @@ export function TokenVerification({
     return <LoadingSpinner />
   }
 
-  const parsedToken = jwtDecode(String(passedToken)) as TokenOptions & {
-    exp: number
-    iat: number
-  }
+  const parsedToken = jwtDecode(String(passedToken)) as TokenOptions
 
   if (parsedToken.exp * 1000 < Date.now()) {
     return (
@@ -988,14 +985,40 @@ export function TokenVerification({
         </div>
       </main>
     )
+  } else if (!parsedToken.organizationId) {
+    return (
+      <main className="mercoa-grid mercoa-min-h-full place-mercoa-items-center mercoa-bg-white mercoa-px-6 mercoa-py-24 sm:mercoa-py-32 lg:mercoa-px-8">
+        <div className="mercoa-text-center">
+          <h1 className="mercoa-mt-4 mercoa-text-3xl mercoa-font-bold mercoa-tracking-tight mercoa-text-gray-900 sm:mercoa-text-5xl">
+            Link Invalid
+          </h1>
+          <p className="mercoa-mt-6 mercoa-text-base mercoa-leading-7 mercoa-text-gray-600">
+            This link is invalid. Please contact the person who shared this link with you.
+          </p>
+        </div>
+      </main>
+    )
+  } else if (!parsedToken.entityId && !parsedToken.userId && !parsedToken.invoiceId && !parsedToken.counterpartyId) {
+    return (
+      <main className="mercoa-grid mercoa-min-h-full place-mercoa-items-center mercoa-bg-white mercoa-px-6 mercoa-py-24 sm:mercoa-py-32 lg:mercoa-px-8">
+        <div className="mercoa-text-center">
+          <h1 className="mercoa-mt-4 mercoa-text-3xl mercoa-font-bold mercoa-tracking-tight mercoa-text-gray-900 sm:mercoa-text-5xl">
+            Link Invalid
+          </h1>
+          <p className="mercoa-mt-6 mercoa-text-base mercoa-leading-7 mercoa-text-gray-600">
+            This link is invalid. Please contact the person who shared this link with you.
+          </p>
+        </div>
+      </main>
+    )
   }
+
   return (
     <MercoaSession googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS} endpoint={getEndpoint()} token={passedToken}>
       {children(parsedToken, passedToken)}
     </MercoaSession>
   )
 }
-
 export function LoadingSpinner({ absolute }: { absolute?: boolean }) {
   return (
     <div
