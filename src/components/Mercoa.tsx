@@ -1,11 +1,5 @@
-import {
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  InformationCircleIcon,
-  XCircleIcon,
-} from '@heroicons/react/24/outline'
+import { CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, XCircleIcon } from '@heroicons/react/20/solid'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
-import { Moov, loadMoov } from '@moovio/moov-js'
 import { jwtDecode } from 'jwt-decode'
 import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { ToastContainer } from 'react-toastify'
@@ -14,7 +8,10 @@ import { EntityPortal, TokenOptions, getAllUsers } from './index'
 export interface MercoaContext {
   token?: string
   entityId?: string
+  entityGroupId?: string
   entity: Mercoa.EntityResponse | undefined
+  entities: Mercoa.EntityResponse[]
+  setEntity: (entity: Mercoa.EntityResponse) => void
   user: Mercoa.EntityUserResponse | undefined
   users: Mercoa.EntityUserResponse[]
   customPaymentMethodSchemas: Mercoa.CustomPaymentMethodSchemaResponse[]
@@ -24,9 +21,6 @@ export interface MercoaContext {
   refresh: () => Promise<void>
   refreshId: number
   organization: Mercoa.OrganizationResponse | undefined
-  moov: Moov | undefined
-  moovToken: string | undefined
-  moovAccountId: string | undefined
   iframeOptions: TokenOptions | undefined
   setIframeOptions: Function
   getNewToken: () => Promise<void>
@@ -38,7 +32,10 @@ export interface MercoaContext {
 const sessionContext = createContext<MercoaContext>({
   token: '',
   entityId: '',
+  entityGroupId: '',
   entity: undefined,
+  entities: [],
+  setEntity: () => {},
   user: undefined,
   users: [],
   customPaymentMethodSchemas: [],
@@ -48,9 +45,6 @@ const sessionContext = createContext<MercoaContext>({
   refresh: async () => {},
   refreshId: 0,
   organization: undefined,
-  moov: undefined,
-  moovToken: undefined,
-  moovAccountId: undefined,
   iframeOptions: undefined,
   setIframeOptions: () => {},
   getNewToken: async (expiresIn?: string) => {},
@@ -76,9 +70,9 @@ export function MercoaSession({
   children,
   entityId,
   entityUserId,
+  entityGroupId,
   token,
   endpoint,
-  isAdmin,
   googleMapsApiKey,
   disableToastContainer,
   heightOffset,
@@ -87,9 +81,9 @@ export function MercoaSession({
   children?: ReactNode
   entityId?: Mercoa.EntityId
   entityUserId?: Mercoa.EntityUserId
+  entityGroupId?: Mercoa.EntityGroupId
   token: string
   endpoint?: string
-  isAdmin?: boolean
   googleMapsApiKey?: string
   disableToastContainer?: boolean
   heightOffset?: number
@@ -101,8 +95,8 @@ export function MercoaSession({
         token,
         entityId,
         entityUserId,
+        entityGroupId,
         endpoint,
-        isAdmin,
         googleMapsApiKey,
         heightOffset: heightOffset ?? 100,
         debug: debug ?? false,
@@ -170,8 +164,8 @@ function useProvideSession({
   token,
   entityId,
   entityUserId,
+  entityGroupId,
   endpoint,
-  isAdmin,
   googleMapsApiKey,
   heightOffset,
   debug,
@@ -179,8 +173,8 @@ function useProvideSession({
   token: string
   entityId?: Mercoa.EntityId
   entityUserId?: Mercoa.EntityUserId
+  entityGroupId?: Mercoa.EntityGroupId
   endpoint?: string
-  isAdmin?: boolean
   googleMapsApiKey?: string
   heightOffset: number
   debug?: boolean
@@ -193,12 +187,10 @@ function useProvideSession({
   const [selectedInvoice, setSelectedInvoice] = useState<Mercoa.InvoiceResponse>()
   const [organization, setOrganization] = useState<Mercoa.OrganizationResponse>()
   const [refreshId, setRefreshId] = useState(0)
-  const [moov, setMoov] = useState<Moov>()
-  const [moovAccountId, setMoovAccountId] = useState<string>()
-  const [moovToken, setMoovToken] = useState<string>()
   const [tokenLocal, setToken] = useState<string>(token)
   const [iframeOptions, setIframeOptions] = useState<TokenOptions>()
   const [heightOffsetLocal, setHeightOffset] = useState<number>(heightOffset)
+  const [entities, setEntities] = useState<Array<Mercoa.EntityResponse>>([])
 
   useEffect(() => {
     setHeightOffset(heightOffset)
@@ -239,10 +231,45 @@ function useProvideSession({
   }, [tokenLocal])
 
   async function refresh() {
+    setRefreshId(Math.random())
     if (!tokenLocal) return
 
+    // Get org data
+    try {
+      const o = await client.organization.get({
+        paymentMethods: true,
+        emailProvider: true,
+        externalAccountingSystemProvider: true,
+        colorScheme: true,
+        payeeOnboardingOptions: true,
+        payorOnboardingOptions: true,
+        metadataSchema: true,
+      })
+      const schemas = await client.customPaymentMethodSchema.getAll()
+      setOrganization(o)
+      setCustomPaymentMethodSchemas(schemas)
+    } catch (e) {
+      console.error(e)
+      console.error('Failed to get organization data')
+    }
+
+    if (entityId) {
+      await refreshEntity(entityId)
+      return
+    }
+    const { entityId: tokenEid, entityGroupId } = jwtDecode(String(tokenLocal)) as TokenOptions
+    if (tokenEid) {
+      await refreshEntity(tokenEid)
+      return
+    }
+    if (entityGroupId) {
+      await refreshEntityGroup()
+      return
+    }
+  }
+
+  async function refreshEntity(eid?: string) {
     // get entity Id from passed prop or token
-    let eid = entityId
     if (!eid) {
       try {
         const { entityId } = jwtDecode(String(tokenLocal)) as TokenOptions
@@ -306,21 +333,23 @@ function useProvideSession({
         console.error(e)
         console.error('Failed to get users for entity ' + eid)
       }
+    }
+  }
 
-      if (!moov && !isAdmin) {
-        client.entity.getToken(eid, {}).then(async (e) => {
-          setToken(e)
-          const { moov } = jwtDecode(String(e)) as { moov: { token: string; accountId: string } }
-          setMoovAccountId(moov.accountId)
-          setMoovToken(moov.token)
-          if (!moov || !moov.token || moov.token === 'sandbox') return
-          try {
-            const m = await loadMoov(moov.token)
-            if (m) setMoov(m)
-          } catch (e) {
-            console.error(e)
-          }
-        })
+  async function refreshEntityGroup() {
+    let egi = entityGroupId
+    if (!egi) {
+      const { entityGroupId } = jwtDecode(String(tokenLocal)) as TokenOptions
+      egi = entityGroupId
+    }
+    // Get entity data
+    if (egi) {
+      try {
+        const group = await client.entityGroup.get(egi)
+        setEntities(group.entities)
+      } catch (e) {
+        console.error(e)
+        console.error('Failed to get entity group ' + egi)
       }
     }
   }
@@ -390,7 +419,6 @@ function useProvideSession({
   }, [organization?.colorScheme?.primaryColor])
 
   useEffect(() => {
-    setMoov(undefined)
     refresh()
   }, [token, entityId])
 
@@ -400,7 +428,13 @@ function useProvideSession({
     refreshId,
     token: tokenLocal,
     entityId: entityId ?? entity?.id,
+    entityGroupId,
     entity,
+    entities,
+    setEntity: (entity: Mercoa.EntityResponse) => {
+      setEntity(entity)
+      refresh()
+    },
     user,
     users,
     customPaymentMethodSchemas: customPaymentMethodSchemas ?? [],
@@ -408,9 +442,6 @@ function useProvideSession({
     setSelectedInvoice,
     client,
     organization,
-    moov,
-    moovAccountId,
-    moovToken,
     iframeOptions,
     setIframeOptions,
     getNewToken,

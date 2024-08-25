@@ -1895,8 +1895,8 @@ export function EntityOnboardingForm({
       taxID: entity.profile.individual?.governmentIdProvided
         ? '****'
         : entity.profile.business?.taxIdProvided
-        ? '**-*******'
-        : '',
+          ? '**-*******'
+          : '',
       mcc: entity.profile.business?.industryCodes?.mcc ?? '',
       dob: new Date(),
       tos: entity.acceptedTos,

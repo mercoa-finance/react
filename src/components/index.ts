@@ -26,6 +26,7 @@ export type onCloseFunction = (value: boolean) => void
 
 export interface TokenOptions {
   organizationId: string
+  entityGroupId?: string
   entityId?: string
   userId?: string
   entityForeignId?: string

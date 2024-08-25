@@ -6,7 +6,9 @@ FILES := $(shell find $(COMPONENTS_DIR) -type f)
 # Copy Copmponents
 copy_components:
 	@echo "Copying Components..."
-	rsync -av --exclude='Mercoa.tsx' $(ORIGINAL_DIR) ./src/
+	rsync -av $(ORIGINAL_DIR) ./src/
+
+## rsync -av --exclude='Mercoa.tsx' $(ORIGINAL_DIR) ./src/
 
 # Rule to replace the string
 replace_import:

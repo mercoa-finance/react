@@ -323,7 +323,7 @@ export function PayablesTable({
   }, [selectedInvoices, invoices])
 
   function toggleAll() {
-    setSelectedInvoices(checked || indeterminate ? [] : invoices ?? [])
+    setSelectedInvoices(checked || indeterminate ? [] : (invoices ?? []))
     setChecked(!checked && !indeterminate)
     setIndeterminate(false)
   }
