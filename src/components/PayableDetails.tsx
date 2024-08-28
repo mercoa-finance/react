@@ -936,9 +936,6 @@ export function PayableForm({
     }
 
     if (data.paymentSchedule?.type) {
-      if (data.paymentSchedule.ends) {
-        data.paymentSchedule.ends = dayjs(data.paymentSchedule.ends).toISOString()
-      }
       if (
         isNaN(data.paymentSchedule.repeatEvery) ||
         data.paymentSchedule.repeatEvery < 1 ||

@@ -10,7 +10,7 @@ export interface MercoaContext {
   entityId?: string
   entityGroupId?: string
   entity: Mercoa.EntityResponse | undefined
-  entities: Mercoa.EntityResponse[]
+  entities: Mercoa.EntityResponse[] | undefined
   setEntity: (entity: Mercoa.EntityResponse) => void
   user: Mercoa.EntityUserResponse | undefined
   users: Mercoa.EntityUserResponse[]
@@ -28,13 +28,14 @@ export interface MercoaContext {
   heightOffset: number
   setHeightOffset: Function
   debug: Function
+  fetchMetadata?: boolean
 }
 const sessionContext = createContext<MercoaContext>({
   token: '',
   entityId: '',
   entityGroupId: '',
   entity: undefined,
-  entities: [],
+  entities: undefined,
   setEntity: () => {},
   user: undefined,
   users: [],
@@ -52,6 +53,7 @@ const sessionContext = createContext<MercoaContext>({
   heightOffset: 100,
   setHeightOffset: () => {},
   debug: () => {},
+  fetchMetadata: false,
 })
 
 interface contextClassType {
@@ -77,6 +79,7 @@ export function MercoaSession({
   disableToastContainer,
   heightOffset,
   debug,
+  fetchMetadata,
 }: {
   children?: ReactNode
   entityId?: Mercoa.EntityId
@@ -88,6 +91,7 @@ export function MercoaSession({
   disableToastContainer?: boolean
   heightOffset?: number
   debug?: boolean
+  fetchMetadata?: boolean
 }) {
   return (
     <sessionContext.Provider
@@ -100,6 +104,7 @@ export function MercoaSession({
         googleMapsApiKey,
         heightOffset: heightOffset ?? 100,
         debug: debug ?? false,
+        fetchMetadata: fetchMetadata ?? false,
       })}
     >
       {disableToastContainer ? (
@@ -169,6 +174,7 @@ function useProvideSession({
   googleMapsApiKey,
   heightOffset,
   debug,
+  fetchMetadata,
 }: {
   token: string
   entityId?: Mercoa.EntityId
@@ -178,6 +184,7 @@ function useProvideSession({
   googleMapsApiKey?: string
   heightOffset: number
   debug?: boolean
+  fetchMetadata?: boolean
 }) {
   const [entity, setEntity] = useState<Mercoa.EntityResponse>()
   const [user, setUser] = useState<Mercoa.EntityUserResponse>()
@@ -190,7 +197,7 @@ function useProvideSession({
   const [tokenLocal, setToken] = useState<string>(token)
   const [iframeOptions, setIframeOptions] = useState<TokenOptions>()
   const [heightOffsetLocal, setHeightOffset] = useState<number>(heightOffset)
-  const [entities, setEntities] = useState<Array<Mercoa.EntityResponse>>([])
+  const [entities, setEntities] = useState<Array<Mercoa.EntityResponse>>()
 
   useEffect(() => {
     setHeightOffset(heightOffset)
@@ -304,7 +311,9 @@ function useProvideSession({
     // Get entity data
     if (eid) {
       try {
-        const e = await client.entity.get(eid)
+        const e = await client.entity.get(eid, {
+          metadata: !!fetchMetadata,
+        })
         setEntity(e)
       } catch (e) {
         console.error(e)
@@ -345,7 +354,9 @@ function useProvideSession({
     // Get entity data
     if (egi) {
       try {
-        const group = await client.entityGroup.get(egi)
+        const group = await client.entityGroup.get(egi, {
+          entityMetadata: !!fetchMetadata,
+        })
         setEntities(group.entities)
       } catch (e) {
         console.error(e)

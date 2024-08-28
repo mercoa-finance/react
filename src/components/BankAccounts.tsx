@@ -528,6 +528,9 @@ export function PlaidPopup({
       console.log('onPlaidExit', { err, metadata })
       if (onExit) onExit(err, metadata)
     },
+    onEvent: (event) => {
+      console.log('onPlaidEvent', { event })
+    },
   })
 
   useEffect(() => {
