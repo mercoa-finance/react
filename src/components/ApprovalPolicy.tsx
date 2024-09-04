@@ -1,13 +1,17 @@
+import { Combobox } from '@headlessui/react'
 import {
   CheckCircleIcon,
+  ChevronUpDownIcon,
   ExclamationTriangleIcon,
   PlusIcon,
   RocketLaunchIcon,
   SparklesIcon,
+  XCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
-import { useEffect, useMemo, useState } from 'react'
+import debounce from 'lodash/debounce'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../lib/currency'
@@ -39,14 +43,16 @@ function ArrowDownLeftIcon({ className }: { className?: string }) {
   )
 }
 
-export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
+export function ApprovalPolicies({ onSave, additionalRoles }: { onSave?: () => void; additionalRoles?: string[] }) {
   const mercoaSession = useMercoaSession()
 
   const [policies, setPolicies] = useState<Mercoa.ApprovalPolicyResponse[]>()
-  const [counterparties, setCounterparties] = useState<Mercoa.CounterpartyResponse[]>()
   const [isSaving, setIsSaving] = useState(false)
 
-  const roles = useMemo(() => [...new Set(mercoaSession.users.map((user) => user.roles).flat())], [mercoaSession.users])
+  const roles = useMemo(
+    () => [...new Set([...mercoaSession.users.map((user) => user.roles).flat(), ...(additionalRoles ?? [])])],
+    [mercoaSession.users, additionalRoles],
+  )
 
   const methods = useForm({
     defaultValues: {
@@ -79,12 +85,11 @@ export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
     const resp = await mercoaSession.client?.entity.counterparty.findPayees(mercoaSession.entity.id, {
       limit: 100,
     })
-    if (resp) setCounterparties(resp.data)
+    //if (resp) setCounterparties(resp.data)
   }
 
   useEffect(() => {
     getPolicies()
-    getCounterparties()
   }, [mercoaSession.entity?.id, mercoaSession.token])
 
   async function onSubmit(data: { policies: Mercoa.ApprovalPolicyResponse[] }) {
@@ -223,7 +228,7 @@ export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
 
   if (!mercoaSession.client) return <NoSession componentName="ApprovalPolicies" />
 
-  if (!policies || !counterparties || !formPolicies) return <LoadingSpinnerIcon />
+  if (!policies || !formPolicies) return <LoadingSpinnerIcon />
 
   return (
     <FormProvider {...methods}>
@@ -238,7 +243,6 @@ export function ApprovalPolicies({ onSave }: { onSave?: () => void }) {
           setValue={setValue}
           users={mercoaSession.users}
           roles={roles}
-          counterparties={counterparties}
           formPolicies={formPolicies}
           upstreamPolicyId="root"
         />
@@ -261,7 +265,6 @@ function Level({
   setValue,
   users,
   roles,
-  counterparties,
   formPolicies,
 }: {
   level: number
@@ -274,7 +277,6 @@ function Level({
   setValue: any
   users: Mercoa.EntityUserResponse[]
   roles: string[]
-  counterparties: Mercoa.CounterpartyResponse[]
   formPolicies: Mercoa.ApprovalPolicyResponse[]
 }) {
   const policies = formPolicies.filter((e) => e.upstreamPolicyId === upstreamPolicyId)
@@ -333,7 +335,6 @@ function Level({
                     watch={watch}
                     register={register}
                     setValue={setValue}
-                    counterparties={counterparties}
                     index={formPolicies.findIndex((e) => e.id == policy.id)}
                   />
                 </div>
@@ -357,7 +358,6 @@ function Level({
                     setValue={setValue}
                     users={users}
                     roles={roles}
-                    counterparties={counterparties}
                     formPolicies={formPolicies}
                     upstreamPolicyId={policy.id}
                   />
@@ -452,14 +452,12 @@ function Trigger({
   watch,
   register,
   setValue,
-  counterparties,
   index,
 }: {
   control: any
   watch: any
   register: any
   setValue: any
-  counterparties: Mercoa.CounterpartyResponse[]
   index: number
 }) {
   const mercoaSession = useMercoaSession()
@@ -471,8 +469,6 @@ function Trigger({
   })
 
   const triggerWatch = watch(trigger) as Mercoa.Trigger[] | undefined | Array<undefined>
-
-  mercoaSession.debug({ render: true, triggerWatch })
 
   return (
     <>
@@ -599,28 +595,11 @@ function Trigger({
                 <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2 mercoa-w-[100px]">
                   is one of
                 </span>
-                <MercoaCombobox
-                  className="mercoa-w-full"
-                  options={counterparties?.map((e) => ({
-                    disabled: false,
-                    value: e,
-                  }))}
-                  onChange={(e: Mercoa.CounterpartyResponse[]) => {
-                    if (e.length == 0) return
-                    setValue(
-                      `policies.${index}.trigger.${triggerIndex}.vendorIds`,
-                      e.filter((e) => e).map((e) => e.id),
-                      {
-                        shouldDirty: true,
-                      },
-                    )
-                  }}
-                  value={counterparties.filter((e) =>
-                    (triggerWatch[triggerIndex] as Mercoa.Trigger.Vendor)?.vendorIds?.includes(e.id),
-                  )}
-                  displayIndex="name"
-                  multiple
-                  displaySelectedAs="pill"
+                <CounterpartySearch
+                  setValue={setValue}
+                  index={index}
+                  triggerIndex={triggerIndex}
+                  triggerWatch={triggerWatch}
                 />
               </>
             )}
@@ -859,5 +838,151 @@ function AddRule({
     >
       <PlusIcon className="mercoa-size-4 mercoa-mr-1" /> Add Rule
     </MercoaButton>
+  )
+}
+
+function CounterpartySearch({
+  setValue,
+  index,
+  triggerIndex,
+  triggerWatch,
+}: {
+  setValue: any
+  index: number
+  triggerIndex: number
+  triggerWatch: any
+}) {
+  const mercoaSession = useMercoaSession()
+
+  const [selectedCounterparties, setSelectedCounterparties] = useState<Mercoa.CounterpartyResponse[]>([])
+
+  const [counterparties, setCounterparties] = useState<Mercoa.CounterpartyResponse[]>([])
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const [search, setSearch] = useState<string>()
+  const [searchTerm, setSearchTerm] = useState<string>()
+  const debouncedSearch = useRef(debounce(setSearch, 200)).current
+
+  const vendorIds = (triggerWatch[triggerIndex] as Mercoa.Trigger.Vendor)?.vendorIds
+
+  useEffect(() => {
+    if (!mercoaSession.entity?.id) return
+
+    if (vendorIds && vendorIds.length > 0) {
+      mercoaSession.client?.entity.counterparty
+        .findPayees(mercoaSession.entity?.id, {
+          limit: 100,
+          counterpartyId: vendorIds,
+        })
+        .then((resp) => {
+          setSelectedCounterparties(resp.data)
+        })
+    } else {
+      setSelectedCounterparties([])
+    }
+  }, [vendorIds, mercoaSession.entity?.id, mercoaSession.token])
+
+  // Get all counterparties
+  useEffect(() => {
+    if (!mercoaSession.entity?.id) return
+    let networkType: Mercoa.CounterpartyNetworkType[] = [Mercoa.CounterpartyNetworkType.Entity]
+    mercoaSession.client?.entity.counterparty
+      .findPayees(mercoaSession.entity?.id, { paymentMethods: true, networkType, name: search })
+      .then((resp) => {
+        setCounterparties(resp.data)
+      })
+  }, [mercoaSession.entity?.id, mercoaSession.token, mercoaSession.refreshId, search])
+
+  useEffect(() => {
+    debouncedSearch(searchTerm)
+  }, [searchTerm])
+
+  return (
+    <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-w-full">
+      {selectedCounterparties.map((cp) => (
+        <div
+          key={cp.id}
+          className="mercoa-bg-gray-200 mercoa-rounded-mercoa mercoa-p-2 mercoa-text-sm mercoa-flex mercoa-items-center mercoa-justify-between"
+        >
+          <span className="mercoa-truncate">{cp.name}</span>
+          <button
+            onClick={() => {
+              setValue(
+                `policies.${index}.trigger.${triggerIndex}.vendorIds`,
+                selectedCounterparties.filter((e) => e.id != cp.id).map((e) => e.id),
+                {
+                  shouldDirty: true,
+                },
+              )
+            }}
+            type="button"
+            className="mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75"
+          >
+            <XCircleIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
+            <span className="mercoa-sr-only">Clear</span>
+          </button>
+        </div>
+      ))}
+      <Combobox
+        value={null}
+        as="div"
+        onChange={(e: Mercoa.CounterpartyResponse) => {
+          console.log(e)
+          if (!e || !e.id) return
+          setValue(
+            `policies.${index}.trigger.${triggerIndex}.vendorIds`,
+            [...new Set([...((triggerWatch[triggerIndex] as Mercoa.Trigger.Vendor)?.vendorIds ?? []), e.id])],
+            {
+              shouldDirty: true,
+            },
+          )
+          setSearchTerm(undefined)
+        }}
+        nullable
+        className="mercoa-col-span-full"
+      >
+        {({ open }) => (
+          <div className="mercoa-relative mercoa-w-full">
+            <Combobox.Input
+              placeholder="Enter a company name..."
+              autoComplete="off"
+              className="mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-white mercoa-py-1.5 mercoa-pl-3 mercoa-pr-10 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 focus:mercoa-ring-2 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
+              onFocus={() => {
+                if (open) return // don't click button if already open, as it will close it
+                setSearchTerm(undefined) // reset filter
+                buttonRef.current?.click() // simulate click on button to open dropdown
+              }}
+              onChange={(event) => {
+                setSearchTerm(event.target.value?.toLowerCase() ?? '')
+              }}
+              displayValue={(e: Mercoa.CounterpartyResponse) => e?.name ?? ''}
+            />
+            <Combobox.Button
+              className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none"
+              ref={buttonRef}
+            >
+              <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
+            </Combobox.Button>
+
+            <Combobox.Options className="mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-mercoa mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm">
+              {counterparties.map((cp) => (
+                <Combobox.Option
+                  key={cp.id}
+                  value={cp}
+                  className={({ active }) =>
+                    `mercoa-relative mercoa-cursor-pointer  mercoa-py-2 mercoa-pl-3 mercoa-pr-9 ${
+                      active
+                        ? 'mercoa-bg-mercoa-primary mercoa-text-mercoa-primary-text-invert'
+                        : 'mercoa-text-gray-900'
+                    }`
+                  }
+                >
+                  <span>{cp.name}</span>
+                </Combobox.Option>
+              ))}
+            </Combobox.Options>
+          </div>
+        )}
+      </Combobox>
+    </div>
   )
 }

@@ -7,6 +7,7 @@ import {
   ExclamationCircleIcon,
   InformationCircleIcon,
   LockClosedIcon,
+  PencilIcon,
   PhotoIcon,
   PlusIcon,
   TrashIcon,
@@ -436,14 +437,46 @@ export function DateOfBirthBlock({
   readOnly?: boolean
 }) {
   return (
-    <MercoaInput
-      type="date"
-      label="Date of Birth"
-      name="dob"
-      errors={errors}
-      readOnly={readOnly}
-      required={required}
+    <Controller
       control={control}
+      name="dob"
+      render={({ field }) => {
+        if (field.value === '****') {
+          return (
+            <div>
+              <MercoaInputLabel label="Date of Birth" name="dob" />
+              <div className="mercoa-mt-1">
+                <input
+                  type="text"
+                  className={inputClassName({})}
+                  placeholder="xx/xx/xxxx"
+                  value={field.value}
+                  onChange={() => {
+                    field.onChange({
+                      target: {
+                        value: '',
+                      },
+                    })
+                  }}
+                  readOnly={readOnly}
+                />
+              </div>
+            </div>
+          )
+        } else {
+          return (
+            <MercoaInput
+              type="date"
+              label="Date of Birth"
+              name="dob"
+              errors={errors}
+              readOnly={readOnly}
+              required={required}
+              control={control}
+            />
+          )
+        }
+      }}
     />
   )
 }
@@ -1313,10 +1346,12 @@ export function RepresentativeOnboardingForm({
   entityId,
   title,
   onClose,
+  representative,
 }: {
   entityId: string
   title?: string
   onClose?: Function
+  representative?: Mercoa.RepresentativeResponse
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1326,8 +1361,8 @@ export function RepresentativeOnboardingForm({
       ...phoneSchema,
       ...addressBlockSchema,
       ...nameBlockSchema,
-      ...dateOfBirthSchema,
-      ...SSNSchema,
+      ...(!representative && dateOfBirthSchema),
+      ...(!representative && SSNSchema),
       jobTitle: yup.string().required('Job title is required'),
       ownershipPercentage: yup
         .number()
@@ -1350,52 +1385,137 @@ export function RepresentativeOnboardingForm({
   } = useForm({
     mode: 'onChange',
     resolver: yupResolver(schema),
+    defaultValues: {
+      firstName: representative?.name?.firstName,
+      middleName: representative?.name?.middleName,
+      lastName: representative?.name?.lastName,
+      email: representative?.email,
+      addressLine1: representative?.address?.addressLine1,
+      addressLine2: representative?.address?.addressLine2,
+      city: representative?.address?.city,
+      stateOrProvince: representative?.address?.stateOrProvince,
+      postalCode: representative?.address?.postalCode,
+      phoneNumber: formatPhoneNumber(representative?.phone?.number),
+      jobTitle: representative?.responsibilities?.jobTitle,
+      isController: representative?.responsibilities?.isController,
+      ownershipPercentage: representative?.responsibilities?.ownershipPercentage,
+      dob: representative?.birthDateProvided ? '****' : '',
+      taxID: representative?.governmentIdProvided ? '****' : '',
+    },
   })
 
-  async function onSubmit(data: any) {
-    const postData: Mercoa.RepresentativeRequest = {
-      email: data.email,
-      phone: {
-        number: data.phoneNumber,
-        countryCode: '1',
-      },
-      name: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        middleName: data.middleName,
-        suffix: data.suffix,
-      },
-      birthDate: {
-        day: dayjs(data.dob).format('D'),
-        month: dayjs(data.dob).format('M'),
-        year: dayjs(data.dob).format('YYYY'),
-      },
-      address: {
-        addressLine1: data.addressLine1,
-        addressLine2: data.addressLine2,
-        postalCode: data.postalCode,
-        stateOrProvince: data.stateOrProvince,
-        city: data.city,
-        country: 'US',
-      },
-      governmentId: {
-        ssn: data.taxID,
-      },
-      responsibilities: {
-        isController: data.isController,
-        isOwner: data.ownershipPercentage >= 25,
-        ownershipPercentage: Number(data.ownershipPercentage),
-        jobTitle: data.jobTitle,
-      },
-    }
+  useEffect(() => {
+    if (!representative) return
+    setValue('firstName', representative.name.firstName as unknown as never)
+    setValue('middleName', representative.name.middleName as unknown as never)
+    setValue('lastName', representative.name.lastName as unknown as never)
+    setValue('email', representative.email as unknown as never)
+    setValue('addressLine1', representative.address.addressLine1 as unknown as never)
+    setValue('addressLine2', representative.address.addressLine2 as unknown as never)
+    setValue('city', representative.address.city as unknown as never)
+    setValue('stateOrProvince', representative.address.stateOrProvince as unknown as never)
+    setValue('postalCode', representative.address.postalCode as unknown as never)
+    setValue('phoneNumber', formatPhoneNumber(representative?.phone?.number) as unknown as never)
+    setValue('jobTitle', representative.responsibilities.jobTitle as unknown as never)
+    setValue('isController', representative.responsibilities.isController as unknown as never)
+    setValue('ownershipPercentage', representative.responsibilities.ownershipPercentage as unknown as never)
+    setValue('dob', (representative.birthDateProvided ? '****' : '') as unknown as never)
+    setValue('taxID', (representative.governmentIdProvided ? '****' : '') as unknown as never)
+  }, [representative])
 
-    try {
-      await mercoaSession.client?.entity.representative.create(entityId, postData)
-      await mercoaSession.refresh()
-      if (onClose) onClose(data)
-    } catch (e) {
-      console.error(e)
-      toast.error('There was an issue creating this representative. Please check your information and try again.')
+  async function onSubmit(data: any) {
+    if (representative) {
+      const postData: Mercoa.RepresentativeUpdateRequest = {
+        email: data.email,
+        phone: {
+          number: data.phoneNumber,
+          countryCode: '1',
+        },
+        name: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          middleName: data.middleName,
+          suffix: data.suffix,
+        },
+        ...(data.dob !== '****' && {
+          birthDate: {
+            day: dayjs(data.dob).format('D'),
+            month: dayjs(data.dob).format('M'),
+            year: dayjs(data.dob).format('YYYY'),
+          },
+        }),
+        address: {
+          addressLine1: data.addressLine1,
+          addressLine2: data.addressLine2,
+          postalCode: data.postalCode,
+          stateOrProvince: data.stateOrProvince,
+          city: data.city,
+          country: 'US',
+        },
+        ...(data.taxID !== '****' && {
+          governmentId: {
+            ssn: data.taxID,
+          },
+        }),
+        responsibilities: {
+          isController: data.isController,
+          isOwner: data.ownershipPercentage >= 25,
+          ownershipPercentage: Number(data.ownershipPercentage),
+          jobTitle: data.jobTitle,
+        },
+      }
+      try {
+        await mercoaSession.client?.entity.representative.update(entityId, representative.id, postData)
+        await mercoaSession.refresh()
+        if (onClose) onClose(data)
+      } catch (e) {
+        console.error(e)
+        toast.error('There was an issue updating this representative. Please check your information and try again.')
+      }
+    } else {
+      const postData: Mercoa.RepresentativeRequest = {
+        email: data.email,
+        phone: {
+          number: data.phoneNumber,
+          countryCode: '1',
+        },
+        name: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          middleName: data.middleName,
+          suffix: data.suffix,
+        },
+        birthDate: {
+          day: dayjs(data.dob).format('D'),
+          month: dayjs(data.dob).format('M'),
+          year: dayjs(data.dob).format('YYYY'),
+        },
+        address: {
+          addressLine1: data.addressLine1,
+          addressLine2: data.addressLine2,
+          postalCode: data.postalCode,
+          stateOrProvince: data.stateOrProvince,
+          city: data.city,
+          country: 'US',
+        },
+        governmentId: {
+          ssn: data.taxID,
+        },
+        responsibilities: {
+          isController: data.isController,
+          isOwner: data.ownershipPercentage >= 25,
+          ownershipPercentage: Number(data.ownershipPercentage),
+          jobTitle: data.jobTitle,
+        },
+      }
+      try {
+        await mercoaSession.client?.entity.representative.create(entityId, postData)
+        await mercoaSession.refresh()
+        if (onClose) onClose(data)
+      } catch (e) {
+        console.error(e)
+        toast.error('There was an issue creating this representative. Please check your information and try again.')
+      }
     }
   }
 
@@ -1472,7 +1592,7 @@ export function RepresentativeOnboardingForm({
       </div>
       <div className="mercoa-mt-5 sm:mercoa-mt-6">
         <MercoaButton isEmphasized className="mercoa-w-full">
-          Add Representative
+          {representative ? 'Update' : 'Add Representative'}
         </MercoaButton>
       </div>
     </form>
@@ -1579,7 +1699,10 @@ export function RepresentativeComponent({
 }) {
   const mercoaSession = useMercoaSession()
 
+  const [showEditModal, setShowEditModal] = useState(false)
+
   async function deleteAccount() {
+    if (!confirm('Are you sure you want to delete this representative?')) return
     if (mercoaSession.token) {
       if (!mercoaSession.entity?.id) {
         toast.error('Entity not found')
@@ -1633,11 +1756,29 @@ export function RepresentativeComponent({
           <div className="mercoa-flex-shrink-0">
             <button
               className="mercoa-ml-1 mercoa-cursor-pointer hover:mercoa-text-red-300"
+              onClick={() => setShowEditModal(true)}
+            >
+              <PencilIcon className="mercoa-size-5" />
+            </button>
+            <button
+              className="mercoa-ml-1 mercoa-cursor-pointer hover:mercoa-text-red-300"
               onClick={() => deleteAccount()}
             >
               {' '}
               <TrashIcon className="mercoa-size-5" />
             </button>
+            <AddDialog
+              show={showEditModal}
+              onClose={() => setShowEditModal(false)}
+              component={
+                <RepresentativeOnboardingForm
+                  title="Create Representative"
+                  onClose={() => setShowEditModal(false)}
+                  entityId={mercoaSession.entity?.id ?? ''}
+                  representative={representative}
+                />
+              }
+            />
           </div>
         )}
       </div>

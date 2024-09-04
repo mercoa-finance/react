@@ -3,7 +3,7 @@ import { Mercoa } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
-import { NoSession, TableNavigation, Tooltip, useMercoaSession } from './index'
+import { MercoaCombobox, NoSession, TableNavigation, Tooltip, useMercoaSession } from './index'
 
 export function EntityDetails({ children }: { children: Function }) {
   const mercoaSession = useMercoaSession()
@@ -56,18 +56,10 @@ export function EntityStatus({ entity }: { entity?: Mercoa.EntityResponse }) {
   )
 }
 
-export function EntityInboxEmail({
-  entity,
-  layout,
-  theme,
-}: {
-  entity?: Mercoa.EntityResponse
-  layout?: 'left' | 'right'
-  theme?: 'light' | 'dark'
-}) {
+export function EntityInboxEmail({ layout, theme }: { layout?: 'left' | 'right'; theme?: 'light' | 'dark' }) {
   const mercoaSession = useMercoaSession()
-  const entitySelected = entity || mercoaSession.entity
   if (!mercoaSession.client) return <NoSession componentName="EntityInboxEmail" />
+  const emailToName = mercoaSession.entity?.emailTo ?? mercoaSession.entityGroup?.emailToName ?? ''
   return (
     <button
       className={`mercoa-flex mercoa-gap-1 mercoa-items-center ${
@@ -75,14 +67,12 @@ export function EntityInboxEmail({
       }`}
       onClick={() => {
         // copy email address to clipboard
-        navigator.clipboard.writeText(
-          `${entitySelected?.emailTo ?? ''}@${mercoaSession.organization?.emailProvider?.inboxDomain}`,
-        )
+        navigator.clipboard.writeText(`${emailToName ?? ''}@${mercoaSession.organization?.emailProvider?.inboxDomain}`)
         toast.success('Email address copied')
       }}
     >
       {layout === 'left' && <Square2StackIcon className="mercoa-size-5" />}
-      {entitySelected?.emailTo ?? ''}@{mercoaSession.organization?.emailProvider?.inboxDomain}
+      {emailToName ?? ''}@{mercoaSession.organization?.emailProvider?.inboxDomain}
       {(!layout || layout === 'right') && <Square2StackIcon className="mercoa-size-5" />}
     </button>
   )
@@ -242,5 +232,60 @@ export function EntityEmailLogs({
         setResultsPerPage={setResultsPerPage}
       />
     </div>
+  )
+}
+
+export function EntitySelector({
+  onSelect,
+  allowClear,
+}: {
+  onSelect?: (entity?: Mercoa.EntityResponse) => void
+  allowClear?: boolean
+}) {
+  const mercoaSession = useMercoaSession()
+  const [selectedEntity, setSelectedEntity] = useState<Mercoa.EntityResponse>()
+
+  useEffect(() => {
+    if (onSelect) onSelect(selectedEntity)
+  }, [selectedEntity])
+
+  if (!mercoaSession.client) return <NoSession componentName="EntitySelector" />
+  if (!mercoaSession.entityGroup) return <></>
+  const options = [
+    ...(mercoaSession.entities ?? []).map((e) => ({
+      disabled: false,
+      value: e,
+    })),
+  ]
+
+  if (allowClear) {
+    options.push({
+      disabled: false,
+      value: {
+        id: 'clear',
+        name: 'All',
+        email: '',
+      } as any,
+    })
+  }
+
+  return (
+    <MercoaCombobox
+      className="mercoa-min-w-[300px]"
+      options={options}
+      onChange={(e: Mercoa.EntityResponse) => {
+        if (e.id === 'clear') {
+          if (onSelect) setSelectedEntity(undefined)
+          else mercoaSession.setEntity(undefined)
+          return
+        }
+        if (onSelect) setSelectedEntity(e)
+        else mercoaSession.setEntity(e)
+      }}
+      value={mercoaSession.entity ?? selectedEntity ?? { id: 'clear', name: 'All', email: '' }}
+      displayIndex="name"
+      secondaryDisplayIndex="email"
+      displaySelectedAs="pill"
+    />
   )
 }

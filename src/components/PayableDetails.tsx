@@ -583,6 +583,7 @@ export function PayableForm({
           name: lineItem.name ?? '',
           metadata: lineItem.metadata ?? {},
           glAccountId: lineItem.glAccountId ?? '',
+          category: lineItem.category ?? 'EXPENSE',
           id: lineItem.id ?? '',
           createdAt: lineItem.createdAt ?? new Date(),
           updatedAt: lineItem.updatedAt ?? new Date(),
@@ -4073,6 +4074,7 @@ export type PayableLineItemChildrenProps = {
   addItem: () => void
   updateItem: (index: number, item: Mercoa.InvoiceLineItemUpdateRequest) => void
   removeItem: (index: number) => void
+  setItems: (items: Mercoa.InvoiceLineItemUpdateRequest[]) => void
 }
 
 export function PayableLineItems({
@@ -4120,6 +4122,9 @@ export function PayableLineItems({
         setValue(`lineItems.${index}`, item)
       },
       removeItem,
+      setItems: (items) => {
+        setValue('lineItems', items)
+      },
     })
   }
 

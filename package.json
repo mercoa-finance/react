@@ -1,7 +1,7 @@
 {
   "name": "@mercoa/react",
   "description": "Mercoa React Component Library",
-  "version": "0.0.56-rc3",
+  "version": "0.0.57",
   "author": "Sandeep Dinesh <sandeep@mercoa.com>",
   "license": "MIT",
   "repository": {
@@ -63,7 +63,7 @@
     "@headlessui/react": "^1.7.19",
     "@heroicons/react": "^2.1.1",
     "@hookform/resolvers": "^3.3.2",
-    "@mercoa/javascript": "^0.5.5",
+    "@mercoa/javascript": "^0.5.7",
     "@react-hook/resize-observer": "^1.2.6",
     "accounting": "^0.4.1",
     "big.js": "^6.2.1",

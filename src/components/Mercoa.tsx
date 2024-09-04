@@ -10,8 +10,9 @@ export interface MercoaContext {
   entityId?: string
   entityGroupId?: string
   entity: Mercoa.EntityResponse | undefined
+  entityGroup: Mercoa.EntityGroupResponse | undefined
   entities: Mercoa.EntityResponse[] | undefined
-  setEntity: (entity: Mercoa.EntityResponse) => void
+  setEntity: (entity?: Mercoa.EntityResponse) => void
   user: Mercoa.EntityUserResponse | undefined
   users: Mercoa.EntityUserResponse[]
   customPaymentMethodSchemas: Mercoa.CustomPaymentMethodSchemaResponse[]
@@ -35,6 +36,7 @@ const sessionContext = createContext<MercoaContext>({
   entityId: '',
   entityGroupId: '',
   entity: undefined,
+  entityGroup: undefined,
   entities: undefined,
   setEntity: () => {},
   user: undefined,
@@ -197,7 +199,7 @@ function useProvideSession({
   const [tokenLocal, setToken] = useState<string>(token)
   const [iframeOptions, setIframeOptions] = useState<TokenOptions>()
   const [heightOffsetLocal, setHeightOffset] = useState<number>(heightOffset)
-  const [entities, setEntities] = useState<Array<Mercoa.EntityResponse>>()
+  const [entityGroup, setEntityGroup] = useState<Mercoa.EntityGroupResponse>()
 
   useEffect(() => {
     setHeightOffset(heightOffset)
@@ -219,7 +221,7 @@ function useProvideSession({
         if (!token.organizationId) {
           throw new Error('Invalid token')
         }
-        if (!token.entityId && !token.userId && !token.invoiceId && !token.counterpartyId) {
+        if (!token.entityId && !token.userId && !token.invoiceId && !token.counterpartyId && !token.entityGroupId) {
           throw new Error('Invalid token')
         }
         if (Date.now() >= token.exp * 1000) {
@@ -264,10 +266,17 @@ function useProvideSession({
       await refreshEntity(entityId)
       return
     }
-    const { entityId: tokenEid, entityGroupId } = jwtDecode(String(tokenLocal)) as TokenOptions
-    if (tokenEid) {
-      await refreshEntity(tokenEid)
-      return
+    try {
+      const { entityId: tokenEid, entityGroupId } = jwtDecode(String(tokenLocal)) as TokenOptions
+      if (tokenEid) {
+        await refreshEntity(tokenEid)
+        return
+      } else if (entityGroupId) {
+        await refreshEntityGroup()
+        return
+      }
+    } catch (e) {
+      console.error(e)
     }
     if (entityGroupId) {
       await refreshEntityGroup()
@@ -357,7 +366,7 @@ function useProvideSession({
         const group = await client.entityGroup.get(egi, {
           entityMetadata: !!fetchMetadata,
         })
-        setEntities(group.entities)
+        setEntityGroup(group)
       } catch (e) {
         console.error(e)
         console.error('Failed to get entity group ' + egi)
@@ -441,8 +450,9 @@ function useProvideSession({
     entityId: entityId ?? entity?.id,
     entityGroupId,
     entity,
-    entities,
-    setEntity: (entity: Mercoa.EntityResponse) => {
+    entityGroup,
+    entities: entityGroup?.entities,
+    setEntity: (entity?: Mercoa.EntityResponse) => {
       setEntity(entity)
       refresh()
     },

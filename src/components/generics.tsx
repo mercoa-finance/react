@@ -560,25 +560,31 @@ export function PaymentMethodList({
   )
 }
 
-export function Switch({
+export function MercoaSwitch({
   register,
   name,
   label,
   disabled,
+  className,
+  errors,
 }: {
   register: Function
   name: string
   label: ReactNode
   disabled?: boolean
+  className?: string
+  errors?: FieldErrors<any>
 }) {
   return (
-    <label className="mercoa-relative mercoa-inline-flex mercoa-cursor-pointer  mercoa-items-center mercoa-mt-2">
+    <label
+      className={`mercoa-relative mercoa-inline-flex mercoa-cursor-pointer mercoa-items-center mercoa-mt-2 ${className}`}
+    >
       <input {...register(name)} type="checkbox" value="" className="mercoa-peer mercoa-sr-only" disabled={disabled} />
       <div
         className="mercoa-peer mercoa-h-6 mercoa-w-11 mercoa-rounded-full mercoa-bg-gray-300 after:mercoa-absolute after:mercoa-top-0.5 after:mercoa-left-[2px]
                 after:mercoa-h-5 after:mercoa-w-5 after:mercoa-rounded-full
                 after:border after:mercoa-border-gray-300 after:mercoa-bg-white after:mercoa-transition-all after:mercoa-content-[''] peer-checked:mercoa-bg-mercoa-primary peer-checked:after:mercoa-translate-x-full
-                peer-checked:after:mercoa-border-white peer-focus:mercoa-ring-4 peer-focus:mercoa-ring-mercoa-primary-300 peer-disabled:mercoa-bg-red-100 peer-disabled:after:mercoa-bg-red-50"
+                peer-checked:after:mercoa-border-white peer-focus:mercoa-ring-4 peer-focus:mercoa-ring-mercoa-primary peer-disabled:mercoa-bg-red-100 peer-disabled:after:mercoa-bg-red-50"
       />
       <span className="mercoa-ml-3 mercoa-flex mercoa-items-center mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">
         {label}
