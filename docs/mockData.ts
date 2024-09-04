@@ -174,6 +174,31 @@ const organization: Mercoa.OrganizationResponse = {
         show: true,
         required: true,
       },
+      w9: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      tenNinetyNine: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      averageMonthlyTransactionVolume: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      maxTransactionSize: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      averageTransactionSize: {
+        edit: true,
+        show: true,
+        required: true,
+      },
     },
     individual: {
       name: {
@@ -210,6 +235,16 @@ const organization: Mercoa.OrganizationResponse = {
         show: false,
         edit: false,
         required: false,
+      },
+      w9: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      tenNinetyNine: {
+        edit: true,
+        show: true,
+        required: true,
       },
     },
   },
@@ -288,6 +323,32 @@ const organization: Mercoa.OrganizationResponse = {
         show: true,
         required: true,
       },
+
+      w9: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      tenNinetyNine: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      averageMonthlyTransactionVolume: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      maxTransactionSize: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      averageTransactionSize: {
+        edit: true,
+        show: true,
+        required: true,
+      },
     },
     individual: {
       name: {
@@ -321,6 +382,16 @@ const organization: Mercoa.OrganizationResponse = {
         required: true,
       },
       termsOfService: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      w9: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      tenNinetyNine: {
         edit: true,
         show: true,
         required: true,
