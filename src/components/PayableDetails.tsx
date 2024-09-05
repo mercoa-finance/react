@@ -61,6 +61,7 @@ import {
   Check,
   CounterpartyAccount,
   CustomPaymentMethod,
+  EntitySelector,
   InvoiceComments,
   InvoiceStatusPill,
   LoadingSpinnerIcon,
@@ -353,6 +354,7 @@ export function PayableForm({
       commentText: yup.string().nullable(),
       comments: yup.mixed().nullable(),
       creatorUser: yup.mixed().nullable(),
+      creatorEntityId: yup.string().nullable(),
       approvalPolicy: yup.mixed().nullable(),
       vendor: yup.object().shape(counterpartyYupValidation),
       '~cpm~~': yup.mixed().nullable(),
@@ -415,6 +417,7 @@ export function PayableForm({
       commentText: '',
       comments: invoice?.comments ?? [],
       creatorUser: invoice?.creatorUser,
+      creatorEntityId: invoice?.creatorEntityId,
       vendor: {
         id: invoice?.vendor?.id,
         accountType: invoice?.vendor?.accountType,
@@ -796,7 +799,7 @@ export function PayableForm({
         try {
           if (confirm('Are your sure you want to delete this invoice? This cannot be undone.')) {
             await mercoaSession.client?.invoice.delete(invoice.id)
-            renderCustom?.toast ? renderCustom.toast.success('Invoice created') : toast.success('Invoice deleted')
+            renderCustom?.toast ? renderCustom.toast.success('Invoice deleted') : toast.success('Invoice deleted')
             if (onUpdate) onUpdate(undefined)
           }
           setIsLoading(false)
@@ -820,7 +823,7 @@ export function PayableForm({
           const resp = await mercoaSession.client?.invoice.update(invoice?.id, { status: Mercoa.InvoiceStatus.Paid })
           if (resp) {
             renderCustom?.toast
-              ? renderCustom.toast.success('Invoice created')
+              ? renderCustom.toast.success('Invoice marked as paid. Live check created.')
               : toast.success('Invoice marked as paid. Live check created.')
             refreshInvoice(resp.id)
           }
@@ -848,7 +851,7 @@ export function PayableForm({
           userId: mercoaSession.user?.id,
         })
         refreshInvoice(invoice.id)
-        renderCustom?.toast ? renderCustom.toast.success('Invoice created') : toast.success('Invoice approved')
+        renderCustom?.toast ? renderCustom.toast.success('Invoice approved') : toast.success('Invoice approved')
       } catch (e: any) {
         console.error(e)
         renderCustom?.toast
@@ -883,7 +886,9 @@ export function PayableForm({
             deductionDate: data.deductionDate,
           })
           refreshInvoice(invoice.id)
-          renderCustom?.toast ? renderCustom.toast.success('Invoice created') : toast.success('Invoice marked as paid')
+          renderCustom?.toast
+            ? renderCustom.toast.success('Invoice marked as paid')
+            : toast.success('Invoice marked as paid')
         }
       } catch (e: any) {
         console.error(e)
@@ -1383,17 +1388,26 @@ export function PayableForm({
               <PayableOverview />
               <PayableLineItems />
               <PayableMetadata /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
-              <PayablePaymentSource />{' '}
-              <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
-              <PayablePaymentDestination />
-              <PaymentDestinationProcessingTime />
-              <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
-              <PayableFees />
-              <PayableRecurringSchedule />
-              <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
-              <PayableApprovers /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+              {mercoaSession.entity?.id && (
+                <>
+                  <PayablePaymentSource />{' '}
+                  <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+                  <PayablePaymentDestination />
+                  <PaymentDestinationProcessingTime />
+                  <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+                  <PayableFees />
+                  <PayableRecurringSchedule />
+                  <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+                  <PayableApprovers />{' '}
+                  <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+                </>
+              )}
               <InvoiceComments />
-              <PayableActions admin={admin} submitForm={handleSubmit(saveInvoiceLoadingWrapper)} />
+              <PayableActions
+                admin={admin}
+                submitForm={handleSubmit(saveInvoiceLoadingWrapper)}
+                refreshInvoice={refreshInvoice}
+              />
             </>
           )}
         </form>
@@ -1944,6 +1958,7 @@ export function OcrProgressBar({ ocrProcessing }: { ocrProcessing: boolean }) {
 
 // Action Bar
 export function PayableActions({
+  refreshInvoice,
   approveButton,
   rejectButton,
   nonApproverButton,
@@ -1963,6 +1978,7 @@ export function PayableActions({
   admin,
   children,
 }: {
+  refreshInvoice?: (invoiceId: string) => void
   approveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   rejectButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   nonApproverButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
@@ -2016,10 +2032,35 @@ export function PayableActions({
   const status = watch('status') as Mercoa.InvoiceStatus | undefined
   const approverSlots = watch('approvers') as Mercoa.ApprovalSlot[]
   const approverSlot = approverSlots.find((e) => e.assignedUserId === mercoaSession.user?.id)
+  const [selectedEntity, setSelectedEntity] = useState<Mercoa.EntityResponse>()
 
   const buttons: JSX.Element[] = []
 
   if (!mercoaSession.client) return <NoSession componentName="PayableActions" />
+
+  const assignToEntityComponent = (
+    <div className="mercoa-flex mercoa-space-x-2">
+      <EntitySelector onSelect={setSelectedEntity} direction="up" />
+      <MercoaButton
+        isEmphasized={true}
+        disabled={!id || !selectedEntity}
+        onClick={async () => {
+          if (!id || !selectedEntity) return
+          await mercoaSession.client?.invoice.update(id, {
+            status: Mercoa.InvoiceStatus.Draft,
+            creatorEntityId: selectedEntity.id,
+            payerId: selectedEntity.id,
+          })
+          if (refreshInvoice) {
+            refreshInvoice(id)
+            mercoaSession.setEntity(selectedEntity)
+          }
+        }}
+      >
+        Assign to Entity
+      </MercoaButton>
+    </div>
+  )
 
   const deleteButtonComponent = deleteButton ? (
     deleteButton({
@@ -2360,6 +2401,10 @@ export function PayableActions({
 
       case Mercoa.InvoiceStatus.Failed:
         buttons.push(retryPaymentButtonComponent, cancelButtonComponent)
+        break
+
+      case Mercoa.InvoiceStatus.Unassigned:
+        buttons.push(assignToEntityComponent)
         break
 
       case Mercoa.InvoiceStatus.Archived:

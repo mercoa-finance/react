@@ -464,6 +464,58 @@ export const payerEntity: Mercoa.EntityResponse = {
   updatedAt: new Date('2021-01-02'),
 }
 
+export const payerEntity2: Mercoa.EntityResponse = {
+  id: 'ent_payer_2',
+  isCustomer: true,
+  accountType: Mercoa.AccountType.Business,
+  name: '456 Biz',
+  email: 'ap@456biz.com',
+  emailTo: '456biz',
+  emailToAlias: ['456Biz@yo.com'],
+  foreignId: '456',
+  isPayee: false,
+  isPayor: false,
+  isNetworkPayee: false,
+  isNetworkPayor: false,
+  profile: {
+    business: {
+      legalBusinessName: '456 Biz',
+      email: 'ap@456biz.com',
+      doingBusinessAs: '456 biz',
+      description: 'this is a description',
+      website: 'https://456biz.com',
+      // @ts-ignore-next-line
+      taxIDProvided: true,
+      ownersProvided: false,
+      phone: {
+        number: '5555551010',
+        countryCode: '1',
+      },
+      businessType: Mercoa.BusinessType.Llc,
+      address: {
+        addressLine1: '123 Main St',
+        addressLine2: 'Apt 1',
+        city: 'San Francisco',
+        stateOrProvince: 'CA',
+        country: 'US',
+        postalCode: '94105',
+      },
+    },
+  },
+  status: Mercoa.EntityStatus.Unverified,
+  acceptedTos: false,
+  createdAt: new Date('2021-01-01'),
+  updatedAt: new Date('2021-01-02'),
+}
+
+export const payerEntityGroup: Mercoa.EntityGroupResponse = {
+  id: 'entg_payer',
+  name: 'Acme Group',
+  emailToName: 'aceme-group',
+  foreignId: '888',
+  entities: [payerEntity, payerEntity2],
+}
+
 export const vendorEntities: Mercoa.EntityResponse[] = [
   'Acme',
   'Globex',
@@ -646,15 +698,21 @@ export const vendorPaymentMethods: Mercoa.PaymentMethodResponse[] = vendorEntiti
 
 export const mockToken = sign(
   {
-    entityId: payerEntity.id,
+    organizationId: organization.id,
+    // entityId: payerEntity.id,
+    entityGroupId: payerEntityGroup.id,
     userId: user.id,
-    moov: {
-      accountId: 'sandbox',
-      token: 'sandbox',
+    options: {
+      expiresIn: '30d',
     },
+    iat: Math.floor(new Date().getTime() / 1000),
+    exp: Math.floor(new Date().getTime() / 1000) + 300 * 24 * 60 * 60,
   },
   '',
 )
+
+console.log(mockToken)
+
 const findEntity: Mercoa.FindEntityResponse = {
   hasMore: false,
   count: 1,
@@ -1236,6 +1294,10 @@ export const mswHandlers = [
   // PMS
   http.get(`${basePath}/paymentMethod/schema`, () => {
     return HttpResponse.json(pmSchemas)
+  }),
+  // Entity Group
+  http.get(`${basePath}/entityGroup/${payerEntityGroup.id}`, () => {
+    return HttpResponse.json(payerEntityGroup)
   }),
 
   // Fees

@@ -166,7 +166,7 @@ function SchedulePaymentModal({
   )
 }
 
-function AssignPayerModal({
+export function AssignEntityModal({
   open,
   onClose,
   setEntity,
@@ -185,9 +185,7 @@ function AssignPayerModal({
       <div className="mercoa-fixed mercoa-inset-0 mercoa-overflow-y-auto">
         <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
           <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-shadow-xl mercoa-transition-all sm:mercoa-p-6">
-            <Dialog.Title className="mercoa-text-lg mercoa-font-semibold">
-              When should these payments be scheduled?
-            </Dialog.Title>
+            <Dialog.Title className="mercoa-text-lg mercoa-font-semibold">Assign to Entity</Dialog.Title>
             <div className="mercoa-flex mercoa-mt-5">
               <EntitySelector onSelect={setSelectedEntity} />
               <MercoaButton
@@ -1251,7 +1249,6 @@ export function GroupPayablesTable({
   const [selectedInvoices, setSelectedInvoices] = useState<Array<Mercoa.InvoiceResponse>>([])
 
   const [showBatchScheduleModal, setShowBatchScheduleModal] = useState(false)
-  const [showAddApproverModal, setShowAddApproverModal] = useState(false)
 
   useLayoutEffect(() => {
     const isIndeterminate = selectedInvoices.length > 0 && selectedInvoices.length < (invoices ? invoices.length : 0)
@@ -1681,7 +1678,7 @@ export function GroupPayablesTable({
                 >
                   Delete
                 </button>
-                <AssignPayerModal
+                <AssignEntityModal
                   open={showBatchScheduleModal}
                   onClose={() => setShowBatchScheduleModal(false)}
                   setEntity={handleAssignEntity}

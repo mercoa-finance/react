@@ -644,14 +644,28 @@ export function CounterpartySearchBase({
 
   // if no counterparties, show loading
   if (!counterparties) {
-    return (
-      <div className="mercoa-relative mercoa-mt-2">
-        <input className={inputClassName({})} placeholder="Loading..." value="Loading..." readOnly />
-        <button className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none">
-          <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
-        </button>
-      </div>
-    )
+    if (mercoaSession.entity?.id) {
+      return (
+        <div className="mercoa-relative mercoa-mt-2">
+          <input className={inputClassName({})} placeholder="Loading..." readOnly />
+          <button className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none">
+            <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
+          </button>
+        </div>
+      )
+    } else {
+      return (
+        <div className="mercoa-relative mercoa-mt-2">
+          <input
+            className={inputClassName({})}
+            placeholder={`Assign to entity to see ${type === 'payor' ? 'customers' : 'vendors'}`}
+          />
+          <button className="mercoa-absolute mercoa-inset-y-0 mercoa-right-0 mercoa-flex mercoa-items-center mercoa-rounded-r-md mercoa-px-2 focus:mercoa-outline-none">
+            <ChevronUpDownIcon className="mercoa-size-5 mercoa-text-gray-400" aria-hidden="true" />
+          </button>
+        </div>
+      )
+    }
   }
 
   if (!mercoaSession.client) return <NoSession componentName="CounterpartySearch" />

@@ -1,6 +1,6 @@
 import { useMercoaSession } from '@mercoa/react'
 import { Tabs } from 'nextra/components'
-import { Children } from 'react'
+import { Children, useEffect } from 'react'
 
 export function ComponentContainer({
   children,
@@ -14,6 +14,12 @@ export function ComponentContainer({
   const items = ['Component', 'Code']
   const arrayChildren = Children.toArray(children)
   const mercoaSession = useMercoaSession()
+
+  useEffect(() => {
+    if (!mercoaSession.entity && mercoaSession.entities) {
+      mercoaSession.setEntity(mercoaSession.entities[0])
+    }
+  }, [mercoaSession.entities, mercoaSession.entity])
 
   if (arrayChildren.length < 2) items.pop()
   return (

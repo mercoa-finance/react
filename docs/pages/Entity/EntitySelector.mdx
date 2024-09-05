@@ -23,7 +23,9 @@ The `<EntitySelector>` component lets you select an entity from a list of entiti
 ## Examples
 
 <ComponentContainer>
-  <EntitySelector />
+<div style={{marginBottom: '100px'}}>
+  <EntitySelector onSelect={(e) => console.log(e)} />
+</div>
   ```jsx
 <EntitySelector />
   ```

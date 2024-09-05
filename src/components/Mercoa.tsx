@@ -205,6 +205,10 @@ function useProvideSession({
     setHeightOffset(heightOffset)
   }, [heightOffset])
 
+  useEffect(() => {
+    setToken(token)
+  }, [token])
+
   let defaultEndpoint = 'https://api.mercoa.com'
 
   const client = useMemo(() => {

@@ -671,6 +671,7 @@ export function MercoaCombobox({
   showClear,
   displaySelectedAs,
   readOnly,
+  direction,
 }: {
   onChange: (val: any) => any
   options: { value: any; disabled: boolean; color?: string }[]
@@ -688,6 +689,7 @@ export function MercoaCombobox({
   showClear?: boolean
   displaySelectedAs?: 'input' | 'pill'
   readOnly?: boolean
+  direction?: 'down' | 'up'
 }) {
   const [query, setQuery] = useState('')
   const [selectedValue, setSelectedValue] = useState(value ?? (multiple ? [] : ''))
@@ -823,7 +825,12 @@ export function MercoaCombobox({
         </Combobox.Button>
 
         {filteredOptionsLimited.length > 0 && (
-          <Combobox.Options className="mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-mercoa mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm ">
+          <Combobox.Options
+            className={
+              'mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-mercoa mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm ' +
+              (direction === 'up' ? 'mercoa-bottom-10' : '')
+            }
+          >
             {filteredOptionsLimited.map(({ value, disabled }) => (
               <Combobox.Option
                 key={value?.id ?? (displayIndex ? value[displayIndex] : value)}
