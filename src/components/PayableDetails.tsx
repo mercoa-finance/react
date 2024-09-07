@@ -770,10 +770,16 @@ export function PayableForm({
     } else if (data.saveAsStatus === 'CREATE_CUSTOM') {
       if (vendorId) {
         const filtered: Record<string, string> = {}
-        Object.entries(data).forEach(([key, value]: [any, any]) => {
-          if (key.startsWith('~cpm~~')) {
-            value.forEach((v: any) => {
-              filtered[v.name] = `${filtered[v.name] ?? v.value}`
+        Object.entries(data['~cpm~~']).forEach(([key, value]: [string, any]) => {
+          if (typeof value === 'string') {
+            filtered[key] = value
+          } else {
+            Object.entries(value).forEach(([subKey, value]: [string, any]) => {
+              if (subKey === 'full') {
+                filtered[key] = value
+              } else {
+                filtered[key + '.' + subKey] = value
+              }
             })
           }
         })
@@ -783,7 +789,7 @@ export function PayableForm({
             schemaId: data.paymentDestinationType,
             data: filtered,
           })) as Mercoa.PaymentMethodResponse.Custom
-          mercoaSession.refresh()
+          await mercoaSession.refresh()
           setTimeout(() => {
             setValue('paymentDestinationType', pm.schemaId, { shouldDirty: true })
             setValue('paymentDestinationId', pm.id, { shouldDirty: true })
@@ -1393,10 +1399,11 @@ export function PayableForm({
                   <PayablePaymentSource />{' '}
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                   <PayablePaymentDestination />
+                  {JSON.stringify(watch('~cpm~~'), null, 2)}
                   <PaymentDestinationProcessingTime />
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                   <PayableFees />
-                  <PayableRecurringSchedule />
+                  {/* <PayableRecurringSchedule /> */}
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                   <PayableApprovers />{' '}
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
@@ -2749,7 +2756,7 @@ export function PayableSelectPaymentMethod({
     if (!mercoaSession.token || !entityId || !mercoaSession.client) return
     refreshPaymentMethods()
     refreshOffPlatformDestinationMethod()
-  }, [mercoaSession.client, entityId, mercoaSession.token])
+  }, [mercoaSession.client, entityId, mercoaSession.refreshId])
 
   let paymentMethodTypeKey: 'paymentSourceType' | 'paymentDestinationType' = 'paymentSourceType'
   let sourceOrDestination: 'paymentSourceId' | 'paymentDestinationId' = 'paymentSourceId'
@@ -2976,7 +2983,7 @@ export function PayableSelectPaymentMethod({
     }
   }, [isDestination, selectedType, paymentMethods, paymentId])
 
-  // Reset payment destination on type change
+  // Reset payment destination and fields on type change
   useEffect(() => {
     if (!isDestination) return
     setValue('paymentDestinationOptions', undefined)
@@ -3183,6 +3190,18 @@ export function PayableSelectPaymentMethod({
       )}
       {selectedType === Mercoa.PaymentMethodType.Utility && (
         <>
+          {readOnly && (
+            <>
+              <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+                <div
+                  className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300
+mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2`}
+                >
+                  <div className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900`}>Automated Utility Pay</div>
+                </div>
+              </div>
+            </>
+          )}
           {isDestination && !disableCreation && !readOnly && vendorId && (
             <>
               <div className="mercoa-mt-4">
@@ -3269,6 +3288,20 @@ export function PayableSelectPaymentMethod({
                 </div>
               </>
             )}
+        </>
+      )}
+      {selectedType === Mercoa.PaymentMethodType.OffPlatform && (
+        <>
+          {readOnly && (
+            <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+              <div
+                className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300
+mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2`}
+              >
+                <div className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900`}>Off Platform</div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

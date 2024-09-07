@@ -2,13 +2,13 @@ import { BuildingLibraryIcon, PencilIcon } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import { ReactNode, useEffect, useState } from 'react'
-import { usePlacesWidget } from 'react-google-autocomplete'
-import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form'
+import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize } from '../lib/lib'
 import {
   AddDialog,
+  AddressBlock,
   DefaultPaymentMethodIndicator,
   LoadingSpinnerIcon,
   MercoaButton,
@@ -247,10 +247,16 @@ export function AddCustomPaymentMethod({
 
   async function submitCPM(data: Record<string, any>) {
     const filtered: Record<string, string> = {}
-    Object.entries(data).forEach(([key, value]) => {
-      if (key.startsWith('~cpm~~')) {
-        value.forEach((v: any) => {
-          filtered[v.name] = `${filtered[v.name] ?? v.value}`
+    Object.entries(data['~cpm~~']).forEach(([key, value]: [string, any]) => {
+      if (typeof value === 'string') {
+        filtered[key] = value
+      } else {
+        Object.entries(value).forEach(([subKey, value]: [string, any]) => {
+          if (subKey === 'full') {
+            filtered[key] = value
+          } else {
+            filtered[key + '.' + subKey] = value
+          }
         })
       }
     })
@@ -287,179 +293,133 @@ export function AddCustomPaymentMethod({
 }
 
 export function AddCustomPaymentMethodForm({ schema }: { schema?: Mercoa.CustomPaymentMethodSchemaResponse }) {
-  const [schemaFields, setSchemaFields] = useState<Mercoa.CustomPaymentMethodSchemaField[]>()
+  const schemaFields = Object.values(schema?.fields ?? {})
 
-  const { watch, register, setValue, control } = useFormContext()
-
-  const { append, fields } = useFieldArray({
+  const {
+    watch,
+    register,
+    setValue,
     control,
-    name: '~cpm~~',
-  })
+    trigger,
+    formState: { errors },
+  } = useFormContext()
 
   useEffect(() => {
-    if (schemaFields) return
-    if (schema) {
-      setSchemaFields(Object.values(schema?.fields ?? {}))
-    }
-  }, [schema, schemaFields])
-
-  useEffect(() => {
-    if (schemaFields) {
-      schemaFields.forEach((field) => {
-        append(field, { focusIndex: 0 })
-      })
-    }
-  }, [schemaFields])
+    if (!schema?.fields) return
+    schemaFields.forEach((field) => {
+      setValue(`~cpm~~.${field.name}`, '')
+    })
+  }, [schema?.fields])
 
   const bankAccountData = watch('newBankAccount')
 
   useEffect(() => {
     if (bankAccountData?.accountNumber) {
-      const index = schemaFields?.findIndex(
+      const field = schemaFields?.find(
         (field) => field.type === Mercoa.CustomPaymentMethodSchemaFieldType.UsBankAccountNumber,
       )
-      if (index !== undefined && index > -1) {
-        setValue(`~cpm~~.${index}.value`, bankAccountData.accountNumber)
+      if (field !== undefined) {
+        setValue(`~cpm~~.${field.name}`, bankAccountData.accountNumber)
       }
     }
     if (bankAccountData?.routingNumber) {
-      const index = schemaFields?.findIndex(
+      const field = schemaFields?.find(
         (field) => field.type === Mercoa.CustomPaymentMethodSchemaFieldType.UsBankRoutingNumber,
       )
-      if (index !== undefined && index > -1) {
-        setValue(`~cpm~~.${index}.value`, bankAccountData.routingNumber)
+      if (field !== undefined) {
+        setValue(`~cpm~~.${field.name}`, bankAccountData.routingNumber)
       }
     }
   }, [bankAccountData, schemaFields])
 
   return (
     <div className="mercoa-mt-2">
-      {fields?.map((field, index) => (
-        <div className="mercoa-mt-1" key={field.id}>
-          <MercoaInputLabel label={schemaFields?.[index]?.displayName || schemaFields?.[index]?.name || ''} />
-          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Text && (
+      {schemaFields?.map((field, index) => (
+        <div className="mercoa-mt-1" key={field.name}>
+          <MercoaInputLabel label={field.displayName || field.name || ''} />
+          {field.type === Mercoa.CustomPaymentMethodSchemaFieldType.Text && (
             <MercoaInput
-              name={`~cpm~~.${index}.value`}
+              name={`~cpm~~.${field.name}`}
               register={register}
               type="text"
-              required={schemaFields?.[index]?.optional ? false : true}
-              placeholder={`${schemaFields?.[index]?.displayName || schemaFields?.[index]?.name}`}
+              required={field.optional ? false : true}
+              placeholder={`${field.displayName || field.name}`}
             />
           )}
-          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Url && (
+          {field.type === Mercoa.CustomPaymentMethodSchemaFieldType.Url && (
             <MercoaInput
-              name={`~cpm~~.${index}.value`}
+              name={`~cpm~~.${field.name}`}
               register={register}
               type="text"
-              required={schemaFields?.[index]?.optional ? false : true}
+              required={field.optional ? false : true}
               placeholder={`https://example.com`}
             />
           )}
-          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Email && (
+          {field.type === Mercoa.CustomPaymentMethodSchemaFieldType.Email && (
             <MercoaInput
-              name={`~cpm~~.${index}.value`}
+              name={`~cpm~~.${field.name}`}
               register={register}
               type="text"
-              required={schemaFields?.[index]?.optional ? false : true}
+              required={field.optional ? false : true}
               placeholder={`name@example.com`}
             />
           )}
-          {(schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Number ||
-            schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.UsBankAccountNumber ||
-            schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.UsBankRoutingNumber) && (
+          {(field.type === Mercoa.CustomPaymentMethodSchemaFieldType.Number ||
+            field.type === Mercoa.CustomPaymentMethodSchemaFieldType.UsBankAccountNumber ||
+            field.type === Mercoa.CustomPaymentMethodSchemaFieldType.UsBankRoutingNumber) && (
             <MercoaInput
               type="number"
-              required={schemaFields?.[index]?.optional ? false : true}
-              placeholder={`${schemaFields?.[index]?.displayName || schemaFields?.[index]?.name}`}
-              name={`~cpm~~.${index}.value`}
+              required={field.optional ? false : true}
+              placeholder={`${field.displayName || field.name}`}
+              name={`~cpm~~.${field.name}`}
               register={register}
             />
           )}
-          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Select && (
+          {field.type === Mercoa.CustomPaymentMethodSchemaFieldType.Select && (
             <select
-              {...register(`~cpm~~.${index}.value`)}
-              required={schemaFields?.[index]?.optional ? false : true}
+              {...register(`~cpm~~.${field.name}`)}
+              required={field.optional ? false : true}
               className={inputClassName({})}
             >
-              {schemaFields?.[index]?.options?.map((option, index) => (
+              {field.options?.map((option, index) => (
                 <option key={index} value={option}>
                   {option}
                 </option>
               ))}
             </select>
           )}
-          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Date && (
+          {field.type === Mercoa.CustomPaymentMethodSchemaFieldType.Date && (
             <MercoaInput
               control={control}
-              name={`~cpm~~.${index}.value`}
+              name={`~cpm~~.${field.name}`}
               type="date"
               placeholder="Select a date"
-              required={schemaFields?.[index]?.optional ? false : true}
+              required={field.optional ? false : true}
             />
           )}
-          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Phone && (
+          {field.type === Mercoa.CustomPaymentMethodSchemaFieldType.Phone && (
             <MercoaInput
               control={control}
-              name={`~cpm~~.${index}.value`}
+              name={`~cpm~~.${field.name}`}
               inputMask={'(###) ###-####'}
-              required={schemaFields?.[index]?.optional ? false : true}
+              required={field.optional ? false : true}
             />
           )}
-          {schemaFields?.[index]?.type === Mercoa.CustomPaymentMethodSchemaFieldType.Address && (
-            <Controller
-              control={control}
-              name={`~cpm~~.${index}.value`}
-              render={({ field }) => (
-                <CustomAddressBlock
-                  setValue={field.onChange}
-                  trigger={field.onBlur}
-                  required={schemaFields?.[index]?.optional ? false : true}
-                />
-              )}
+          {field.type === Mercoa.CustomPaymentMethodSchemaFieldType.Address && (
+            <AddressBlock
+              label={''}
+              register={register}
+              setValue={setValue}
+              trigger={trigger}
+              watch={watch}
+              errors={errors}
+              required={field.optional ? false : true}
+              prefix={`~cpm~~.${field.name}.`}
             />
           )}
         </div>
       ))}
     </div>
-  )
-}
-
-function CustomAddressBlock({
-  setValue,
-  trigger,
-  required,
-}: {
-  setValue: Function
-  trigger: Function
-  required?: boolean
-}) {
-  const mercoaSession = useMercoaSession()
-  const { ref } = usePlacesWidget({
-    apiKey: mercoaSession.googleMapsApiKey,
-    onPlaceSelected: async (place) => {
-      const streetNumber = place.address_components.find((e: any) => e.types.includes('street_number'))?.long_name
-      const streetName = place.address_components.find((e: any) => e.types.includes('route'))?.long_name
-      const city = place.address_components.find((e: any) => e.types.includes('locality'))?.long_name
-      const state = place.address_components.find((e: any) =>
-        e.types.includes('administrative_area_level_1'),
-      )?.short_name
-      const postalCode = place.address_components.find((e: any) => e.types.includes('postal_code'))?.long_name
-      setValue(`${streetNumber} ${streetName}, ${city}, ${state} ${postalCode}}`)
-      trigger()
-    },
-    options: {
-      fields: ['address_components'],
-      types: ['address'],
-    },
-  })
-  return (
-    <input
-      ref={ref as any}
-      type="text"
-      placeholder="Enter a location"
-      className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-gray-300 mercoa-shadow-sm focus:mercoa-border-indigo-500 focus:mercoa-ring-indigo-500 sm:mercoa-text-sm"
-      required={required}
-    />
   )
 }
 

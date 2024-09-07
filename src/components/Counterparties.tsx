@@ -1032,10 +1032,12 @@ export type CounterpartiesChildrenProps = {
 export function Counterparties({
   type,
   network,
+  disableCreation,
   admin,
   children,
 }: {
   type: 'payor' | 'payee'
+  disableCreation?: boolean
   network?: Mercoa.CounterpartyNetworkType[]
   admin?: boolean
   children?: ({
@@ -1302,8 +1304,7 @@ export function Counterparties({
           setResultsPerPage={setResultsPerPage}
         />
       )}
-
-      <AddCounterpartyModal type={type} show={addCounterparty} setShow={setAddCounterparty} />
+      {!disableCreation && <AddCounterpartyModal type={type} show={addCounterparty} setShow={setAddCounterparty} />}
     </div>
   )
 }

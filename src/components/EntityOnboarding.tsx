@@ -224,6 +224,7 @@ export function AddressBlock({
   required,
   label,
   placeholder,
+  prefix,
 }: {
   register: UseFormRegister<any>
   errors: any
@@ -234,7 +235,9 @@ export function AddressBlock({
   required?: boolean
   label?: string
   placeholder?: string
+  prefix?: string
 }) {
+  if (!prefix) prefix = ''
   const mercoaSession = useMercoaSession()
   const { ref } = usePlacesWidget({
     apiKey: mercoaSession.googleMapsApiKey,
@@ -247,13 +250,17 @@ export function AddressBlock({
         e.types.includes('administrative_area_level_1'),
       )?.short_name
       const postalCode = place.address_components.find((e: any) => e.types.includes('postal_code'))?.long_name
-
       setShowAddress(true)
-      setValue('addressLine1', streetNumber + ' ' + streetName, { shouldDirty: true })
-      setValue('city', city ?? '', { shouldDirty: true })
-      setValue('stateOrProvince', state ?? '', { shouldDirty: true })
-      setValue('postalCode', postalCode ?? '', { shouldDirty: true })
-      setValue('country', 'US', { shouldDirty: true })
+      setValue(`${prefix}addressLine1`, streetNumber + ' ' + streetName, { shouldDirty: true })
+      setValue(`${prefix}city`, city ?? '', { shouldDirty: true })
+      setValue(`${prefix}stateOrProvince`, state ?? '', { shouldDirty: true })
+      setValue(`${prefix}postalCode`, postalCode ?? '', { shouldDirty: true })
+      setValue(`${prefix}country`, 'US', { shouldDirty: true })
+      if (prefix) {
+        setValue(`${prefix}.full`, `${streetNumber} ${streetName}, ${city}, ${state} ${postalCode}`, {
+          shouldDirty: true,
+        })
+      }
       trigger()
     },
     options: {
@@ -266,7 +273,7 @@ export function AddressBlock({
     setValue('country', 'US', { shouldDirty: true })
   }, [])
 
-  const stateOrProvince = watch('stateOrProvince')
+  const stateOrProvince = watch(`${prefix}stateOrProvince`)
   const [showAddress, setShowAddress] = useState(!!readOnly || stateOrProvince)
 
   return (
@@ -292,7 +299,7 @@ export function AddressBlock({
           <MercoaInput
             label={label ?? 'Address'}
             register={register}
-            name="addressLine1"
+            name={`${prefix}addressLine1`}
             className="mercoa-mt-1 mercoa-col-span-2"
             errors={errors}
             readOnly={readOnly}
@@ -301,7 +308,7 @@ export function AddressBlock({
           <MercoaInput
             label="Apartment, suite, etc."
             register={register}
-            name="addressLine2"
+            name={`${prefix}addressLine2`}
             className="mercoa-mt-1"
             errors={errors}
             readOnly={readOnly}
@@ -310,7 +317,7 @@ export function AddressBlock({
           <MercoaInput
             label="City"
             register={register}
-            name="city"
+            name={`${prefix}city`}
             className="mercoa-mt-1"
             errors={errors}
             readOnly={readOnly}
@@ -326,9 +333,9 @@ export function AddressBlock({
               label="State"
               value={stateOrProvince}
               onChange={(value) => {
-                setValue('stateOrProvince', value, { shouldDirty: true })
+                setValue(`${prefix}stateOrProvince`, value, { shouldDirty: true })
               }}
-              labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700 -mercoa-mb-1"
+              labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 -mercoa-mb-1"
             />
             {errors.stateOrProvince?.message && (
               <p className="mercoa-text-sm mercoa-text-red-500 mercoa-text-left">{errors.stateOrProvince?.message}</p>
@@ -337,7 +344,7 @@ export function AddressBlock({
           <MercoaInput
             label="Postal Code"
             register={register}
-            name="postalCode"
+            name={`${prefix}postalCode`}
             className="mercoa-mt-1"
             errors={errors}
             readOnly={readOnly}
@@ -1790,7 +1797,7 @@ export function RepresentativeComponent({
         account={representative}
         selected={selected}
         icon={<PlusIcon className="mercoa-size-5" />}
-        text="Add newrepresentative"
+        text="Add new representative"
       />
     )
   }
