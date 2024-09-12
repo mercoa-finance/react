@@ -325,7 +325,7 @@ function useProvideSession({
     if (eid) {
       try {
         const e = await client.entity.get(eid, {
-          metadata: !!fetchMetadata,
+          returnMetadata: !!fetchMetadata,
         })
         setEntity(e)
       } catch (e) {
@@ -368,7 +368,7 @@ function useProvideSession({
     if (egi) {
       try {
         const group = await client.entityGroup.get(egi, {
-          entityMetadata: !!fetchMetadata,
+          returnEntityMetadata: !!fetchMetadata,
         })
         setEntityGroup(group)
       } catch (e) {

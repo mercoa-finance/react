@@ -14,7 +14,9 @@ import {
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
+import dayjs from 'dayjs'
 import debounce from 'lodash/debounce'
+import Papa from 'papaparse'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
@@ -40,6 +42,7 @@ import {
   inputClassName,
   useMercoaSession,
 } from './index'
+
 const human = require('humanparser')
 
 export async function onSubmitCounterparty({
@@ -1210,9 +1213,58 @@ export function Counterparties({
     )
   }
 
+  function downloadAsCSV() {
+    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    let startingAfter = ''
+    let counterparties: Mercoa.EntityResponse[] = []
+
+    getNextPage()
+
+    async function getNextPage() {
+      if (!mercoaSession.token || !mercoaSession.entity?.id) return
+
+      const filter = {
+        startingAfter,
+        limit: 100,
+      }
+
+      const response = await mercoaSession.client?.entity.counterparty.findPayees(mercoaSession.entity?.id, filter)
+
+      if (response) {
+        if (response.data.length > 0) {
+          startingAfter = response.data[response.data.length - 1].id
+          counterparties = [...counterparties, ...response.data]
+          await getNextPage()
+        } else {
+          const csv = Papa.unparse(
+            counterparties.map((counterparty) => {
+              return {
+                Name: counterparty.name,
+                Email: counterparty.email,
+                ...(admin && {
+                  'Foreign ID': counterparty.foreignId,
+                }),
+                'Account Type': counterparty.accountType,
+              }
+            }),
+          )
+          const blob = new Blob([csv], { type: 'text/csv' })
+          const url = window.URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.setAttribute('mercoa-hidden', '')
+          a.setAttribute('href', url)
+          a.setAttribute('download', `${type}-counterparties-export-${dayjs().format('YYYY-MM-DD')}.csv`)
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+        }
+      }
+    }
+  }
+
   if (!mercoaSession.client) return <NoSession componentName="Counterparties" />
   return (
-    <div className="mercoa-overflow-hidden mercoa-shadow mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 md:mercoa-rounded-mercoa mercoa-p-5">
+    <div className="mercoa-shadow mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 md:mercoa-rounded-mercoa mercoa-p-5">
       <div className="mercoa-flex mercoa-mb-5 mercoa-space-x-5 mercoa-items-center">
         <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900">
           {type === 'payor' ? 'Customers' : 'Vendors'}
@@ -1225,7 +1277,7 @@ export function Counterparties({
             setStartingAfter([])
           }}
         />
-        {(admin || !mercoaSession.iframeOptions?.options?.vendors?.disableCreation) && (
+        {(admin || (!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation)) && (
           <MercoaButton
             isEmphasized
             type="button"
@@ -1302,9 +1354,10 @@ export function Counterparties({
           count={count}
           resultsPerPage={resultsPerPage}
           setResultsPerPage={setResultsPerPage}
+          downloadAll={downloadAsCSV}
         />
       )}
-      {!disableCreation && <AddCounterpartyModal type={type} show={addCounterparty} setShow={setAddCounterparty} />}
+      <AddCounterpartyModal type={type} show={addCounterparty} setShow={setAddCounterparty} />
     </div>
   )
 }

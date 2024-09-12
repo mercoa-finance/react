@@ -883,26 +883,6 @@ export function PayableForm({
           : toast.error(`There was an error rejecting the invoice.\n Error: ${e.body}`)
       }
       return
-    } else if (data.saveAsStatus === 'MARK_PAID') {
-      if (!invoice?.id) return
-      try {
-        if (confirm('Are you sure you want to mark this invoice as paid? This cannot be undone.')) {
-          await mercoaSession.client?.invoice.update(invoice.id, {
-            status: Mercoa.InvoiceStatus.Paid,
-            deductionDate: data.deductionDate,
-          })
-          refreshInvoice(invoice.id)
-          renderCustom?.toast
-            ? renderCustom.toast.success('Invoice marked as paid')
-            : toast.success('Invoice marked as paid')
-        }
-      } catch (e: any) {
-        console.error(e)
-        renderCustom?.toast
-          ? renderCustom?.toast.error(`There was an error marking the invoice as paid.\n Error: ${e.body}`)
-          : toast.error(`There was an error marking the invoice as paid.\n Error: ${e.body}`)
-      }
-      return
     } else if (data.saveAsStatus === 'COMMENT') {
       if (!mercoaSession.user?.id) {
         renderCustom?.toast
@@ -1399,7 +1379,6 @@ export function PayableForm({
                   <PayablePaymentSource />{' '}
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                   <PayablePaymentDestination />
-                  {JSON.stringify(watch('~cpm~~'), null, 2)}
                   <PaymentDestinationProcessingTime />
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                   <PayableFees />
@@ -2265,14 +2244,14 @@ export function PayableActions({
   const markPaidButtonComponent = markAsPaidButton ? (
     markAsPaidButton({
       onClick: () => {
-        setValue('saveAsStatus', 'MARK_PAID')
+        setValue('saveAsStatus', Mercoa.InvoiceStatus.Paid)
       },
     })
   ) : (
     <MercoaButton
       isEmphasized={true}
       onClick={() => {
-        setValue('saveAsStatus', 'MARK_PAID')
+        setValue('saveAsStatus', Mercoa.InvoiceStatus.Paid)
       }}
     >
       Mark as Paid

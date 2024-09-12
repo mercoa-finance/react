@@ -16,7 +16,6 @@ import {
   EntitySelector,
   MercoaButton,
   MercoaCombobox,
-  MercoaContext,
   NoSession,
   Skeleton,
   StatCard,
@@ -70,48 +69,6 @@ function invoiceStatusToReceivableName(name: Mercoa.InvoiceStatus, approvalPolic
     ARCHIVED: 'Archived',
   }
   return out[name]
-}
-
-async function getMetrics({
-  statuses,
-  search,
-  mercoaSession,
-  setMetrics,
-  returnByDate,
-  excludeReceivables,
-  excludePayables,
-}: {
-  statuses: Mercoa.InvoiceStatus[]
-  search?: string
-  mercoaSession: MercoaContext
-  setMetrics: (metrics: { [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse }) => void
-  returnByDate?: Mercoa.InvoiceMetricsPerDateGroupBy
-  excludeReceivables: boolean
-  excludePayables: boolean
-}) {
-  if (!excludePayables && !excludeReceivables) {
-    excludeReceivables = true
-  }
-  const results = (
-    await Promise.all(
-      (statuses ?? []).map(async (status) => {
-        if (!mercoaSession.token || !mercoaSession.entity?.id) return
-        const metrics = await mercoaSession.client?.entity.invoice.metrics(mercoaSession.entity.id, {
-          search,
-          status,
-          returnByDate,
-          excludeReceivables,
-          excludePayables,
-        })
-        return [status as string, metrics?.[0] ?? { totalAmount: 0, totalInvoices: 0, totalCount: 0, currency: 'USD' }]
-      }),
-    )
-  ).filter((e) => e) as Array<Array<string | Mercoa.InvoiceMetricsResponse>>
-
-  const metrics = Object.fromEntries(results) as {
-    [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse
-  }
-  setMetrics(metrics)
 }
 
 function SchedulePaymentModal({
@@ -324,7 +281,7 @@ export function PayablesTable({
 }: {
   statuses: Mercoa.InvoiceStatus[]
   search?: string
-  metadata?: Mercoa.InvoiceMetadataFilter[]
+  metadata?: Mercoa.MetadataFilter[]
   startDate?: Date
   endDate?: Date
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
@@ -366,7 +323,7 @@ export function PayablesTable({
   }, [selectedInvoices, invoices])
 
   function toggleAll() {
-    setSelectedInvoices(checked || indeterminate ? [] : invoices ?? [])
+    setSelectedInvoices(checked || indeterminate ? [] : (invoices ?? []))
     setChecked(!checked && !indeterminate)
     setIndeterminate(false)
   }
@@ -1222,7 +1179,7 @@ export function GroupPayablesTable({
   children,
 }: {
   search?: string
-  metadata?: Mercoa.InvoiceMetadataFilter[]
+  metadata?: Mercoa.MetadataFilter[]
   startDate?: Date
   endDate?: Date
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
@@ -1260,13 +1217,13 @@ export function GroupPayablesTable({
   }, [selectedInvoices, invoices])
 
   function toggleAll() {
-    setSelectedInvoices(checked || indeterminate ? [] : invoices ?? [])
+    setSelectedInvoices(checked || indeterminate ? [] : (invoices ?? []))
     setChecked(!checked && !indeterminate)
     setIndeterminate(false)
   }
 
   async function handleDelete() {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    if (!mercoaSession.token) return
     let anySuccessFlag = false
     setDataLoaded(false)
     await Promise.all(
@@ -1512,13 +1469,14 @@ export function GroupPayablesTable({
   ]
 
   function columnHasData(column: InvoiceTableColumn) {
-    if (!invoices) return false
+    // Return false if invoices is undefined or is an empty array
+    if (!invoices || invoices.length === 0) return false
     return invoices.some((invoice) => {
       if (column.field.startsWith('metadata.')) return true
-      if (invoice[`${column.field}` as keyof Mercoa.InvoiceResponse] && column.format) {
+      if (invoice.hasOwnProperty(`${column.field}` as keyof Mercoa.InvoiceResponse) && column.format) {
         return column.format(invoice[`${column.field}` as keyof Mercoa.InvoiceResponse] as any, invoice)
       }
-      return invoice[`${column.field}` as keyof Mercoa.InvoiceResponse]
+      return invoice.hasOwnProperty(`${column.field}` as keyof Mercoa.InvoiceResponse)
     })
   }
 
@@ -1610,7 +1568,9 @@ export function GroupPayablesTable({
               toDisplay = column.format(toDisplay, invoice)
             } else {
               if (column.field === 'amount') {
-                toDisplay = accounting.formatMoney(toDisplay ?? '', currencyCodeToSymbol(invoice.currency))
+                toDisplay = !!toDisplay
+                  ? accounting.formatMoney(toDisplay ?? '', currencyCodeToSymbol(invoice.currency))
+                  : '-'
               } else if (toDisplay instanceof Date) {
                 toDisplay = dayjs(toDisplay).format('MMM DD, YYYY')
               } else if (typeof toDisplay === 'object') {
@@ -1620,7 +1580,7 @@ export function GroupPayablesTable({
                   toDisplay = JSON.stringify(toDisplay)
                 }
               } else {
-                toDisplay = toDisplay?.toString() ?? ''
+                toDisplay = toDisplay?.toString() ?? '-'
               }
             }
             return (
@@ -1897,15 +1857,33 @@ export function InvoiceMetrics({
   useEffect(() => {
     setInvoiceMetrics(undefined)
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    getMetrics({
-      statuses,
-      search,
-      mercoaSession,
-      setMetrics: setInvoiceMetrics,
-      returnByDate,
-      excludePayables: excludePayables ?? false,
-      excludeReceivables: excludeReceivables ?? false,
-    })
+
+    mercoaSession.client?.entity.invoice
+      .metrics(mercoaSession.entity.id, {
+        search,
+        status: statuses,
+        returnByDate,
+        excludeReceivables,
+        excludePayables,
+        groupBy: ['STATUS'],
+      })
+      .then((metrics) => {
+        const results = (statuses ?? []).map((status) => {
+          return [
+            status as string,
+            metrics.find((e) => e.group?.some((e) => e.status === status)) ?? {
+              totalAmount: 0,
+              totalInvoices: 0,
+              totalCount: 0,
+              currency: 'USD',
+            },
+          ]
+        })
+        const out = Object.fromEntries(results) as {
+          [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse
+        }
+        setInvoiceMetrics(out)
+      })
   }, [search, statuses, mercoaSession.token, mercoaSession.entity, mercoaSession.refreshId])
 
   if (children) return children({ metrics: invoiceMetrics })
@@ -1993,14 +1971,31 @@ export function StatusTabs({
 
   useEffect(() => {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    getMetrics({
-      statuses: tabs,
-      search,
-      mercoaSession,
-      setMetrics: setInvoiceMetrics,
-      excludePayables: excludePayables ?? false,
-      excludeReceivables: excludeReceivables ?? false,
-    })
+    mercoaSession.client?.entity.invoice
+      .metrics(mercoaSession.entity.id, {
+        search,
+        status: tabs,
+        excludeReceivables,
+        excludePayables,
+        groupBy: ['STATUS'],
+      })
+      .then((metrics) => {
+        const results = (statuses ?? []).map((status) => {
+          return [
+            status as string,
+            metrics.find((e) => e.group?.some((e) => e.status === status)) ?? {
+              totalAmount: 0,
+              totalInvoices: 0,
+              totalCount: 0,
+              currency: 'USD',
+            },
+          ]
+        })
+        const out = Object.fromEntries(results) as {
+          [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse
+        }
+        setInvoiceMetrics(out)
+      })
   }, [search, tabs, mercoaSession.client, mercoaSession.entity, mercoaSession.refreshId])
 
   if (!mercoaSession.client) return <NoSession componentName="StatusTabs" />

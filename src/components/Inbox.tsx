@@ -222,7 +222,7 @@ export function InvoiceTable({
 }: {
   statuses: Mercoa.InvoiceStatus[]
   search?: string
-  metadata?: Mercoa.InvoiceMetadataFilter[]
+  metadata?: Mercoa.MetadataFilter[]
   startDate?: Date
   endDate?: Date
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
@@ -288,7 +288,7 @@ export function InvoiceTable({
   }, [selectedInvoices, invoices])
 
   function toggleAll() {
-    setSelectedInvoices(checked || indeterminate ? [] : invoices ?? [])
+    setSelectedInvoices(checked || indeterminate ? [] : (invoices ?? []))
     setChecked(!checked && !indeterminate)
     setIndeterminate(false)
   }

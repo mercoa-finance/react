@@ -36,7 +36,7 @@ export function ReceivablesTable({
 }: {
   statuses: Mercoa.InvoiceStatus[]
   search?: string
-  metadata?: Mercoa.InvoiceMetadataFilter[]
+  metadata?: Mercoa.MetadataFilter[]
   startDate?: Date
   endDate?: Date
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
@@ -387,7 +387,7 @@ export function GroupReceivablesTable({
   columns,
 }: {
   search?: string
-  metadata?: Mercoa.InvoiceMetadataFilter[]
+  metadata?: Mercoa.MetadataFilter[]
   startDate?: Date
   endDate?: Date
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
