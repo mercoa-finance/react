@@ -1463,7 +1463,7 @@ export function CounterpartyDetails({
     address?.stateOrProvince ?? ''
   } ${address?.postalCode ?? ''}`
 
-  function PaymentMethodCard({ method }: { method: Mercoa.PaymentMethodResponse }) {
+  function PaymentMethodCard({ method, entityId }: { method: Mercoa.PaymentMethodResponse; entityId: string }) {
     let card = <></>
     if (method.type === Mercoa.PaymentMethodType.BankAccount) {
       card = <BankAccount account={method} />
@@ -1482,7 +1482,26 @@ export function CounterpartyDetails({
             <p className="mercoa-text-xs mercoa-whitespace-nowrap">{method.id}</p>
           </>
         )}
-        {card}
+        <div className="mercoa-flex mercoa-gap-x-2 mercoa-items-center">
+          {card}
+          {method.isDefaultDestination ? (
+            <div className="mercoa-text-xs mercoa-text-gray-700">Default Destination</div>
+          ) : (
+            <MercoaButton
+              isEmphasized={false}
+              size="sm"
+              onClick={async () => {
+                await mercoaSession.client?.entity.paymentMethod.update(entityId, method.id, {
+                  type: method.type,
+                  defaultDestination: true,
+                })
+                mercoaSession.refresh()
+              }}
+            >
+              Set as Default Destination
+            </MercoaButton>
+          )}
+        </div>
       </div>
     )
   }
@@ -1560,6 +1579,33 @@ export function CounterpartyDetails({
               }}
             >
               Onboarding Link
+            </MercoaButton>
+          </Tooltip>
+          <Tooltip
+            title={`Send a link for the ${type === 'payor' ? 'Customer' : 'Vendor'} to fill out their own information`}
+          >
+            <MercoaButton
+              isEmphasized={false}
+              size="sm"
+              className="mercoa-ml-2"
+              onClick={async () => {
+                if (!mercoaSession.entityId) return
+                let url
+                if (type === 'payor') {
+                  url = await mercoaSession.client?.entity.sendOnboardingLink(counterpartyLocal.id, {
+                    expiresIn: '30d',
+                    type: Mercoa.EntityOnboardingLinkType.Payor,
+                  })
+                } else {
+                  url = await mercoaSession.client?.entity.sendOnboardingLink(counterpartyLocal.id, {
+                    expiresIn: '30d',
+                    type: Mercoa.EntityOnboardingLinkType.Payee,
+                  })
+                }
+                toast.info('Link Sent')
+              }}
+            >
+              Send Onboarding Email
             </MercoaButton>
           </Tooltip>
         </div>
@@ -1661,27 +1707,27 @@ export function CounterpartyDetails({
             ACH
           </dd>
         </div>
-        <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
+        <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} entityId={counterpartyLocal.id} />)}
         </div>
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center  mercoa-border-t mercoa-border-gray-900/5 ">
           <dd className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
             Check
           </dd>
         </div>
-        <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
+        <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.Check)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} entityId={counterpartyLocal.id} />)}
         </div>
 
         <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-mt-2 mercoa-pt-2 mercoa-items-center mercoa-border-t mercoa-border-gray-900/5 " />
-        <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
+        <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-2 mercoa-ml-4 mercoa-p-2">
           {counterpartyLocal?.paymentMethods
             ?.filter((e) => e.type === Mercoa.PaymentMethodType.Custom)
-            ?.map((method) => <PaymentMethodCard method={method} key={method.id} />)}
+            ?.map((method) => <PaymentMethodCard method={method} key={method.id} entityId={counterpartyLocal.id} />)}
         </div>
       </div>
     )

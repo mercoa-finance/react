@@ -425,8 +425,8 @@ export function ReceivableForm({
   })
 
   const payerId = watch('payerId')
-  const payerName = watch('payerName')
   const currency = watch('currency')
+  const paymentDestinationType = watch('paymentDestinationType')
 
   function refreshVendorPaymentMethods() {
     if (!mercoaSession.entityId) return
@@ -524,11 +524,25 @@ export function ReceivableForm({
       try {
         await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(invoice.id)
         toast.info('Email Sent')
+        refreshInvoice(invoice.id)
       } catch (e) {
         toast.error('There was an issue generating the email. Please refresh and try again.')
       }
     } catch (e: any) {
       toast.error(`There was an issue saving the invoice.\n Error: ${e.body}`)
+    }
+  }
+
+  async function markAsPaid() {
+    if (!invoice?.id) return
+    try {
+      await mercoaSession.client?.invoice.update(invoice.id, {
+        status: Mercoa.InvoiceStatus.Paid,
+      })
+      toast.success('Invoice marked as paid')
+      refreshInvoice(invoice.id)
+    } catch (e: any) {
+      toast.error(`There was an issue marking the invoice as paid.\n Error: ${e.body}`)
     }
   }
 
@@ -560,15 +574,28 @@ export function ReceivableForm({
         payors: [newInvoice.payerId],
       })
     }
-    const response = await mercoaSession.client?.invoice.create(newInvoice)
-    mercoaSession.debug(response)
-    if (response?.id) {
-      toast.success('Invoice created')
-      if (onUpdate) {
-        onUpdate(response)
+    if (invoice) {
+      const response = await mercoaSession.client?.invoice.update(invoice.id, newInvoice)
+      mercoaSession.debug(response)
+      if (response?.id) {
+        toast.success('Invoice updated')
+        if (onUpdate) {
+          onUpdate(response)
+        }
+      } else {
+        toast.error('Invoice failed to update')
       }
     } else {
-      toast.error('Invoice failed to create')
+      const response = await mercoaSession.client?.invoice.create(newInvoice)
+      mercoaSession.debug(response)
+      if (response?.id) {
+        toast.success('Invoice created')
+        if (onUpdate) {
+          onUpdate(response)
+        }
+      } else {
+        toast.error('Invoice failed to create')
+      }
     }
   }
 
@@ -795,50 +822,12 @@ export function ReceivableForm({
           </table>
         </div>
 
-        {/*  GRAY border  */}
         <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
-
-        {/*  PAYMENT SOURCE */}
-        <div className="mercoa-pb-6 mercoa-col-span-full">
-          <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
-            Choose existing payment method on file for{' '}
-            <span className="mercoa-text-gray-800 mercoa-underline">{payerName}</span>:
-          </h2>
-          <ReceivableSelectPaymentMethod isSource />
-          {errors.paymentSourceId?.message && (
-            <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentSourceId?.message.toString()}</p>
-          )}
-        </div>
-
-        {/*  GRAY border  */}
+        <ReceivablePaymentSource />
         <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
+        <ReceivablePaymentDestination />
 
-        {/*  PAYMENT DESTINATION  */}
-
-        <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-16 mercoa-col-span-full">
-          <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
-            How do you want to get paid?
-          </h2>
-          <ReceivableSelectPaymentMethod isDestination />
-          {/* {invoice?.id &&
-      invoice?.status != Mercoa.InvoiceStatus.Canceled &&
-      invoice?.status != Mercoa.InvoiceStatus.Archived &&
-      !mercoaSession.iframeOptions?.options?.vendors?.disableCreation && (
-        <MercoaButton
-          isEmphasized={false}
-          onClick={getVendorLink}
-          className="mercoa-inline-flex mercoa-text-sm mercoa-float-right mercoa-mt-3"
-          type="button"
-        >
-          <DocumentDuplicateIcon className="mercoa-size-5 md:mercoa-mr-2" />{' '}
-          <span className="mercoa-hidden md:mercoa-inline-block">Get Payment Acceptance Link</span>
-        </MercoaButton>
-      )} */}
-          {errors.paymentDestinationId?.message && (
-            <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentDestinationId?.message.toString()}</p>
-          )}
-        </div>
-
+        {/* RECEIVABLE ACTIONS */}
         <div className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-1 mercoa-gap-2 mercoa-items-end mercoa-p-0.5">
           {!invoice?.id ? (
             <MercoaButton className="mercoa-mt-5" isEmphasized>
@@ -846,6 +835,7 @@ export function ReceivableForm({
             </MercoaButton>
           ) : (
             <>
+              {/* Preview Invoice */}
               <MercoaButton
                 isEmphasized={false}
                 onClick={getPDFLink}
@@ -854,6 +844,8 @@ export function ReceivableForm({
               >
                 <DocumentDuplicateIcon className="mercoa-size-5 md:mercoa-mr-2" /> Preview Invoice
               </MercoaButton>
+
+              {/* Get Payment Link */}
               <MercoaButton
                 isEmphasized={false}
                 onClick={getPaymentLink}
@@ -862,18 +854,36 @@ export function ReceivableForm({
               >
                 <GlobeAltIcon className="mercoa-size-5 md:mercoa-mr-2" /> Get Payment Link
               </MercoaButton>
+
+              {/* Save Draft */}
               {invoice.status === Mercoa.InvoiceStatus.Draft && (
                 <MercoaButton isEmphasized={false}>Save Draft</MercoaButton>
               )}
-              <MercoaButton
-                isEmphasized
-                onClick={sendEmail}
-                type="button"
-                className="mercoa-flex mercoa-justify-center"
-              >
-                <EnvelopeIcon className="mercoa-size-5 md:mercoa-mr-2" />
-                {invoice.status === 'DRAFT' ? 'Send Invoice' : 'Resend Invoice'}
-              </MercoaButton>
+
+              {/* Mark as Paid */}
+              {paymentDestinationType === 'offPlatform' && invoice.status === Mercoa.InvoiceStatus.Draft && (
+                <MercoaButton
+                  isEmphasized={true}
+                  onClick={markAsPaid}
+                  type="button"
+                  className="mercoa-flex mercoa-justify-center"
+                >
+                  Mark as Paid
+                </MercoaButton>
+              )}
+
+              {/* Send / Resend Email */}
+              {paymentDestinationType !== 'offPlatform' && (
+                <MercoaButton
+                  isEmphasized
+                  onClick={sendEmail}
+                  type="button"
+                  className="mercoa-flex mercoa-justify-center"
+                >
+                  <EnvelopeIcon className="mercoa-size-5 md:mercoa-mr-2" />
+                  {invoice.status === Mercoa.InvoiceStatus.Draft ? 'Send Invoice' : 'Resend Invoice'}
+                </MercoaButton>
+              )}
             </>
           )}
         </div>
@@ -939,6 +949,17 @@ export function ReceivableSelectPaymentMethod({
       availableTypes.push({ key: paymentMethod.schemaId ?? '', value: paymentMethod.schema.name ?? '' })
     }
   })
+
+  if (isDestination) {
+    // If destination is selected, check if off platform payments are enabled and push that
+    const offPlatform = mercoaSession.organization?.paymentMethods?.payerPayments.find((e) => e.type === 'offPlatform')
+    if (offPlatform && offPlatform.active) {
+      availableTypes.push({
+        key: offPlatform.type,
+        value: offPlatform.name,
+      })
+    }
+  }
 
   // Set a default payment method type
   useEffect(() => {
@@ -1152,6 +1173,59 @@ export function ReceivableSelectPaymentMethod({
       {selectedType === Mercoa.PaymentMethodType.BankAccount && bankAccountJsx}
       {selectedType === Mercoa.PaymentMethodType.Check && checkJsx}
       {selectedType === Mercoa.PaymentMethodType.Card && cardJsx}
+    </div>
+  )
+}
+
+export function ReceivablePaymentSource({ readOnly }: { readOnly?: boolean }) {
+  const {
+    watch,
+    formState: { errors },
+  } = useFormContext()
+
+  const status = watch('status')
+  readOnly = readOnly || (!!status && status !== Mercoa.InvoiceStatus.Draft)
+
+  const paymentDestinationType = watch('paymentDestinationType')
+  const payerId = watch('payerId')
+  const payerName = watch('payerName')
+
+  return (
+    <>
+      {payerId && payerName && paymentDestinationType !== 'offPlatform' && (
+        <div className="mercoa-pb-6 mercoa-col-span-full">
+          <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
+            Choose existing payment method on file for{' '}
+            <span className="mercoa-text-gray-800 mercoa-underline">{payerName}</span>:
+          </h2>
+          <ReceivableSelectPaymentMethod isSource />
+          {errors.paymentSourceId?.message && (
+            <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentSourceId?.message.toString()}</p>
+          )}
+        </div>
+      )}
+    </>
+  )
+}
+
+export function ReceivablePaymentDestination({ readOnly }: { readOnly?: boolean }) {
+  const {
+    watch,
+    formState: { errors },
+  } = useFormContext()
+
+  const status = watch('status')
+  readOnly = readOnly || (!!status && status !== Mercoa.InvoiceStatus.Draft)
+
+  return (
+    <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-16 mercoa-col-span-full">
+      <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
+        How do you want to get paid?
+      </h2>
+      <ReceivableSelectPaymentMethod isDestination />
+      {errors.paymentDestinationId?.message && (
+        <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentDestinationId?.message.toString()}</p>
+      )}
     </div>
   )
 }

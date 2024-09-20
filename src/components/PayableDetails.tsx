@@ -86,6 +86,20 @@ dayjs.extend(tz)
 
 const dJSON = require('dirty-json')
 
+// @ts-ignore-next-line
+if (typeof Promise.withResolvers === 'undefined') {
+  if (window)
+    // @ts-expect-error This does not exist outside of polyfill which this is doing
+    window.Promise.withResolvers = function () {
+      let resolve, reject
+      const promise = new Promise((res, rej) => {
+        resolve = res
+        reject = rej
+      })
+      return { promise, resolve, reject }
+    }
+}
+
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
 const afterScheduledStatus = [
@@ -1016,6 +1030,19 @@ export function PayableForm({
       data.paymentSchedule = out
     }
 
+    // clean up payment destination options
+    if (
+      data.paymentDestinationOptions?.type === Mercoa.PaymentMethodType.BankAccount &&
+      data.paymentDestinationType !== Mercoa.PaymentMethodType.BankAccount
+    ) {
+      data.paymentDestinationOptions = undefined
+    } else if (
+      data.paymentDestinationOptions?.type === Mercoa.PaymentMethodType.Check &&
+      data.paymentDestinationType !== Mercoa.PaymentMethodType.Check
+    ) {
+      data.paymentDestinationOptions = undefined
+    }
+
     const invoiceData: Mercoa.InvoiceCreationRequest = {
       status: data.saveAsStatus || nextInvoiceState,
       amount: Number(data.amount),
@@ -1671,6 +1698,12 @@ export function DocumentUploadBox({
         'image/jpeg': ['.jpeg', '.jpg'],
         'image/heic': ['.heic'],
         'image/webp': ['.webp'],
+        'application/msword': ['.doc', '.docx'],
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+        'application/vnd.ms-excel': ['.xls', '.xlsx'],
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+        'application/vnd.ms-powerpoint': ['.ppt', '.pptx'],
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
       }}
     >
       {({ getRootProps, getInputProps, isDragActive }) => (
