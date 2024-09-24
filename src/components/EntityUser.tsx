@@ -29,6 +29,7 @@ const notificationTypeToText = {
   [Mercoa.NotificationType.InvoiceRejected]: 'Invoice Rejected',
   [Mercoa.NotificationType.InvoicePending]: 'Invoice Payment Initiated',
   [Mercoa.NotificationType.InvoiceFailed]: 'Invoice Payment Failed',
+  //[Mercoa.NotificationType.CounterpartyOnboardingCompleted]: 'Counterparty Onboarding Completed',
 }
 
 export function EntityUserNotificationTable({

@@ -426,6 +426,7 @@ export function ReceivableForm({
 
   const payerId = watch('payerId')
   const currency = watch('currency')
+  const paymentSourceType = watch('paymentSourceType')
   const paymentDestinationType = watch('paymentDestinationType')
 
   function refreshVendorPaymentMethods() {
@@ -846,44 +847,45 @@ export function ReceivableForm({
               </MercoaButton>
 
               {/* Get Payment Link */}
-              <MercoaButton
-                isEmphasized={false}
-                onClick={getPaymentLink}
-                type="button"
-                className="mercoa-flex mercoa-justify-center"
-              >
-                <GlobeAltIcon className="mercoa-size-5 md:mercoa-mr-2" /> Get Payment Link
-              </MercoaButton>
+              {paymentSourceType !== 'offPlatform' && paymentDestinationType !== 'offPlatform' && (
+                <MercoaButton
+                  isEmphasized={false}
+                  onClick={getPaymentLink}
+                  type="button"
+                  className="mercoa-flex mercoa-justify-center"
+                >
+                  <GlobeAltIcon className="mercoa-size-5 md:mercoa-mr-2" /> Get Payment Link
+                </MercoaButton>
+              )}
 
               {/* Save Draft */}
               {invoice.status === Mercoa.InvoiceStatus.Draft && (
                 <MercoaButton isEmphasized={false}>Save Draft</MercoaButton>
               )}
 
-              {/* Mark as Paid */}
-              {paymentDestinationType === 'offPlatform' && invoice.status === Mercoa.InvoiceStatus.Draft && (
-                <MercoaButton
-                  isEmphasized={true}
-                  onClick={markAsPaid}
-                  type="button"
-                  className="mercoa-flex mercoa-justify-center"
-                >
-                  Mark as Paid
-                </MercoaButton>
-              )}
-
               {/* Send / Resend Email */}
-              {paymentDestinationType !== 'offPlatform' && (
-                <MercoaButton
-                  isEmphasized
-                  onClick={sendEmail}
-                  type="button"
-                  className="mercoa-flex mercoa-justify-center"
-                >
-                  <EnvelopeIcon className="mercoa-size-5 md:mercoa-mr-2" />
-                  {invoice.status === Mercoa.InvoiceStatus.Draft ? 'Send Invoice' : 'Resend Invoice'}
-                </MercoaButton>
-              )}
+              <MercoaButton
+                isEmphasized
+                onClick={sendEmail}
+                type="button"
+                className="mercoa-flex mercoa-justify-center"
+              >
+                <EnvelopeIcon className="mercoa-size-5 md:mercoa-mr-2" />
+                {invoice.status === Mercoa.InvoiceStatus.Draft ? 'Send Invoice' : 'Resend Invoice'}
+              </MercoaButton>
+
+              {/* Mark as Paid */}
+              {invoice.status === Mercoa.InvoiceStatus.Approved &&
+                (paymentSourceType === 'offPlatform' || paymentDestinationType === 'offPlatform') && (
+                  <MercoaButton
+                    isEmphasized={true}
+                    onClick={markAsPaid}
+                    type="button"
+                    className="mercoa-flex mercoa-justify-center"
+                  >
+                    Mark as Paid
+                  </MercoaButton>
+                )}
             </>
           )}
         </div>
@@ -950,15 +952,23 @@ export function ReceivableSelectPaymentMethod({
     }
   })
 
-  if (isDestination) {
-    // If destination is selected, check if off platform payments are enabled and push that
-    const offPlatform = mercoaSession.organization?.paymentMethods?.payerPayments.find((e) => e.type === 'offPlatform')
-    if (offPlatform && offPlatform.active) {
-      availableTypes.push({
-        key: offPlatform.type,
-        value: offPlatform.name,
-      })
-    }
+  // Check if off platform payments are enabled, push if so (applies for payment source AND destination)
+  const offPlatform = mercoaSession.organization?.paymentMethods?.payerPayments.find(
+    (e) => e.type === Mercoa.PaymentMethodType.OffPlatform,
+  )
+  if (offPlatform && offPlatform.active) {
+    availableTypes.push({
+      key: offPlatform.type,
+      value: offPlatform.name,
+    })
+  }
+
+  // Add an "Unknown" option for source payment methods (represents payer-defined payment method via portal)
+  if (isSource) {
+    availableTypes.push({
+      key: 'unknown',
+      value: 'Unknown',
+    })
   }
 
   // Set a default payment method type
@@ -1004,6 +1014,11 @@ export function ReceivableSelectPaymentMethod({
         setValue(paymentMethodTypeKey, cpm.schemaId)
         setMethodOnTypeChange(cpm.schemaId)
       }
+    }
+    // If no sane defaults were set and this is a source payment method selector, set unknown as the default
+    else if (isSource) {
+      setValue(paymentMethodTypeKey, 'unknown')
+      setValue(sourceOrDestination, undefined) // circumvents setMethodOnTypeChange because unknown represents a blank payment method
     }
   }, [paymentMethods, paymentId, firstRender])
 

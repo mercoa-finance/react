@@ -2553,11 +2553,13 @@ export function entityDetailsForMercoaPaymentsCompleted(entity: Mercoa.EntityRes
 export function EntityOnboarding({
   entityId,
   connectedEntityName,
+  connectedEntityId,
   type,
   onComplete,
 }: {
   type: 'payee' | 'payor'
   connectedEntityName?: string
+  connectedEntityId?: Mercoa.EntityId
   entityId?: Mercoa.EntityId
   onComplete?: () => void
 }) {
@@ -2636,6 +2638,11 @@ export function EntityOnboarding({
       if (entity.acceptedTos) {
         mercoaSession.client?.entity.initiateKyb(entity.id)
       }
+      // if (connectedEntityId) {
+      //   mercoaSession.client?.entity.update(entity.id, {
+      //     connectedEntityId: connectedEntityId,
+      //   })
+      // }
       onComplete?.()
     }
   }, [mercoaSession.organization, mercoaSession.client, entity, entityData, formState, type])

@@ -811,7 +811,7 @@ export function EditBankAccount({
   function onUpdate(data: Mercoa.BankAccountUpdateRequest) {
     let signatureImage
     if (data.checkOptions?.useSignatureImage) {
-      signatureImage = sigRef.current?.getTrimmedCanvas().toDataURL('image/png') ?? ''
+      signatureImage = sigRef.current?.getCanvas().toDataURL('image/png') ?? ''
     }
     if ((data.checkOptions?.signatoryName?.length ?? 0) > 30) {
       toast.error('Signatory name must be less than 30 characters. Use the signature image instead.')
@@ -847,7 +847,12 @@ export function EditBankAccount({
 
   useEffect(() => {
     if (account.checkOptions?.signatureImage && sigRef.current) {
-      sigRef.current?.fromDataURL('data:image/gif;base64,' + account.checkOptions?.signatureImage)
+      const canvasWidth = sigRef.current?.getCanvas()?.width ?? 375
+      const canvasHeight = sigRef.current?.getCanvas()?.height ?? 150
+      sigRef.current?.fromDataURL('data:image/gif;base64,' + account.checkOptions?.signatureImage, {
+        width: canvasWidth,
+        height: canvasHeight,
+      })
     }
   }, [account.checkOptions?.signatureImage, useSig])
 
@@ -944,7 +949,14 @@ export function EditBankAccount({
                   style={{ display: 'none' }}
                   accept="image/*"
                   onChange={(e) => {
-                    e.target.files && sigRef.current?.fromDataURL(URL.createObjectURL(e.target.files[0]))
+                    if (e.target.files && e.target.files[0]) {
+                      const canvasWidth = sigRef.current?.getCanvas()?.width ?? 375
+                      const canvasHeight = sigRef.current?.getCanvas()?.height ?? 150
+                      sigRef.current?.fromDataURL(URL.createObjectURL(e.target.files[0]), {
+                        width: canvasWidth,
+                        height: canvasHeight,
+                      })
+                    }
                   }}
                 />
                 <MercoaButton size="sm" isEmphasized={false} type="button" onClick={() => inputFile?.current?.click()}>

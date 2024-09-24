@@ -86,7 +86,7 @@ dayjs.extend(tz)
 
 const dJSON = require('dirty-json')
 
-// @ts-ignore-next-line
+// @ts-ignore next-line
 if (typeof Promise.withResolvers === 'undefined') {
   if (window)
     // @ts-expect-error This does not exist outside of polyfill which this is doing
