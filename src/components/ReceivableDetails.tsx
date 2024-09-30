@@ -410,8 +410,15 @@ export function ReceivableForm({
     if (!name?.startsWith('lineItems')) return
     if (name.endsWith('amount')) return
 
-    const lineItems = data.lineItems as Mercoa.InvoiceLineItemUpdateRequest[]
+    // NOTE: data.lineItems is NOT ACTUALLY a Mercoa.InvoiceLineItemUpdateRequest[]!!! quantity, unitPrice, and amount can be strings
+    const lineItems = data.lineItems as any[]
+
     let amount = lineItems.reduce((acc, lineItem, index) => {
+      // Coerce quantity / unitPrice types back to number
+      // NOTE: Can safely assume , is the thousands separator because this frontend is formatting it that way
+      lineItem.quantity = Number(lineItem.quantity)
+      lineItem.unitPrice = Number(String(lineItem.unitPrice).replace(/,/g, ''))
+
       // TODO: Use a library to handle rounding
       lineItem.amount = Math.floor((lineItem.quantity ?? 1) * (lineItem.unitPrice ?? 1) * 100) / 100
       setValue(`lineItems.${index}.amount`, lineItem.amount)
@@ -523,7 +530,7 @@ export function ReceivableForm({
         status: Mercoa.InvoiceStatus.Approved,
       })
       try {
-        await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(invoice.id)
+        await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(invoice.id, { attachInvoice: true })
         toast.info('Email Sent')
         refreshInvoice(invoice.id)
       } catch (e) {
@@ -730,7 +737,7 @@ export function ReceivableForm({
                       name={`lineItems.${index}.amount`}
                       errors={errors}
                       control={control}
-                      placeholder="Description"
+                      placeholder="Total Amount"
                       readOnly
                       type="currency"
                       leadingIcon={
