@@ -648,7 +648,8 @@ export function PayableForm({
   }
 
   async function saveInvoice(data: any) {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    if (!mercoaSession.token) return
+    if (!mercoaSession.entity?.id && !mercoaSession.entityGroup?.id) return
 
     // Special Actions
     mercoaSession.debug({ saveAsStatus: data.saveAsStatus })
@@ -707,7 +708,7 @@ export function PayableForm({
         return
       }
     } else if (data.saveAsStatus === 'CREATE_COUNTERPARTY_ACCOUNT') {
-      if (vendorId) {
+      if (mercoaSession.entity?.id && vendorId) {
         try {
           // TODO: Optimize this to one network request when patch adding counterparty accounts is supported in API
           const resp = await mercoaSession.client?.entity.counterparty.findPayees(mercoaSession.entity.id, {
@@ -1043,7 +1044,7 @@ export function PayableForm({
       data.paymentDestinationOptions = undefined
     }
 
-    const invoiceData: Mercoa.InvoiceCreationRequest = {
+    const incompleteInvoiceData: Omit<Mercoa.InvoiceCreationRequest, 'creatorEntityId' | 'creatorEntityGroupId'> = {
       status: data.saveAsStatus || nextInvoiceState,
       amount: Number(data.amount),
       currency: data.currency,
@@ -1094,9 +1095,21 @@ export function PayableForm({
       }),
       metadata: JSON.parse(JSON.stringify(data.metadata)) as unknown as Record<string, string>,
       document: uploadedDocument,
-      creatorEntityId: mercoaSession.entity?.id,
       creatorUserId: mercoaSession.user?.id,
     }
+
+    // Note: Typescript isn't smart enough to know that entityGroupId and entityId must be set at these points
+    const createUnassignedInvoice = !!mercoaSession.entityGroup?.id && !mercoaSession.entity?.id
+    const invoiceData: Mercoa.InvoiceCreationRequest = createUnassignedInvoice
+      ? {
+          ...incompleteInvoiceData,
+          creatorEntityGroupId: mercoaSession.entityGroup?.id!,
+        }
+      : {
+          ...incompleteInvoiceData,
+          creatorEntityId: mercoaSession.entity?.id!,
+        }
+
     mercoaSession.debug({ data, invoiceData })
 
     // metadata validation
@@ -2209,20 +2222,20 @@ export function PayableActions({
     </MercoaButton>
   )
 
+  const createInvoiceButtonHandler = () => {
+    // Set initial invoice status to Unassigned if creating at the group level
+    const creationStatus =
+      !!mercoaSession.entityGroup?.id && !mercoaSession.entity?.id
+        ? Mercoa.InvoiceStatus.Unassigned
+        : Mercoa.InvoiceStatus.Draft
+    setValue('saveAsStatus', creationStatus)
+  }
   const createInvoiceButtonComponent = createInvoiceButton ? (
     createInvoiceButton({
-      onClick: () => {
-        setValue('saveAsStatus', Mercoa.InvoiceStatus.Draft)
-      },
+      onClick: createInvoiceButtonHandler,
     })
   ) : (
-    <MercoaButton
-      isEmphasized
-      type="submit"
-      onClick={() => {
-        setValue('saveAsStatus', Mercoa.InvoiceStatus.Draft)
-      }}
-    >
+    <MercoaButton isEmphasized type="submit" onClick={createInvoiceButtonHandler}>
       Create Invoice
     </MercoaButton>
   )

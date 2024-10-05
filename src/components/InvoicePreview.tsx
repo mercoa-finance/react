@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { ReceivableFormValues, ReceivablePaymentPdf, ReceivablePaymentPortal, useMercoaSession } from './index'
 
-export type PreviewType = 'pdf' | 'email' | 'paymentPage'
+type PreviewType = 'pdf' | 'email' | 'paymentPage'
 
 export default function InvoicePreview({
   selectedPayer,
@@ -19,6 +19,8 @@ export default function InvoicePreview({
 
   const { watch } = useFormContext()
   const fieldValues: ReceivableFormValues = watch()
+  const paymentSourceType = watch('paymentSourceType')
+  const paymentDestinationType = watch('paymentDestinationType')
 
   const invoice: Mercoa.InvoiceResponse = {
     id: fieldValues.id ?? '',
@@ -51,23 +53,27 @@ export default function InvoicePreview({
     updatedAt: new Date(),
   }
 
+  const showPaymentPage = paymentSourceType !== 'offPlatform' && paymentDestinationType !== 'offPlatform'
   const tabs: Array<{
     name: string
     action: PreviewType
-  }> = [
-    {
-      name: 'Invoice PDF',
-      action: 'pdf',
-    },
-    // {
-    //   name: 'Email',
-    //   action: 'email',
-    // },
-    {
-      name: 'Payment Page',
-      action: 'paymentPage',
-    },
-  ]
+  }> = showPaymentPage
+    ? [
+        {
+          name: 'Invoice PDF',
+          action: 'pdf',
+        },
+        {
+          name: 'Payment Page',
+          action: 'paymentPage',
+        },
+      ]
+    : [
+        {
+          name: 'Invoice PDF',
+          action: 'pdf',
+        },
+      ]
 
   return (
     <div className="mercoa-h-full mercoa-w-full mercoa-flex mercoa-flex-col mercoa-justify-center mercoa-items-center">

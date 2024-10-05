@@ -555,19 +555,20 @@ export function ReceivableForm({
   }
 
   async function onSubmit(data: any) {
-    if (!mercoaSession.entityId) return
-    const newInvoice: Mercoa.InvoiceCreationRequest = {
-      invoiceNumber: data.invoiceNumber,
+    if (!mercoaSession.entityId && !mercoaSession.entityGroupId) return
+    const createUnassignedInvoice = !!mercoaSession.entityGroupId && !mercoaSession.entityId
+    const incompleteInvoiceData: Omit<Mercoa.InvoiceCreationRequest, 'creatorEntityId' | 'creatorEntityGroupId'> = {
+      status: createUnassignedInvoice ? Mercoa.InvoiceStatus.Unassigned : Mercoa.InvoiceStatus.Draft,
+      amount: data.amount,
+      currency: data.currency ?? 'USD',
       invoiceDate: dayjs(data.invoiceDate).toDate(),
       dueDate: dayjs(data.dueDate).toDate(),
-      currency: data.currency ?? 'USD',
-      amount: data.amount,
-      payerId: data.payerId,
-      vendorId: mercoaSession.entityId,
-      paymentSourceId: data.paymentSourceId,
-      paymentDestinationId: data.paymentDestinationId,
-      creatorEntityId: mercoaSession.entityId,
+      invoiceNumber: data.invoiceNumber,
       noteToSelf: data.description,
+      payerId: data.payerId,
+      paymentSourceId: data.paymentSourceId,
+      vendorId: mercoaSession.entityId,
+      paymentDestinationId: data.paymentDestinationId,
       lineItems: data.lineItems.map((lineItem: any) => ({
         name: lineItem.name,
         description: lineItem.description,
@@ -577,6 +578,18 @@ export function ReceivableForm({
         currency: lineItem.currency ?? 'USD',
       })),
     }
+
+    // Note: Typescript isn't smart enough to know that entityGroupId and entityId must be set at these points
+    const newInvoice: Mercoa.InvoiceCreationRequest = createUnassignedInvoice
+      ? {
+          ...incompleteInvoiceData,
+          creatorEntityGroupId: mercoaSession.entityGroupId!,
+        }
+      : {
+          ...incompleteInvoiceData,
+          creatorEntityId: mercoaSession.entityId!,
+        }
+
     if (newInvoice.payerId && mercoaSession.entityId) {
       await mercoaSession.client?.entity.counterparty.addPayors(mercoaSession.entityId, {
         payors: [newInvoice.payerId],

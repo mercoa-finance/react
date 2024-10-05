@@ -2150,11 +2150,6 @@ export function EntityOnboardingForm({
       })}
     >
       <div className="sm:mercoa-grid sm:mercoa-grid-cols-2 mercoa-gap-3">
-        {onboardingOptions?.enableBusiness && onboardingOptions?.enableIndividual && (
-          <div className="mercoa-col-span-2">
-            <AccountTypeSelectBlock register={register} errors={errors} />
-          </div>
-        )}
         {accountType === 'individual' && (
           <>
             {onboardingOptions?.individual.email.show && (
@@ -2638,11 +2633,11 @@ export function EntityOnboarding({
       if (entity.acceptedTos) {
         mercoaSession.client?.entity.initiateKyb(entity.id)
       }
-      // if (connectedEntityId) {
-      //   mercoaSession.client?.entity.update(entity.id, {
-      //     connectedEntityId: connectedEntityId,
-      //   })
-      // }
+      if (connectedEntityId) {
+        mercoaSession.client?.entity.update(entity.id, {
+          connectedEntityId: connectedEntityId,
+        })
+      }
       onComplete?.()
     }
   }, [mercoaSession.organization, mercoaSession.client, entity, entityData, formState, type])

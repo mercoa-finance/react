@@ -2,7 +2,6 @@ import { Combobox } from '@headlessui/react'
 import {
   CheckCircleIcon,
   ChevronUpDownIcon,
-  ExclamationTriangleIcon,
   PlusIcon,
   RocketLaunchIcon,
   SparklesIcon,
@@ -78,14 +77,6 @@ export function ApprovalPolicies({ onSave, additionalRoles }: { onSave?: () => v
         policies: resp,
       })
     }
-  }
-
-  async function getCounterparties() {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    const resp = await mercoaSession.client?.entity.counterparty.findPayees(mercoaSession.entity.id, {
-      limit: 100,
-    })
-    //if (resp) setCounterparties(resp.data)
   }
 
   useEffect(() => {
@@ -301,7 +292,6 @@ function Level({
       </li>
 
       {policies.map((policy, index) => {
-        if (policy.trigger.length === 0) return <></>
         return (
           <li key={index} className="mercoa-relative mercoa-flex mercoa-gap-x-4">
             <div
@@ -316,20 +306,20 @@ function Level({
             </div>
             <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
               <div
-                className={`font-medium mercoa-text-gray-900 mercoa-p-2 mercoa-pb-5 mercoa-rounded-mercoa ${
+                className={`font-medium mercoa-text-gray-900 mercoa-p-2 mercoa-pb-5 mercoa-rounded-mercoa mercoa-relative mercoa-pt-10 ${
                   nestedBg[level + 1]
                 }`}
               >
-                <div className="mercoa-grid mercoa-grid-cols-4 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-mercoa mercoa-relative mercoa-bg-white">
-                  <button
-                    className="mercoa-absolute mercoa-top-2 mercoa-right-2 mercoa-text-gray-400 hover:mercoa-text-gray-500"
-                    type="button"
-                    onClick={() => remove(formPolicies.findIndex((e) => e.id == policy.id))}
-                  >
-                    <span className="mercoa-sr-only">Remove</span>
-                    <XMarkIcon className="mercoa-size-5" />
-                  </button>
+                <button
+                  className="mercoa-absolute mercoa-top-2 mercoa-right-2 mercoa-text-gray-400 hover:mercoa-text-gray-500"
+                  type="button"
+                  onClick={() => remove(formPolicies.findIndex((e) => e.id == policy.id))}
+                >
+                  <span className="mercoa-sr-only">Remove</span>
+                  <XMarkIcon className="mercoa-size-5" />
+                </button>
 
+                <div className="mercoa-grid mercoa-grid-cols-4 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-mercoa mercoa-bg-white">
                   <Trigger
                     control={control}
                     watch={watch}
@@ -345,7 +335,7 @@ function Level({
                   users={users}
                   roles={roles}
                   index={formPolicies.findIndex((e) => e.id == policy.id)}
-                  remove={() => remove(formPolicies.findIndex((e) => e.id == policy.id))}
+                  noTrigger={policy.trigger.length === 0}
                 />
                 <div className="mercoa-ml-10">
                   <Level
@@ -384,64 +374,25 @@ function Level({
             id={upstreamPolicyId + '~' + policies.length}
             upstreamPolicyId={upstreamPolicyId}
             append={append}
-            trigger={[{ type: 'amount', amount: 100, currency: Mercoa.CurrencyCode.Usd }]}
+            trigger={[]}
           />
         </p>
       </li>
 
       {upstreamPolicyId === 'root' && (
-        <>
-          <li className="mercoa-relative  mercoa-gap-x-4">
-            <div className="mercoa-flex">
-              <div className="-mercoa-bottom-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center">
-                <div className="mercoa-w-px mercoa-bg-gray-200" />
-              </div>
-              <div className="mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center mercoa-bg-white">
-                <ExclamationTriangleIcon className="mercoa-size-5 mercoa-text-gray-300" aria-hidden="true" />
-              </div>
-              <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500 mercoa-ml-4">
-                <span className="mercoa-font-medium mercoa-text-gray-900 ">
-                  Always apply the following rules:
-                  <div className="mercoa-mt-1">
-                    <AddRule upstreamPolicyId="root" append={append} trigger={[]} id={'fallback-' + Math.random()} />
-                  </div>
-                </span>
-              </p>
-            </div>
-            {formPolicies.map((policy, index) => {
-              if (policy.trigger.length > 0) return <></>
-              return (
-                <div className="mercoa-ml-10" key={index}>
-                  <Rule
-                    key={formPolicies.findIndex((e) => e.id == policy.id)}
-                    watch={watch}
-                    register={register}
-                    setValue={setValue}
-                    users={users}
-                    roles={roles}
-                    index={formPolicies.findIndex((e) => e.id == policy.id)}
-                    noTrigger
-                    remove={() => remove(formPolicies.findIndex((e) => e.id == policy.id))}
-                  />
-                </div>
-              )
-            })}
-          </li>
-
-          <li className="mercoa-relative mercoa-flex mercoa-gap-x-4">
-            <div className="mercoa-h-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center">
-              <div className="mercoa-w-px mercoa-bg-gray-200" />
-            </div>
-            <div
-              className={`mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center ${nestedBg[level]}`}
-            >
-              <CheckCircleIcon className="mercoa-size-5 mercoa-text-green-400" aria-hidden="true" />
-            </div>
-            <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
-              <span className="mercoa-font-medium mercoa-text-gray-900"> Approve Invoice</span>
-            </p>
-          </li>
-        </>
+        <li className="mercoa-relative mercoa-flex mercoa-gap-x-4">
+          <div className="mercoa-h-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center">
+            <div className="mercoa-w-px mercoa-bg-gray-200" />
+          </div>
+          <div
+            className={`mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center ${nestedBg[level]}`}
+          >
+            <CheckCircleIcon className="mercoa-size-5 mercoa-text-green-400" aria-hidden="true" />
+          </div>
+          <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
+            <span className="mercoa-font-medium mercoa-text-gray-900"> Approve Invoice</span>
+          </p>
+        </li>
       )}
     </ul>
   )
@@ -468,13 +419,15 @@ function Trigger({
     name: trigger,
   })
 
-  const triggerWatch = watch(trigger) as Mercoa.Trigger[] | undefined | Array<undefined>
+  const triggerWatch = watch(trigger) as Mercoa.Trigger[]
 
   return (
     <>
-      <div className="mercoa-col-span-4 mercoa-font-medium mercoa-text-gray-700 mercoa-mb-1">
-        If these conditions are true:
-      </div>
+      {!!fields.length && (
+        <div className="mercoa-col-span-4 mercoa-font-medium mercoa-text-gray-700 mercoa-mb-1">
+          If these conditions are true:
+        </div>
+      )}
       {fields.map((field, triggerIndex) => {
         const previousTriggers: string[] = triggerWatch?.slice(0, triggerIndex).map((t) => t?.type ?? '') ?? []
         return (
@@ -621,16 +574,14 @@ function Trigger({
                 />
               </>
             )}
-            {triggerIndex !== 0 && (
-              <button
-                type="button"
-                onClick={() => remove(triggerIndex)}
-                className="mercoa-ml-2 mercoa-text-gray-400 hover:mercoa-text-gray-500"
-              >
-                <span className="mercoa-sr-only">Remove</span>
-                <XMarkIcon className="mercoa-size-5" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => remove(triggerIndex)}
+              className="mercoa-ml-2 mercoa-text-gray-400 hover:mercoa-text-gray-500"
+            >
+              <span className="mercoa-sr-only">Remove</span>
+              <XMarkIcon className="mercoa-size-5" />
+            </button>
           </div>
         )
       })}
@@ -681,7 +632,6 @@ function Rule({
   users,
   roles,
   index,
-  remove,
   noTrigger,
 }: {
   watch: any
@@ -690,7 +640,6 @@ function Rule({
   users: Mercoa.EntityUserResponse[]
   roles: string[]
   index: number
-  remove: () => void
   noTrigger?: boolean
 }) {
   const [ruleIdType, setRuleIdType] = useState('rolesList')
@@ -714,18 +663,7 @@ function Rule({
   return (
     <div className="mercoa-grid mercoa-grid-cols-1 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-mercoa mercoa-relative mercoa-mt-5 mercoa-ml-10 mercoa-bg-white">
       <ArrowDownLeftIcon className="mercoa-w-7 mercoa-h-7 mercoa-absolute -mercoa-top-2 -mercoa-left-10" />
-      {noTrigger ? (
-        <button
-          className="mercoa-absolute mercoa-top-2 mercoa-right-2 mercoa-text-gray-400 hover:mercoa-text-gray-500"
-          type="button"
-          onClick={remove}
-        >
-          <span className="mercoa-sr-only">Remove</span>
-          <XMarkIcon className="mercoa-size-5" />
-        </button>
-      ) : (
-        <div className="mercoa-font-medium mercoa-text-gray-700">Then:</div>
-      )}
+      {!noTrigger && <div className="mercoa-font-medium mercoa-text-gray-700">Then:</div>}
       <div className="mercoa-flex mercoa-items-center">
         <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-mr-2">
           Require

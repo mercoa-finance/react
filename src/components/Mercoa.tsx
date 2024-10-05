@@ -29,7 +29,7 @@ export interface MercoaContext {
   heightOffset: number
   setHeightOffset: Function
   debug: Function
-  fetchMetadata?: boolean
+  fetchMetadata?: string[] | boolean
 }
 const sessionContext = createContext<MercoaContext>({
   token: '',
@@ -55,7 +55,7 @@ const sessionContext = createContext<MercoaContext>({
   heightOffset: 100,
   setHeightOffset: () => {},
   debug: () => {},
-  fetchMetadata: false,
+  fetchMetadata: undefined,
 })
 
 interface contextClassType {
@@ -93,7 +93,7 @@ export function MercoaSession({
   disableToastContainer?: boolean
   heightOffset?: number
   debug?: boolean
-  fetchMetadata?: boolean
+  fetchMetadata?: string[]
 }) {
   return (
     <sessionContext.Provider
@@ -106,7 +106,7 @@ export function MercoaSession({
         googleMapsApiKey,
         heightOffset: heightOffset ?? 100,
         debug: debug ?? false,
-        fetchMetadata: fetchMetadata ?? false,
+        fetchMetadata: fetchMetadata,
       })}
     >
       {disableToastContainer ? (
@@ -186,7 +186,7 @@ function useProvideSession({
   googleMapsApiKey?: string
   heightOffset: number
   debug?: boolean
-  fetchMetadata?: boolean
+  fetchMetadata?: string[]
 }) {
   const [entity, setEntity] = useState<Mercoa.EntityResponse>()
   const [user, setUser] = useState<Mercoa.EntityUserResponse>()
@@ -325,7 +325,7 @@ function useProvideSession({
     if (eid) {
       try {
         const e = await client.entity.get(eid, {
-          returnMetadata: !!fetchMetadata,
+          returnMetadata: fetchMetadata,
         })
         setEntity(e)
       } catch (e) {
@@ -368,7 +368,7 @@ function useProvideSession({
     if (egi) {
       try {
         const group = await client.entityGroup.get(egi, {
-          returnEntityMetadata: !!fetchMetadata,
+          returnEntityMetadata: fetchMetadata,
         })
         setEntityGroup(group)
       } catch (e) {
