@@ -74,7 +74,7 @@ export type OnboardingFormData = {
 
 // Onboarding Blocks //////////////////////////////////////////////////////////
 
-export function UploadBlock({ type }: { type: 'W9' | '1099' | 'Logo' }) {
+export function UploadBlock({ type, entity }: { type: 'W9' | '1099' | 'Logo'; entity: Mercoa.EntityResponse }) {
   const mercoaSession = useMercoaSession()
   const blobToDataUrl = (blob: Blob) =>
     new Promise<string>((resolve, reject) => {
@@ -96,8 +96,8 @@ export function UploadBlock({ type }: { type: 'W9' | '1099' | 'Logo' }) {
       <DocumentIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
     )
   } else if (type === 'Logo') {
-    if (mercoaSession.entity?.logo) {
-      defaultIcon = <img className="mercoa-mx-auto mercoa-h-12" src={mercoaSession.entity?.logo} />
+    if (entity?.logo) {
+      defaultIcon = <img className="mercoa-mx-auto mercoa-h-12" src={entity?.logo} />
     }
   }
 
@@ -107,10 +107,10 @@ export function UploadBlock({ type }: { type: 'W9' | '1099' | 'Logo' }) {
         onDropAccepted={(acceptedFiles) => {
           blobToDataUrl(acceptedFiles[0]).then((fileReaderObj) => {
             mercoaSession.debug(fileReaderObj)
-            if (mercoaSession.entityId) {
+            if (entity) {
               if (type === 'Logo') {
                 mercoaSession.client?.entity
-                  .update(mercoaSession.entityId, {
+                  .update(entity.id, {
                     logo: fileReaderObj,
                   })
                   .then(() => {
@@ -119,7 +119,7 @@ export function UploadBlock({ type }: { type: 'W9' | '1099' | 'Logo' }) {
                   })
               } else if (type === 'W9') {
                 mercoaSession.client?.entity.document
-                  .upload(mercoaSession.entityId, {
+                  .upload(entity.id, {
                     document: fileReaderObj,
                     type: 'W9',
                   })
@@ -129,7 +129,7 @@ export function UploadBlock({ type }: { type: 'W9' | '1099' | 'Logo' }) {
                   })
               } else if (type === '1099') {
                 mercoaSession.client?.entity.document
-                  .upload(mercoaSession.entityId, {
+                  .upload(entity.id, {
                     document: fileReaderObj,
                     type: 'TEN_NINETY_NINE',
                   })
@@ -2223,7 +2223,7 @@ export function EntityOnboardingForm({
         )}
         {accountType === 'business' && (
           <>
-            {onboardingOptions?.business.logo.edit && <UploadBlock type="Logo" />}
+            {onboardingOptions?.business.logo.edit && <UploadBlock type="Logo" entity={entity} />}
             {onboardingOptions?.business.name.show && (
               <LegalBusinessNameBlock
                 register={register}
@@ -2337,8 +2337,8 @@ export function EntityOnboardingForm({
                 />
               </div>
             )}
-            {onboardingOptions?.business.w9.show && <UploadBlock type="W9" />}
-            {onboardingOptions?.business.tenNinetyNine.show && <UploadBlock type="1099" />}
+            {onboardingOptions?.business.w9.show && <UploadBlock type="W9" entity={entity} />}
+            {onboardingOptions?.business.tenNinetyNine.show && <UploadBlock type="1099" entity={entity} />}
             {onboardingOptions?.business.termsOfService.show && (
               <div className="mercoa-col-span-2">
                 <TosBlock

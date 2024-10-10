@@ -1716,21 +1716,39 @@ export function InvoiceStatusPill({
       message = 'Ready for Review'
     }
   } else if (status === Mercoa.InvoiceStatus.Approved) {
-    if (!paymentSourceId || !paymentDestinationId || !counterparty || !amount || !dueDate) {
+    // AP Validation
+    if (type === 'payable' && (!paymentSourceId || !paymentDestinationId || !counterparty || !amount || !dueDate)) {
       backgroundColor = 'mercoa-bg-yellow-100'
       textColor = 'mercoa-text-black'
       message = 'Incomplete'
-    } else {
+    }
+    // AR Validation (don't require paymentSourceId)
+    else if (type === 'receivable' && (!paymentDestinationId || !counterparty || !amount || !dueDate)) {
+      backgroundColor = 'mercoa-bg-yellow-100'
+      textColor = 'mercoa-text-black'
+      message = 'Incomplete'
+    }
+    // Fallthrough
+    else {
       backgroundColor = 'mercoa-bg-green-100'
       textColor = 'mercoa-text-green-800'
       message = type === 'receivable' ? 'Out for Payment' : 'Ready for Payment'
     }
   } else if (status === Mercoa.InvoiceStatus.Scheduled) {
-    if (!paymentSourceId || !paymentDestinationId || !counterparty || !amount || !dueDate) {
+    // AP Validation
+    if (type === 'payable' && (!paymentSourceId || !paymentDestinationId || !counterparty || !amount || !dueDate)) {
       backgroundColor = 'mercoa-bg-yellow-100'
       textColor = 'mercoa-text-black'
       message = 'Incomplete'
-    } else {
+    }
+    // AR Validation (don't require paymentSourceId)
+    else if (type === 'receivable' && (!paymentDestinationId || !counterparty || !amount || !dueDate)) {
+      backgroundColor = 'mercoa-bg-yellow-100'
+      textColor = 'mercoa-text-black'
+      message = 'Incomplete'
+    }
+    // Fallthrough
+    else {
       backgroundColor = 'mercoa-bg-green-100'
       textColor = 'mercoa-text-green-800'
       message = 'Payment Scheduled'

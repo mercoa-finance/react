@@ -626,7 +626,20 @@ export function ReceivableForm({
   return (
     <div className="mercoa-p-2 mercoa-mx-4">
       <h2 className="mercoa-text-lg mercoa-font-bold mercoa-leading-7 mercoa-text-gray-900">
-        Edit Invoice {invoice && <InvoiceStatusPill status={invoice?.status ?? 'DRAFT'} />}
+        Edit Invoice{' '}
+        {invoice && (
+          <InvoiceStatusPill
+            status={invoice.status ?? 'DRAFT'}
+            failureType={invoice.failureType}
+            amount={invoice.amount}
+            payerId={invoice.payerId}
+            vendorId={invoice.vendorId}
+            dueDate={invoice.dueDate}
+            paymentSourceId={invoice.paymentSourceId}
+            paymentDestinationId={invoice.paymentDestinationId}
+            type="receivable"
+          />
+        )}
       </h2>
       <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-items-center mercoa-mt-10 mercoa-w-full">
         {/*  VENDOR SEARCH */}
