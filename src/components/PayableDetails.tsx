@@ -1313,7 +1313,7 @@ export function PayableForm({
         if (resp) {
           mercoaSession.debug('invoice/update API response: ', resp)
           setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
-          toast.success('Invoice updated')
+          renderCustom?.toast ? renderCustom?.toast.success('Invoice updated') : toast.success('Invoice updated')
           onInvoiceSubmit?.(resp)
           refreshInvoice(resp.id)
         } else {

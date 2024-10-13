@@ -272,7 +272,7 @@ function useProvideSession({
     }
     try {
       const { entityId: tokenEid, entityGroupId } = jwtDecode(String(tokenLocal)) as TokenOptions
-      if (tokenEid) {
+      if (tokenEid && !entityGroupId) {
         await refreshEntity(tokenEid)
         return
       } else if (entityGroupId) {
@@ -365,7 +365,7 @@ function useProvideSession({
       egi = entityGroupId
     }
     // Get entity data
-    if (egi) {
+    if (egi && egi !== 'all') {
       try {
         const group = await client.entityGroup.get(egi, {
           returnEntityMetadata: fetchMetadata,
