@@ -1841,6 +1841,12 @@ export function CounterpartyDetails({
               >
                 Invoice Date
               </th>
+              <th
+                scope="col"
+                className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+              >
+                Status
+              </th>
             </tr>
           </thead>
           <tbody className="mercoa-bg-white">
@@ -1855,6 +1861,9 @@ export function CounterpartyDetails({
                   </td>
                   <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
                     {dayjs(invoice.invoiceDate).format('MMM DD, YYYY')}
+                  </td>
+                  <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                    {invoice.status}
                   </td>
                   {admin && (
                     <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">

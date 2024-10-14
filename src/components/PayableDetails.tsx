@@ -934,7 +934,7 @@ export function PayableForm({
       nextInvoiceState = Mercoa.InvoiceStatus.Approved
     } else if (invoice?.status === Mercoa.InvoiceStatus.Approved || invoice?.status === Mercoa.InvoiceStatus.Failed) {
       nextInvoiceState = Mercoa.InvoiceStatus.Scheduled
-    } else if (invoice?.id) {
+    } else if (invoice?.id && invoice.status !== Mercoa.InvoiceStatus.Unassigned) {
       // Invoice is already scheduled, there is no next state
       renderCustom?.toast
         ? renderCustom?.toast.error('This invoice is already scheduled and cannot be edited.')
