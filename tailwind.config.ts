@@ -1,6 +1,6 @@
-const defaultTheme = require('tailwindcss/defaultTheme')
+import type { Config } from 'tailwindcss'
+import defaultTheme from 'tailwindcss/defaultTheme'
 
-/** @type {import('tailwindcss').Config} */
 export default {
   content: ['./src/**/*.{js,ts,jsx,tsx}'],
   prefix: 'mercoa-',
@@ -46,4 +46,4 @@ export default {
     },
   },
   plugins: [require('@tailwindcss/forms'), require('@tailwindcss/typography')],
-}
+} satisfies Config
