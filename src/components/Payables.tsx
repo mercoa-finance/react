@@ -101,6 +101,10 @@ function SchedulePaymentModal({
                 selected={selectedDate}
                 minDate={dayjs().add(1, 'day').toDate()}
                 filterDate={isWeekday}
+                peekNextMonth
+                showMonthDropdown
+                showYearDropdown
+                dropdownMode="select"
               />
 
               <MercoaButton
@@ -380,13 +384,11 @@ export function PayablesTable({
     mercoaSession.refresh()
   }
 
-  function getNewOrApprovedStatus(invoice: Mercoa.InvoiceResponse) {
-    let status: Mercoa.InvoiceStatus = Mercoa.InvoiceStatus.Approved
-    const approvalPolicy = invoice.approvalPolicy
-    if (!!approvalPolicy && approvalPolicy.length > 0) {
-      status = Mercoa.InvoiceStatus.New
+  function needsApproval(invoice: Mercoa.InvoiceResponse) {
+    if (invoice.approvers.length > 0) {
+      return true
     }
-    return status
+    return false
   }
 
   async function handleSubmitNew() {
@@ -397,12 +399,15 @@ export function PayablesTable({
       selectedInvoices.map(async (invoice) => {
         try {
           await mercoaSession.client?.invoice.update(invoice.id, {
-            status: getNewOrApprovedStatus(invoice),
+            status: Mercoa.InvoiceStatus.New,
           })
           anySuccessFlag = true
         } catch (e) {
           console.error('Error submitting invoice: ', e)
           console.log('Errored invoice: ', { invoice })
+          await mercoaSession.client?.invoice.update(invoice.id, {
+            status: Mercoa.InvoiceStatus.Draft,
+          })
         }
       }),
     )
@@ -458,6 +463,31 @@ export function PayablesTable({
       toast.success('Invoices Archived')
     } else {
       toast.error('Error archiving invoices')
+    }
+    mercoaSession.refresh()
+  }
+
+  async function handleRestoreAsDraft() {
+    if (!mercoaSession.token || !mercoaSession.entity?.id) return
+    let anySuccessFlag = false
+    setDataLoaded(false)
+    await Promise.all(
+      selectedInvoices.map(async (invoice) => {
+        try {
+          await mercoaSession.client?.invoice.update(invoice.id, {
+            status: Mercoa.InvoiceStatus.Draft,
+          })
+          anySuccessFlag = true
+        } catch (e) {
+          console.error('Error restoring invoice: ', e)
+          console.log('Errored restoring: ', { invoice })
+        }
+      }),
+    )
+    if (anySuccessFlag) {
+      toast.success('Invoices Restored as Draft')
+    } else {
+      toast.error('Error restoring invoices')
     }
     mercoaSession.refresh()
   }
@@ -1004,7 +1034,7 @@ export function PayablesTable({
           <div className="mercoa-absolute mercoa-left-14 mercoa-top-6 mercoa-flex mercoa-h-12 mercoa-items-center mercoa-space-x-3 mercoa-bg-white sm:mercoa-left-12">
             {currentStatuses.includes(Mercoa.InvoiceStatus.Draft) && selectedInvoices.length > 0 && (
               <>
-                {getNewOrApprovedStatus(selectedInvoices[0]) === Mercoa.InvoiceStatus.New && (
+                {needsApproval(selectedInvoices[0]) && (
                   <button
                     type="button"
                     className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
@@ -1018,9 +1048,7 @@ export function PayablesTable({
                   className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
                   onClick={handleSubmitNew}
                 >
-                  {getNewOrApprovedStatus(selectedInvoices[0]) === Mercoa.InvoiceStatus.New
-                    ? 'Submit for Approval'
-                    : 'Approve'}
+                  {needsApproval(selectedInvoices[0]) ? 'Submit for Approval' : 'Approve'}
                 </button>
                 <AddApproverModal
                   open={showAddApproverModal}
@@ -1093,19 +1121,22 @@ export function PayablesTable({
                   </button>
                 </>
               )}
-            {currentStatuses.includes(Mercoa.InvoiceStatus.Draft) && selectedInvoices.length > 0 && (
-              <button
-                type="button"
-                className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
-                onClick={() => {
-                  if (confirm('Are you sure you want to delete these invoices? This action cannot be undone.')) {
-                    handleDelete()
-                  }
-                }}
-              >
-                Delete
-              </button>
-            )}
+            {currentStatuses.some((e) =>
+              [Mercoa.InvoiceStatus.Draft, Mercoa.InvoiceStatus.Canceled].includes(e as any),
+            ) &&
+              selectedInvoices.length > 0 && (
+                <button
+                  type="button"
+                  className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete these invoices? This action cannot be undone.')) {
+                      handleDelete()
+                    }
+                  }}
+                >
+                  Delete
+                </button>
+              )}
             {currentStatuses.some((e) =>
               [
                 Mercoa.InvoiceStatus.New,
@@ -1128,22 +1159,30 @@ export function PayablesTable({
                   Cancel
                 </button>
               )}
-            {currentStatuses.some((e) =>
-              [Mercoa.InvoiceStatus.Paid, Mercoa.InvoiceStatus.Canceled].includes(e as any),
-            ) &&
-              selectedInvoices.length > 0 && (
-                <button
-                  type="button"
-                  className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
-                  onClick={() => {
-                    if (confirm('Are you sure you want to archive these invoices? This action cannot be undone.')) {
-                      handleArchive()
-                    }
-                  }}
-                >
-                  Archive
-                </button>
-              )}
+            {currentStatuses.includes(Mercoa.InvoiceStatus.Paid) && selectedInvoices.length > 0 && (
+              <button
+                type="button"
+                className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
+                onClick={() => {
+                  if (confirm('Are you sure you want to archive these invoices? This action cannot be undone.')) {
+                    handleArchive()
+                  }
+                }}
+              >
+                Archive
+              </button>
+            )}
+            {currentStatuses.includes(Mercoa.InvoiceStatus.Canceled) && selectedInvoices.length > 0 && (
+              <button
+                type="button"
+                className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-white mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50 disabled:mercoa-cursor-not-allowed disabled:mercoa-opacity-30 disabled:hover:mercoa-bg-white"
+                onClick={() => {
+                  handleRestoreAsDraft()
+                }}
+              >
+                Restore as Draft
+              </button>
+            )}
           </div>
 
           {/* ******** TABLE ******** */}

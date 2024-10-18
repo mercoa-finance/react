@@ -1302,6 +1302,10 @@ export function MercoaInput({
             filterDate={dateOptions?.filterDate}
             readOnly={readOnly}
             required={required}
+            peekNextMonth
+            showMonthDropdown
+            showYearDropdown
+            dropdownMode="select"
           />
         )}
       />

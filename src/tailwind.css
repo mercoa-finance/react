@@ -4,3 +4,20 @@
 .react-datepicker-wrapper {
   display: block !important;
 }
+
+.react-datepicker__year-dropdown-container--select,
+.react-datepicker__month-dropdown-container--select,
+.react-datepicker__month-year-dropdown-container--select,
+.react-datepicker__year-dropdown-container--scroll,
+.react-datepicker__month-dropdown-container--scroll,
+.react-datepicker__month-year-dropdown-container--scroll {
+  margin: 0 10px !important;
+}
+
+.react-datepicker__month-select,
+.react-datepicker__year-select {
+  padding-left: 5px !important;
+  padding-top: 0px !important;
+  padding-bottom: 0px !important;
+  padding-right: 30px !important;
+}

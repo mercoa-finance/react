@@ -934,7 +934,11 @@ export function PayableForm({
       nextInvoiceState = Mercoa.InvoiceStatus.Approved
     } else if (invoice?.status === Mercoa.InvoiceStatus.Approved || invoice?.status === Mercoa.InvoiceStatus.Failed) {
       nextInvoiceState = Mercoa.InvoiceStatus.Scheduled
-    } else if (invoice?.id && invoice.status !== Mercoa.InvoiceStatus.Unassigned) {
+    } else if (
+      invoice?.id &&
+      invoice.status !== Mercoa.InvoiceStatus.Unassigned &&
+      invoice.status !== Mercoa.InvoiceStatus.Canceled
+    ) {
       // Invoice is already scheduled, there is no next state
       renderCustom?.toast
         ? renderCustom?.toast.error('This invoice is already scheduled and cannot be edited.')
@@ -1322,11 +1326,21 @@ export function PayableForm({
             : toast.error('There was an error updating the invoice')
         }
       } catch (e: any) {
-        console.error(e)
-        console.error(e.body)
-        renderCustom?.toast
-          ? renderCustom?.toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
-          : toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+        // if the previous state was draft, we might need to refresh to get new approval rules
+        if (invoiceDataFinal.status === Mercoa.InvoiceStatus.New) {
+          invoiceDataFinal.status = Mercoa.InvoiceStatus.Draft
+          const resp = await mercoaSession.client?.invoice.update(invoice.id, invoiceDataFinal)
+          if (resp) {
+            setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
+            refreshInvoice(resp.id)
+          }
+        } else {
+          console.error(e)
+          console.error(e.body)
+          renderCustom?.toast
+            ? renderCustom?.toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+            : toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+        }
       }
     } else {
       try {
@@ -1994,6 +2008,7 @@ export function PayableActions({
   approveButton,
   rejectButton,
   nonApproverButton,
+  recreateDraftButton,
   deleteButton,
   archiveButton,
   cancelButton,
@@ -2014,6 +2029,7 @@ export function PayableActions({
   approveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   rejectButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   nonApproverButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  recreateDraftButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   deleteButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   archiveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   cancelButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
@@ -2097,9 +2113,7 @@ export function PayableActions({
   const deleteButtonComponent = deleteButton ? (
     deleteButton({
       onClick: () => {
-        if (confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
-          setValue('saveAsStatus', 'DELETE')
-        }
+        setValue('saveAsStatus', 'DELETE')
       },
     })
   ) : (
@@ -2107,9 +2121,7 @@ export function PayableActions({
       isEmphasized={false}
       color="red"
       onClick={() => {
-        if (confirm('Are you sure you want to delete this invoice? This action cannot be undone.')) {
-          setValue('saveAsStatus', 'DELETE')
-        }
+        setValue('saveAsStatus', 'DELETE')
       }}
     >
       Delete Invoice
@@ -2131,6 +2143,24 @@ export function PayableActions({
       }}
     >
       Archive Invoice
+    </MercoaButton>
+  )
+
+  const recreateDraftButtonComponent = recreateDraftButton ? (
+    recreateDraftButton({
+      onClick: () => {
+        setValue('saveAsStatus', Mercoa.InvoiceStatus.Draft)
+      },
+    })
+  ) : (
+    <MercoaButton
+      isEmphasized={false}
+      color="green"
+      onClick={() => {
+        setValue('saveAsStatus', Mercoa.InvoiceStatus.Draft)
+      }}
+    >
+      Restore as Draft
     </MercoaButton>
   )
 
@@ -2439,27 +2469,15 @@ export function PayableActions({
         buttons.push(assignToEntityComponent)
         break
 
+      case Mercoa.InvoiceStatus.Canceled:
+        buttons.push(recreateDraftButtonComponent, deleteButtonComponent)
+        break
+
       case Mercoa.InvoiceStatus.Archived:
       case Mercoa.InvoiceStatus.Pending:
-      case Mercoa.InvoiceStatus.Canceled:
       case Mercoa.InvoiceStatus.Refused:
       default:
         break
-    }
-
-    if (admin) {
-      buttons.push(
-        <MercoaButton
-          type="submit"
-          isEmphasized
-          onClick={() => {
-            setValue('saveAsStatus', '')
-            setValue('saveAsAdmin', true)
-          }}
-        >
-          SAVE AS ADMIN
-        </MercoaButton>,
-      )
     }
   }
 

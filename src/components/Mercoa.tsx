@@ -349,7 +349,7 @@ function useProvideSession({
         const allUsers = await getAllUsers(client, eid)
         setUsers(allUsers)
         if (uid) {
-          setUser(allUsers.find((u) => u.id === uid))
+          setUser(allUsers.find((u) => u.id === uid || u.foreignId === uid))
         }
       } catch (e) {
         console.error(e)
