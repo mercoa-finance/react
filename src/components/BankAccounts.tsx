@@ -9,12 +9,12 @@ import {
   PlusIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import { Fragment, ReactNode, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { PlaidLinkError, PlaidLinkOnExitMetadata, usePlaidLink } from 'react-plaid-link'
 import SignatureCanvas from 'react-signature-canvas'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
 import {
@@ -329,7 +329,7 @@ export function BankAccount({
                                   isEmphasized
                                   onClick={async () => {
                                     if (mercoaSession.entity?.id && account?.id) {
-                                      await mercoaSession.client?.entity.paymentMethod.initiateMicroDeposits(
+                                      await mercoaSession.client?.entity.paymentMethod.bankAccount.initiateMicroDeposits(
                                         mercoaSession.entity?.id,
                                         account?.id,
                                       )
@@ -349,7 +349,7 @@ export function BankAccount({
                               <form
                                 onSubmit={handleSubmit(async (data) => {
                                   if (mercoaSession.entity?.id && account?.id) {
-                                    await mercoaSession.client?.entity.paymentMethod.completeMicroDeposits(
+                                    await mercoaSession.client?.entity.paymentMethod.bankAccount.completeMicroDeposits(
                                       mercoaSession.entity?.id,
                                       account?.id,
                                       {

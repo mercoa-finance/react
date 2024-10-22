@@ -3422,18 +3422,27 @@ export function PaymentDestinationProcessingTime({
   const paymentSourceId = watch('paymentSourceId') as Mercoa.PaymentMethodType
   const paymentDestinationId = watch('paymentDestinationId') as Mercoa.PaymentMethodType
   const paymentDestinationOptions = watch('paymentDestinationOptions') as Mercoa.PaymentDestinationOptions
+  const status = watch('status') as Mercoa.InvoiceStatus
+  const invoiceId = watch('invoiceId') as string
+
+  let payload: Mercoa.CalculatePaymentTimingRequest = {
+    invoiceId,
+  }
+  if (status !== Mercoa.InvoiceStatus.New && status !== Mercoa.InvoiceStatus.Draft) {
+    payload = {
+      ...(processedAt ? { processedAt } : { estimatedDeductionDate: deductionDate }),
+      paymentSourceId,
+      paymentDestinationId,
+      paymentDestinationOptions,
+    }
+  }
 
   const [timing, setTiming] = useState<Mercoa.CalculatePaymentTimingResponse>()
 
   useEffect(() => {
     if (paymentSourceId && paymentDestinationId && deductionDate) {
       mercoaSession.client?.calculate
-        .paymentTiming({
-          ...(processedAt ? { processedAt } : { estimatedDeductionDate: deductionDate }),
-          paymentSourceId,
-          paymentDestinationId,
-          paymentDestinationOptions,
-        })
+        .paymentTiming(payload)
         .then((timing) => {
           setTiming(timing)
         })

@@ -83,7 +83,7 @@ export default function InvoicePreview({
     if (!container || !preview) return
     const containerWidth = container.offsetWidth
     const previewWidth = preview.offsetWidth
-    const scaleFactor = (0.9 * containerWidth) / previewWidth
+    const scaleFactor = (0.75 * containerWidth) / previewWidth
     preview.style.transform = `scale(${scaleFactor})`
   }
 

@@ -1925,10 +1925,10 @@ export function InvoiceMetrics({
         groupBy: ['STATUS'],
       })
       .then((metrics) => {
-        const results = (statuses ?? []).map((status) => {
+        const results = (statuses ?? Object.keys(Mercoa.InvoiceStatus)).map((status) => {
           return [
-            status as string,
-            metrics.find((e) => e.group?.some((e) => e.status === status)) ?? {
+            status.toUpperCase() as string,
+            metrics.find((e) => e.group?.some((e) => e.status === status.toUpperCase())) ?? {
               totalAmount: 0,
               totalInvoices: 0,
               totalCount: 0,
@@ -2037,10 +2037,10 @@ export function StatusTabs({
         groupBy: ['STATUS'],
       })
       .then((metrics) => {
-        const results = (statuses ?? []).map((status) => {
+        const results = (statuses ?? Object.keys(Mercoa.InvoiceStatus)).map((status) => {
           return [
-            status as string,
-            metrics.find((e) => e.group?.some((e) => e.status === status)) ?? {
+            status.toUpperCase() as string,
+            metrics.find((e) => e.group?.some((e) => e.status === status.toUpperCase())) ?? {
               totalAmount: 0,
               totalInvoices: 0,
               totalCount: 0,

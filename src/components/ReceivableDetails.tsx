@@ -206,7 +206,7 @@ export function ReceivableDetails({
   const paymentDestinationId = methods.watch('paymentDestinationId')
 
   const invoicePreview = (
-    <Section minSize={0} maxSize={800}>
+    <Section minSize={300} maxSize={800}>
       <InvoicePreview
         selectedPayer={selectedPayer}
         paymentDestination={destinationPaymentMethods.find((e) => e.id === paymentDestinationId)}
