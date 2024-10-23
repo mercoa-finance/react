@@ -17,6 +17,7 @@ import {
   MagnifyingGlassPlusIcon,
   PlusCircleIcon,
   PlusIcon,
+  TrashIcon,
   XCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
@@ -336,8 +337,8 @@ export function PayableForm({
       lineItems: yup.array().of(
         yup.object({
           id: yup.string(),
-          description: yup.string().required(),
-          amount: yup.number().transform(removeThousands).required().typeError('Please enter a valid number'),
+          description: yup.string().nullable(),
+          amount: yup.number().transform(removeThousands).nullable(),
           quantity: yup.number().transform(removeThousands).required().typeError('Please enter a valid number'),
           unitPrice: yup.number().transform(removeThousands).required().typeError('Please enter a valid number'),
           currency: yup.string().nullable(),
@@ -1148,8 +1149,34 @@ export function PayableForm({
       }
     }
 
+    // if not draft or unassigned, make sure all line items have amounts and descriptions
+    if (
+      ![Mercoa.InvoiceStatus.Draft, Mercoa.InvoiceStatus.Unassigned].includes(invoiceData.status as any) &&
+      mercoaSession.iframeOptions?.options?.invoice?.lineItems != Mercoa.LineItemAvailabilities.Disabled &&
+      invoiceData.lineItems &&
+      invoiceData.lineItems.length > 0
+    ) {
+      lineItems.forEach((lineItem, index) => {
+        if (!lineItem.amount) {
+          setError(`lineItems.${index}.amount`, {
+            type: 'manual',
+            message: 'Please enter an amount',
+          })
+          return
+        }
+        if (!lineItem.description) {
+          setError(`lineItems.${index}.description`, {
+            type: 'manual',
+            message: 'Please enter a description',
+          })
+          return
+        }
+      })
+    }
+
     // Make sure line items amount is equal to invoice amount
     if (
+      ![Mercoa.InvoiceStatus.Draft, Mercoa.InvoiceStatus.Unassigned].includes(invoiceData.status as any) &&
       mercoaSession.iframeOptions?.options?.invoice?.lineItems != Mercoa.LineItemAvailabilities.Disabled &&
       invoiceData.lineItems &&
       invoiceData.lineItems.length > 0
@@ -1593,11 +1620,13 @@ export function PayableDocument({
 
   useEffect(() => {
     if (invoice && invoice.hasDocuments) {
-      mercoaSession.client?.invoice.document.getAll(invoice.id).then((documents) => {
-        if (documents && documents.length > 0) {
-          setDocuments(documents.map((document) => ({ fileReaderObj: document.uri, mimeType: document.mimeType })))
-        }
-      })
+      mercoaSession.client?.invoice.document
+        .getAll(invoice.id, { type: Mercoa.DocumentType.Invoice })
+        .then((documents) => {
+          if (documents && documents.length > 0) {
+            setDocuments(documents.map((document) => ({ fileReaderObj: document.uri, mimeType: document.mimeType })))
+          }
+        })
     }
     if (invoice && invoice.hasSourceEmail) {
       mercoaSession.client?.invoice.document.getSourceEmail(invoice.id).then((sourceEmail) => {
@@ -1672,6 +1701,7 @@ export function PayableDocument({
             height={height}
             showSourceEmail
             sourceEmails={sourceEmails}
+            {...(!invoice?.hasDocuments && { onRemoveDocument: () => setDocuments(undefined) })}
           />
         </>
       ) : (
@@ -1773,12 +1803,14 @@ export function PayableDocumentDisplay({
   height,
   showSourceEmail,
   sourceEmails,
+  onRemoveDocument,
 }: {
   documents?: Array<{ fileReaderObj: string; mimeType: string }>
   invoice?: Mercoa.InvoiceResponse
   height: number
   showSourceEmail?: boolean
   sourceEmails?: Mercoa.EmailLog[]
+  onRemoveDocument?: () => void
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1872,6 +1904,11 @@ export function PayableDocumentDisplay({
                     </button>
                   </div>
                   <div className="mercoa-flex mercoa-items-center mercoa-justify-end mercoa-gap-x-1">
+                    {onRemoveDocument ? (
+                      <div className="mercoa-cursor-pointer" onClick={onRemoveDocument}>
+                        <TrashIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" color="#6B7280" />
+                      </div>
+                    ) : null}
                     <a
                       href={document.fileReaderObj}
                       target="_blank"
@@ -4436,7 +4473,7 @@ export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
   return (
     <>
       {lineItems.map((lineItem, index) => (
-        <Fragment key={lineItem.id}>
+        <Fragment key={`${lineItem.id}-${lineItem.description}`}>
           <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-my-4" />
           <div className="mercoa-flex mercoa-items-start">
             {/*  INVOICE NUMBER */}
