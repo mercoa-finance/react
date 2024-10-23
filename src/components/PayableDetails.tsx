@@ -286,6 +286,7 @@ export type PayableFormChildrenProps = {
 export function PayableForm({
   invoice,
   ocrResponse,
+  reverseOcrResponse = false,
   uploadedDocument,
   setUploadedDocument,
   onUpdate,
@@ -300,6 +301,7 @@ export function PayableForm({
 }: {
   invoice?: Mercoa.InvoiceResponse
   ocrResponse?: Mercoa.OcrResponse
+  reverseOcrResponse?: boolean
   uploadedDocument?: string
   setUploadedDocument: (e?: string) => void
   onUpdate?: (invoice: Mercoa.InvoiceResponse | undefined) => void
@@ -590,23 +592,21 @@ export function PayableForm({
       ocrResponse.invoice.lineItems &&
       mercoaSession.iframeOptions?.options?.invoice?.lineItems != Mercoa.LineItemAvailabilities.Disabled
     ) {
-      setValue(
-        'lineItems',
-        ocrResponse.invoice.lineItems.map((lineItem) => ({
-          description: lineItem.description ?? '',
-          currency: lineItem.currency ?? 'USD',
-          amount: lineItem.amount ?? 0,
-          quantity: lineItem.quantity ?? 0,
-          unitPrice: lineItem.unitPrice ?? 0,
-          name: lineItem.name ?? '',
-          metadata: lineItem.metadata ?? {},
-          glAccountId: lineItem.glAccountId ?? '',
-          category: lineItem.category ?? 'EXPENSE',
-          id: lineItem.id ?? '',
-          createdAt: lineItem.createdAt ?? new Date(),
-          updatedAt: lineItem.updatedAt ?? new Date(),
-        })),
-      )
+      const ocrResponseLineItems = ocrResponse.invoice.lineItems.map((lineItem) => ({
+        description: lineItem.description ?? '',
+        currency: lineItem.currency ?? 'USD',
+        amount: lineItem.amount ?? 0,
+        quantity: lineItem.quantity ?? 0,
+        unitPrice: lineItem.unitPrice ?? 0,
+        name: lineItem.name ?? '',
+        metadata: lineItem.metadata ?? {},
+        glAccountId: lineItem.glAccountId ?? '',
+        category: lineItem.category ?? 'EXPENSE',
+        id: lineItem.id ?? '',
+        createdAt: lineItem.createdAt ?? new Date(),
+        updatedAt: lineItem.updatedAt ?? new Date(),
+      }))
+      setValue('lineItems', reverseOcrResponse ? ocrResponseLineItems.reverse() : ocrResponseLineItems)
     }
 
     if (ocrResponse.bankAccount) {
