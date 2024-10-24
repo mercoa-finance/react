@@ -89,7 +89,7 @@ const dJSON = require('dirty-json')
 
 // @ts-ignore next-line
 if (typeof Promise.withResolvers === 'undefined') {
-  if (window)
+  if (typeof window !== 'undefined') {
     // @ts-expect-error This does not exist outside of polyfill which this is doing
     window.Promise.withResolvers = function () {
       let resolve, reject
@@ -99,6 +99,7 @@ if (typeof Promise.withResolvers === 'undefined') {
       })
       return { promise, resolve, reject }
     }
+  }
 }
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
