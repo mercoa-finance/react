@@ -433,18 +433,23 @@ export function Tooltip({
   children,
   title,
   offset,
+  position,
 }: {
   children: React.ReactNode
   title: React.ReactNode
   offset?: number
+  position?: 'top' | 'bottom' | 'left' | 'right'
 }) {
+  let positionString = 'mercoa-left-1/4 -mercoa-translate-x-1/2'
+  if (position === 'right') {
+    positionString = 'mercoa-translate-y-2'
+  }
   return (
     <span className="mercoa-group mercoa-relative">
       <span
-        className={`mercoa-pointer-events-none mercoa-absolute -mercoa-top-10 mercoa-left-1/4 
-        -mercoa-translate-x-1/2 mercoa-whitespace-pre mercoa-rounded mercoa-bg-gray-600 mercoa-px-2 mercoa-py-1 
-        mercoa-text-white mercoa-opacity-0 transition group-hover:mercoa-opacity-100
-        mercoa-text-sm mercoa-font-medium`}
+        className={`mercoa-pointer-events-none mercoa-absolute mercoa-whitespace-pre mercoa-rounded mercoa-bg-gray-600 mercoa-px-2 mercoa-py-1 
+        mercoa-text-white mercoa-opacity-0 transition group-hover:mercoa-opacity-100 mercoa-text-sm mercoa-font-medium ${positionString}
+        `}
         style={{ top: -1 * (offset ?? 40) }}
       >
         {title}
@@ -564,6 +569,7 @@ export function MercoaSwitch({
   register,
   name,
   label,
+  tooltip,
   disabled,
   className,
   errors,
@@ -571,6 +577,7 @@ export function MercoaSwitch({
   register: Function
   name: string
   label: ReactNode
+  tooltip?: ReactNode
   disabled?: boolean
   className?: string
   errors?: FieldErrors<any>
@@ -587,7 +594,13 @@ export function MercoaSwitch({
                 peer-checked:after:mercoa-border-white peer-focus:mercoa-ring-4 peer-focus:mercoa-ring-mercoa-primary peer-disabled:mercoa-bg-red-100 peer-disabled:after:mercoa-bg-red-50"
       />
       <span className="mercoa-ml-3 mercoa-flex mercoa-items-center mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">
-        {label}
+        {tooltip ? (
+          <Tooltip position="right" title={tooltip} offset={70}>
+            {label}
+          </Tooltip>
+        ) : (
+          label
+        )}
       </span>
     </label>
   )

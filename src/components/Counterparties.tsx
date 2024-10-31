@@ -769,13 +769,23 @@ function CounterpartyAddOrEditForm({
   onExit?: (counterparty?: any) => any
 }) {
   const [addMore, setAddMore] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   const {
     register,
     watch,
     setValue,
-    formState: { errors },
+    formState: { errors, isSubmitting, isSubmitted },
   } = useFormContext()
+
+  useEffect(() => {
+    if (isSubmitted) {
+      // sleep to allow the form to update
+      setTimeout(() => {
+        setIsSaving(false)
+      }, 200)
+    }
+  }, [isSubmitted])
 
   let counterpartyName = name
   let address = counterparty?.profile?.business?.address
@@ -1014,7 +1024,11 @@ function CounterpartyAddOrEditForm({
           className="mercoa-mt-2 mercoa-w-full"
           onClick={() => {
             setValue('saveAsStatus', 'COUNTERPARTY')
+            setTimeout(() => {
+              setIsSaving(true)
+            }, 100)
           }}
+          disabled={isSubmitting || isSaving}
         >
           Save
         </MercoaButton>

@@ -2043,8 +2043,8 @@ export function EntityOnboardingForm({
       taxID: entity.profile.individual?.governmentIdProvided
         ? '****'
         : entity.profile.business?.taxIdProvided
-        ? '**-*******'
-        : '',
+          ? '**-*******'
+          : '',
       mcc: entity.profile.business?.industryCodes?.mcc ?? '',
       dob: new Date(),
       tos: entity.acceptedTos,
@@ -2129,6 +2129,7 @@ export function EntityOnboardingForm({
         if (!entity) return
         if (!entityData) return
         if (!mercoaSession.client) return
+        // Handle entity updates
         await createOrUpdateEntity({
           data: entityData,
           entityId: entity.id,

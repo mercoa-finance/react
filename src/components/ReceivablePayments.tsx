@@ -9,6 +9,8 @@ import {
 import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
+import { useEffect, useState } from 'react'
+import QRCode from 'react-qr-code'
 import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { AddBankAccount, LoadingSpinnerIcon, MercoaButton, useMercoaSession } from './index'
@@ -30,14 +32,17 @@ export function ReceivablePaymentPortal({
   updateInvoice: (invoice: Mercoa.PaymentMethodResponse) => void
   setSelectedPaymentType: (paymentMethodType: Mercoa.PaymentMethodType | string) => void
 }) {
-  const logo = invoice.vendor?.logo ?? 'https://storage.googleapis.com/mercoa-partner-logos/mercoa-logo.png'
-
   const mercoaSession = useMercoaSession()
+
+  const logo =
+    invoice.vendor?.logo ??
+    mercoaSession.organization?.logoUrl ??
+    'https://storage.googleapis.com/mercoa-partner-logos/mercoa-logo.png'
 
   return (
     <div className="mercoa-min-h-full">
-      <div className="mercoa-h-28">
-        <img src={logo} alt="logo" width={150} className="mercoa-pt-4 mercoa-pl-4" />
+      <div className="mercoa-h-28 mercoa-flex mercoa-flex-col">
+        <img src={logo} alt="logo" width={150} className=" mercoa-object-contain mercoa-min-h-0" />
       </div>
       {complete ? (
         <PaymentComplete invoice={invoice} />
@@ -353,11 +358,25 @@ export function ReceivablePaymentPortal({
 export function ReceivablePaymentPdf({ invoice }: { invoice?: Mercoa.InvoiceResponse }) {
   const mercoaSession = useMercoaSession()
 
+  const [paymentLink, setPaymentLink] = useState<string>()
+
+  useEffect(() => {
+    if (paymentLink || !invoice?.id) return
+    // get payment link
+    mercoaSession.client?.invoice.paymentLinks.getPayerLink(invoice.id).then((resp) => {
+      setPaymentLink(resp)
+    })
+  }, [paymentLink, invoice?.id, mercoaSession.client])
+
   if (!invoice) return <LoadingSpinnerIcon />
 
   const payerAddress = invoice.payer?.profile?.individual?.address ?? invoice.payer?.profile?.business?.address
   const vendorAddress = invoice.vendor?.profile?.individual?.address ?? invoice.vendor?.profile?.business?.address
-  const logo = invoice.vendor?.logo
+
+  const logo =
+    invoice.vendor?.logo ??
+    mercoaSession.organization?.logoUrl ??
+    'https://storage.googleapis.com/mercoa-partner-logos/mercoa-logo.png'
 
   const invoiceHeader = (
     <div className="mercoa-flex mercoa-justify-between mercoa-mt-10">
@@ -514,28 +533,34 @@ export function ReceivablePaymentPdf({ invoice }: { invoice?: Mercoa.InvoiceResp
       {invoiceNumberAndDate}
       <LineItems lineItems={invoice.lineItems ?? []} />
       {invoiceTotal}
-      {invoice.paymentDestination?.type === Mercoa.PaymentMethodType.BankAccount && invoice.vendor && (
-        <table>
-          <tbody>
-            <tr>
-              <td className="mercoa-text-gray-500">Beneficiary Holder</td>
-              <td className="mercoa-text-gray-800 mercoa-pl-2">{invoice.vendor.name}</td>
-            </tr>
-            <tr>
-              <td className="mercoa-text-gray-500">Bank Name</td>
-              <td className="mercoa-text-gray-800 mercoa-pl-2">{invoice.paymentDestination.bankName}</td>
-            </tr>
-            <tr>
-              <td className="mercoa-text-gray-500">Account Number</td>
-              <td className="mercoa-text-gray-800 mercoa-pl-2">{invoice.paymentDestination.accountNumber}</td>
-            </tr>
-            <tr>
-              <td className="mercoa-text-gray-500">Routing Number</td>
-              <td className="mercoa-text-gray-800 mercoa-pl-2">{invoice.paymentDestination.routingNumber}</td>
-            </tr>
-          </tbody>
-        </table>
-      )}
+
+      <div className="mercoa-absolute mercoa-left-0 mercoa-bottom-2 mercoa-items-center mercoa-w-full mercoa-px-9">
+        <div className="mercoa-flex mercoa-justify-between mercoa-w-full mercoa-border-t mercoa-border-gray-300 mercoa-pt-5">
+          <div className="mercoa-flex-1" />
+          <div>
+            {invoice.paymentDestination?.type === Mercoa.PaymentMethodType.BankAccount && invoice.vendor && (
+              <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-x-1 mercoa-text-sm mercoa-leading-5">
+                <span className="mercoa-text-gray-500 te">Account Holder</span>
+                <span className="mercoa-text-gray-800">{invoice.vendor.name}</span>
+                <span className="mercoa-text-gray-500">Bank Name</span>
+                <span className="mercoa-text-gray-800">{invoice.paymentDestination.bankName}</span>
+                <span className="mercoa-text-gray-500">Account Number</span>
+                <span className="mercoa-text-gray-800">{invoice.paymentDestination.accountNumber}</span>
+                <span className="mercoa-text-gray-500">Routing Number</span>
+                <span className="mercoa-text-gray-800">{invoice.paymentDestination.routingNumber}</span>
+              </div>
+            )}
+          </div>
+          <div className="mercoa-pl-2">
+            <QRCode
+              size={100}
+              style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+              value={paymentLink ?? mercoaSession.organization?.websiteUrl ?? 'https://mercoa.com'}
+            />
+            <div className="mercoa-text-gray-500 mercoa-text-sm mercoa-text-center">Scan to pay</div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
