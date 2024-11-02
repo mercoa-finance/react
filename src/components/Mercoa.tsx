@@ -3,6 +3,7 @@ import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { jwtDecode } from 'jwt-decode'
 import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { ToastContainer } from 'react-toastify'
+import { setStyle } from '../lib/lib'
 import { EntityPortal, TokenOptions, getAllUsers } from './index'
 
 export interface MercoaContext {
@@ -398,49 +399,8 @@ function useProvideSession({
 
   // Set C1-defined color theming
   useEffect(() => {
-    if (!organization?.colorScheme) return
-    const adjustBrightness = (col: string, amt: number) => {
-      col = col.replace(/^#/, '')
-      if (col.length === 3) col = col[0] + col[0] + col[1] + col[1] + col[2] + col[2]
-
-      let [r, g, b] = col.match(/.{2}/g) as [any, any, any]
-      ;[r, g, b] = [parseInt(r, 16) + amt, parseInt(g, 16) + amt, parseInt(b, 16) + amt]
-
-      r = Math.max(Math.min(255, r), 0).toString(16)
-      g = Math.max(Math.min(255, g), 0).toString(16)
-      b = Math.max(Math.min(255, b), 0).toString(16)
-
-      const rr = (r.length < 2 ? '0' : '') + r
-      const gg = (g.length < 2 ? '0' : '') + g
-      const bb = (b.length < 2 ? '0' : '') + b
-
-      return `#${rr}${gg}${bb}`
-    }
-
-    const logoBackground = organization.colorScheme.logoBackgroundColor || 'transparent' // default is transparent
-    const primary = organization.colorScheme.primaryColor || '#4f46e5' // default is indigo-600
-    const primaryLight = adjustBrightness(primary, 40)
-    const primaryDark = adjustBrightness(primary, -40)
-
-    let primaryText = primary
-    let primaryTextInvert = '#ffffff'
-    // hardcode colors for white theme
-    if (primary === '#f8fafc') {
-      primaryText = '#111827' // black
-      primaryTextInvert = '#111827' // black
-    }
-
-    document.documentElement.style.setProperty('--mercoa-logo-background', logoBackground)
-    document.documentElement.style.setProperty('--mercoa-primary', primary)
-    document.documentElement.style.setProperty('--mercoa-primary-light', primaryLight)
-    document.documentElement.style.setProperty('--mercoa-primary-dark', primaryDark)
-    document.documentElement.style.setProperty('--mercoa-primary-text', primaryText)
-    document.documentElement.style.setProperty('--mercoa-primary-text-invert', primaryTextInvert)
-    document.documentElement.style.setProperty(
-      '--mercoa-border-radius',
-      (organization.colorScheme.roundedCorners ?? 6) + 'px',
-    )
-  }, [organization?.colorScheme?.primaryColor])
+    setStyle({ colorScheme: organization?.colorScheme })
+  }, [organization?.colorScheme])
 
   useEffect(() => {
     refresh()

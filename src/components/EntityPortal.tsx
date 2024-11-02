@@ -291,7 +291,7 @@ export function EntityPortal({ token }: { token: string }) {
           }}
         />
       </div>
-      {screen === 'payments' && <PaymentMethods />}
+      {screen === 'payments' && <PaymentMethods isPayor />}
       {user && screen === 'notifications' && (
         <div>
           <h3 className="mercoa-mt-8">Notifications</h3>

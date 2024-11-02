@@ -23,6 +23,8 @@ export function InvoiceComments({
   const { register, watch, setValue } = useFormContext()
 
   const comments = watch('comments') as Mercoa.CommentResponse[]
+  const vendorName = watch('vendor.name') as string | undefined
+  const getCommentAuthor = (comment: Mercoa.CommentResponse) => comment.user?.name ?? vendorName ?? 'Unknown'
 
   function getApprovalIcon(action: Mercoa.AssociatedApprovalAction) {
     let approvalIcon = (
@@ -97,7 +99,8 @@ export function InvoiceComments({
                 <div className="mercoa-flex-auto mercoa-rounded-mercoa mercoa-p-3 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-200 mercoa-bg-white">
                   <div className="mercoa-flex mercoa-justify-between mercoa-gap-x-4">
                     <div className="mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
-                      <span className="mercoa-font-medium mercoa-text-gray-900">{comment.user?.name}</span> commented
+                      <span className="mercoa-font-medium mercoa-text-gray-900">{getCommentAuthor(comment)}</span>{' '}
+                      commented
                     </div>
                     <time
                       dateTime={dayjs(comment.createdAt).toISOString()}
@@ -116,7 +119,7 @@ export function InvoiceComments({
                   {getApprovalIcon(comment.associatedApprovalAction)}
                 </div>
                 <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
-                  <span className="mercoa-font-medium mercoa-text-gray-900">{comment.user?.name}</span>{' '}
+                  <span className="mercoa-font-medium mercoa-text-gray-900">{getCommentAuthor(comment)}</span>{' '}
                   {approvalToText[comment.associatedApprovalAction.action]} the invoice.
                 </p>
                 <time

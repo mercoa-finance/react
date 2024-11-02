@@ -69,6 +69,7 @@ import {
   MercoaButton,
   MercoaCombobox,
   MercoaInput,
+  MercoaSwitch,
   NoSession,
   PayableCounterpartySearch,
   PayablesInlineForm,
@@ -123,6 +124,7 @@ export type PayableDetailsChildrenProps = {
   height: number
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
+  counterpartyPreSubmit?: (counterparty: Mercoa.EntityRequest) => Promise<Mercoa.EntityRequest | undefined>
   onOcrComplete: (ocrResponse?: Mercoa.OcrResponse) => void
 }
 
@@ -134,6 +136,7 @@ export function PayableDetails({
   admin,
   documentPosition = 'left',
   invoicePreSubmit,
+  counterpartyPreSubmit,
   onInvoiceSubmit,
   children,
   renderCustom,
@@ -145,6 +148,7 @@ export function PayableDetails({
   admin?: boolean
   documentPosition?: 'right' | 'left' | 'none'
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
+  counterpartyPreSubmit?: (counterparty: Mercoa.EntityRequest) => Promise<Mercoa.EntityRequest | undefined>
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   children?: (props: PayableDetailsChildrenProps) => JSX.Element[]
   renderCustom?: {
@@ -204,6 +208,7 @@ export function PayableDetails({
       height,
       refreshInvoice,
       invoicePreSubmit,
+      counterpartyPreSubmit,
       onOcrComplete: setOcrResponse,
       onUpdate,
     })
@@ -230,6 +235,7 @@ export function PayableDetails({
         height={height}
         admin={admin}
         invoicePreSubmit={invoicePreSubmit}
+        counterpartyPreSubmit={counterpartyPreSubmit}
         onInvoiceSubmit={onInvoiceSubmit}
       />
     )
@@ -295,6 +301,7 @@ export function PayableForm({
   height,
   admin,
   invoicePreSubmit,
+  counterpartyPreSubmit,
   onInvoiceSubmit,
   fullWidth,
   children,
@@ -310,6 +317,7 @@ export function PayableForm({
   height: number
   admin?: boolean
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
+  counterpartyPreSubmit?: (counterparty: Mercoa.EntityRequest) => Promise<Mercoa.EntityRequest | undefined>
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   fullWidth?: boolean
   children?: (props: PayableFormChildrenProps) => JSX.Element
@@ -361,6 +369,7 @@ export function PayableForm({
       paymentSourceId: yup.string(),
       paymentSourceType: yup.string(),
       paymentSourceCheckEnabled: yup.boolean().nullable(),
+      batchPayment: yup.boolean().nullable(),
       paymentSourceSchemaId: yup.string().nullable(),
       paymentSchedule: yup.mixed().nullable(),
       hasDocuments: yup.boolean().nullable(),
@@ -404,6 +413,7 @@ export function PayableForm({
       paymentSourceId: invoice?.paymentSource?.id,
       paymentSourceType: invoice?.paymentSource?.type ?? '',
       paymentSourceCheckEnabled: (invoice?.paymentSource as Mercoa.BankAccountResponse)?.checkOptions?.enabled ?? false,
+      batchPayment: invoice?.batchPayment ?? false,
       description: invoice?.noteToSelf ?? '',
       hasDocuments: invoice?.hasDocuments ?? !!uploadedDocument ?? false,
       saveAsStatus: '',
@@ -506,6 +516,7 @@ export function PayableForm({
       'paymentSourceCheckEnabled',
       (invoice.paymentSource as Mercoa.BankAccountResponse)?.checkOptions?.enabled ?? false,
     )
+    setValue('batchPayment', invoice.batchPayment ?? false)
     setValue('description', invoice.noteToSelf ?? '')
     setValue('hasDocuments', invoice.hasDocuments ?? uploadedDocument ?? false)
     setValue('saveAsStatus', '')
@@ -674,18 +685,28 @@ export function PayableForm({
       refreshInvoice(data.id)
       return
     } else if (data.saveAsStatus === 'COUNTERPARTY') {
-      await onSubmitCounterparty({
-        data: data.vendor,
-        mercoaSession,
-        type: 'payee',
-        setError,
-        onSelect: async (counterparty) => {
-          await mercoaSession.refresh()
-          setTimeout(() => {
-            setSelectedVendor(counterparty)
-          }, 100)
-        },
-      })
+      if (counterpartyPreSubmit) {
+        data.vendor = await counterpartyPreSubmit(data.vendor)
+      }
+      if (data.vendor) {
+        await onSubmitCounterparty({
+          data: data.vendor,
+          mercoaSession,
+          type: 'payee',
+          setError,
+          onSelect: async (counterparty) => {
+            await mercoaSession.refresh()
+            setTimeout(() => {
+              setSelectedVendor(counterparty)
+            }, 100)
+          },
+        })
+      } else {
+        await mercoaSession.refresh()
+        setTimeout(() => {
+          setSelectedVendor(undefined)
+        }, 100)
+      }
       return
     }
     // payment method creation for vendor
@@ -901,10 +922,10 @@ export function PayableForm({
       }
       return
     } else if (data.saveAsStatus === 'COMMENT') {
-      if (!mercoaSession.user?.id) {
+      if (!mercoaSession.user?.id && mercoaSession.entity?.id === invoice?.creatorEntityId) {
         renderCustom?.toast
-          ? renderCustom?.toast.error('Please login as a user to comment')
-          : toast.error('Please login as a user to comment')
+          ? renderCustom?.toast.error('Please log in as a user to comment')
+          : toast.error('Please log in as a user to comment')
         return
       }
       if (!mercoaSession.token || !invoice?.id) return
@@ -1065,6 +1086,7 @@ export function PayableForm({
       vendorId: data.vendorId,
       paymentSchedule: data.paymentSchedule,
       paymentDestinationId: data.paymentDestinationId,
+      batchPayment: data.batchPayment,
       ...(data.paymentDestinationType === Mercoa.PaymentMethodType.Check && {
         paymentDestinationOptions: data.paymentDestinationOptions ?? {
           type: 'check',
@@ -1462,6 +1484,7 @@ export function PayableForm({
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                   <PayablePaymentDestination />
                   <PaymentDestinationProcessingTime />
+                  <PaymentOptions />
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                   <PayableFees />
                   {/* <PayableRecurringSchedule /> */}
@@ -2595,6 +2618,7 @@ export function PayableOverview({
 
   const currency = watch('currency')
   const status = watch('status')
+  const paymentDestinationType = watch('paymentDestinationType')
   const notDraft = !!status && status !== Mercoa.InvoiceStatus.Draft
 
   // // Get Supported Currencies
@@ -2762,12 +2786,16 @@ export function PayableOverview({
         className="md:mercoa-col-span-1 mercoa-col-span-full"
         control={control}
         errors={errors}
-        dateOptions={{
-          minDate: !supportedSchedulePaymentDates?.includes('Past') ? dayjs().toDate() : undefined,
-          filterDate: supportedSchedulePaymentDates
-            ? isSupportedScheduleDate(supportedSchedulePaymentDates)
-            : isWeekday,
-        }}
+        dateOptions={
+          paymentDestinationType === Mercoa.PaymentMethodType.OffPlatform
+            ? undefined
+            : {
+                minDate: !supportedSchedulePaymentDates?.includes('Past') ? dayjs().toDate() : undefined,
+                filterDate: supportedSchedulePaymentDates
+                  ? isSupportedScheduleDate(supportedSchedulePaymentDates)
+                  : isWeekday,
+              }
+        }
       />
 
       {/*  DESCRIPTION */}
@@ -3400,7 +3428,7 @@ export function PayablePaymentSource({ readOnly }: { readOnly?: boolean }) {
 
   return (
     <div className="mercoa-col-span-full">
-      <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-my-5">
+      <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mb-5">
         {readOnly ? 'Paying from:' : 'How do you want to pay?'}
       </h2>
       <PayableSelectPaymentMethod isSource readOnly={readOnly} />
@@ -3428,7 +3456,7 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
     <>
       {vendorId && vendorName && paymentSourceType !== 'offPlatform' && (
         <div className="mercoa-col-span-full">
-          <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-my-5">
+          <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mb-5">
             {readOnly ? (
               `Paying to ${vendorName}:`
             ) : (
@@ -4538,6 +4566,45 @@ export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
     </>
   )
 } // End Line Items
+
+// Payment Options
+
+export function PaymentOptions() {
+  const mercoaSession = useMercoaSession()
+  const {
+    watch,
+    register,
+    formState: { errors },
+  } = useFormContext()
+
+  const deductionDate = watch('deductionDate')
+  const vendorName = watch('vendorName')
+  const paymentSourceType = watch('paymentSourceType')
+  const paymentDestinationType = watch('paymentDestinationType')
+
+  if (paymentSourceType != Mercoa.PaymentMethodType.BankAccount) return <></>
+  if (
+    paymentDestinationType != Mercoa.PaymentMethodType.BankAccount &&
+    paymentDestinationType != Mercoa.PaymentMethodType.Check
+  )
+    return <></>
+
+  return (
+    <div className="sm:mercoa-col-span-3 pl-1">
+      <MercoaSwitch
+        label="Batch Payment"
+        name="batchPayment"
+        register={register}
+        errors={errors}
+        tooltip={
+          <div className="mercoa-whitespace-normal mercoa-w-[300px]">{`Send a single payment to ${vendorName} for invoices scheduled on ${dayjs(
+            deductionDate,
+          ).format('MMM DD')}`}</div>
+        }
+      />
+    </div>
+  )
+}
 
 // Fees
 

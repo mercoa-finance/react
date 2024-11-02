@@ -2060,6 +2060,7 @@ export function EntityOnboardingForm({
       isCustomer: entity.isCustomer,
       isPayor: entity.isPayor,
       isPayee: entity.isPayee,
+      isOrganizationEntity: mercoaSession.organization?.organizationEntityId === entity.id,
     },
     resolver: async (data, context, options) => {
       if (data.accountType === Mercoa.AccountType.Individual) {
@@ -2140,7 +2141,31 @@ export function EntityOnboardingForm({
         if (entityData.tos && !entity.acceptedTos) {
           await mercoaSession.client?.entity.acceptTermsOfService(entity.id)
         }
-        if (admin) {
+        // Handle organization updates (organizationEntity)
+        if (entityData.isOrganizationEntity && mercoaSession.organization?.organizationEntityId !== entity.id) {
+          await fetch('/api/updateOrganizationEntity', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${mercoaSession.token}`,
+            },
+            body: JSON.stringify({
+              entityId: entity.id,
+            }),
+          })
+        } else if (!entityData.isOrganizationEntity && mercoaSession.organization?.organizationEntityId === entity.id) {
+          await fetch('/api/updateOrganizationEntity', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${mercoaSession.token}`,
+            },
+            body: JSON.stringify({
+              entityId: null,
+            }),
+          })
+        }
+        if (admin || onCancel) {
           toast.success('Entity Updated')
         }
         if (onOnboardingSubmit) {
@@ -2406,6 +2431,21 @@ export function EntityOnboardingForm({
                 <input
                   type="checkbox"
                   {...register('isPayee')}
+                  className={'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 focus:mercoa-ring-mercoa-primary'}
+                />
+              </div>
+            </div>
+            <div className="mercoa-col-span-full mercoa-grid mercoa-grid-cols-3 mercoa-space-x-2">
+              <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-col-start-2 mercoa-ml-2 mercoa-rounded-mercoa mercoa-border mercoa-p-2">
+                <label
+                  htmlFor="isOrganizationEntity"
+                  className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
+                >
+                  Organization Entity
+                </label>
+                <input
+                  type="checkbox"
+                  {...register('isOrganizationEntity')}
                   className={'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 focus:mercoa-ring-mercoa-primary'}
                 />
               </div>

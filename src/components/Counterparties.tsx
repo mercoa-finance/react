@@ -14,7 +14,6 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import debounce from 'lodash/debounce'
@@ -22,6 +21,7 @@ import Papa from 'papaparse'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize, constructFullName } from '../lib/lib'
@@ -186,12 +186,14 @@ export const counterpartyYupValidation = {
 export function CounterpartySearch({
   counterparty,
   disableCreation,
+  counterpartyPreSubmit,
   onSelect,
   type,
   network,
 }: {
   counterparty?: Mercoa.CounterpartyResponse
   disableCreation?: boolean
+  counterpartyPreSubmit?: (counterparty: Mercoa.EntityRequest) => Promise<Mercoa.EntityRequest | undefined>
   onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
   type: 'payee' | 'payor'
   network?: Mercoa.CounterpartyNetworkType[]
@@ -231,17 +233,22 @@ export function CounterpartySearch({
 
   const onSubmit = async (overall: any) => {
     if (!mercoaSession.entity?.id) return
-    const data = overall.vendor
-    await onSubmitCounterparty({
-      data,
-      mercoaSession,
-      type,
-      setError,
-      onSelect: (e) => {
-        onSelect?.(e)
-        setEdit(false)
-      },
-    })
+    let data = overall.vendor
+    if (counterpartyPreSubmit) {
+      data = await counterpartyPreSubmit(data)
+    }
+    if (data) {
+      await onSubmitCounterparty({
+        data,
+        mercoaSession,
+        type,
+        setError,
+        onSelect: (e) => {
+          onSelect?.(e)
+          setEdit(false)
+        },
+      })
+    }
   }
 
   return (
@@ -339,10 +346,12 @@ export function AddCounterpartyModal({
   type,
   show,
   setShow,
+  counterpartyPreSubmit,
 }: {
   type: 'payor' | 'payee'
   show: boolean
   setShow: (show: boolean) => void
+  counterpartyPreSubmit?: (counterparty: Mercoa.EntityRequest) => Promise<Mercoa.EntityRequest | undefined>
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -374,17 +383,22 @@ export function AddCounterpartyModal({
 
   const onSubmit = async (overall: any) => {
     if (!mercoaSession.entity?.id) return
-    const data = overall.vendor
-    await onSubmitCounterparty({
-      data,
-      mercoaSession,
-      type,
-      setError,
-      onSelect: (e) => {
-        setShow(false)
-        mercoaSession.refresh()
-      },
-    })
+    let data = overall.vendor
+    if (counterpartyPreSubmit) {
+      data = await counterpartyPreSubmit(data)
+    }
+    if (data) {
+      await onSubmitCounterparty({
+        data,
+        mercoaSession,
+        type,
+        setError,
+        onSelect: (e) => {
+          setShow(false)
+          mercoaSession.refresh()
+        },
+      })
+    }
   }
 
   if (!mercoaSession.client) return <NoSession componentName="AddCounterpartyModal" />
@@ -527,12 +541,7 @@ export function CounterpartySearchBase({
     }
     if (type === 'payee') {
       mercoaSession.client?.entity.counterparty
-        .findPayees(mercoaSession.entity?.id, {
-          paymentMethods: true,
-          networkType,
-          name: search,
-          returnMetadata: 'true',
-        })
+        .findPayees(mercoaSession.entity?.id, { paymentMethods: true, networkType, name: search })
         .then((resp) => {
           setCounterparties(resp.data)
         })
@@ -1054,11 +1063,13 @@ export function Counterparties({
   type,
   network,
   disableCreation,
+  counterpartyPreSubmit,
   admin,
   children,
 }: {
   type: 'payor' | 'payee'
   disableCreation?: boolean
+  counterpartyPreSubmit?: (counterparty: Mercoa.EntityRequest) => Promise<Mercoa.EntityRequest | undefined>
   network?: Mercoa.CounterpartyNetworkType[]
   admin?: boolean
   children?: ({
@@ -1375,7 +1386,12 @@ export function Counterparties({
           downloadAll={downloadAsCSV}
         />
       )}
-      <AddCounterpartyModal type={type} show={addCounterparty} setShow={setAddCounterparty} />
+      <AddCounterpartyModal
+        type={type}
+        show={addCounterparty}
+        setShow={setAddCounterparty}
+        counterpartyPreSubmit={counterpartyPreSubmit}
+      />
     </div>
   )
 }

@@ -1,20 +1,97 @@
 import { EnvelopeIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
-import { ReactNode, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import * as yup from 'yup'
 import { usaStates } from '../lib/locations'
 import {
   AddDialog,
   DefaultPaymentMethodIndicator,
+  LoadingSpinnerIcon,
   MercoaButton,
   MercoaCombobox,
   MercoaInput,
   NoSession,
   PaymentMethodButton,
+  PaymentMethodList,
   useMercoaSession,
 } from './index'
+
+export function Checks({
+  children,
+  onSelect,
+  showAdd,
+  showEdit,
+}: {
+  children?: Function
+  onSelect?: (value?: Mercoa.PaymentMethodResponse.Check) => void
+  showAdd?: boolean
+  showEdit?: boolean
+}) {
+  const [checks, setChecks] = useState<Array<Mercoa.PaymentMethodResponse.Check>>()
+  const [showDialog, setShowDialog] = useState(false)
+
+  const mercoaSession = useMercoaSession()
+  useEffect(() => {
+    if (mercoaSession.token && mercoaSession.entity?.id) {
+      mercoaSession.client?.entity.paymentMethod.getAll(mercoaSession.entity?.id, { type: 'check' }).then((resp) => {
+        setChecks(
+          resp
+            .filter((e) => {
+              return e
+            })
+            .map((e) => e as Mercoa.PaymentMethodResponse.Check),
+        )
+      })
+    }
+  }, [mercoaSession.entity?.id, mercoaSession.token, showDialog, mercoaSession.refreshId])
+
+  const onClose = (account?: Mercoa.PaymentMethodResponse.Check) => {
+    setShowDialog(false)
+    if (onSelect && account) onSelect(account)
+  }
+
+  if (!mercoaSession.client) return <NoSession componentName="Checks" />
+
+  if (children) return children({ checks })
+  else {
+    return (
+      <>
+        {!checks && (
+          <div className="mercoa-p-9 mercoa-text-center">
+            <LoadingSpinnerIcon />
+          </div>
+        )}
+        <PaymentMethodList
+          accounts={checks}
+          showEdit={showEdit}
+          addAccount={
+            checks && showAdd ? (
+              <div className="mercoa-mt-2">
+                <AddDialog
+                  show={showDialog}
+                  onClose={onClose}
+                  component={
+                    <AddCheck
+                      onSubmit={(data?: Mercoa.PaymentMethodResponse.Check) => {
+                        onClose(data)
+                      }}
+                    />
+                  }
+                />
+                <Check onSelect={() => setShowDialog(true)} />
+              </div>
+            ) : undefined
+          }
+          formatAccount={(account: Mercoa.PaymentMethodResponse.Check) => (
+            <Check account={account} onSelect={onSelect} showEdit={showEdit} />
+          )}
+        />
+      </>
+    )
+  }
+}
 
 export function Check({
   account,
@@ -144,7 +221,7 @@ export function AddCheck({
   check,
   entityId,
 }: {
-  onSubmit?: (data?: Mercoa.PaymentMethodResponse) => void
+  onSubmit?: (data?: Mercoa.PaymentMethodResponse.Check) => void
   title?: ReactNode
   actions?: ReactNode
   check?: Mercoa.CheckRequest
@@ -170,10 +247,10 @@ export function AddCheck({
   async function submitCheck(check: Mercoa.CheckRequest) {
     if (mercoaSession.entity?.id) {
       check.country = 'US'
-      const resp = await mercoaSession.client?.entity.paymentMethod.create(entityId ?? mercoaSession.entity?.id, {
+      const resp = (await mercoaSession.client?.entity.paymentMethod.create(entityId ?? mercoaSession.entity?.id, {
         ...check,
         type: 'check',
-      })
+      })) as Mercoa.PaymentMethodResponse.Check
       if (!onSubmit) return
       if (resp) onSubmit(resp)
       else onSubmit()
