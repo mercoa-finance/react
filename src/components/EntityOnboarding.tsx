@@ -141,11 +141,11 @@ export function UploadBlock({ type, entity }: { type: 'W9' | '1099' | 'Logo'; en
             }
           })
         }}
-        onDropRejected={() => {
-          toast.error('Invalid file type')
+        onDropRejected={(_, event) => {
+          toast.error('Invalid file type or file is too large')
         }}
         minSize={0}
-        maxSize={100_000}
+        maxSize={100_000_000}
         accept={
           type === 'Logo'
             ? {

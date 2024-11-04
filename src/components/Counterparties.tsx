@@ -14,6 +14,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import debounce from 'lodash/debounce'
@@ -21,7 +22,6 @@ import Papa from 'papaparse'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize, constructFullName } from '../lib/lib'
@@ -44,20 +44,15 @@ import {
 
 const human = require('humanparser')
 
-export async function onSubmitCounterparty({
+export function createCounterpartyRequest({
   data,
-  mercoaSession,
-  type,
   setError,
-  onSelect,
+  type,
 }: {
   data: any
-  mercoaSession: MercoaContext
-  type: 'payee' | 'payor'
   setError: any
-  onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
-}) {
-  if (!mercoaSession.entity?.id) return
+  type: 'payee' | 'payor'
+}): Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined {
   const profile: Mercoa.ProfileRequest = {}
 
   if (data.accountType === 'individual') {
@@ -121,22 +116,43 @@ export async function onSubmitCounterparty({
       return
     }
   }
-
-  let counterparty: Mercoa.CounterpartyResponse | undefined = undefined
-
   if (data?.id && data.id !== 'new') {
-    counterparty = await mercoaSession.client?.entity.update(data.id, {
+    return {
       profile,
       accountType: data.accountType,
-    })
+    }
   } else {
-    counterparty = await mercoaSession.client?.entity.create({
+    return {
       profile,
       accountType: data.accountType,
       isPayee: type === 'payee',
       isPayor: type === 'payor',
       isCustomer: false,
-    })
+    }
+  }
+}
+
+export async function onSubmitCounterparty({
+  data,
+  profile,
+  mercoaSession,
+  type,
+  onSelect,
+}: {
+  data: any
+  profile: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest
+  mercoaSession: MercoaContext
+  type: 'payee' | 'payor'
+  onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
+}) {
+  if (!mercoaSession.entity?.id) return
+
+  let counterparty: Mercoa.CounterpartyResponse | undefined = undefined
+
+  if (data?.id && data.id !== 'new') {
+    counterparty = await mercoaSession.client?.entity.update(data.id, profile)
+  } else {
+    counterparty = await mercoaSession.client?.entity.create(profile as Mercoa.EntityRequest)
   }
 
   if (!counterparty?.id) return
@@ -193,7 +209,9 @@ export function CounterpartySearch({
 }: {
   counterparty?: Mercoa.CounterpartyResponse
   disableCreation?: boolean
-  counterpartyPreSubmit?: (counterparty: Mercoa.EntityRequest) => Promise<Mercoa.EntityRequest | undefined>
+  counterpartyPreSubmit?: (
+    counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
+  ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
   type: 'payee' | 'payor'
   network?: Mercoa.CounterpartyNetworkType[]
@@ -234,15 +252,16 @@ export function CounterpartySearch({
   const onSubmit = async (overall: any) => {
     if (!mercoaSession.entity?.id) return
     let data = overall.vendor
+    let profile = createCounterpartyRequest({ data, setError, type })
     if (counterpartyPreSubmit) {
-      data = await counterpartyPreSubmit(data)
+      profile = await counterpartyPreSubmit(profile)
     }
-    if (data) {
+    if (data && profile) {
       await onSubmitCounterparty({
         data,
         mercoaSession,
+        profile,
         type,
-        setError,
         onSelect: (e) => {
           onSelect?.(e)
           setEdit(false)
@@ -351,7 +370,9 @@ export function AddCounterpartyModal({
   type: 'payor' | 'payee'
   show: boolean
   setShow: (show: boolean) => void
-  counterpartyPreSubmit?: (counterparty: Mercoa.EntityRequest) => Promise<Mercoa.EntityRequest | undefined>
+  counterpartyPreSubmit?: (
+    counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
+  ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -384,15 +405,16 @@ export function AddCounterpartyModal({
   const onSubmit = async (overall: any) => {
     if (!mercoaSession.entity?.id) return
     let data = overall.vendor
+    let profile = createCounterpartyRequest({ data, setError, type })
     if (counterpartyPreSubmit) {
-      data = await counterpartyPreSubmit(data)
+      profile = await counterpartyPreSubmit(profile)
     }
-    if (data) {
+    if (data && profile) {
       await onSubmitCounterparty({
         data,
         mercoaSession,
         type,
-        setError,
+        profile,
         onSelect: (e) => {
           setShow(false)
           mercoaSession.refresh()
@@ -1036,6 +1058,9 @@ function CounterpartyAddOrEditForm({
             setTimeout(() => {
               setIsSaving(true)
             }, 100)
+            setTimeout(() => {
+              setIsSaving(false)
+            }, 2000)
           }}
           disabled={isSubmitting || isSaving}
         >
@@ -1069,7 +1094,9 @@ export function Counterparties({
 }: {
   type: 'payor' | 'payee'
   disableCreation?: boolean
-  counterpartyPreSubmit?: (counterparty: Mercoa.EntityRequest) => Promise<Mercoa.EntityRequest | undefined>
+  counterpartyPreSubmit?: (
+    counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
+  ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   network?: Mercoa.CounterpartyNetworkType[]
   admin?: boolean
   children?: ({

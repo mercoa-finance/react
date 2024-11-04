@@ -75,6 +75,7 @@ import {
   PayablesInlineForm,
   Tooltip,
   counterpartyYupValidation,
+  createCounterpartyRequest,
   inputClassName,
   onSubmitCounterparty,
   removeThousands,
@@ -124,7 +125,9 @@ export type PayableDetailsChildrenProps = {
   height: number
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
-  counterpartyPreSubmit?: (counterparty: Mercoa.EntityRequest) => Promise<Mercoa.EntityRequest | undefined>
+  counterpartyPreSubmit?: (
+    counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
+  ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onOcrComplete: (ocrResponse?: Mercoa.OcrResponse) => void
 }
 
@@ -148,7 +151,9 @@ export function PayableDetails({
   admin?: boolean
   documentPosition?: 'right' | 'left' | 'none'
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
-  counterpartyPreSubmit?: (counterparty: Mercoa.EntityRequest) => Promise<Mercoa.EntityRequest | undefined>
+  counterpartyPreSubmit?: (
+    counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
+  ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   children?: (props: PayableDetailsChildrenProps) => JSX.Element[]
   renderCustom?: {
@@ -317,7 +322,9 @@ export function PayableForm({
   height: number
   admin?: boolean
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
-  counterpartyPreSubmit?: (counterparty: Mercoa.EntityRequest) => Promise<Mercoa.EntityRequest | undefined>
+  counterpartyPreSubmit?: (
+    counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
+  ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   fullWidth?: boolean
   children?: (props: PayableFormChildrenProps) => JSX.Element
@@ -685,15 +692,16 @@ export function PayableForm({
       refreshInvoice(data.id)
       return
     } else if (data.saveAsStatus === 'COUNTERPARTY') {
+      let profile = createCounterpartyRequest({ data: data.vendor, setError, type: 'payor' })
       if (counterpartyPreSubmit) {
-        data.vendor = await counterpartyPreSubmit(data.vendor)
+        profile = await counterpartyPreSubmit(data.vendor)
       }
-      if (data.vendor) {
+      if (data.vendor && profile) {
         await onSubmitCounterparty({
           data: data.vendor,
           mercoaSession,
           type: 'payee',
-          setError,
+          profile,
           onSelect: async (counterparty) => {
             await mercoaSession.refresh()
             setTimeout(() => {

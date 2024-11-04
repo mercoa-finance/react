@@ -41,7 +41,7 @@ The `<PayableForm>` component should be used as a child of the [`<PayableDetails
 | uploadedDocument      | `string`                                                                             |          | base64 encoded invoice document                                                                           |
 | setUploadedDocument   | `(e?: string) => void`                                                               |          | Overrides for buttons                                                                                                                                 |
 | invoicePreSubmit      | `(invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>` |          | This function is called after frontend validations are complete, and before the API call to create/update the invoice is sent.                        |
-| counterpartyPreSubmit | `(counterparty: Mercoa.EntityRequest) => Promise<Mercoa.EntityRequest \| undefined>` |          | Function to call before an entity is submitted to Mercoa. Useful for adding custom fields to the entity or preventing submission |
+| counterpartyPreSubmit | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Function to call before an entity is submitted to Mercoa. Useful for adding custom fields to the entity or preventing submission |
 | children              | `(methods: PayableFormChildrenProps) => JSX.Element`                                 |          | See [customization](#customization) for details on how to use the children prop.                                                                      |
 
 ```typescript
