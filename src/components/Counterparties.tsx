@@ -563,7 +563,12 @@ export function CounterpartySearchBase({
     }
     if (type === 'payee') {
       mercoaSession.client?.entity.counterparty
-        .findPayees(mercoaSession.entity?.id, { paymentMethods: true, networkType, name: search })
+        .findPayees(mercoaSession.entity?.id, {
+          paymentMethods: true,
+          networkType,
+          name: search,
+          returnMetadata: 'true',
+        })
         .then((resp) => {
           setCounterparties(resp.data)
         })
