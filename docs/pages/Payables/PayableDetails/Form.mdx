@@ -14,6 +14,7 @@ import {
   InvoiceComments,
   PayableFees,
   PayableActions,
+  PaymentOptions,
 } from '@mercoa/react'
 import { payerEntity, vendorEntities, inv_new_ready, inv_scheduled } from '../../../mockData'
 import { ComponentContainer } from '../../../components/helpers'
@@ -410,12 +411,14 @@ type InvoiceCommentsChildrenProps = {
 ### PayableActions
 
 {' '}
+
 <Callout>
   The payable actions is a `position: absolute` component that sticks to the bottom of the form. It should only be used
   in a `position: relative` container or in `PayableDetails`. It also wraps the `PayableFormErrors` component.
 </Callout>
 
 {' '}
+
 <Callout>
   If you fully customize this component by passing in a child component, you will need to also add the `
   <PayableFormErrors />` component to render from validation errors.
