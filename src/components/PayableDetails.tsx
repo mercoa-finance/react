@@ -694,7 +694,7 @@ export function PayableForm({
     } else if (data.saveAsStatus === 'COUNTERPARTY') {
       let profile = createCounterpartyRequest({ data: data.vendor, setError, type: 'payor' })
       if (counterpartyPreSubmit) {
-        profile = await counterpartyPreSubmit(data.vendor)
+        profile = await counterpartyPreSubmit(profile)
       }
       if (data.vendor && profile) {
         await onSubmitCounterparty({
