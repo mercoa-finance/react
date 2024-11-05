@@ -930,12 +930,12 @@ export function PayableForm({
       }
       return
     } else if (data.saveAsStatus === 'COMMENT') {
-      if (!mercoaSession.user?.id && mercoaSession.entity?.id === invoice?.creatorEntityId) {
-        renderCustom?.toast
-          ? renderCustom?.toast.error('Please log in as a user to comment')
-          : toast.error('Please log in as a user to comment')
-        return
-      }
+      // if (!mercoaSession.user?.id && mercoaSession.entity?.id === invoice?.creatorEntityId) {
+      //   renderCustom?.toast
+      //     ? renderCustom?.toast.error('Please log in as a user to comment')
+      //     : toast.error('Please log in as a user to comment')
+      //   return
+      // }
       if (!mercoaSession.token || !invoice?.id) return
       if (!data.commentText) return
 

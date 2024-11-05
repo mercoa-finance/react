@@ -8,6 +8,7 @@ import {
   TrashIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import dayjs from 'dayjs'
 import { jwtDecode } from 'jwt-decode'
@@ -30,7 +31,6 @@ import DatePicker from 'react-datepicker'
 import { Control, Controller, FieldErrors, UseFormRegister, useFormContext } from 'react-hook-form'
 import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { classNames, getEndpoint } from '../lib/lib'
 import { MercoaSession, TokenOptions, useMercoaSession } from './index'
 
