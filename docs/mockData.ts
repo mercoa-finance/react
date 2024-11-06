@@ -92,6 +92,7 @@ const organization: Mercoa.OrganizationResponse = {
       hasApiKey: true,
     },
     inboxDomain: 'ap.mercoa.com',
+    alternativeInboxDomains: [],
   },
   colorScheme: {
     primaryColor: '',
@@ -514,6 +515,7 @@ export const payerEntityGroup: Mercoa.EntityGroupResponse = {
   emailToName: 'aceme-group',
   foreignId: '888',
   entities: [payerEntity, payerEntity2],
+  metadata: {},
 }
 
 export const vendorEntities: Mercoa.EntityResponse[] = [
