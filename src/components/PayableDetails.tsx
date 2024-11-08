@@ -31,7 +31,7 @@ import dayjs from 'dayjs'
 import minMax from 'dayjs/plugin/minMax'
 import tz from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
-import { Fragment, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Dispatch, Fragment, SetStateAction, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Dropzone from 'react-dropzone'
 import {
   Control,
@@ -129,6 +129,8 @@ export type PayableDetailsChildrenProps = {
     counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onOcrComplete: (ocrResponse?: Mercoa.OcrResponse) => void
+  ocrProcessing?: boolean
+  setOcrProcessing?: Dispatch<SetStateAction<boolean>>
 }
 
 export function PayableDetails({
@@ -167,6 +169,7 @@ export function PayableDetails({
   const contentHeightOffset = heightOffset ?? mercoaSession.heightOffset
 
   const [ocrResponse, setOcrResponse] = useState<Mercoa.OcrResponse>()
+  const [ocrProcessing, setOcrProcessing] = useState<boolean>(false)
   const [uploadedDocument, setUploadedDocument] = useState<string>()
   const [invoiceLocal, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>(invoice)
   const [height, setHeight] = useState<number>(
@@ -216,6 +219,8 @@ export function PayableDetails({
       counterpartyPreSubmit,
       onOcrComplete: setOcrResponse,
       onUpdate,
+      ocrProcessing,
+      setOcrProcessing,
     })
     leftComponent = childrenArray[0]
     rightComponent = childrenArray[1]
@@ -226,6 +231,8 @@ export function PayableDetails({
         setUploadedDocument={setUploadedDocument}
         height={height}
         invoice={invoiceLocal}
+        ocrProcessing={ocrProcessing}
+        setOcrProcessing={setOcrProcessing}
       />
     )
 
@@ -242,6 +249,7 @@ export function PayableDetails({
         invoicePreSubmit={invoicePreSubmit}
         counterpartyPreSubmit={counterpartyPreSubmit}
         onInvoiceSubmit={onInvoiceSubmit}
+        ocrProcessing={ocrProcessing}
       />
     )
   }
@@ -272,6 +280,7 @@ export function PayableDetails({
 
 export type PayableFormChildrenProps = {
   invoice?: Mercoa.InvoiceResponse
+  ocrProcessing?: boolean
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
   ocrResponse?: Mercoa.OcrResponse
   uploadedDocument?: string
@@ -298,6 +307,7 @@ export type PayableFormChildrenProps = {
 export function PayableForm({
   invoice,
   ocrResponse,
+  ocrProcessing,
   reverseOcrResponse = false,
   uploadedDocument,
   setUploadedDocument,
@@ -314,6 +324,7 @@ export function PayableForm({
 }: {
   invoice?: Mercoa.InvoiceResponse
   ocrResponse?: Mercoa.OcrResponse
+  ocrProcessing?: boolean
   reverseOcrResponse?: boolean
   uploadedDocument?: string
   setUploadedDocument: (e?: string) => void
@@ -1473,6 +1484,7 @@ export function PayableForm({
               clearErrors: clearErrors as any,
               setError: setError as any,
               isLoading,
+              ocrProcessing,
               submitForm: () => {
                 handleSubmit(saveInvoiceLoadingWrapper)()
               },
@@ -1517,6 +1529,7 @@ export function PayableForm({
 
 export function PayableFormHeader({ hideId }: { hideId?: boolean }) {
   const { watch } = useFormContext()
+
   return (
     <>
       <div className="mercoa-flex mercoa-col-span-full">
@@ -1614,11 +1627,12 @@ export function PayableFormErrors() {
 export type PayableDocumentChildrenProps = {
   documents?: Array<{ fileReaderObj: string; mimeType: string }>
   sourceEmails?: Mercoa.EmailLog[]
-  ocrProcessing: boolean
   invoice?: Mercoa.InvoiceResponse
   height: number
   theme?: 'light' | 'dark'
   onFileUpload: (fileReaderObj: string, mimeType: string) => void
+  ocrProcessing?: boolean
+  setOcrProcessing?: Dispatch<SetStateAction<boolean>>
 }
 
 export function PayableDocument({
@@ -1628,6 +1642,8 @@ export function PayableDocument({
   height,
   theme,
   children,
+  ocrProcessing,
+  setOcrProcessing,
   renderCustom,
 }: {
   onOcrComplete?: (ocrResponse?: Mercoa.OcrResponse) => void
@@ -1636,6 +1652,8 @@ export function PayableDocument({
   height: number
   theme?: 'light' | 'dark'
   children?: (props: PayableDocumentChildrenProps) => JSX.Element
+  ocrProcessing?: boolean
+  setOcrProcessing?: Dispatch<SetStateAction<boolean>>
   renderCustom?: {
     uploadBanner?: () => React.ReactNode
     toast?: {
@@ -1645,10 +1663,9 @@ export function PayableDocument({
   }
 }) {
   const mercoaSession = useMercoaSession()
-
-  const [ocrProcessing, setOcrProcessing] = useState<boolean>(false)
   const [documents, setDocuments] = useState<Array<{ fileReaderObj: string; mimeType: string }> | undefined>()
   const [sourceEmails, setSourceEmail] = useState<Mercoa.EmailLog[]>()
+  const [ocrProcessingInternal, setOcrProcessingInternal] = useState(false)
 
   useEffect(() => {
     if (invoice && invoice.hasDocuments) {
@@ -1674,10 +1691,10 @@ export function PayableDocument({
     const resp = await mercoaSession.client?.ocr.getAsyncOcr(ocrJobId)
     if (resp && resp.status === Mercoa.OcrJobStatus.Success) {
       if (onOcrComplete) onOcrComplete(resp.data)
-      setOcrProcessing(false)
+      setOcrProcessing ? setOcrProcessing(false) : setOcrProcessingInternal(false)
     } else if (resp && resp.status === Mercoa.OcrJobStatus.Failed) {
       renderCustom?.toast ? renderCustom?.toast.error('OCR failed') : toast.error('OCR failed')
-      setOcrProcessing(false)
+      setOcrProcessing ? setOcrProcessing(false) : setOcrProcessingInternal(false)
     } else {
       setTimeout(() => refreshOcrJob(ocrJobId), 2500)
     }
@@ -1687,7 +1704,7 @@ export function PayableDocument({
     setDocuments([{ fileReaderObj, mimeType }])
     if (setUploadedDocument) setUploadedDocument(fileReaderObj)
     // Run OCR on file upload
-    setOcrProcessing(true)
+    setOcrProcessing ? setOcrProcessing(true) : setOcrProcessingInternal(true)
     try {
       //refreshOcrJob('ocr_57bab05c-0f69-4d98-86c5-ef258acf6253')
       const ocrResponse = await mercoaSession.client?.ocr.runAsyncOcr({
@@ -1699,12 +1716,12 @@ export function PayableDocument({
         refreshOcrJob(ocrResponse.jobId)
       } else {
         renderCustom?.toast ? renderCustom?.toast.error('OCR failed') : toast.error('OCR failed')
-        setOcrProcessing(false)
+        setOcrProcessing ? setOcrProcessing(false) : setOcrProcessingInternal(false)
       }
     } catch (e) {
       console.error(e)
       renderCustom?.toast ? renderCustom?.toast.error('OCR failed') : toast.error('OCR failed')
-      setOcrProcessing(false)
+      setOcrProcessing ? setOcrProcessing(false) : setOcrProcessingInternal(false)
     }
   }
 
@@ -1714,7 +1731,8 @@ export function PayableDocument({
     return children({
       documents,
       sourceEmails,
-      ocrProcessing,
+      ocrProcessing: ocrProcessing ?? ocrProcessingInternal,
+      setOcrProcessing: setOcrProcessing ?? setOcrProcessingInternal,
       invoice,
       height,
       theme,
@@ -1726,14 +1744,19 @@ export function PayableDocument({
     <div className={`mercoa-p-5 mercoa-rounded-mercoa`}>
       {documents ? (
         <>
-          <OcrProgressBar ocrProcessing={ocrProcessing} />
+          <OcrProgressBar ocrProcessing={ocrProcessing ?? ocrProcessingInternal} />
           <PayableDocumentDisplay
             documents={documents}
             invoice={invoice}
             height={height}
             showSourceEmail
             sourceEmails={sourceEmails}
-            {...(!invoice?.hasDocuments && { onRemoveDocument: () => setDocuments(undefined) })}
+            {...(!invoice?.hasDocuments && {
+              onRemoveDocument: () => {
+                setOcrProcessing ? setOcrProcessing(false) : setOcrProcessingInternal(false)
+                setDocuments(undefined)
+              },
+            })}
           />
         </>
       ) : (

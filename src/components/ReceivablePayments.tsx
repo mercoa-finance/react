@@ -360,13 +360,22 @@ export function ReceivablePaymentPdf({ invoice }: { invoice?: Mercoa.InvoiceResp
 
   const [paymentLink, setPaymentLink] = useState<string>()
 
+  console.log('payment link', paymentLink)
+
   useEffect(() => {
-    if (paymentLink || !invoice?.id) return
+    if (paymentLink || !invoice?.id || !invoice?.payer) return
+    console.log('getting payment link', invoice?.id, invoice?.payer)
     // get payment link
-    mercoaSession.client?.invoice.paymentLinks.getPayerLink(invoice.id).then((resp) => {
-      setPaymentLink(resp)
-    })
-  }, [paymentLink, invoice?.id, mercoaSession.client])
+    mercoaSession.client?.invoice.paymentLinks
+      .getPayerLink(invoice.id)
+      .then((resp) => {
+        console.log('setting payment link', resp)
+        setPaymentLink(resp)
+      })
+      .catch((e) => {
+        console.error(e)
+      })
+  }, [paymentLink, invoice?.id, invoice?.payer, mercoaSession.client])
 
   if (!invoice) return <LoadingSpinnerIcon />
 
@@ -535,8 +544,7 @@ export function ReceivablePaymentPdf({ invoice }: { invoice?: Mercoa.InvoiceResp
       {invoiceTotal}
 
       <div className="mercoa-absolute mercoa-left-0 mercoa-bottom-2 mercoa-items-center mercoa-w-full mercoa-px-9">
-        <div className="mercoa-flex mercoa-justify-between mercoa-w-full mercoa-border-t mercoa-border-gray-300 mercoa-pt-5">
-          <div className="mercoa-flex-1" />
+        <div className="mercoa-flex mercoa-justify-end mercoa-w-full mercoa-border-t mercoa-border-gray-300 mercoa-pt-5 mercoa-gap-x-4">
           <div>
             {invoice.paymentDestination?.type === Mercoa.PaymentMethodType.BankAccount && invoice.vendor && (
               <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-x-1 mercoa-text-sm mercoa-leading-5">
@@ -551,9 +559,9 @@ export function ReceivablePaymentPdf({ invoice }: { invoice?: Mercoa.InvoiceResp
               </div>
             )}
           </div>
-          <div className="mercoa-pl-2">
+          <div>
             <QRCode
-              size={100}
+              size={75}
               style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
               value={paymentLink ?? mercoaSession.organization?.websiteUrl ?? 'https://mercoa.com'}
             />

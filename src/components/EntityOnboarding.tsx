@@ -74,7 +74,13 @@ export type OnboardingFormData = {
 
 // Onboarding Blocks //////////////////////////////////////////////////////////
 
-export function UploadBlock({ type, entity }: { type: 'W9' | '1099' | 'Logo'; entity: Mercoa.EntityResponse }) {
+export function UploadBlock({
+  type,
+  entity,
+}: {
+  type: 'W9' | '1099' | 'Logo' | 'Bank Statement'
+  entity: Mercoa.EntityResponse
+}) {
   const mercoaSession = useMercoaSession()
   const blobToDataUrl = (blob: Blob) =>
     new Promise<string>((resolve, reject) => {
@@ -170,7 +176,7 @@ export function UploadBlock({ type, entity }: { type: 'W9' | '1099' | 'Logo'; en
                   htmlFor="file-upload"
                   className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-bg-white mercoa-font-semibold mercoa-primary-text focus-within:mercoa-outline-none focus-within:mercoa-ring-2 focus-within:mercoa-ring-primary focus-within:mercoa-ring-offset-2 hover:mercoa-text-indigo-500"
                 >
-                  <span>Upload New {type}</span>
+                  <span>Upload {type}</span>
                   <input
                     {...getInputProps()}
                     id="file-upload"
@@ -390,7 +396,7 @@ export function NameBlock({
         name="middleName"
         errors={errors}
         readOnly={readOnly}
-        required={required}
+        required={false}
         optional
       />
       <MercoaInput

@@ -510,6 +510,10 @@ export function ReceivableForm({
 
   async function getPaymentLink() {
     if (!invoice?.id) return
+    if (!invoice.payer) {
+      toast.error('There is no payer associated with this invoice. Please select a payer and save draft.')
+      return
+    }
     const pdfLink = await mercoaSession.client?.invoice.paymentLinks.getPayerLink(invoice.id)
     if (pdfLink) {
       // open in new window
@@ -521,8 +525,12 @@ export function ReceivableForm({
 
   async function sendEmail() {
     if (!invoice?.id) return
+    if (!invoice.payer) {
+      toast.error('There is no payer associated with this invoice. Please select a payer and save draft.')
+      return
+    }
     if (!invoice.payer?.email) {
-      toast.error('There is no payer email address for this invoice.')
+      toast.error('There is no payer email address for this invoice. Please provide an email address and save draft.')
       return
     }
     try {
@@ -600,6 +608,7 @@ export function ReceivableForm({
       mercoaSession.debug(response)
       if (response?.id) {
         toast.success('Invoice updated')
+        refreshInvoice(invoice.id)
         if (onUpdate) {
           onUpdate(response)
         }
@@ -621,6 +630,11 @@ export function ReceivableForm({
   }
 
   const lineItemHeaders = ['Description', 'Quantity', 'Unit Price', 'Total Amount']
+  const showPaymentLinkButton = !!(
+    paymentSourceType !== 'offPlatform' &&
+    paymentDestinationType !== 'offPlatform' &&
+    selectedPayer
+  )
 
   if (!mercoaSession.client) return <NoSession componentName="ReceivableForm" />
   return (
@@ -880,7 +894,7 @@ export function ReceivableForm({
               </MercoaButton>
 
               {/* Get Payment Link */}
-              {paymentSourceType !== 'offPlatform' && paymentDestinationType !== 'offPlatform' && (
+              {showPaymentLinkButton && (
                 <MercoaButton
                   isEmphasized={false}
                   onClick={getPaymentLink}
@@ -898,6 +912,7 @@ export function ReceivableForm({
 
               {/* Send / Resend Email */}
               <MercoaButton
+                disabled={!selectedPayer}
                 isEmphasized
                 onClick={sendEmail}
                 type="button"
