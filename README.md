@@ -1,3 +1,5 @@
+![NPM Version](https://img.shields.io/npm/v/%40mercoa%2Freact)
+
 # Mercoa React Component Library
 
 ## Setup
