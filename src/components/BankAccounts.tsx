@@ -9,12 +9,12 @@ import {
   PlusIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import { Fragment, ReactNode, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { PlaidLinkError, PlaidLinkOnExitMetadata, usePlaidLink } from 'react-plaid-link'
 import SignatureCanvas from 'react-signature-canvas'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
 import {
@@ -803,7 +803,11 @@ export function EditBankAccount({
   const { register, handleSubmit, watch, setValue } = useForm({
     defaultValues: {
       accountName: account.accountName,
-      checkOptions: account.checkOptions,
+      checkOptions: {
+        ...account.checkOptions,
+        signatoryName: account.checkOptions?.signatoryName ?? '',
+        accountNumberOverride: account.checkOptions?.accountNumberOverride ?? account.accountNumber,
+      },
       externalAccountingSystemId: account.externalAccountingSystemId,
     },
   })
@@ -824,6 +828,7 @@ export function EditBankAccount({
           checkOptions: {
             enabled: data.checkOptions?.enabled,
             initialCheckNumber: Number(data.checkOptions?.initialCheckNumber),
+            accountNumberOverride: data.checkOptions?.accountNumberOverride,
             signatoryName: `${data.checkOptions?.signatoryName}`,
             useSignatureImage: data.checkOptions?.useSignatureImage,
             ...(signatureImage && { signatureImage }),
@@ -868,8 +873,6 @@ export function EditBankAccount({
         }
       })
   }, [mercoaSession.entityId, mercoaSession.refreshId])
-
-  console.log(watch('externalAccountingSystemId'))
 
   if (!mercoaSession.client) return <NoSession componentName="EditBankAccount" />
   return (
@@ -919,6 +922,13 @@ export function EditBankAccount({
           <MercoaInput
             label="Signatory Name"
             name="checkOptions.signatoryName"
+            register={register}
+            required
+            className="mercoa-mt-2"
+          />
+          <MercoaInput
+            label="Full Account Number"
+            name="checkOptions.accountNumberOverride"
             register={register}
             required
             className="mercoa-mt-2"
