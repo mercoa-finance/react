@@ -25,7 +25,7 @@ export function RecurringSchedule() {
   }
 
   return (
-    <div className="mercoa-flex mercoa-flex-col mercoa-rounded-mercoa mercoa-p-5 mercoa-border mercoa-border-[#e3e3e3] mercoa-w-full mercoa-max-w-md">
+    <div className="mercoa-flex mercoa-flex-col mercoa-w-full mercoa-max-w-md">
       {/* Repeat every */}
       <div className="mercoa-flex mercoa-items-center mercoa-gap-2 mercoa-pb-6">
         <label className="mercoa-font-medium mercoa-text-gray-800">Repeat every</label>

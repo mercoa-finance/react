@@ -68,6 +68,7 @@ import {
   LoadingSpinnerIcon,
   MercoaButton,
   MercoaCombobox,
+  MercoaContext,
   MercoaInput,
   MercoaSwitch,
   NoSession,
@@ -133,7 +134,16 @@ export type PayableDetailsChildrenProps = {
   setOcrProcessing?: Dispatch<SetStateAction<boolean>>
 }
 
+function getInvoiceClient(mercoaSession: MercoaContext, invoiceType: 'invoice' | 'invoiceTemplate') {
+  if (invoiceType === 'invoice') {
+    return mercoaSession.client?.invoice
+  } else {
+    return mercoaSession.client?.invoiceTemplate
+  }
+}
+
 export function PayableDetails({
+  invoiceType = 'invoice',
   invoiceId,
   invoice,
   onUpdate,
@@ -146,7 +156,8 @@ export function PayableDetails({
   children,
   renderCustom,
 }: {
-  invoiceId?: Mercoa.InvoiceId
+  invoiceType?: 'invoice' | 'invoiceTemplate'
+  invoiceId?: Mercoa.InvoiceId | Mercoa.InvoiceTemplateId
   invoice?: Mercoa.InvoiceResponse
   onUpdate?: (invoice: Mercoa.InvoiceResponse | undefined) => void
   heightOffset?: number
@@ -176,9 +187,9 @@ export function PayableDetails({
     typeof window !== 'undefined' ? window.innerHeight - contentHeightOffset : 0,
   )
 
-  async function refreshInvoice(invoiceId: Mercoa.InvoiceId) {
+  async function refreshInvoice(invoiceId: Mercoa.InvoiceId | Mercoa.InvoiceTemplateId) {
     if (!mercoaSession.token) return
-    const resp = await mercoaSession.client?.invoice.get(invoiceId)
+    const resp = await getInvoiceClient(mercoaSession, invoiceType)?.get(invoiceId)
     if (resp) {
       setInvoice(resp)
       if (onUpdate) onUpdate(resp)
@@ -230,6 +241,7 @@ export function PayableDetails({
         onOcrComplete={setOcrResponse}
         setUploadedDocument={setUploadedDocument}
         height={height}
+        invoiceType={invoiceType}
         invoice={invoiceLocal}
         ocrProcessing={ocrProcessing}
         setOcrProcessing={setOcrProcessing}
@@ -238,6 +250,7 @@ export function PayableDetails({
 
     rightComponent = (
       <PayableForm
+        invoiceType={invoiceType}
         invoice={invoiceLocal}
         ocrResponse={ocrResponse}
         uploadedDocument={uploadedDocument}
@@ -305,6 +318,7 @@ export type PayableFormChildrenProps = {
 }
 
 export function PayableForm({
+  invoiceType = 'invoice',
   invoice,
   ocrResponse,
   ocrProcessing,
@@ -322,6 +336,7 @@ export function PayableForm({
   children,
   renderCustom,
 }: {
+  invoiceType?: 'invoice' | 'invoiceTemplate'
   invoice?: Mercoa.InvoiceResponse
   ocrResponse?: Mercoa.OcrResponse
   ocrProcessing?: boolean
@@ -410,6 +425,15 @@ export function PayableForm({
     })
     .required()
 
+  const defaultPaymentSchedule =
+    invoiceType === 'invoiceTemplate'
+      ? {
+          type: 'daily',
+          repeatEvery: 1,
+          ends: new Date(),
+        }
+      : undefined
+
   const methods = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -458,7 +482,7 @@ export function PayableForm({
         country: 'US',
       },
       '~cpm~~': {} as any,
-      paymentSchedule: invoice?.paymentSchedule,
+      paymentSchedule: invoice?.paymentSchedule ?? defaultPaymentSchedule,
       failureType: invoice?.failureType ?? '',
       commentText: '',
       comments: invoice?.comments ?? [],
@@ -686,7 +710,7 @@ export function PayableForm({
     mercoaSession.debug({ saveAsStatus: data.saveAsStatus })
     if (data.saveAsStatus === Mercoa.InvoiceStatus.Canceled) {
       if (confirm('Are you sure you want to cancel this invoice? This cannot be undone.')) {
-        await mercoaSession.client?.invoice.update(data.id, {
+        await getInvoiceClient(mercoaSession, invoiceType)?.update(data.id, {
           status: Mercoa.InvoiceStatus.Canceled,
         })
       }
@@ -695,7 +719,7 @@ export function PayableForm({
       return
     } else if (data.saveAsStatus === Mercoa.InvoiceStatus.Archived) {
       if (confirm('Are you sure you want to archive this invoice? This cannot be undone.')) {
-        await mercoaSession.client?.invoice.update(data.id, {
+        await getInvoiceClient(mercoaSession, invoiceType)?.update(data.id, {
           status: Mercoa.InvoiceStatus.Archived,
         })
       }
@@ -861,7 +885,7 @@ export function PayableForm({
       if (invoice?.id) {
         try {
           if (confirm('Are your sure you want to delete this invoice? This cannot be undone.')) {
-            await mercoaSession.client?.invoice.delete(invoice.id)
+            await getInvoiceClient(mercoaSession, invoiceType)?.delete(invoice.id)
             renderCustom?.toast ? renderCustom.toast.success('Invoice deleted') : toast.success('Invoice deleted')
             if (onUpdate) onUpdate(undefined)
           }
@@ -883,7 +907,9 @@ export function PayableForm({
         paymentDestinationOptions?.delivery === Mercoa.CheckDeliveryMethod.Print
       ) {
         if (confirm('Do you want to create a live check? This will mark the invoice as paid cannot be undone.')) {
-          const resp = await mercoaSession.client?.invoice.update(invoice?.id, { status: Mercoa.InvoiceStatus.Paid })
+          const resp = await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice?.id, {
+            status: Mercoa.InvoiceStatus.Paid,
+          })
           if (resp) {
             renderCustom?.toast
               ? renderCustom.toast.success('Invoice marked as paid. Live check created.')
@@ -894,7 +920,7 @@ export function PayableForm({
           toast.success('VOID check created')
         }
       }
-      const pdf = await mercoaSession.client?.invoice.document.generateCheckPdf(invoice.id)
+      const pdf = await getInvoiceClient(mercoaSession, invoiceType)?.document.generateCheckPdf(invoice.id)
       if (pdf) {
         window.open(pdf.uri, '_blank')
       } else {
@@ -910,7 +936,7 @@ export function PayableForm({
         return
       }
       try {
-        await mercoaSession.client?.invoice.approval.approve(invoice.id, {
+        await getInvoiceClient(mercoaSession, invoiceType)?.approval.approve(invoice.id, {
           userId: mercoaSession.user?.id,
         })
         refreshInvoice(invoice.id)
@@ -929,7 +955,7 @@ export function PayableForm({
         return
       }
       try {
-        await mercoaSession.client?.invoice.approval.reject(invoice.id, {
+        await getInvoiceClient(mercoaSession, invoiceType)?.approval.reject(invoice.id, {
           userId: mercoaSession.user?.id,
         })
         toast.success('Invoice rejected')
@@ -1382,7 +1408,7 @@ export function PayableForm({
 
     if (invoice) {
       try {
-        const resp = await mercoaSession.client?.invoice.update(invoice.id, invoiceDataFinal)
+        const resp = await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, invoiceDataFinal)
         if (resp) {
           mercoaSession.debug('invoice/update API response: ', resp)
           setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
@@ -1398,7 +1424,7 @@ export function PayableForm({
         // if the previous state was draft, we might need to refresh to get new approval rules
         if (invoiceDataFinal.status === Mercoa.InvoiceStatus.New) {
           invoiceDataFinal.status = Mercoa.InvoiceStatus.Draft
-          const resp = await mercoaSession.client?.invoice.update(invoice.id, invoiceDataFinal)
+          const resp = await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, invoiceDataFinal)
           if (resp) {
             setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
             refreshInvoice(resp.id)
@@ -1413,7 +1439,7 @@ export function PayableForm({
       }
     } else {
       try {
-        const resp = await mercoaSession.client?.invoice.create({
+        const resp = await getInvoiceClient(mercoaSession, invoiceType)?.create({
           ...invoiceDataFinal,
           creatorUserId: mercoaSession.user?.id,
         })
@@ -1507,7 +1533,7 @@ export function PayableForm({
                   <PaymentOptions />
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                   <PayableFees />
-                  {/* <PayableRecurringSchedule /> */}
+                  {invoiceType === 'invoiceTemplate' && <PayableRecurringSchedule />}
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                   <PayableApprovers />{' '}
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
@@ -1518,6 +1544,7 @@ export function PayableForm({
                 admin={admin}
                 submitForm={handleSubmit(saveInvoiceLoadingWrapper)}
                 refreshInvoice={refreshInvoice}
+                invoiceType={invoiceType}
               />
             </>
           )}
@@ -1638,6 +1665,7 @@ export type PayableDocumentChildrenProps = {
 export function PayableDocument({
   onOcrComplete,
   setUploadedDocument,
+  invoiceType = 'invoice',
   invoice,
   height,
   theme,
@@ -1648,6 +1676,7 @@ export function PayableDocument({
 }: {
   onOcrComplete?: (ocrResponse?: Mercoa.OcrResponse) => void
   setUploadedDocument?: (fileReaderObj: string) => void
+  invoiceType?: 'invoice' | 'invoiceTemplate'
   invoice?: Mercoa.InvoiceResponse
   height: number
   theme?: 'light' | 'dark'
@@ -1669,8 +1698,8 @@ export function PayableDocument({
 
   useEffect(() => {
     if (invoice && invoice.hasDocuments) {
-      mercoaSession.client?.invoice.document
-        .getAll(invoice.id, { type: Mercoa.DocumentType.Invoice })
+      getInvoiceClient(mercoaSession, invoiceType)
+        ?.document.getAll(invoice.id, { type: Mercoa.DocumentType.Invoice })
         .then((documents) => {
           if (documents && documents.length > 0) {
             setDocuments(documents.map((document) => ({ fileReaderObj: document.uri, mimeType: document.mimeType })))
@@ -1678,11 +1707,13 @@ export function PayableDocument({
         })
     }
     if (invoice && invoice.hasSourceEmail) {
-      mercoaSession.client?.invoice.document.getSourceEmail(invoice.id).then((sourceEmail) => {
-        if (sourceEmail) {
-          setSourceEmail(sourceEmail.data)
-        }
-      })
+      getInvoiceClient(mercoaSession, invoiceType)
+        ?.document.getSourceEmail(invoice.id)
+        .then((sourceEmail) => {
+          if (sourceEmail) {
+            setSourceEmail(sourceEmail.data)
+          }
+        })
     }
   }, [invoice])
 
@@ -2150,6 +2181,7 @@ export function OcrProgressBar({ ocrProcessing }: { ocrProcessing: boolean }) {
 
 // Action Bar
 export function PayableActions({
+  invoiceType = 'invoice',
   refreshInvoice,
   approveButton,
   rejectButton,
@@ -2171,6 +2203,7 @@ export function PayableActions({
   admin,
   children,
 }: {
+  invoiceType?: 'invoice' | 'invoiceTemplate'
   refreshInvoice?: (invoiceId: string) => void
   approveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   rejectButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
@@ -2240,7 +2273,7 @@ export function PayableActions({
         disabled={!id || !selectedEntity}
         onClick={async () => {
           if (!id || !selectedEntity) return
-          await mercoaSession.client?.invoice.update(id, {
+          await getInvoiceClient(mercoaSession, invoiceType)?.update(id, {
             status: Mercoa.InvoiceStatus.Draft,
             creatorEntityId: selectedEntity.id,
             payerId: selectedEntity.id,
@@ -2370,7 +2403,7 @@ export function PayableActions({
   const viewCheckButtonComponent = viewCheckButton ? (
     viewCheckButton({
       onClick: async () => {
-        const pdf = await mercoaSession.client?.invoice.document.generateCheckPdf(id)
+        const pdf = await getInvoiceClient(mercoaSession, invoiceType)?.document.generateCheckPdf(id)
         if (pdf) {
           window.open(pdf.uri, '_blank')
         } else {
@@ -2383,7 +2416,7 @@ export function PayableActions({
       type="button"
       isEmphasized
       onClick={async () => {
-        const pdf = await mercoaSession.client?.invoice.document.generateCheckPdf(id)
+        const pdf = await getInvoiceClient(mercoaSession, invoiceType)?.document.generateCheckPdf(id)
         if (pdf) {
           window.open(pdf.uri, '_blank')
         } else {
@@ -4675,7 +4708,7 @@ export function PaymentOptions() {
     return <></>
 
   return (
-    <div className="sm:mercoa-col-span-3 pl-1">
+    <div className="sm:mercoa-col-span-3 mercoa-pl-1">
       <MercoaSwitch
         label="Batch Payment"
         name="batchPayment"
@@ -4790,35 +4823,10 @@ export function PayableFees({
 }
 
 export function PayableRecurringSchedule() {
-  const { watch, setValue } = useFormContext()
-  const type = watch('paymentSchedule.type')
-
   return (
     <div className="mercoa-col-span-full">
-      <div className="mercoa-flex mercoa-mb-3">
-        <div className="mercoa-flex-1" />
-        <label className="mercoa-relative mercoa-inline-flex mercoa-cursor-pointer  mercoa-items-center mercoa-mt-2">
-          <input
-            type="checkbox"
-            value=""
-            className="mercoa-peer mercoa-sr-only"
-            checked={type && type !== 'oneTime'}
-            onChange={(e) => setValue('paymentSchedule.type', e.target.checked ? 'daily' : 'oneTime')}
-          />
-          <div
-            className="mercoa-peer mercoa-h-6 mercoa-w-11 mercoa-rounded-full mercoa-bg-gray-300 after:mercoa-absolute after:mercoa-top-0.5 after:mercoa-left-[2px]
-                after:mercoa-h-5 after:mercoa-w-5 after:mercoa-rounded-full
-                after:border after:mercoa-border-gray-300 after:mercoa-bg-white after:mercoa-transition-all after:mercoa-content-[''] peer-checked:mercoa-bg-mercoa-primary peer-checked:after:mercoa-translate-x-full
-                peer-checked:after:mercoa-border-white peer-focus:mercoa-ring-4 peer-focus:mercoa-ring-mercoa-primary-300 peer-disabled:mercoa-bg-red-100 peer-disabled:after:mercoa-bg-red-50"
-          />
-          <span className="mercoa-ml-3 mercoa-flex mercoa-items-center mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">
-            Is Recurring
-          </span>
-        </label>
-      </div>
-      <div className="mercoa-flex">
-        <div className="mercoa-flex-1" />
-        {type && type !== 'oneTime' && <RecurringSchedule />}
+      <div className="mercoa-flex mercoa-pl-1">
+        <RecurringSchedule />
       </div>
     </div>
   )

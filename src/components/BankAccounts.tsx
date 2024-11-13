@@ -211,9 +211,12 @@ export function BankAccount({
             <>
               <div className="mercoa-flex mercoa-items-center mercoa-gap-x-1">
                 <DefaultPaymentMethodIndicator paymentMethod={account} />
-                {(account?.status === Mercoa.BankStatus.New || account?.status === Mercoa.BankStatus.Pending) && (
+                {(account?.status === Mercoa.BankStatus.New ||
+                  account?.status === Mercoa.BankStatus.Pending ||
+                  account?.status === Mercoa.BankStatus.VerificationFailed) && (
                   <MercoaButton isEmphasized size="sm" className="mercoa-mr-2" onClick={() => setVerify(true)}>
                     {account?.status === Mercoa.BankStatus.New && 'Start Verification'}
+                    {account?.status === Mercoa.BankStatus.VerificationFailed && 'Retry Verification'}
                     {account?.status === Mercoa.BankStatus.Pending && 'Complete Verification'}
                   </MercoaButton>
                 )}
@@ -310,7 +313,8 @@ export function BankAccount({
                               Verify Account
                             </Dialog.Title>
 
-                            {account?.status === Mercoa.BankStatus.New && (
+                            {(account?.status === Mercoa.BankStatus.New ||
+                              account?.status === Mercoa.BankStatus.VerificationFailed) && (
                               <>
                                 <p className="mercoa-mt-5 mercoa-text-sm">
                                   Mercoa will send two small deposits to verify this account. These deposits may take up
@@ -807,6 +811,7 @@ export function EditBankAccount({
         ...account.checkOptions,
         signatoryName: account.checkOptions?.signatoryName ?? '',
         accountNumberOverride: account.checkOptions?.accountNumberOverride ?? account.accountNumber,
+        routingNumberOverride: account.checkOptions?.routingNumberOverride ?? account.routingNumber,
       },
       externalAccountingSystemId: account.externalAccountingSystemId,
     },
@@ -829,6 +834,7 @@ export function EditBankAccount({
             enabled: data.checkOptions?.enabled,
             initialCheckNumber: Number(data.checkOptions?.initialCheckNumber),
             accountNumberOverride: data.checkOptions?.accountNumberOverride,
+            routingNumberOverride: data.checkOptions?.routingNumberOverride,
             signatoryName: `${data.checkOptions?.signatoryName}`,
             useSignatureImage: data.checkOptions?.useSignatureImage,
             ...(signatureImage && { signatureImage }),
@@ -929,6 +935,13 @@ export function EditBankAccount({
           <MercoaInput
             label="Full Account Number"
             name="checkOptions.accountNumberOverride"
+            register={register}
+            required
+            className="mercoa-mt-2"
+          />
+          <MercoaInput
+            label="Full Routing Number"
+            name="checkOptions.routingNumberOverride"
             register={register}
             required
             className="mercoa-mt-2"
