@@ -258,6 +258,7 @@ function useProvideSession({
         payeeOnboardingOptions: true,
         payorOnboardingOptions: true,
         metadataSchema: true,
+        customDomains: true,
       })
       const schemas = await client.customPaymentMethodSchema.getAll()
       setOrganization(o)

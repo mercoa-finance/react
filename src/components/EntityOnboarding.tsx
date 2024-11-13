@@ -143,6 +143,16 @@ export function UploadBlock({
                     mercoaSession.refresh()
                     toast.success('1099 Updated')
                   })
+              } else if (type === 'Bank Statement') {
+                mercoaSession.client?.entity.document
+                  .upload(entity.id, {
+                    document: fileReaderObj,
+                    type: 'BANK_STATEMENT',
+                  })
+                  .then(() => {
+                    mercoaSession.refresh()
+                    toast.success('Bank Statement Updated')
+                  })
               }
             }
           })
@@ -2371,6 +2381,7 @@ export function EntityOnboardingForm({
             )}
             {onboardingOptions?.business.w9.show && <UploadBlock type="W9" entity={entity} />}
             {onboardingOptions?.business.tenNinetyNine.show && <UploadBlock type="1099" entity={entity} />}
+            {onboardingOptions?.business.bankStatement.show && <UploadBlock type="Bank Statement" entity={entity} />}
             {onboardingOptions?.business.termsOfService.show && (
               <div className="mercoa-col-span-2">
                 <TosBlock
