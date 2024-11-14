@@ -385,6 +385,7 @@ export function PayableForm({
           amount: yup.number().transform(removeThousands).nullable(),
           quantity: yup.number().transform(removeThousands).required().typeError('Please enter a valid number'),
           unitPrice: yup.number().transform(removeThousands).required().typeError('Please enter a valid number'),
+          category: yup.mixed().nullable(),
           currency: yup.string().nullable(),
           metadata: yup.mixed().nullable(),
           glAccountId: yup.string(),
@@ -655,7 +656,7 @@ export function PayableForm({
         name: lineItem.name ?? '',
         metadata: lineItem.metadata ?? {},
         glAccountId: lineItem.glAccountId ?? '',
-        category: lineItem.category ?? 'EXPENSE',
+        category: lineItem.category ?? Mercoa.InvoiceLineItemCategory.Expense,
         id: lineItem.id ?? '',
         createdAt: lineItem.createdAt ?? new Date(),
         updatedAt: lineItem.updatedAt ?? new Date(),
@@ -1151,13 +1152,14 @@ export function PayableForm({
             accountId: data.paymentDestinationOptions.accountId,
           },
         }),
-      lineItems: data.lineItems.map((lineItem: any) => {
+      lineItems: data.lineItems.map((lineItem: Mercoa.InvoiceLineItemUpdateRequest) => {
         const out: Mercoa.InvoiceLineItemUpdateRequest = {
           ...(lineItem.id && { id: lineItem.id }),
           description: lineItem.description,
           amount: Number(lineItem.amount),
           quantity: Number(lineItem.quantity),
           unitPrice: Number(lineItem.unitPrice),
+          category: lineItem.category ?? Mercoa.InvoiceLineItemCategory.Expense,
           metadata: lineItem.metadata
             ? (JSON.parse(JSON.stringify(lineItem.metadata)) as unknown as Record<string, string>)
             : {},
@@ -4420,6 +4422,7 @@ export function PayableLineItems({
       unitPrice: 0,
       quantity: 1,
       currency: currency,
+      category: Mercoa.InvoiceLineItemCategory.Expense,
     })
   }
 
@@ -4535,6 +4538,7 @@ function LineItemOptions() {
             amount: amount.toNumber(),
             quantity: 1,
             unitPrice: amount.toNumber(),
+            category: Mercoa.InvoiceLineItemCategory.Expense,
             description: lineItems[0].description,
             currency: lineItems[0].currency ?? 'USD',
             metadata: lineItems[0].metadata,
