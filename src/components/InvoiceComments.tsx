@@ -54,7 +54,7 @@ export function InvoiceComments({
     updatedAt: watch('updatedAt'),
     user: watch('creatorUser') ?? {
       id: '',
-      name: 'Email',
+      name: '',
     },
     text: '',
     associatedApprovalAction: {
@@ -120,7 +120,11 @@ export function InvoiceComments({
                 </div>
                 <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
                   <span className="mercoa-font-medium mercoa-text-gray-900">{getCommentAuthor(comment)}</span>{' '}
-                  {approvalToText[comment.associatedApprovalAction.action]} the invoice.
+                  {getCommentAuthor(comment) ? (
+                    <> {approvalToText[comment.associatedApprovalAction.action]} the invoice. </>
+                  ) : (
+                    <> invoice {approvalToText[comment.associatedApprovalAction.action]}. </>
+                  )}
                 </p>
                 <time
                   dateTime={dayjs(comment.createdAt).toISOString()}

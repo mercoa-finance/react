@@ -394,6 +394,7 @@ export function PayableForm({
         }),
       ),
       currency: yup.string().required(),
+      payerId: yup.string(),
       vendorId: yup.string(),
       vendorName: yup.string(),
       paymentDestinationId: yup.string(),
@@ -421,6 +422,7 @@ export function PayableForm({
       '~cpm~~': yup.mixed().nullable(),
       fees: yup.mixed().nullable(),
       failureType: yup.string().nullable(),
+      vendorCreditIds: yup.array().nullable(),
       createdAt: yup.date().nullable(),
       updatedAt: yup.date().nullable(),
     })
@@ -443,6 +445,7 @@ export function PayableForm({
       invoiceNumber: invoice?.invoiceNumber,
       amount: invoice?.amount,
       currency: invoice?.currency ?? 'USD',
+      payerId: invoice?.payer?.id,
       vendorId: invoice?.vendor?.id,
       vendorName: invoice?.vendor?.name,
       invoiceDate: invoice?.invoiceDate ? dayjs(invoice?.invoiceDate).toDate() : undefined,
@@ -465,6 +468,7 @@ export function PayableForm({
       approvalPolicy: invoice?.approvalPolicy ?? { type: 'any', approvers: [] },
       approvers: invoice?.approvers ?? [],
       fees: invoice?.fees,
+      vendorCreditIds: invoice?.vendorCreditIds ?? [],
       createdAt: invoice?.createdAt,
       updatedAt: invoice?.updatedAt,
       newBankAccount: {
@@ -545,6 +549,7 @@ export function PayableForm({
     setValue('invoiceNumber', invoice.invoiceNumber)
     setValue('amount', invoice.amount)
     setValue('currency', invoice.currency ?? 'USD')
+    setValue('payerId', invoice.payer?.id)
     setValue('vendorId', invoice.vendor?.id)
     setValue('vendorName', invoice.vendor?.name)
     setValue('invoiceDate', invoice.invoiceDate ? dayjs(invoice.invoiceDate).toDate() : undefined)
@@ -571,6 +576,7 @@ export function PayableForm({
     setValue('comments', invoice?.comments ?? [])
     setValue('fees', invoice?.fees)
     setValue('failureType', invoice?.failureType ?? '')
+    setValue('vendorCreditIds', invoice?.vendorCreditIds ?? [])
     setValue('createdAt', invoice?.createdAt)
     setValue('updatedAt', invoice?.updatedAt)
     setValue('paymentSchedule', invoice?.paymentSchedule)
@@ -709,6 +715,7 @@ export function PayableForm({
 
     // Special Actions
     mercoaSession.debug({ saveAsStatus: data.saveAsStatus })
+    let postAction: 'APPROVE' | 'REJECT' | undefined = undefined
     if (data.saveAsStatus === Mercoa.InvoiceStatus.Canceled) {
       if (confirm('Are you sure you want to cancel this invoice? This cannot be undone.')) {
         await getInvoiceClient(mercoaSession, invoiceType)?.update(data.id, {
@@ -930,43 +937,6 @@ export function PayableForm({
           : toast.error('There was an error generating the check PDF')
       }
       return
-    } else if (data.saveAsStatus === 'APPROVE') {
-      if (!invoice?.id || !mercoaSession.user?.id) return
-      if (invoice.status !== Mercoa.InvoiceStatus.New) {
-        refreshInvoice(invoice.id)
-        return
-      }
-      try {
-        await getInvoiceClient(mercoaSession, invoiceType)?.approval.approve(invoice.id, {
-          userId: mercoaSession.user?.id,
-        })
-        refreshInvoice(invoice.id)
-        renderCustom?.toast ? renderCustom.toast.success('Invoice approved') : toast.success('Invoice approved')
-      } catch (e: any) {
-        console.error(e)
-        renderCustom?.toast
-          ? renderCustom?.toast.error(`There was an error approving the invoice.\n Error: ${e.body}`)
-          : toast.error(`There was an error approving the invoice.\n Error: ${e.body}`)
-      }
-      return
-    } else if (data.saveAsStatus === 'REJECT') {
-      if (!invoice?.id || !mercoaSession.user?.id) return
-      if (invoice.status !== Mercoa.InvoiceStatus.New) {
-        refreshInvoice(invoice.id)
-        return
-      }
-      try {
-        await getInvoiceClient(mercoaSession, invoiceType)?.approval.reject(invoice.id, {
-          userId: mercoaSession.user?.id,
-        })
-        toast.success('Invoice rejected')
-      } catch (e: any) {
-        console.error(e)
-        renderCustom?.toast
-          ? renderCustom?.toast.error(`There was an error rejecting the invoice.\n Error: ${e.body}`)
-          : toast.error(`There was an error rejecting the invoice.\n Error: ${e.body}`)
-      }
-      return
     } else if (data.saveAsStatus === 'COMMENT') {
       // if (!mercoaSession.user?.id && mercoaSession.entity?.id === invoice?.creatorEntityId) {
       //   renderCustom?.toast
@@ -993,6 +963,12 @@ export function PayableForm({
     }
 
     let nextInvoiceState: Mercoa.InvoiceStatus = Mercoa.InvoiceStatus.Draft
+
+    // we should save the data first, and then update the invoice approve/reject status
+    if (data.saveAsStatus === 'APPROVE' || data.saveAsStatus === 'REJECT') {
+      postAction = data.saveAsStatus
+      data.saveAsStatus = Mercoa.InvoiceStatus.New
+    }
 
     if (admin && data.saveAsAdmin) {
       setValue('saveAsAdmin', false)
@@ -1285,6 +1261,21 @@ export function PayableForm({
       return
     }
 
+    // If using Mercoa payment rails, ensure vendor/payer are valid
+    if (data.paymentDestinationType === 'bankAccount') {
+      if (selectedVendor?.accountType === 'business') {
+        if (!selectedVendor?.profile?.business?.description && !selectedVendor?.profile?.business?.website) {
+          setError('vendor', { type: 'manual', message: 'Please provide the vendor business description or website' })
+          return
+        }
+      } else {
+        if (!selectedVendor?.profile?.individual?.email && !selectedVendor?.profile?.individual?.phone?.number) {
+          setError('vendor', { type: 'manual', message: 'Please provide the vendor email or phone number' })
+          return
+        }
+      }
+    }
+
     // Check if a vendor is selected
     if (!data.saveAsStatus) {
       if (!data.amount) {
@@ -1401,6 +1392,24 @@ export function PayableForm({
       }
     }
 
+    // Auto-assign vendor credits if the invoice is saved as NEW or APPROVED (before scheduled)
+    if (nextInvoiceState === Mercoa.InvoiceStatus.New || nextInvoiceState === Mercoa.InvoiceStatus.Approved) {
+      if (invoiceData.payerId && invoiceData.vendorId && invoiceData.amount) {
+        const vendorCreditUsage = await mercoaSession.client?.entity.counterparty.vendorCredit.estimateUsage(
+          invoiceData.payerId,
+          invoiceData.vendorId,
+          {
+            amount: Number(invoiceData.amount),
+            currency: 'USD',
+          },
+        )
+        const vendorCredits = vendorCreditUsage?.vendorCredits
+        if (vendorCredits && vendorCredits.length > 0) {
+          invoiceData.vendorCreditIds = vendorCredits.map((vendorCredit) => vendorCredit.id)
+        }
+      }
+    }
+
     mercoaSession.debug('invoiceData before API call: ', { invoiceData })
 
     let invoiceDataFinal = invoiceData
@@ -1412,11 +1421,13 @@ export function PayableForm({
       try {
         const resp = await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, invoiceDataFinal)
         if (resp) {
-          mercoaSession.debug('invoice/update API response: ', resp)
-          setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
-          renderCustom?.toast ? renderCustom?.toast.success('Invoice updated') : toast.success('Invoice updated')
-          onInvoiceSubmit?.(resp)
-          refreshInvoice(resp.id)
+          if (!postAction) {
+            mercoaSession.debug('invoice/update API response: ', resp)
+            setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
+            renderCustom?.toast ? renderCustom?.toast.success('Invoice updated') : toast.success('Invoice updated')
+            onInvoiceSubmit?.(resp)
+            refreshInvoice(resp.id)
+          }
         } else {
           renderCustom?.toast
             ? renderCustom?.toast.error('There was an error updating the invoice')
@@ -1424,7 +1435,7 @@ export function PayableForm({
         }
       } catch (e: any) {
         // if the previous state was draft, we might need to refresh to get new approval rules
-        if (invoiceDataFinal.status === Mercoa.InvoiceStatus.New) {
+        if (invoiceDataFinal.status === Mercoa.InvoiceStatus.New && !postAction) {
           invoiceDataFinal.status = Mercoa.InvoiceStatus.Draft
           const resp = await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, invoiceDataFinal)
           if (resp) {
@@ -1464,6 +1475,45 @@ export function PayableForm({
           : toast.error(`There was an error creating the invoice.\n Error: ${e.body}`)
       }
     }
+
+    if (postAction === 'APPROVE') {
+      if (!invoice?.id || !mercoaSession.user?.id) return
+      if (invoice.status !== Mercoa.InvoiceStatus.New) {
+        refreshInvoice(invoice.id)
+        return
+      }
+      try {
+        await getInvoiceClient(mercoaSession, invoiceType)?.approval.approve(invoice.id, {
+          userId: mercoaSession.user?.id,
+        })
+        refreshInvoice(invoice.id)
+        renderCustom?.toast ? renderCustom.toast.success('Invoice approved') : toast.success('Invoice approved')
+      } catch (e: any) {
+        console.error(e)
+        renderCustom?.toast
+          ? renderCustom?.toast.error(`There was an error approving the invoice.\n Error: ${e.body}`)
+          : toast.error(`There was an error approving the invoice.\n Error: ${e.body}`)
+      }
+      return
+    } else if (postAction === 'REJECT') {
+      if (!invoice?.id || !mercoaSession.user?.id) return
+      if (invoice.status !== Mercoa.InvoiceStatus.New) {
+        refreshInvoice(invoice.id)
+        return
+      }
+      try {
+        await getInvoiceClient(mercoaSession, invoiceType)?.approval.reject(invoice.id, {
+          userId: mercoaSession.user?.id,
+        })
+        toast.success('Invoice rejected')
+      } catch (e: any) {
+        console.error(e)
+        renderCustom?.toast
+          ? renderCustom?.toast.error(`There was an error rejecting the invoice.\n Error: ${e.body}`)
+          : toast.error(`There was an error rejecting the invoice.\n Error: ${e.body}`)
+      }
+      return
+    }
   }
 
   async function getVendorPaymentLink() {
@@ -1481,7 +1531,7 @@ export function PayableForm({
   if (!mercoaSession.client) return <NoSession componentName="PayableForm" />
 
   return (
-    <div style={{ height: `${height}px` }} className="mercoa-overflow-auto mercoa-pr-2 mercoa-pb-10">
+    <div style={{ height: `${height}px` }} className="mercoa-overflow-auto mercoa-pr-2 mercoa-pb-32">
       <FormProvider {...methods}>
         <form
           id="payable-form"
@@ -1543,7 +1593,6 @@ export function PayableForm({
               )}
               <InvoiceComments />
               <PayableActions
-                admin={admin}
                 submitForm={handleSubmit(saveInvoiceLoadingWrapper)}
                 refreshInvoice={refreshInvoice}
                 invoiceType={invoiceType}
@@ -2182,6 +2231,14 @@ export function OcrProgressBar({ ocrProcessing }: { ocrProcessing: boolean }) {
 // End Documents
 
 // Action Bar
+
+export type PayableActionChildrenProps = {
+  isSaving: boolean
+  buttons?: JSX.Element[]
+  setStatus: (status: Mercoa.InvoiceStatus) => void
+  submitForm?: () => void
+}
+
 export function PayableActions({
   invoiceType = 'invoice',
   refreshInvoice,
@@ -2202,7 +2259,7 @@ export function PayableActions({
   schedulePaymentButton,
   retryPaymentButton,
   submitForm,
-  admin,
+  additionalActions,
   children,
 }: {
   invoiceType?: 'invoice' | 'invoiceTemplate'
@@ -2230,18 +2287,12 @@ export function PayableActions({
   schedulePaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   retryPaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   submitForm?: () => void
-  admin?: boolean
-  children?: ({
-    isSaving,
-    buttons,
-    setStatus,
-    submitForm,
-  }: {
-    isSaving: boolean
-    buttons?: JSX.Element[]
-    setStatus: (status: Mercoa.InvoiceStatus) => void
-    submitForm?: () => void
-  }) => JSX.Element
+  additionalActions?: {
+    hideDefaultActions?: boolean
+    position: 'left' | 'right'
+    actions: (props: PayableActionChildrenProps) => JSX.Element[]
+  }
+  children?: (props: PayableActionChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
   const [isSaving, setIsSaving] = useState(false)
@@ -2260,7 +2311,22 @@ export function PayableActions({
   const id = watch('id')
   const status = watch('status') as Mercoa.InvoiceStatus | undefined
   const approverSlots = watch('approvers') as Mercoa.ApprovalSlot[]
-  const approverSlot = approverSlots.find((e) => e.assignedUserId === mercoaSession.user?.id)
+  const approverSlot = approverSlots.find((approver, index) => {
+    if (approver.assignedUserId === mercoaSession.user?.id) {
+      return true
+    } else if (!approver.assignedUserId || approver.assignedUserId === 'ANY') {
+      const eligibleApprovers = filterApproverOptions({
+        approverSlotIndex: index,
+        eligibleRoles: approver.eligibleRoles,
+        eligibleUserIds: approver.eligibleUserIds,
+        users: mercoaSession.users,
+        selectedApprovers: [],
+      })
+      if (eligibleApprovers.find((e) => e.user.id === mercoaSession.user?.id)) {
+        return true
+      }
+    }
+  })
   const [selectedEntity, setSelectedEntity] = useState<Mercoa.EntityResponse>()
 
   const buttons: JSX.Element[] = []
@@ -2666,6 +2732,18 @@ export function PayableActions({
     return children({ isSaving, buttons, setStatus: (status) => setValue('saveAsStatus', status), submitForm })
   }
 
+  const additionalActionButtons = (
+    <>
+      {additionalActions?.actions &&
+        additionalActions.actions({
+          isSaving,
+          buttons,
+          setStatus: (status) => setValue('saveAsStatus', status),
+          submitForm,
+        })}
+    </>
+  )
+
   return (
     <>
       <div className="mercoa-col-span-full" style={{ visibility: 'hidden' }}>
@@ -2680,9 +2758,10 @@ export function PayableActions({
           <>
             <PayableFormErrors />
             <div className="mercoa-mx-auto mercoa-flex mercoa-flex-row-reverse mercoa-items-center mercoa-gap-2 mercoa-py-3 mercoa-px-6">
-              {buttons.map((button, index) => (
-                <div key={index}>{button}</div>
-              ))}
+              {additionalActions?.position !== 'left' && additionalActionButtons}
+              {!additionalActions?.hideDefaultActions &&
+                buttons.map((button, index) => <div key={index}>{button}</div>)}
+              {additionalActions?.position === 'left' && additionalActionButtons}
             </div>
           </>
         )}
@@ -2741,7 +2820,7 @@ export function PayableOverview({
   const paymentDestinationType = watch('paymentDestinationType')
   const notDraft = !!status && status !== Mercoa.InvoiceStatus.Draft
 
-  // // Get Supported Currencies
+  // Get Supported Currencies
   useEffect(() => {
     // Figure out what currencies are supported by C1 -------------------------------
     let derivedSupportedCurrencies: Mercoa.CurrencyCode[] = []
@@ -3685,13 +3764,26 @@ export function PaymentDestinationProcessingTime({
 // Approvers
 
 export function PayableApprovers({ readOnly }: { readOnly?: boolean }) {
+  const mercoaSession = useMercoaSession()
   const {
     watch,
+    setValue,
     formState: { errors },
   } = useFormContext()
 
   const approvers = watch('approvers') as Mercoa.ApprovalSlot[]
+  const invoicePolicy = watch('approvalPolicy') as Mercoa.ApprovalPolicyResponse[]
   const status = watch('status') as Mercoa.InvoiceStatus
+
+  // auto-assign ANY if rule tells us to
+  useEffect(() => {
+    approvers.forEach((approverSlot, index) => {
+      const policy = invoicePolicy.find((e) => e.id === approverSlot.approvalPolicyId)
+      if (policy?.rule.autoAssign) {
+        setValue(`approvers.${index}.assignedUserId`, 'ANY')
+      }
+    })
+  }, [approvers])
 
   return (
     <div className="mercoa-col-span-full mercoa-space-y-4">
@@ -3743,12 +3835,13 @@ function ApproversSelection() {
                 })
               }}
               value={
-                mercoaSession.users.filter((user) => {
+                [...mercoaSession.users, { id: 'ANY', name: 'Any Approver', email: '' }].find((user) => {
                   const approverSlot = approvers.find((e) => e?.approvalSlotId === slot.approvalSlotId)
                   if (user.id === approverSlot?.assignedUserId) return true
-                })[0] ?? ''
+                }) ?? ''
               }
               options={[
+                { disabled: false, value: { id: 'ANY', name: 'Any Approver', email: '' } },
                 ...filterApproverOptions({
                   approverSlotIndex: index,
                   eligibleRoles: slot.eligibleRoles,
@@ -3779,11 +3872,13 @@ function ApproverWells() {
   const approvers = watch('approvers') as Mercoa.ApprovalSlot[]
   return (
     <>
-      {approvers.map((slot) => {
+      {approvers.map((slot, index) => {
         const user = mercoaSession.users.find((user) => user.id === slot.assignedUserId)
-        if (user && !seenUsers.includes(user.id)) {
+        if (!slot.assignedUserId || slot.assignedUserId === 'ANY') {
+          return <ApproverWell key={slot.approvalSlotId} approverSlot={slot} index={index} />
+        } else if (user && !seenUsers.includes(user.id)) {
           seenUsers.push(user.id)
-          return <ApproverWell key={user.id} approverSlot={slot} approver={user} />
+          return <ApproverWell key={user.id} approverSlot={slot} approver={user} index={index} />
         }
       })}
     </>
@@ -3793,10 +3888,16 @@ function ApproverWells() {
 function ApproverWell({
   approverSlot,
   approver,
+  index,
 }: {
   approverSlot: Mercoa.ApprovalSlot
-  approver: Mercoa.EntityUserResponse
+  approver?: Mercoa.EntityUserResponse
+  index: number
 }) {
+  const mercoaSession = useMercoaSession()
+
+  const [isExpanded, setIsExpanded] = useState(false)
+
   let bgColor = ''
   let icon
   if (approverSlot.action === Mercoa.ApproverAction.None) {
@@ -3810,14 +3911,52 @@ function ApproverWell({
     icon = <XCircleIcon className="mercoa-h-8 mercoa-w-8 mercoa-text-red-400" aria-hidden="true" />
   }
 
+  const approvers = filterApproverOptions({
+    approverSlotIndex: index,
+    eligibleRoles: approverSlot.eligibleRoles,
+    eligibleUserIds: approverSlot.eligibleUserIds,
+    users: mercoaSession.users,
+    selectedApprovers: [],
+  })
+
   return (
     <>
       <div className="mercoa-flex mercoa-items-center">
-        <div className="mercoa-flex-auto">
-          <div className={`mercoa-flex mercoa-items-center mercoa-rounded-mercoa ${bgColor}`}>
-            <div className="mercoa-flex-auto mercoa-p-3">
-              <div className={'mercoa-text-sm mercoa-font-medium mercoa-text-grey-900'}>{approver.name}</div>
-              <div className="mercoa-text-sm mercoa-text-gray-500">{approver.email}</div>
+        <div className="mercoa-flex-auto mercoa-max-w-full">
+          <div className={`mercoa-flex mercoa-items-center mercoa-rounded-mercoa ${bgColor} mercoa-max-w-full`}>
+            <div className="mercoa-flex-auto mercoa-p-3 mercoa-max-w-full">
+              {approver ? (
+                <>
+                  <div className={'mercoa-text-sm mercoa-font-medium mercoa-text-grey-900'}>{approver.name}</div>
+                  <div className="mercoa-text-sm mercoa-text-gray-500">{approver.email}</div>
+                </>
+              ) : (
+                <div
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className={
+                    'mercoa-text-sm mercoa-font-medium mercoa-text-grey-900 mercoa-max-w-full mercoa-overflow-hidden mercoa-whitespace-nowrap mercoa-truncate mercoa-cursor-pointer'
+                  }
+                >
+                  Any Approver:
+                  <span className="mercoa-ml-1">
+                    {isExpanded ? (
+                      <>
+                        {approvers.map(({ user: approver }) => (
+                          <div
+                            key={approver.id}
+                            className="mercoa-text-sm mercoa-border mercoa-p-2 mercoa-border-gray-200 mercoa-rounded-mercoa mercoa-mt-2 mercoa-mb-1"
+                          >
+                            <div className={'mercoa-font-medium mercoa-text-grey-900 '}>{approver.name}</div>
+                            <div className="mercoa-text-gray-500 ">{approver.email}</div>
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <span className="mercoa-text-gray-500">{approvers.map((e) => e.user.name).join(', ')}</span>
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
             <div className="mercoa-mx-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75">
               {icon}
@@ -3827,36 +3966,6 @@ function ApproverWell({
       </div>
     </>
   )
-}
-
-function ApproverActionButtons({
-  approveButton,
-  rejectButton,
-  nonApproverButton,
-}: {
-  approveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  rejectButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  nonApproverButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-}) {
-  const { setValue, watch } = useFormContext()
-
-  const approvers = watch('approvers') as Mercoa.ApprovalSlot[]
-  const status = watch('status')
-
-  const mercoaSession = useMercoaSession()
-  if (status != Mercoa.InvoiceStatus.New) return <></>
-  const approverSlot = approvers.find((e) => e.assignedUserId === mercoaSession.user?.id)
-  if (!approverSlot) {
-    return nonApproverButton ? (
-      nonApproverButton({ onClick: () => {} })
-    ) : (
-      <MercoaButton disabled color="gray" isEmphasized type="button">
-        Waiting for approval
-      </MercoaButton>
-    )
-  }
-
-  return <div className="mercoa-flex mercoa-items-center mercoa-justify-end mercoa-gap-x-2"></div>
 }
 
 export function filterApproverOptions({
@@ -4704,12 +4813,13 @@ export function PaymentOptions() {
   const paymentSourceType = watch('paymentSourceType')
   const paymentDestinationType = watch('paymentDestinationType')
 
-  if (paymentSourceType != Mercoa.PaymentMethodType.BankAccount) return <></>
   if (
-    paymentDestinationType != Mercoa.PaymentMethodType.BankAccount &&
-    paymentDestinationType != Mercoa.PaymentMethodType.Check
-  )
+    paymentSourceType !== Mercoa.PaymentMethodType.BankAccount ||
+    (paymentDestinationType !== Mercoa.PaymentMethodType.BankAccount &&
+      paymentDestinationType !== Mercoa.PaymentMethodType.Check)
+  ) {
     return <></>
+  }
 
   return (
     <div className="sm:mercoa-col-span-3 mercoa-pl-1">
@@ -4740,19 +4850,24 @@ export function PayableFees({
 
   const amount = watch('amount')
   const currency = watch('currency')
+  const payerId = watch('payerId')
+  const vendorId = watch('vendorId')
   const paymentSourceId = watch('paymentSourceId')
   const paymentDestinationId = watch('paymentDestinationId')
   const paymentDestinationOptions = watch('paymentDestinationOptions')
+  const vendorCreditIds = watch('vendorCreditIds') as Mercoa.VendorCreditId[] | undefined
 
   const [fees, setFees] = useState<Mercoa.InvoiceFeesResponse>()
+  const [vendorCreditUsage, setVendorCreditUsage] = useState<Mercoa.CalculateVendorCreditUsageResponse>()
+
+  // convert number to digits
+  let amountNumber = amount
+  if (typeof amount === 'string') {
+    amountNumber = Number(amount.replace(/,/g, ''))
+  }
 
   useEffect(() => {
-    if (amount && paymentSourceId && paymentDestinationId) {
-      // convert number to digits
-      let amountNumber = amount
-      if (typeof amount === 'string') {
-        amountNumber = Number(amount.replace(/,/g, ''))
-      }
+    if (amountNumber && paymentSourceId && paymentDestinationId) {
       mercoaSession.client?.calculate
         .fee({
           amount: amountNumber,
@@ -4771,17 +4886,41 @@ export function PayableFees({
           })
         })
     }
-  }, [amount, paymentSourceId, paymentDestinationId, paymentDestinationOptions])
+  }, [amountNumber, paymentSourceId, paymentDestinationId, paymentDestinationOptions])
+
+  useEffect(() => {
+    if (amountNumber && payerId && vendorId) {
+      mercoaSession.client?.entity.counterparty.vendorCredit
+        .estimateUsage(payerId, vendorId, {
+          amount: amountNumber,
+          currency: 'USD',
+        })
+        .then((usage) => {
+          setVendorCreditUsage(usage)
+          clearErrors('amount')
+        })
+        .catch((e) => {
+          setError('amount', {
+            type: 'manual',
+            message: e.body,
+          })
+        })
+    }
+  }, [amountNumber, payerId, vendorId])
 
   if (children) {
     return children({ fees: fees })
   }
 
+  const feeTotal = (fees?.destinationPlatformMarkupFee ?? 0) + (fees?.sourcePlatformMarkupFee ?? 0)
+  const vendorCreditTotal =
+    amountNumber && vendorCreditUsage?.remainingAmount ? amountNumber - vendorCreditUsage.remainingAmount : 0
+
   if (
     amount &&
     paymentSourceId &&
     paymentDestinationId &&
-    (fees?.destinationPlatformMarkupFee || fees?.destinationPlatformMarkupFee)
+    (fees?.destinationPlatformMarkupFee || (vendorCreditIds?.length ?? 0) > 0)
   ) {
     return (
       <div className="mercoa-col-span-full">
@@ -4797,10 +4936,15 @@ export function PayableFees({
           <div className="mercoa-flex-1" />
           Payment Fees:
           <span className="mercoa-font-medium mercoa-ml-1 mercoa-text-gray-900 mercoa-w-28 mercoa-text-right">
-            {accounting.formatMoney(
-              fees?.destinationPlatformMarkupFee + fees?.sourcePlatformMarkupFee,
-              currencyCodeToSymbol(currency),
-            )}
+            {accounting.formatMoney(feeTotal, currencyCodeToSymbol(currency))}
+          </span>
+        </div>
+
+        <div className="mercoa-flex mercoa-text-gray-700 mercoa-text-md">
+          <div className="mercoa-flex-1" />
+          Vendor Credits:
+          <span className="mercoa-font-medium mercoa-ml-1 mercoa-text-gray-900 mercoa-w-28 mercoa-text-right">
+            -{accounting.formatMoney(vendorCreditTotal, currencyCodeToSymbol(currency))}
           </span>
         </div>
 
@@ -4813,10 +4957,7 @@ export function PayableFees({
           <div className="mercoa-flex-1" />
           Total Payment:
           <span className="mercoa-font-medium mercoa-ml-1 mercoa-text-gray-900 mercoa-w-28 mercoa-text-right">
-            {accounting.formatMoney(
-              amount + fees?.destinationPlatformMarkupFee + fees?.sourcePlatformMarkupFee,
-              currencyCodeToSymbol(currency),
-            )}
+            {accounting.formatMoney(amount + feeTotal - vendorCreditTotal, currencyCodeToSymbol(currency))}
           </span>
         </div>
       </div>

@@ -14,6 +14,7 @@ import {
   CountPill,
   DebouncedSearch,
   EntitySelector,
+  filterApproverOptions,
   MercoaButton,
   MercoaCombobox,
   NoSession,
@@ -797,13 +798,31 @@ export function PayablesTable({
       title: 'Approvers',
       field: 'approvers',
       format: (_, invoice) => {
-        if (invoice.approvers.every((approver) => !approver.assignedUserId)) {
+        if (invoice.approvers.length === 0) {
           return null
         }
         return (
           <div className="mercoa-gap-1 mercoa-grid">
-            {invoice.approvers?.map((approver) => {
-              if (!approver.assignedUserId) return null
+            {invoice.approvers?.map((approver, index) => {
+              if (!approver.assignedUserId) {
+                const eligibleApprovers = filterApproverOptions({
+                  approverSlotIndex: index,
+                  eligibleRoles: approver.eligibleRoles,
+                  eligibleUserIds: approver.eligibleUserIds,
+                  users: mercoaSession.users,
+                  selectedApprovers: [],
+                })
+                return (
+                  <Tooltip title={eligibleApprovers.map((e) => e.user.email).join(', ')} key={approver.approvalSlotId}>
+                    <div
+                      key={approver.approvalSlotId}
+                      className={`mercoa-flex mercoa-items-center mercoa-rounded-mercoa mercoa-text-xs mercoa-bg-gray-50 mercoa-text-gray-800 mercoa-py-1 mercoa-px-2`}
+                    >
+                      Any Eligible Approver
+                    </div>
+                  </Tooltip>
+                )
+              }
               const user = mercoaSession.users.find((e) => e.id === approver.assignedUserId)
               return (
                 <Tooltip title={user?.email} key={approver.approvalSlotId}>
@@ -1006,7 +1025,7 @@ export function PayablesTable({
     <div>
       <div className="mercoa-min-h-[600px]">
         {/* create checkbox that toggles invoices assigned to me */}
-        {currentStatuses.includes(Mercoa.InvoiceStatus.New) && invoicesThatNeedMyApprovalCount > 0 && (
+        {currentStatuses.includes(Mercoa.InvoiceStatus.New) && mercoaSession.user?.id && (
           <div className="mercoa-flex mercoa-items-center mercoa-justify-start mercoa-my-4 mercoa-ml-4">
             <div className="mercoa-flex mercoa-items-center mercoa-font-bold mercoa-font-xl mercoa-text-gray-600">
               <input
@@ -1103,7 +1122,24 @@ export function PayablesTable({
             )}
             {currentStatuses.includes(Mercoa.InvoiceStatus.New) &&
               selectedInvoices.length > 0 &&
-              selectedInvoices.some((e) => e.approvers.some((e) => e.assignedUserId === mercoaSession.user?.id)) && (
+              selectedInvoices.some((e) =>
+                e.approvers.some((approver, index) => {
+                  if (approver.assignedUserId === mercoaSession.user?.id) {
+                    return true
+                  } else if (!approver.assignedUserId) {
+                    const eligibleApprovers = filterApproverOptions({
+                      approverSlotIndex: index,
+                      eligibleRoles: approver.eligibleRoles,
+                      eligibleUserIds: approver.eligibleUserIds,
+                      users: mercoaSession.users,
+                      selectedApprovers: [],
+                    })
+                    if (eligibleApprovers.find((e) => e.user.id === mercoaSession.user?.id)) {
+                      return true
+                    }
+                  }
+                }),
+              ) && (
                 <>
                   <button
                     type="button"

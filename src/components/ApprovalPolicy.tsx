@@ -8,17 +8,18 @@ import {
   XCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
+import { Mercoa } from '@mercoa/javascript'
 import debounce from 'lodash/debounce'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import {
   LoadingSpinnerIcon,
   MercoaButton,
   MercoaCombobox,
   MercoaInput,
+  MercoaSwitch,
   MetadataSelection,
   NoSession,
   inputClassName,
@@ -180,6 +181,7 @@ export function ApprovalPolicies({ onSave, additionalRoles }: { onSave?: () => v
               type: data.rule.identifierList.type,
               value: data.rule.identifierList.value,
             },
+            autoAssign: data.rule.autoAssign,
           },
         }
 
@@ -737,6 +739,20 @@ function Rule({
           />
         )}
       </div>
+      <MercoaSwitch
+        tooltip={
+          <span>
+            If enabled, the policy will automatically assign approvers.
+            <br />
+            If more than one approver is eligible, the policy will assign all eligible approvers to the invoice.
+            <br />
+            If disabled, approvers must be manually selected from the list of eligible approvers.
+          </span>
+        }
+        label="Automatically Assign Approvers"
+        name={`policies.${index}.rule.autoAssign`}
+        register={register}
+      />
     </div>
   )
 }

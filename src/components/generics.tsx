@@ -392,7 +392,7 @@ export function TableNavigation({
         </Listbox>
         <div className="mercoa-hidden sm:mercoa-block">
           <p className="mercoa-text-sm mercoa-text-gray-700">
-            Showing <span className="mercoa-font-medium">{(page - 1) * resultsPerPage + 1}</span> to{' '}
+            Showing <span className="mercoa-font-medium">{Math.min((page - 1) * resultsPerPage + 1, count)}</span> to{' '}
             <span className="mercoa-font-medium">{Math.min(page * resultsPerPage, count)}</span> of{' '}
             <span className="mercoa-font-medium">{count}</span> results
           </p>

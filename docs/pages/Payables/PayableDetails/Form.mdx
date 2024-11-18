@@ -441,7 +441,18 @@ type InvoiceCommentsChildrenProps = {
 | markAsPaidButton        | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
 | schedulePaymentButton   | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
 | retryPaymentButton      | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
-| children                | `({ isSaving, buttons }: { isSaving: boolean; buttons: JSX.Element[] }) => JSX.Element`                |          | Custom component. `Buttons` will return buttons with the correct actions for the state the invoice is in. Customize buttons using the props. |
+| children                | `(props: PayableActionChildrenProps) => JSX.Element`                                                   |          | Custom component. `Buttons` will return buttons with the correct actions for the state the invoice is in. Customize buttons using the props. |
+| additionalActions       | `{ hideDefaultActions?: boolean; position: 'left' \| 'right'; actions: (props: PayableActionChildrenProps) => JSX.Element[] }` |          | Pass additional actions to render in the action bar.    |                                                                                                                     |
+
+
+```typescript
+type PayableActionChildrenProps = {
+  isSaving: boolean
+  buttons?: JSX.Element[]
+  setStatus: (status: Mercoa.InvoiceStatus) => void
+  submitForm?: () => void
+}
+```
 
 <ComponentContainer display="block">
   <PayableForm invoice={inv_new_ready}>

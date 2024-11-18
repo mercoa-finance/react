@@ -14,6 +14,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import debounce from 'lodash/debounce'
@@ -21,7 +22,6 @@ import Papa from 'papaparse'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize, constructFullName } from '../lib/lib'
@@ -1093,12 +1093,20 @@ export function Counterparties({
   type,
   network,
   disableCreation,
+  hideCounterpartyDetails,
+  hideCounterpartyPaymentMethods,
+  hideCounterpartyInvoices,
+  hideCounterpartyVendorCredits,
   counterpartyPreSubmit,
   admin,
   children,
 }: {
   type: 'payor' | 'payee'
   disableCreation?: boolean
+  hideCounterpartyDetails?: boolean
+  hideCounterpartyPaymentMethods?: boolean
+  hideCounterpartyInvoices?: boolean
+  hideCounterpartyVendorCredits?: boolean
   counterpartyPreSubmit?: (
     counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
@@ -1205,6 +1213,10 @@ export function Counterparties({
     setSelected,
     selectedId,
     admin,
+    hideCounterpartyDetails,
+    hideCounterpartyPaymentMethods,
+    hideCounterpartyInvoices,
+    hideCounterpartyVendorCredits,
   }: {
     entity: Mercoa.CounterpartyResponse
     index: number
@@ -1212,15 +1224,27 @@ export function Counterparties({
     setSelected: (entity?: Mercoa.CounterpartyResponse) => void
     selectedId?: Mercoa.EntityId
     admin?: boolean
+    hideCounterpartyDetails?: boolean
+    hideCounterpartyPaymentMethods?: boolean
+    hideCounterpartyInvoices?: boolean
+    hideCounterpartyVendorCredits?: boolean
   }) {
     const mercoaSession = useMercoaSession()
 
     if (selectedId === entity.id) {
       return (
-        <tr key={entity.id} className={`hover:mercoa-bg-gray-100 ${index % 2 === 0 ? undefined : 'mercoa-bg-gray-50'}`}>
+        <tr key={entity.id} className={`hover:mercoa-bg-gray-100 ${index % 2 === 0 ? '' : 'mercoa-bg-gray-50'}`}>
           <td className="mercoa-p-10 mercoa-bg-gray-200" colSpan={admin ? 4 : 3}>
             <div className="mercoa-rounded-mercoa mercoa-bg-gray-50 mercoa-shadow mercoa-ring-1 mercoa-ring-gray-900/5">
-              <CounterpartyDetails counterparty={entity} admin={admin} type={type} />
+              <CounterpartyDetails
+                counterparty={entity}
+                admin={admin}
+                type={type}
+                hideCounterpartyDetails={hideCounterpartyDetails}
+                hideCounterpartyPaymentMethods={hideCounterpartyPaymentMethods}
+                hideCounterpartyInvoices={hideCounterpartyInvoices}
+                hideCounterpartyVendorCredits={hideCounterpartyVendorCredits}
+              />
             </div>
           </td>
         </tr>
@@ -1230,9 +1254,7 @@ export function Counterparties({
     return (
       <tr
         key={entity.id}
-        className={`hover:mercoa-bg-gray-100 mercoa-cursor-pointer  ${
-          index % 2 === 0 ? undefined : 'mercoa-bg-gray-50'
-        }`}
+        className={`hover:mercoa-bg-gray-100 mercoa-cursor-pointer  ${index % 2 === 0 ? '' : 'mercoa-bg-gray-50'}`}
         onClick={() => {
           setSelected(entity)
         }}
@@ -1400,6 +1422,10 @@ export function Counterparties({
                 setSelected={setSelected}
                 selectedId={selected?.id}
                 admin={admin}
+                hideCounterpartyDetails={hideCounterpartyDetails}
+                hideCounterpartyPaymentMethods={hideCounterpartyPaymentMethods}
+                hideCounterpartyInvoices={hideCounterpartyInvoices}
+                hideCounterpartyVendorCredits={hideCounterpartyVendorCredits}
               />
             ))}
         </tbody>
@@ -1432,12 +1458,20 @@ export function CounterpartyDetails({
   counterparty,
   counterpartyId,
   admin,
+  hideCounterpartyDetails,
+  hideCounterpartyPaymentMethods,
+  hideCounterpartyInvoices,
+  hideCounterpartyVendorCredits,
   type,
   children,
 }: {
   counterparty?: Mercoa.CounterpartyResponse
   counterpartyId?: Mercoa.EntityId
   admin?: boolean
+  hideCounterpartyDetails?: boolean
+  hideCounterpartyPaymentMethods?: boolean
+  hideCounterpartyInvoices?: boolean
+  hideCounterpartyVendorCredits?: boolean
   type: 'payor' | 'payee'
   children?: ({
     counterparty,
@@ -1452,6 +1486,7 @@ export function CounterpartyDetails({
   const [isEditing, setIsEditing] = useState<boolean>(false)
 
   const [invoiceHistory, setInvoiceHistory] = useState<Mercoa.InvoiceResponse[] | undefined>(undefined)
+  const [vendorCredits, setVendorCredits] = useState<Mercoa.VendorCreditResponse[] | undefined>(undefined)
   const [counterpartyLocal, setCounterparty] = useState<Mercoa.CounterpartyResponse | undefined>(counterparty)
   const [documents, setDocuments] = useState<Mercoa.DocumentResponse[] | undefined>(undefined)
 
@@ -1532,6 +1567,28 @@ export function CounterpartyDetails({
           isCurrent = false
         }
       })
+  }, [mercoaSession.client, mercoaSession.entityId, mercoaSession.refreshId, counterpartyLocal, type])
+
+  // get vendor credits
+  useEffect(() => {
+    if (!mercoaSession.client || !mercoaSession.entityId || !counterpartyLocal) return
+    if (type === 'payee') {
+      mercoaSession.client.entity.counterparty.vendorCredit
+        .getAll(mercoaSession.entityId, counterpartyLocal.id)
+        .then((vendorCredits) => {
+          if (vendorCredits) {
+            setVendorCredits(vendorCredits.data)
+          }
+        })
+    } else {
+      mercoaSession.client.entity.counterparty.vendorCredit
+        .getAll(counterpartyLocal.id, mercoaSession.entityId)
+        .then((vendorCredits) => {
+          if (vendorCredits) {
+            setVendorCredits(vendorCredits.data)
+          }
+        })
+    }
   }, [mercoaSession.client, mercoaSession.entityId, mercoaSession.refreshId, counterpartyLocal, type])
 
   if (children) {
@@ -1623,327 +1680,585 @@ export function CounterpartyDetails({
             )}
           </div>
           <div className="mercoa-flex-grow"></div>
-          <Tooltip
-            title={`Get a link for the ${type === 'payor' ? 'Customer' : 'Vendor'} to fill out their own information`}
-          >
-            <MercoaButton
-              isEmphasized={false}
-              size="sm"
-              className="mercoa-ml-5"
-              onClick={async () => {
-                if (!mercoaSession.entityId) return
-                let url
-                if (type === 'payor') {
-                  url = await mercoaSession.client?.entity.getOnboardingLink(counterpartyLocal.id, {
-                    expiresIn: '30d',
-                    type: Mercoa.EntityOnboardingLinkType.Payor,
-                  })
-                } else {
-                  url = await mercoaSession.client?.entity.getOnboardingLink(counterpartyLocal.id, {
-                    expiresIn: '30d',
-                    type: Mercoa.EntityOnboardingLinkType.Payee,
-                  })
-                }
-                if (url) {
-                  navigator.clipboard.writeText(url).then(
-                    function () {
-                      toast.info('Link Copied')
-                    },
-                    function (err) {
+
+          {/* Onboarding Link Buttons (only needed if showing counterparty details) */}
+          {!hideCounterpartyDetails && (
+            <>
+              <Tooltip
+                title={`Get a link for the ${
+                  type === 'payor' ? 'Customer' : 'Vendor'
+                } to fill out their own information`}
+              >
+                <MercoaButton
+                  isEmphasized={false}
+                  size="sm"
+                  className="mercoa-ml-5"
+                  onClick={async () => {
+                    if (!mercoaSession.entityId) return
+                    let url
+                    if (type === 'payor') {
+                      url = await mercoaSession.client?.entity.getOnboardingLink(counterpartyLocal.id, {
+                        expiresIn: '30d',
+                        type: Mercoa.EntityOnboardingLinkType.Payor,
+                      })
+                    } else {
+                      url = await mercoaSession.client?.entity.getOnboardingLink(counterpartyLocal.id, {
+                        expiresIn: '30d',
+                        type: Mercoa.EntityOnboardingLinkType.Payee,
+                      })
+                    }
+                    if (url) {
+                      navigator.clipboard.writeText(url).then(
+                        function () {
+                          toast.info('Link Copied')
+                        },
+                        function (err) {
+                          toast.error(
+                            'There was an issue generating the onboarding link. Please refresh and try again.',
+                          )
+                        },
+                      )
+                    } else {
                       toast.error('There was an issue generating the onboarding link. Please refresh and try again.')
-                    },
-                  )
-                } else {
-                  toast.error('There was an issue generating the onboarding link. Please refresh and try again.')
-                  mercoaSession.refresh()
-                }
-                mercoaSession.refresh()
-              }}
+                      mercoaSession.refresh()
+                    }
+                    mercoaSession.refresh()
+                  }}
+                >
+                  Onboarding Link
+                </MercoaButton>
+              </Tooltip>
+              <Tooltip
+                title={`Send a link for the ${
+                  type === 'payor' ? 'Customer' : 'Vendor'
+                } to fill out their own information`}
+              >
+                <MercoaButton
+                  isEmphasized={false}
+                  size="sm"
+                  className="mercoa-ml-2"
+                  onClick={async () => {
+                    if (!mercoaSession.entityId) return
+                    let url
+                    if (type === 'payor') {
+                      url = await mercoaSession.client?.entity.sendOnboardingLink(counterpartyLocal.id, {
+                        expiresIn: '30d',
+                        type: Mercoa.EntityOnboardingLinkType.Payor,
+                      })
+                    } else {
+                      url = await mercoaSession.client?.entity.sendOnboardingLink(counterpartyLocal.id, {
+                        expiresIn: '30d',
+                        type: Mercoa.EntityOnboardingLinkType.Payee,
+                      })
+                    }
+                    toast.info('Link Sent')
+                  }}
+                >
+                  Send Onboarding Email
+                </MercoaButton>
+              </Tooltip>
+            </>
+          )}
+        </div>
+
+        {/* Details */}
+        {!hideCounterpartyDetails && (
+          <>
+            <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-pt-6 mercoa-items-center">
+              <dd className="mercoa-text-lg mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
+                {type === 'payor' ? 'Customer' : 'Vendor'} Details
+              </dd>
+            </div>
+            {counterpartyLocal.email && (
+              <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-border-t mercoa-border-gray-900/5 mercoa-mt-3 mercoa-pt-2">
+                <dt className="mercoa-flex-none">
+                  <span className="mercoa-sr-only">Email</span>
+                  <EnvelopeIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
+                </dt>
+                <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700 mercoa-select-all">
+                  <a
+                    className="mercoa-text-sm mercoa-font-medium mercoa-leading-3 mercoa-text-blue-400"
+                    href={`mailto:${counterpartyLocal.email}`}
+                  >
+                    {counterpartyLocal.email}
+                  </a>
+                </dd>
+              </div>
+            )}
+            {phoneNumber && (
+              <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-1">
+                <dt className="mercoa-flex-none">
+                  <span className="mercoa-sr-only">Phone</span>
+                  <DevicePhoneMobileIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
+                </dt>
+                <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700 mercoa-select-all">
+                  <a
+                    className="mercoa-text-sm mercoa-font-medium mercoa-leading-3 mercoa-text-blue-400"
+                    href={`tel:${phone}`}
+                  >
+                    {phone}
+                  </a>
+                </dd>
+              </div>
+            )}
+            {address?.addressLine1 && (
+              <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-1">
+                <dt className="mercoa-flex-none">
+                  <span className="mercoa-sr-only">Address</span>
+                  <MapPinIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
+                </dt>
+                <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700">
+                  <a
+                    className="mercoa-text-sm mercoa-font-medium mercoa-leading-3 mercoa-text-blue-400"
+                    href={`https://www.google.com/maps/search/?api=1&query=${addressString}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {addressString}
+                  </a>
+                </dd>
+              </div>
+            )}
+            {counterparty?.profile.business?.taxIdProvided && (
+              <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-1">
+                <dt className="mercoa-flex-none">
+                  <span className="mercoa-sr-only">EIN</span>
+                  <ShieldCheckIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
+                </dt>
+                <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700 mercoa-select-all">
+                  EIN: **-*******
+                </dd>
+              </div>
+            )}
+            {counterparty?.profile.individual?.governmentIdProvided && (
+              <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-1">
+                <dt className="mercoa-flex-none">
+                  <span className="mercoa-sr-only">SSN</span>
+                  <ShieldCheckIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
+                </dt>
+                <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700 mercoa-select-all">
+                  SSN: ***-**-****
+                </dd>
+              </div>
+            )}
+            {TenNinetyNine && (
+              <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-1">
+                <dt className="mercoa-flex-none">
+                  <span className="mercoa-sr-only">1099 Document</span>
+                  <DocumentIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
+                </dt>
+                <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700">
+                  <a
+                    className="mercoa-text-sm mercoa-font-medium mercoa-leading-3 mercoa-text-blue-400"
+                    href={TenNinetyNine.uri}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    1099 Document
+                  </a>
+                </dd>
+              </div>
+            )}
+            {W9 && (
+              <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-1">
+                <dt className="mercoa-flex-none">
+                  <span className="mercoa-sr-only">W9 Document</span>
+                  <DocumentIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
+                </dt>
+                <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700">
+                  <a
+                    className="mercoa-text-sm mercoa-font-medium mercoa-leading-3 mercoa-text-blue-400"
+                    href={W9.uri}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    W9 Document
+                  </a>
+                </dd>
+              </div>
+            )}
+            <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-3">
+              <MercoaButton
+                size="sm"
+                isEmphasized={false}
+                onClick={() => {
+                  setIsEditing(true)
+                }}
+              >
+                Edit Details
+              </MercoaButton>
+            </div>
+          </>
+        )}
+
+        {/* Payment Methods */}
+        {!hideCounterpartyPaymentMethods && (
+          <>
+            <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-pt-6 mercoa-items-center">
+              <dd className="mercoa-text-lg mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
+                {type === 'payor' ? 'Customer' : 'Vendor'} Payment Methods
+              </dd>
+            </div>
+            <table className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300">
+              <thead className="mercoa-bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="mercoa-py-3.5 mercoa-pl-4 mercoa-pr-3 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 sm:mercoa-pl-6"
+                  >
+                    Name
+                  </th>
+                  <th
+                    scope="col"
+                    className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+                  >
+                    Type
+                  </th>
+                  <th
+                    scope="col"
+                    className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+                  >
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="mercoa-bg-white">
+                {paymentMethods.map((method, index) => (
+                  <tr key={method.id} className={`${index % 2 === 0 ? '' : 'mercoa-bg-gray-50'}`}>
+                    <td className="mercoa-whitespace-nowrap mercoa-py-4 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-6">
+                      {formatPaymentMethodName(method)}
+                    </td>
+                    <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                      {formatPaymentMethodType(method, mercoaSession.customPaymentMethodSchemas)}
+                    </td>
+                    <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                      {method.isDefaultDestination ? (
+                        <div className="mercoa-text-xs mercoa-text-gray-700">Default Destination</div>
+                      ) : (
+                        <MercoaButton
+                          isEmphasized={false}
+                          size="sm"
+                          onClick={async () => {
+                            await mercoaSession.client?.entity.paymentMethod.update(counterpartyLocal.id, method.id, {
+                              type: method.type,
+                              defaultDestination: true,
+                            })
+                            mercoaSession.refresh()
+                          }}
+                        >
+                          Set as Default Destination
+                        </MercoaButton>
+                      )}
+                    </td>
+                    {admin && (
+                      <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                        {method.id}
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {/* Invoices */}
+        {!hideCounterpartyInvoices && (
+          <>
+            <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-pt-6 mercoa-items-center">
+              <dd className="mercoa-text-lg mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
+                {type === 'payor' ? 'Customer' : 'Vendor'} Invoices
+              </dd>
+            </div>
+            <table className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300">
+              <thead className="mercoa-bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="mercoa-py-3.5 mercoa-pl-4 mercoa-pr-3 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 sm:mercoa-pl-6"
+                  >
+                    Invoice Number
+                  </th>
+                  <th
+                    scope="col"
+                    className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+                  >
+                    Amount
+                  </th>
+                  <th
+                    scope="col"
+                    className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+                  >
+                    Invoice Date
+                  </th>
+                  <th
+                    scope="col"
+                    className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+                  >
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="mercoa-bg-white">
+                {invoiceHistory &&
+                  invoiceHistory.map((invoice, index) => (
+                    <tr key={invoice.id} className={`${index % 2 === 0 ? '' : 'mercoa-bg-gray-50'}`}>
+                      <td className="mercoa-whitespace-nowrap mercoa-py-4 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-6">
+                        {invoice.invoiceNumber}
+                      </td>
+                      <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                        {accounting.formatMoney(Number(invoice.amount), currencyCodeToSymbol(invoice.currency))}
+                      </td>
+                      <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                        {dayjs(invoice.invoiceDate).format('MMM DD, YYYY')}
+                      </td>
+                      <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                        {invoice.status}
+                      </td>
+                      {admin && (
+                        <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                          {invoice.id}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </>
+        )}
+
+        {/* Vendor Credits */}
+        {!hideCounterpartyVendorCredits && (
+          <VendorCreditsTable vendorCredits={vendorCredits} counterpartyLocal={counterpartyLocal} admin={admin} />
+        )}
+      </div>
+    )
+  }
+}
+
+function VendorCreditsTable({
+  vendorCredits,
+  counterpartyLocal,
+  admin,
+}: {
+  vendorCredits?: Mercoa.VendorCreditResponse[]
+  counterpartyLocal: Mercoa.CounterpartyResponse
+  admin?: boolean
+}) {
+  const [createVendorCreditOpen, setCreateVendorCreditOpen] = useState(false)
+
+  return (
+    <>
+      <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-pt-6 mercoa-items-center">
+        <dd className="mercoa-text-lg mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
+          Vendor Credits
+        </dd>
+      </div>
+      <table className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300">
+        <thead className="mercoa-bg-gray-50">
+          <tr>
+            <th
+              scope="col"
+              className="mercoa-py-3.5 mercoa-pl-4 mercoa-pr-3 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 sm:mercoa-pl-6"
             >
-              Onboarding Link
-            </MercoaButton>
-          </Tooltip>
-          <Tooltip
-            title={`Send a link for the ${type === 'payor' ? 'Customer' : 'Vendor'} to fill out their own information`}
-          >
-            <MercoaButton
-              isEmphasized={false}
-              size="sm"
-              className="mercoa-ml-2"
-              onClick={async () => {
-                if (!mercoaSession.entityId) return
-                let url
-                if (type === 'payor') {
-                  url = await mercoaSession.client?.entity.sendOnboardingLink(counterpartyLocal.id, {
-                    expiresIn: '30d',
-                    type: Mercoa.EntityOnboardingLinkType.Payor,
-                  })
-                } else {
-                  url = await mercoaSession.client?.entity.sendOnboardingLink(counterpartyLocal.id, {
-                    expiresIn: '30d',
-                    type: Mercoa.EntityOnboardingLinkType.Payee,
-                  })
-                }
-                toast.info('Link Sent')
-              }}
+              Total Amount
+            </th>
+            <th
+              scope="col"
+              className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
             >
-              Send Onboarding Email
-            </MercoaButton>
-          </Tooltip>
-        </div>
-
-        <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-pt-6 mercoa-items-center">
-          <dd className="mercoa-text-lg mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
-            {type === 'payor' ? 'Customer' : 'Vendor'} Details
-          </dd>
-        </div>
-        {counterpartyLocal.email && (
-          <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-border-t mercoa-border-gray-900/5 mercoa-mt-3 mercoa-pt-2">
-            <dt className="mercoa-flex-none">
-              <span className="mercoa-sr-only">Email</span>
-              <EnvelopeIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
-            </dt>
-            <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700 mercoa-select-all">
-              <a
-                className="mercoa-text-sm mercoa-font-medium mercoa-leading-3 mercoa-text-blue-400"
-                href={`mailto:${counterpartyLocal.email}`}
-              >
-                {counterpartyLocal.email}
-              </a>
-            </dd>
-          </div>
-        )}
-        {phoneNumber && (
-          <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-1">
-            <dt className="mercoa-flex-none">
-              <span className="mercoa-sr-only">Phone</span>
-              <DevicePhoneMobileIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
-            </dt>
-            <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700 mercoa-select-all">
-              <a
-                className="mercoa-text-sm mercoa-font-medium mercoa-leading-3 mercoa-text-blue-400"
-                href={`tel:${phone}`}
-              >
-                {phone}
-              </a>
-            </dd>
-          </div>
-        )}
-        {address?.addressLine1 && (
-          <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-1">
-            <dt className="mercoa-flex-none">
-              <span className="mercoa-sr-only">Address</span>
-              <MapPinIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
-            </dt>
-            <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700">
-              <a
-                className="mercoa-text-sm mercoa-font-medium mercoa-leading-3 mercoa-text-blue-400"
-                href={`https://www.google.com/maps/search/?api=1&query=${addressString}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {addressString}
-              </a>
-            </dd>
-          </div>
-        )}
-        {counterparty?.profile.business?.taxIdProvided && (
-          <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-1">
-            <dt className="mercoa-flex-none">
-              <span className="mercoa-sr-only">EIN</span>
-              <ShieldCheckIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
-            </dt>
-            <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700 mercoa-select-all">EIN: **-*******</dd>
-          </div>
-        )}
-        {counterparty?.profile.individual?.governmentIdProvided && (
-          <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-1">
-            <dt className="mercoa-flex-none">
-              <span className="mercoa-sr-only">SSN</span>
-              <ShieldCheckIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
-            </dt>
-            <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700 mercoa-select-all">SSN: ***-**-****</dd>
-          </div>
-        )}
-        {TenNinetyNine && (
-          <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-1">
-            <dt className="mercoa-flex-none">
-              <span className="mercoa-sr-only">1099 Document</span>
-              <DocumentIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
-            </dt>
-            <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700">
-              <a
-                className="mercoa-text-sm mercoa-font-medium mercoa-leading-3 mercoa-text-blue-400"
-                href={TenNinetyNine.uri}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                1099 Document
-              </a>
-            </dd>
-          </div>
-        )}
-        {W9 && (
-          <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-1">
-            <dt className="mercoa-flex-none">
-              <span className="mercoa-sr-only">W9 Document</span>
-              <DocumentIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
-            </dt>
-            <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700">
-              <a
-                className="mercoa-text-sm mercoa-font-medium mercoa-leading-3 mercoa-text-blue-400"
-                href={W9.uri}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                W9 Document
-              </a>
-            </dd>
-          </div>
-        )}
-
-        <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-3">
-          <MercoaButton
-            size="sm"
-            isEmphasized={false}
-            onClick={() => {
-              setIsEditing(true)
-            }}
-          >
-            Edit Details
-          </MercoaButton>
-        </div>
-
-        <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-pt-6 mercoa-items-center">
-          <dd className="mercoa-text-lg mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
-            {type === 'payor' ? 'Customer' : 'Vendor'} Payment Methods
-          </dd>
-        </div>
-
-        <table className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300">
-          <thead className="mercoa-bg-gray-50">
-            <tr>
-              <th
-                scope="col"
-                className="mercoa-py-3.5 mercoa-pl-4 mercoa-pr-3 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 sm:mercoa-pl-6"
-              >
-                Name
-              </th>
-              <th
-                scope="col"
-                className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
-              >
-                Type
-              </th>
-              <th
-                scope="col"
-                className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
-              >
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="mercoa-bg-white">
-            {paymentMethods.map((method, index) => (
-              <tr key={method.id} className={`${index % 2 === 0 ? undefined : 'mercoa-bg-gray-50'}`}>
-                <td className="mercoa-whitespace-nowrap mercoa-py-4 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-6">
-                  {formatPaymentMethodName(method)}
-                </td>
-                <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
-                  {formatPaymentMethodType(method, mercoaSession.customPaymentMethodSchemas)}
-                </td>
-                <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
-                  {method.isDefaultDestination ? (
-                    <div className="mercoa-text-xs mercoa-text-gray-700">Default Destination</div>
-                  ) : (
-                    <MercoaButton
-                      isEmphasized={false}
-                      size="sm"
-                      onClick={async () => {
-                        await mercoaSession.client?.entity.paymentMethod.update(counterpartyLocal.id, method.id, {
-                          type: method.type,
-                          defaultDestination: true,
-                        })
-                        mercoaSession.refresh()
-                      }}
-                    >
-                      Set as Default Destination
-                    </MercoaButton>
+              Remaining Amount
+            </th>
+            <th
+              scope="col"
+              className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+            >
+              Creation Date
+            </th>
+            <th
+              scope="col"
+              className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+            >
+              Note
+            </th>
+          </tr>
+        </thead>
+        <tbody className="mercoa-bg-white">
+          {vendorCredits &&
+            vendorCredits.map((vendorCredit, index) => (
+              <tr key={vendorCredit.id} className={`${index % 2 === 0 ? '' : 'mercoa-bg-gray-50'}`}>
+                <td className="mercoa-whitespace-nowrap mercoa-py-4 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-text-gray-900 sm:mercoa-pl-6">
+                  {accounting.formatMoney(
+                    Number(vendorCredit.totalAmount),
+                    currencyCodeToSymbol(vendorCredit.currency),
                   )}
+                </td>
+                <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                  {accounting.formatMoney(
+                    Number(vendorCredit.remainingAmount),
+                    currencyCodeToSymbol(vendorCredit.currency),
+                  )}
+                </td>
+                <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                  {dayjs(vendorCredit.createdAt).format('MMM DD, YYYY')}
+                </td>
+                <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                  {vendorCredit.note}
                 </td>
                 {admin && (
                   <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
-                    {method.id}
+                    {vendorCredit.id}
                   </td>
                 )}
               </tr>
             ))}
-          </tbody>
-        </table>
+          <tr>
+            <td
+              colSpan={admin ? 5 : 4}
+              className={vendorCredits && vendorCredits.length % 2 === 1 ? 'mercoa-bg-gray-50' : ''}
+              onClick={() => setCreateVendorCreditOpen(true)}
+            >
+              <div className="mercoa-flex mercoa-justify-center mercoa-items-center mercoa-cursor-pointer mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 hover:mercoa-bg-gray-100 hover:mercoa-text-gray-900">
+                <PlusIcon className="mercoa-h-4 mercoa-w-5 mercoa-mr-2" />
+                <span className="mercoa-hidden md:mercoa-inline-block">Add New</span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <Transition.Root show={!!createVendorCreditOpen} as={Fragment}>
+        <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={() => setCreateVendorCreditOpen(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="mercoa-ease-out mercoa-duration-300"
+            enterFrom="mercoa-opacity-0"
+            enterTo="mercoa-opacity-100"
+            leave="mercoa-ease-in mercoa-duration-200"
+            leaveFrom="mercoa-opacity-100"
+            leaveTo="mercoa-opacity-0"
+          >
+            <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
+          </Transition.Child>
 
-        <div className="mercoa-flex mercoa-flex-auto mercoa-pl-6 mercoa-pt-6 mercoa-items-center">
-          <dd className="mercoa-text-lg mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-inline">
-            {type === 'payor' ? 'Customer' : 'Vendor'} Invoices
-          </dd>
-        </div>
-
-        <table className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300">
-          <thead className="mercoa-bg-gray-50">
-            <tr>
-              <th
-                scope="col"
-                className="mercoa-py-3.5 mercoa-pl-4 mercoa-pr-3 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 sm:mercoa-pl-6"
+          <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
+            <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
+              <Transition.Child
+                as={Fragment}
+                enter="mercoa-ease-out mercoa-duration-300"
+                enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+                enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                leave="mercoa-ease-in mercoa-duration-200"
+                leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
               >
-                Invoice Number
-              </th>
-              <th
-                scope="col"
-                className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
-              >
-                Amount
-              </th>
-              <th
-                scope="col"
-                className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
-              >
-                Invoice Date
-              </th>
-              <th
-                scope="col"
-                className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
-              >
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody className="mercoa-bg-white">
-            {invoiceHistory &&
-              invoiceHistory.map((invoice, index) => (
-                <tr key={invoice.id} className={`${index % 2 === 0 ? undefined : 'mercoa-bg-gray-50'}`}>
-                  <td className="mercoa-whitespace-nowrap mercoa-py-4 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-6">
-                    {invoice.invoiceNumber}
-                  </td>
-                  <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
-                    {accounting.formatMoney(Number(invoice.amount), currencyCodeToSymbol(invoice.currency))}
-                  </td>
-                  <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
-                    {dayjs(invoice.invoiceDate).format('MMM DD, YYYY')}
-                  </td>
-                  <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
-                    {invoice.status}
-                  </td>
-                  {admin && (
-                    <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
-                      {invoice.id}
-                    </td>
+                <Dialog.Panel
+                  className={`mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-max-w-lg sm:mercoa-p-6`}
+                >
+                  {createVendorCreditOpen && (
+                    <CreateVendorCredit
+                      counterpartyId={counterpartyLocal.id}
+                      setCreateVendorCreditOpen={setCreateVendorCreditOpen}
+                    />
                   )}
-                </tr>
-              ))}
-          </tbody>
-        </table>
-      </div>
-    )
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition.Root>
+    </>
+  )
+}
+
+function CreateVendorCredit({
+  counterpartyId,
+  setCreateVendorCreditOpen,
+}: {
+  counterpartyId: Mercoa.EntityId
+  setCreateVendorCreditOpen: (open: boolean) => void
+}) {
+  const mercoaSession = useMercoaSession()
+
+  const schema = yup
+    .object({
+      totalAmount: yup.number().positive().typeError('Please enter a valid number'),
+      currency: yup.string().required(),
+      note: yup.string().nullable(),
+    })
+    .required()
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    control,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
+    defaultValues: {
+      totalAmount: 0,
+      currency: 'USD',
+      note: '',
+    },
+  })
+
+  const currency = watch('currency')
+
+  const onSubmit = async (data: any) => {
+    if (!mercoaSession.token || !mercoaSession.entity?.id || !counterpartyId) return
+    const create: Mercoa.VendorCreditRequest = {
+      totalAmount: Number(data.totalAmount),
+      currency: data.currency,
+      note: data.note,
+    }
+    try {
+      await mercoaSession.client?.entity.counterparty.vendorCredit.create(
+        counterpartyId,
+        mercoaSession.entity.id,
+        create,
+      )
+      toast('Vendor credit created!', { type: 'success' })
+    } catch (e: any) {
+      console.error(e)
+      toast('There was an error creating the vendor credit.', { type: 'error' })
+    }
+    setCreateVendorCreditOpen(false)
+    mercoaSession.refresh()
   }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900 mercoa-mb-4">
+        Create Vendor Credit
+      </h2>
+      <MercoaInput
+        control={control}
+        name="totalAmount"
+        label="Total Amount"
+        type="currency"
+        leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>}
+        trailingIcon={
+          <>
+            <label htmlFor="currency" className="mercoa-sr-only">
+              Currency
+            </label>
+            <select
+              {...register('currency')}
+              className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+            >
+              <option value="USD">USD</option>
+            </select>
+          </>
+        }
+        errors={errors}
+      />
+
+      <MercoaInput label="Note" register={register} name="note" className="mercoa-mt-2" />
+      <MercoaButton isEmphasized={true} className="mercoa-mt-5 mercoa-w-full">
+        Create
+      </MercoaButton>
+    </form>
+  )
 }
 
 export function AddCounterpartyAccount({ prefix }: { prefix?: string }) {
