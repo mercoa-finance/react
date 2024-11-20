@@ -2818,6 +2818,7 @@ export function PayableOverview({
   const currency = watch('currency')
   const status = watch('status')
   const paymentDestinationType = watch('paymentDestinationType')
+
   const notDraft = !!status && status !== Mercoa.InvoiceStatus.Draft
 
   // Get Supported Currencies
@@ -2897,9 +2898,6 @@ export function PayableOverview({
   }
   if (width && width > 900) {
     formCols = 'mercoa-grid-cols-5'
-  }
-  if (width && width > 1100) {
-    formCols = 'mercoa-grid-cols-6'
   }
 
   return (
@@ -3001,9 +2999,10 @@ export function PayableOverview({
       <div className="mercoa-col-span-full">
         <label
           htmlFor="description"
-          className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 "
+          className="mercoa-flex mercoa-justify-between mercoa-items-center mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 "
         >
           Description
+          <PrintDescriptionOnCheckRemittanceSwitch />
         </label>
         <div className="mercoa-mt-2">
           <textarea
@@ -3017,6 +3016,40 @@ export function PayableOverview({
         </div>
       </div>
     </div>
+  )
+}
+
+function PrintDescriptionOnCheckRemittanceSwitch() {
+  const {
+    watch,
+    setValue,
+    register,
+    formState: { errors },
+  } = useFormContext()
+
+  const paymentDestinationType = watch('paymentDestinationType')
+  const paymentDestinationOptions = watch('paymentDestinationOptions')
+
+  // Only runs when paymentDestinationOptions is not set
+  useEffect(() => {
+    if (paymentDestinationOptions?.printDescription && !paymentDestinationOptions?.type) {
+      setValue('paymentDestinationOptions', {
+        type: 'check',
+        delivery: 'MAIL',
+        printDescription: true,
+      })
+    }
+  }, [paymentDestinationOptions])
+
+  if (paymentDestinationType !== 'check') return <></>
+  return (
+    <MercoaSwitch
+      label="Print Description on Check Remittance"
+      name="paymentDestinationOptions.printDescription"
+      register={register}
+      errors={errors}
+      className="mercoa-mt-[0px]"
+    />
   )
 }
 
@@ -3458,10 +3491,8 @@ export function PayableSelectPaymentMethod({
                     },
                   ]}
                   onChange={(selected) => {
-                    setValue('paymentDestinationOptions', {
-                      type: 'check',
-                      delivery: selected.key,
-                    })
+                    setValue('paymentDestinationOptions.type', 'check')
+                    setValue('paymentDestinationOptions.delivery', selected.key)
                   }}
                   displayIndex="value"
                   value={() => {
@@ -3690,22 +3721,19 @@ export function PaymentDestinationProcessingTime({
   const status = watch('status') as Mercoa.InvoiceStatus
   const invoiceId = watch('invoiceId') as string
 
-  let payload: Mercoa.CalculatePaymentTimingRequest = {
-    invoiceId,
-  }
-  if (status !== Mercoa.InvoiceStatus.New && status !== Mercoa.InvoiceStatus.Draft) {
-    payload = {
-      ...(processedAt ? { processedAt } : { estimatedDeductionDate: deductionDate }),
-      paymentSourceId,
-      paymentDestinationId,
-      paymentDestinationOptions,
-    }
-  }
-
   const [timing, setTiming] = useState<Mercoa.CalculatePaymentTimingResponse>()
 
   useEffect(() => {
     if (paymentSourceId && paymentDestinationId && deductionDate) {
+      let payload: Mercoa.CalculatePaymentTimingRequest = {
+        invoiceId,
+      }
+      payload = {
+        ...(processedAt ? { processedAt } : { estimatedDeductionDate: deductionDate }),
+        paymentSourceId,
+        paymentDestinationId,
+        paymentDestinationOptions,
+      }
       mercoaSession.client?.calculate
         .paymentTiming(payload)
         .then((timing) => {
@@ -4916,12 +4944,7 @@ export function PayableFees({
   const vendorCreditTotal =
     amountNumber && vendorCreditUsage?.remainingAmount ? amountNumber - vendorCreditUsage.remainingAmount : 0
 
-  if (
-    amount &&
-    paymentSourceId &&
-    paymentDestinationId &&
-    (fees?.destinationPlatformMarkupFee || (vendorCreditIds?.length ?? 0) > 0)
-  ) {
+  if (amount && paymentSourceId && paymentDestinationId && (feeTotal || (vendorCreditIds?.length ?? 0) > 0)) {
     return (
       <div className="mercoa-col-span-full">
         <div className="mercoa-flex mercoa-text-gray-700 mercoa-text-md">
@@ -4932,21 +4955,25 @@ export function PayableFees({
           </span>
         </div>
 
-        <div className="mercoa-flex mercoa-text-gray-700 mercoa-text-md">
-          <div className="mercoa-flex-1" />
-          Payment Fees:
-          <span className="mercoa-font-medium mercoa-ml-1 mercoa-text-gray-900 mercoa-w-28 mercoa-text-right">
-            {accounting.formatMoney(feeTotal, currencyCodeToSymbol(currency))}
-          </span>
-        </div>
+        {feeTotal > 0 && (
+          <div className="mercoa-flex mercoa-text-gray-700 mercoa-text-md">
+            <div className="mercoa-flex-1" />
+            Payment Fees:
+            <span className="mercoa-font-medium mercoa-ml-1 mercoa-text-gray-900 mercoa-w-28 mercoa-text-right">
+              {accounting.formatMoney(feeTotal, currencyCodeToSymbol(currency))}
+            </span>
+          </div>
+        )}
 
-        <div className="mercoa-flex mercoa-text-gray-700 mercoa-text-md">
-          <div className="mercoa-flex-1" />
-          Vendor Credits:
-          <span className="mercoa-font-medium mercoa-ml-1 mercoa-text-gray-900 mercoa-w-28 mercoa-text-right">
-            -{accounting.formatMoney(vendorCreditTotal, currencyCodeToSymbol(currency))}
-          </span>
-        </div>
+        {vendorCreditTotal > 0 && (
+          <div className="mercoa-flex mercoa-text-gray-700 mercoa-text-md">
+            <div className="mercoa-flex-1" />
+            Vendor Credits:
+            <span className="mercoa-font-medium mercoa-ml-1 mercoa-text-gray-900 mercoa-w-28 mercoa-text-right">
+              -{accounting.formatMoney(vendorCreditTotal, currencyCodeToSymbol(currency))}
+            </span>
+          </div>
+        )}
 
         <div className="mercoa-flex mercoa-mb-1">
           <div className="mercoa-flex-1" />

@@ -2411,7 +2411,7 @@ export function EntityOnboardingForm({
               }
             />
             <MercoaInput register={register} name="foreignId" label="Foreign ID" type="text" />
-            <div className="mercoa-col-span-full mercoa-grid mercoa-grid-cols-3 mercoa-space-x-2">
+            <div className="mercoa-col-span-full mercoa-grid mercoa-grid-cols-3 mercoa-gap-2">
               <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-rounded-mercoa mercoa-border mercoa-p-2">
                 <label
                   htmlFor="isCustomer"
@@ -2451,14 +2451,12 @@ export function EntityOnboardingForm({
                   className={'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 focus:mercoa-ring-mercoa-primary'}
                 />
               </div>
-            </div>
-            <div className="mercoa-col-span-full mercoa-grid mercoa-grid-cols-3 mercoa-space-x-2">
-              <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-col-start-2 mercoa-ml-2 mercoa-rounded-mercoa mercoa-border mercoa-p-2">
+              <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-rounded-mercoa mercoa-border mercoa-p-2">
                 <label
                   htmlFor="isOrganizationEntity"
                   className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
                 >
-                  Organization Entity
+                  Is Organization Entity
                 </label>
                 <input
                   type="checkbox"
