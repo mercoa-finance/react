@@ -1,9 +1,9 @@
 import { BuildingLibraryIcon, PencilIcon } from '@heroicons/react/24/outline'
-import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import { ReactNode, useEffect, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize } from '../lib/lib'
 import {

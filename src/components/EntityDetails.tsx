@@ -1,8 +1,8 @@
 import { Square2StackIcon } from '@heroicons/react/24/outline'
-import { Mercoa } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import { MercoaCombobox, NoSession, TableNavigation, Tooltip, useMercoaSession } from './index'
 
 export function EntityDetails({ children }: { children: Function }) {

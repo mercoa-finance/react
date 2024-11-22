@@ -1,7 +1,7 @@
 import { BuildingLibraryIcon, CreditCardIcon, EnvelopeIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
-import { Mercoa } from '@mercoa/javascript'
 import { Fragment, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import {
   AddBankViaPlaidOrManual,
   AddCheck,

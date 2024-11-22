@@ -1,7 +1,6 @@
 import { Bar, Container, Section } from '@column-resizer/react'
 import { DocumentDuplicateIcon, EnvelopeIcon, GlobeAltIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Mercoa } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { useEffect, useState } from 'react'
@@ -15,6 +14,7 @@ import {
   useFormContext,
 } from 'react-hook-form'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import InvoicePreview from './InvoicePreview'

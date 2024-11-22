@@ -23,7 +23,6 @@ import {
 } from '@heroicons/react/24/outline'
 import { PhotoIcon } from '@heroicons/react/24/solid'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Mercoa } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import accounting from 'accounting'
 import Big from 'big.js'
@@ -48,6 +47,7 @@ import {
 } from 'react-hook-form'
 import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { classNames } from '../lib/lib'
@@ -134,7 +134,7 @@ export type PayableDetailsChildrenProps = {
   setOcrProcessing?: Dispatch<SetStateAction<boolean>>
 }
 
-function getInvoiceClient(mercoaSession: MercoaContext, invoiceType: 'invoice' | 'invoiceTemplate') {
+export function getInvoiceClient(mercoaSession: MercoaContext, invoiceType: 'invoice' | 'invoiceTemplate') {
   if (invoiceType === 'invoice') {
     return mercoaSession.client?.invoice
   } else {
@@ -441,7 +441,7 @@ export function PayableForm({
       invoiceNumber: invoice?.invoiceNumber,
       amount: invoice?.amount,
       currency: invoice?.currency ?? 'USD',
-      payerId: invoice?.payer?.id,
+      payerId: invoice?.payer?.id ?? mercoaSession.entityId,
       vendorId: invoice?.vendor?.id,
       vendorName: invoice?.vendor?.name,
       invoiceDate: invoice?.invoiceDate ? dayjs(invoice?.invoiceDate).toDate() : undefined,
@@ -545,7 +545,7 @@ export function PayableForm({
     setValue('invoiceNumber', invoice.invoiceNumber)
     setValue('amount', invoice.amount)
     setValue('currency', invoice.currency ?? 'USD')
-    setValue('payerId', invoice.payer?.id)
+    setValue('payerId', invoice.payer?.id ?? mercoaSession.entityId)
     setValue('vendorId', invoice.vendor?.id)
     setValue('vendorName', invoice.vendor?.name)
     setValue('invoiceDate', invoice.invoiceDate ? dayjs(invoice.invoiceDate).toDate() : undefined)
@@ -731,7 +731,7 @@ export function PayableForm({
       refreshInvoice(data.id)
       return
     } else if (data.saveAsStatus === 'COUNTERPARTY') {
-      let profile = createCounterpartyRequest({ data: data.vendor, setError, type: 'payor' })
+      let profile = createCounterpartyRequest({ data: data.vendor, setError, type: 'payee' })
       if (counterpartyPreSubmit) {
         profile = await counterpartyPreSubmit(profile)
       }
@@ -1388,8 +1388,13 @@ export function PayableForm({
       }
     }
 
-    // Auto-assign vendor credits if the invoice is saved as NEW or APPROVED (before scheduled)
-    if (nextInvoiceState === Mercoa.InvoiceStatus.New || nextInvoiceState === Mercoa.InvoiceStatus.Approved) {
+    // Auto-assign vendor credits if the invoice is saved as NEW, APPROVED, or SCHEDULED
+    const vendorCreditUpdateStatuses: Mercoa.InvoiceStatus[] = [
+      Mercoa.InvoiceStatus.New,
+      Mercoa.InvoiceStatus.Approved,
+      Mercoa.InvoiceStatus.Scheduled,
+    ]
+    if (vendorCreditUpdateStatuses.includes(nextInvoiceState)) {
       if (invoiceData.payerId && invoiceData.vendorId && invoiceData.amount) {
         const vendorCreditUsage = await mercoaSession.client?.entity.counterparty.vendorCredit.estimateUsage(
           invoiceData.payerId,
@@ -1397,6 +1402,7 @@ export function PayableForm({
           {
             amount: Number(invoiceData.amount),
             currency: 'USD',
+            ...(invoice?.id && { excludedInvoiceIds: [invoice.id] }),
           },
         )
         const vendorCredits = vendorCreditUsage?.vendorCredits
@@ -1552,7 +1558,7 @@ export function PayableForm({
               getVendorPaymentLink,
               formMethods: methods as any,
               setValue: setValue as any,
-              watch,
+              watch: watch as any,
               control: control as any,
               errors: errors as any,
               clearErrors: clearErrors as any,
@@ -4870,29 +4876,32 @@ export function PayableFees({
   children?: ({ fees }: { fees?: Mercoa.InvoiceFeesResponse }) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
-  const { watch, setError, clearErrors } = useFormContext()
 
+  const [fees, setFees] = useState<Mercoa.InvoiceFeesResponse>()
+  const [vendorCreditUsage, setVendorCreditUsage] = useState<Mercoa.CalculateVendorCreditUsageResponse>()
+
+  const { watch, setError, clearErrors } = useFormContext()
+  const invoiceId = watch('id')
+  const status = watch('status')
   const amount = watch('amount')
   const currency = watch('currency')
-  const payerId = watch('payerId')
+  const payerId = mercoaSession.entityId
   const vendorId = watch('vendorId')
   const paymentSourceId = watch('paymentSourceId')
   const paymentDestinationId = watch('paymentDestinationId')
   const paymentDestinationOptions = watch('paymentDestinationOptions')
   const vendorCreditIds = watch('vendorCreditIds') as Mercoa.VendorCreditId[] | undefined
 
-  const [fees, setFees] = useState<Mercoa.InvoiceFeesResponse>()
-  const [vendorCreditUsage, setVendorCreditUsage] = useState<Mercoa.CalculateVendorCreditUsageResponse>()
-
-  // convert number to digits
+  // Convert number to digits
   let amountNumber = amount
   if (typeof amount === 'string') {
     amountNumber = Number(amount.replace(/,/g, ''))
   }
 
+  // Calculate fees
   useEffect(() => {
-    if (amountNumber && paymentSourceId && paymentDestinationId) {
-      mercoaSession.client?.calculate
+    if (mercoaSession.client && amountNumber && paymentSourceId && paymentDestinationId) {
+      mercoaSession.client.calculate
         .fee({
           amount: amountNumber,
           paymentSourceId,
@@ -4910,14 +4919,25 @@ export function PayableFees({
           })
         })
     }
-  }, [amountNumber, paymentSourceId, paymentDestinationId, paymentDestinationOptions])
+  }, [mercoaSession.client, amountNumber, paymentSourceId, paymentDestinationId, paymentDestinationOptions])
 
+  // Calculate estimated vendor credit usage
   useEffect(() => {
-    if (amountNumber && payerId && vendorId) {
+    if (mercoaSession.client && amountNumber && payerId && vendorId) {
+      const vendorCreditApplicationIsFixed =
+        status &&
+        ![
+          Mercoa.InvoiceStatus.Unassigned,
+          Mercoa.InvoiceStatus.Draft,
+          Mercoa.InvoiceStatus.New,
+          Mercoa.InvoiceStatus.Approved,
+        ].includes(status)
       mercoaSession.client?.entity.counterparty.vendorCredit
         .estimateUsage(payerId, vendorId, {
           amount: amountNumber,
           currency: 'USD',
+          ...(invoiceId && { excludedInvoiceIds: [invoiceId] }),
+          ...(vendorCreditApplicationIsFixed && { includedVendorCreditIds: vendorCreditIds ?? [] }),
         })
         .then((usage) => {
           setVendorCreditUsage(usage)
@@ -4930,17 +4950,18 @@ export function PayableFees({
           })
         })
     }
-  }, [amountNumber, payerId, vendorId])
+  }, [mercoaSession.client, amountNumber, payerId, vendorId])
 
   if (children) {
-    return children({ fees: fees })
+    return children({ fees })
   }
 
   const feeTotal = (fees?.destinationPlatformMarkupFee ?? 0) + (fees?.sourcePlatformMarkupFee ?? 0)
-  const vendorCreditTotal =
-    amountNumber && vendorCreditUsage?.remainingAmount ? amountNumber - vendorCreditUsage.remainingAmount : 0
+  const vendorCreditTotal = !!(amountNumber !== undefined && vendorCreditUsage?.remainingAmount !== undefined)
+    ? amountNumber - vendorCreditUsage.remainingAmount
+    : 0
 
-  if (amount && paymentSourceId && paymentDestinationId && (feeTotal || (vendorCreditIds?.length ?? 0) > 0)) {
+  if (amount && (feeTotal || vendorCreditTotal)) {
     return (
       <div className="mercoa-col-span-full">
         <div className="mercoa-flex mercoa-text-gray-700 mercoa-text-md">

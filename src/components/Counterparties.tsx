@@ -14,7 +14,6 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import debounce from 'lodash/debounce'
@@ -22,6 +21,7 @@ import Papa from 'papaparse'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize, constructFullName } from '../lib/lib'
@@ -915,7 +915,7 @@ function CounterpartyAddOrEditForm({
         className="mercoa-mt-1"
       />
 
-      <div className="mercoa-mt-1 mercoa-mt-2 mercoa-flex mercoa-space-x-2">
+      <div className="mercoa-mt-2 mercoa-flex mercoa-space-x-2">
         <button
           type="button"
           onClick={() => setValue('vendor.accountType', 'individual')}
@@ -2029,7 +2029,12 @@ export function CounterpartyDetails({
 
         {/* Vendor Credits */}
         {!hideCounterpartyVendorCredits && (
-          <VendorCreditsTable vendorCredits={vendorCredits} counterpartyLocal={counterpartyLocal} admin={admin} />
+          <VendorCreditsTable
+            vendorCredits={vendorCredits}
+            counterpartyLocal={counterpartyLocal}
+            type={type}
+            admin={admin}
+          />
         )}
       </div>
     )
@@ -2039,10 +2044,12 @@ export function CounterpartyDetails({
 function VendorCreditsTable({
   vendorCredits,
   counterpartyLocal,
+  type,
   admin,
 }: {
   vendorCredits?: Mercoa.VendorCreditResponse[]
   counterpartyLocal: Mercoa.CounterpartyResponse
+  type: 'payor' | 'payee'
   admin?: boolean
 }) {
   const [createVendorCreditOpen, setCreateVendorCreditOpen] = useState(false)
@@ -2156,6 +2163,7 @@ function VendorCreditsTable({
                 >
                   {createVendorCreditOpen && (
                     <CreateVendorCredit
+                      type={type}
                       counterpartyId={counterpartyLocal.id}
                       setCreateVendorCreditOpen={setCreateVendorCreditOpen}
                     />
@@ -2171,9 +2179,11 @@ function VendorCreditsTable({
 }
 
 function CreateVendorCredit({
+  type,
   counterpartyId,
   setCreateVendorCreditOpen,
 }: {
+  type: 'payor' | 'payee'
   counterpartyId: Mercoa.EntityId
   setCreateVendorCreditOpen: (open: boolean) => void
 }) {
@@ -2212,11 +2222,19 @@ function CreateVendorCredit({
       note: data.note,
     }
     try {
-      await mercoaSession.client?.entity.counterparty.vendorCredit.create(
-        counterpartyId,
-        mercoaSession.entity.id,
-        create,
-      )
+      if (type === 'payee') {
+        await mercoaSession.client?.entity.counterparty.vendorCredit.create(
+          mercoaSession.entity.id,
+          counterpartyId,
+          create,
+        )
+      } else {
+        await mercoaSession.client?.entity.counterparty.vendorCredit.create(
+          counterpartyId,
+          mercoaSession.entity.id,
+          create,
+        )
+      }
       toast('Vendor credit created!', { type: 'success' })
     } catch (e: any) {
       console.error(e)

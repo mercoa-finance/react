@@ -1,11 +1,11 @@
 import { Dialog, Transition } from '@headlessui/react'
 import { EnvelopeIcon, PlusCircleIcon, TrashIcon } from '@heroicons/react/24/outline'
-import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import { Fragment, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import {
   LoadingSpinnerIcon,
