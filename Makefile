@@ -3,7 +3,7 @@ COMPONENTS_DIR := ./src/components
 ORIGINAL_DIR := ../core/components/@mercoa/react/src/components
 FILES := $(shell find $(COMPONENTS_DIR) -type f)
 
-# Copy Copmponents
+# Copy Components
 copy_components:
 	@echo "Copying Components..."
 	rsync -av $(ORIGINAL_DIR) ./src/
@@ -30,7 +30,10 @@ replace_import:
 		done
 		@echo "String replaced successfully"
 
+prettier:
+		npm run prettier
+
 # Define phony targets
 .PHONY: replace_string
 
-sync: copy_components replace_import
+sync: copy_components replace_import prettier

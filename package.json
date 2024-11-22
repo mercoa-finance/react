@@ -1,7 +1,7 @@
 {
   "name": "@mercoa/react",
   "description": "Mercoa React Component Library",
-  "version": "0.0.64",
+  "version": "0.0.65",
   "author": "Sandeep Dinesh <sandeep@mercoa.com>",
   "license": "MIT",
   "repository": {
@@ -14,7 +14,8 @@
   "scripts": {
     "build": "tsc && vite build && tailwindcss -i ./src/tailwind.css -o ./dist/mercoa.css --minify && cat ./dist/mercoa.css ./node_modules/react-datepicker/dist/react-datepicker.min.css ./node_modules/react-toastify/dist/ReactToastify.min.css > ./dist/style.css && cp ./src/tailwind.base.css ./dist/tailwind.base.css",
     "dev": "npm start",
-    "lint": "eslint . --ext .ts,.tsx"
+    "lint": "eslint . --ext .ts,.tsx",
+    "prettier": "prettier --write ./src/components"
   },
   "peerDependencies": {
     "react": "^18.2.0",
@@ -63,7 +64,7 @@
     "@headlessui/react": "^1.7.19",
     "@heroicons/react": "^2.1.1",
     "@hookform/resolvers": "^3.3.2",
-    "@mercoa/javascript": "^0.6.1",
+    "@mercoa/javascript": "^0.6.2",
     "@react-hook/resize-observer": "^1.2.6",
     "accounting": "^0.4.1",
     "big.js": "^6.2.1",

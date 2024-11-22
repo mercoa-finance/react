@@ -6,12 +6,12 @@ import {
   MapPinIcon,
   PrinterIcon,
 } from '@heroicons/react/24/outline'
-import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import QRCode from 'react-qr-code'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { AddBankAccount, LoadingSpinnerIcon, MercoaButton, useMercoaSession } from './index'
 

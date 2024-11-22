@@ -1,12 +1,12 @@
 import { Dialog } from '@headlessui/react'
 import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
-import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import Papa from 'papaparse'
 import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { classNames } from '../lib/lib'
 import { isWeekday } from '../lib/scheduling'
@@ -15,6 +15,7 @@ import {
   DebouncedSearch,
   EntitySelector,
   filterApproverOptions,
+  getInvoiceClient,
   MercoaButton,
   MercoaCombobox,
   NoSession,
@@ -26,19 +27,31 @@ import {
   useMercoaSession,
 } from './index'
 
-function invoiceStatusToName(
-  name: Mercoa.InvoiceStatus,
-  approvalPolicies?: Mercoa.ApprovalPolicyResponse[],
-  excludePayables?: boolean,
-) {
+function invoiceStatusToName({
+  status,
+  approvalPolicies,
+  excludePayables,
+  invoiceType = 'invoice',
+}: {
+  status: Mercoa.InvoiceStatus
+  approvalPolicies?: Mercoa.ApprovalPolicyResponse[]
+  excludePayables?: boolean
+  invoiceType?: 'invoice' | 'invoiceTemplate'
+}) {
+  // Receivables
   if (excludePayables) {
-    return invoiceStatusToReceivableName(name, approvalPolicies)
+    return invoiceStatusToReceivableName(status, approvalPolicies)
+  }
+
+  // Payables
+  if (invoiceType === 'invoice') {
+    return invoiceStatusToPayableName(status, approvalPolicies)
   } else {
-    return invoiceStatusToPayableName(name, approvalPolicies)
+    return invoiceTemplateStatusToPayableName(status)
   }
 }
 
-function invoiceStatusToPayableName(name: Mercoa.InvoiceStatus, approvalPolicies?: Mercoa.ApprovalPolicyResponse[]) {
+function invoiceStatusToPayableName(status: Mercoa.InvoiceStatus, approvalPolicies?: Mercoa.ApprovalPolicyResponse[]) {
   const out = {
     UNASSIGNED: 'Unassigned',
     DRAFT: 'Inbox',
@@ -52,10 +65,30 @@ function invoiceStatusToPayableName(name: Mercoa.InvoiceStatus, approvalPolicies
     REFUSED: 'Rejected',
     ARCHIVED: 'Archived',
   }
-  return out[name]
+  return out[status]
 }
 
-function invoiceStatusToReceivableName(name: Mercoa.InvoiceStatus, approvalPolicies?: Mercoa.ApprovalPolicyResponse[]) {
+function invoiceTemplateStatusToPayableName(status: Mercoa.InvoiceStatus) {
+  const out = {
+    UNASSIGNED: 'Unassigned',
+    DRAFT: 'Draft',
+    NEW: 'Ready for Review',
+    APPROVED: 'Approved',
+    SCHEDULED: 'Active',
+    PENDING: 'Payment Processing', // unused
+    FAILED: 'Payment Failed', // unused
+    PAID: 'Paid', // unused
+    CANCELED: 'Canceled',
+    REFUSED: 'Rejected', // unused
+    ARCHIVED: 'Archived', // unused
+  }
+  return out[status]
+}
+
+function invoiceStatusToReceivableName(
+  status: Mercoa.InvoiceStatus,
+  approvalPolicies?: Mercoa.ApprovalPolicyResponse[],
+) {
   const out = {
     UNASSIGNED: 'Unassigned',
     DRAFT: 'Draft',
@@ -69,7 +102,7 @@ function invoiceStatusToReceivableName(name: Mercoa.InvoiceStatus, approvalPolic
     REFUSED: 'Rejected',
     ARCHIVED: 'Archived',
   }
-  return out[name]
+  return out[status]
 }
 
 function SchedulePaymentModal({
@@ -181,20 +214,7 @@ function AddApproverModal({
 }) {
   const mercoaSession = useMercoaSession()
 
-  const [users, setUsers] = useState<Mercoa.EntityUserResponse[]>([])
   const [selectedUser, setSelectedUser] = useState<Mercoa.EntityUserResponse>()
-
-  useEffect(() => {
-    if (!mercoaSession.entityId) return
-    mercoaSession.client?.entity.user
-      .getAll(mercoaSession.entityId)
-      .then((resp) => {
-        setUsers(resp)
-      })
-      .catch((err) => {
-        console.error(err)
-      })
-  }, [mercoaSession.token, mercoaSession.entityId])
 
   return (
     <Dialog as="div" open={open} onClose={onClose} className="mercoa-relative mercoa-z-10">
@@ -212,7 +232,7 @@ function AddApproverModal({
             </Tooltip>
             <div className="mercoa-flex mercoa-mt-5">
               <MercoaCombobox
-                options={users.map((user) => ({
+                options={mercoaSession.users.map((user) => ({
                   disabled: false,
                   value: user,
                 }))}
@@ -275,6 +295,7 @@ export type PayablesTableChildrenProps = {
 }
 
 export function PayablesTable({
+  invoiceType = 'invoice',
   statuses,
   search,
   metadata,
@@ -284,6 +305,7 @@ export function PayablesTable({
   columns,
   children,
 }: {
+  invoiceType?: 'invoice' | 'invoiceTemplate'
   statuses: Mercoa.InvoiceStatus[]
   search?: string
   metadata?: Mercoa.MetadataFilter[]
@@ -340,7 +362,7 @@ export function PayablesTable({
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
-          await mercoaSession.client?.invoice.update(invoice.id, {
+          await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, {
             ...((invoice.status === Mercoa.InvoiceStatus.Approved ||
               invoice.status === Mercoa.InvoiceStatus.Failed) && { status: Mercoa.InvoiceStatus.Scheduled }),
             deductionDate: deductionDate,
@@ -367,7 +389,7 @@ export function PayablesTable({
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
-          await mercoaSession.client?.invoice.approval.addApprover(invoice.id, {
+          await getInvoiceClient(mercoaSession, invoiceType)?.approval.addApprover(invoice.id, {
             userId: approverId,
           })
           anySuccessFlag = true
@@ -399,14 +421,14 @@ export function PayablesTable({
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
-          await mercoaSession.client?.invoice.update(invoice.id, {
+          await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, {
             status: Mercoa.InvoiceStatus.New,
           })
           anySuccessFlag = true
         } catch (e) {
           console.error('Error submitting invoice: ', e)
           console.log('Errored invoice: ', { invoice })
-          await mercoaSession.client?.invoice.update(invoice.id, {
+          await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, {
             status: Mercoa.InvoiceStatus.Draft,
           })
         }
@@ -427,7 +449,7 @@ export function PayablesTable({
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
-          await mercoaSession.client?.invoice.delete(invoice.id)
+          await getInvoiceClient(mercoaSession, invoiceType)?.delete(invoice.id)
           anySuccessFlag = true
         } catch (e) {
           console.error('Error deleting invoice: ', e)
@@ -450,7 +472,7 @@ export function PayablesTable({
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
-          await mercoaSession.client?.invoice.update(invoice.id, {
+          await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, {
             status: Mercoa.InvoiceStatus.Archived,
           })
           anySuccessFlag = true
@@ -475,7 +497,7 @@ export function PayablesTable({
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
-          await mercoaSession.client?.invoice.update(invoice.id, {
+          await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, {
             status: Mercoa.InvoiceStatus.Draft,
           })
           anySuccessFlag = true
@@ -500,7 +522,7 @@ export function PayablesTable({
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
-          await mercoaSession.client?.invoice.update(invoice.id, {
+          await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, {
             status: Mercoa.InvoiceStatus.Canceled,
           })
           anySuccessFlag = true
@@ -525,12 +547,14 @@ export function PayablesTable({
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
-          const resp = await mercoaSession.client?.invoice.get(invoice.id)
+          const resp = await getInvoiceClient(mercoaSession, invoiceType)?.get(invoice.id)
           if (resp?.status != Mercoa.InvoiceStatus.New) {
             anySuccessFlag = true
             return
           }
-          await mercoaSession.client?.invoice.approval.approve(invoice.id, { userId: mercoaSession.user?.id! })
+          await getInvoiceClient(mercoaSession, invoiceType)?.approval.approve(invoice.id, {
+            userId: mercoaSession.user?.id!,
+          })
           anySuccessFlag = true
         } catch (e) {
           console.error('Error approving invoice: ', e)
@@ -551,12 +575,14 @@ export function PayablesTable({
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
-          const resp = await mercoaSession.client?.invoice.get(invoice.id)
+          const resp = await getInvoiceClient(mercoaSession, invoiceType)?.get(invoice.id)
           if (resp?.status != Mercoa.InvoiceStatus.New) {
             anySuccessFlag = true
             return
           }
-          await mercoaSession.client?.invoice.approval.reject(invoice.id, { userId: mercoaSession.user?.id! })
+          await getInvoiceClient(mercoaSession, invoiceType)?.approval.reject(invoice.id, {
+            userId: mercoaSession.user?.id!,
+          })
           anySuccessFlag = true
         } catch (e) {
           console.error('Error rejecting invoice: ', e)
@@ -597,7 +623,13 @@ export function PayablesTable({
         metadata: metadata as any,
       }
 
-      const response = await mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, filter)
+      const response =
+        invoiceType === 'invoice'
+          ? await mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, filter)
+          : await mercoaSession.client?.invoiceTemplate.find({
+              ...filter,
+              entityId: mercoaSession.entity.id,
+            })
 
       if (response) {
         if (response.data.length > 0) {
@@ -674,27 +706,58 @@ export function PayablesTable({
       metadata: metadata as any,
     }
 
-    mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, filter).then((resp) => {
-      if (resp && isCurrent) {
-        setHasMore(resp.hasMore)
-        setCount(resp.count)
-        setInvoices(resp.data)
-        setDataLoaded(true)
+    if (invoiceType === 'invoice') {
+      mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, filter).then((resp) => {
+        if (resp && isCurrent) {
+          setHasMore(resp.hasMore)
+          setCount(resp.count)
+          setInvoices(resp.data)
+          setDataLoaded(true)
+        }
+      })
+      if (currentStatuses.includes(Mercoa.InvoiceStatus.New)) {
+        mercoaSession.client?.entity.invoice
+          .find(mercoaSession.entity.id, {
+            ...filter,
+            approverId: mercoaSession.user?.id,
+            approverAction: Mercoa.ApproverAction.None,
+          })
+          .then((resp) => {
+            if (resp && isCurrent) {
+              setInvoicesThatNeedMyApprovalCount(resp.count)
+            }
+          })
       }
-    })
-    if (currentStatuses.includes(Mercoa.InvoiceStatus.New)) {
-      mercoaSession.client?.entity.invoice
-        .find(mercoaSession.entity.id, {
+    } else {
+      mercoaSession.client?.invoiceTemplate
+        .find({
           ...filter,
-          approverId: mercoaSession.user?.id,
-          approverAction: Mercoa.ApproverAction.None,
+          entityId: mercoaSession.entity.id,
         })
         .then((resp) => {
           if (resp && isCurrent) {
-            setInvoicesThatNeedMyApprovalCount(resp.count)
+            setHasMore(resp.hasMore)
+            setCount(resp.count)
+            setInvoices(resp.data)
+            setDataLoaded(true)
           }
         })
+      if (currentStatuses.includes(Mercoa.InvoiceStatus.New)) {
+        mercoaSession.client?.invoiceTemplate
+          .find({
+            ...filter,
+            entityId: mercoaSession.entity.id,
+            approverId: mercoaSession.user?.id,
+            approverAction: Mercoa.ApproverAction.None,
+          })
+          .then((resp) => {
+            if (resp && isCurrent) {
+              setInvoicesThatNeedMyApprovalCount(resp.count)
+            }
+          })
+      }
     }
+
     return () => {
       isCurrent = false
     }
@@ -712,6 +775,7 @@ export function PayablesTable({
     startingAfter,
     resultsPerPage,
     showOnlyInvoicesThatUserNeedsToApprove,
+    invoiceType,
   ])
 
   // Reset pagination on search
@@ -1951,6 +2015,7 @@ export function InvoiceMetrics({
     setInvoiceMetrics(undefined)
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
 
+    // TODO: Make this work for invoices vs. invoice templates
     mercoaSession.client?.entity.invoice
       .metrics(mercoaSession.entity.id, {
         search,
@@ -2002,6 +2067,7 @@ export function InvoiceMetrics({
 }
 
 export function StatusTabs({
+  invoiceType = 'invoice',
   statuses,
   selectedStatus,
   search,
@@ -2009,6 +2075,7 @@ export function StatusTabs({
   excludePayables,
   excludeReceivables,
 }: {
+  invoiceType?: 'invoice' | 'invoiceTemplate'
   statuses?: Array<Mercoa.InvoiceStatus>
   selectedStatus?: Mercoa.InvoiceStatus
   search?: string
@@ -2112,7 +2179,7 @@ export function StatusTabs({
         >
           {tabs.map((status) => (
             <option key={status} value={status}>
-              {invoiceStatusToName(status, approvalPolicies, excludePayables)}
+              {invoiceStatusToName({ status, approvalPolicies, excludePayables, invoiceType })}
             </option>
           ))}
         </select>
@@ -2135,13 +2202,15 @@ export function StatusTabs({
                   : 'mercoa-border-transparent mercoa-text-gray-500 hover:mercoa-border-gray-300 hover:mercoa-text-gray-700'
               } mercoa-mr-2 mercoa-whitespace-nowrap mercoa-py-4 mercoa-px-1 mercoa-text-sm mercoa-font-medium sm:mercoa-mr-0 sm:mercoa-border-b-2`}
               aria-current={
-                invoiceStatusToName(status, approvalPolicies, excludePayables) == selectedStatuses[0]
+                invoiceStatusToName({ status, approvalPolicies, excludePayables, invoiceType }) == selectedStatuses[0]
                   ? 'page'
                   : undefined
               }
             >
-              {invoiceStatusToName(status, approvalPolicies, excludePayables)}{' '}
-              <CountPill count={invoiceMetrics?.[status]?.totalCount ?? 0} selected={status == selectedStatuses[0]} />
+              {invoiceStatusToName({ status, approvalPolicies, excludePayables, invoiceType })}{' '}
+              {invoiceType === 'invoice' && (
+                <CountPill count={invoiceMetrics?.[status]?.totalCount ?? 0} selected={status == selectedStatuses[0]} />
+              )}
             </a>
           ))}
         </nav>
@@ -2230,17 +2299,41 @@ export function StatusDropdown({
 export function Payables({
   statuses,
   onSelectInvoice,
+  onSelectInvoiceType,
   statusSelectionStyle,
   columns,
+  showRecurringTemplates,
 }: {
   statuses?: Array<Mercoa.InvoiceStatus>
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse, isMiddleClick?: boolean) => any
+  onSelectInvoiceType?: (invoiceType: 'invoice' | 'invoiceTemplate') => any
   statusSelectionStyle?: 'tabs' | 'dropdown'
   columns?: InvoiceTableColumn[]
+  showRecurringTemplates?: boolean
 }) {
   const mercoaSession = useMercoaSession()
   const [selectedStatuses, setSelectedStatuses] = useState<Mercoa.InvoiceStatus[]>([Mercoa.InvoiceStatus.Draft])
   const [search, setSearch] = useState<string>('')
+  const [invoiceType, setInvoiceType] = useState<'invoice' | 'invoiceTemplate'>('invoice')
+
+  // Filter unavailable statuses for invoice templates
+  const invoiceTemplateStatuses: Mercoa.InvoiceStatus[] = [
+    Mercoa.InvoiceStatus.Draft,
+    Mercoa.InvoiceStatus.New,
+    Mercoa.InvoiceStatus.Approved,
+    Mercoa.InvoiceStatus.Scheduled,
+  ]
+  const availableStatuses =
+    invoiceType === 'invoiceTemplate'
+      ? statuses?.filter((status) => invoiceTemplateStatuses.includes(status))
+      : statuses
+
+  const handleInvoiceTypeChange = (invoiceType: 'invoice' | 'invoiceTemplate') => {
+    if (onSelectInvoiceType) {
+      onSelectInvoiceType(invoiceType)
+    }
+    setInvoiceType(invoiceType)
+  }
 
   return (
     <div className="mercoa-mt-8">
@@ -2249,22 +2342,63 @@ export function Payables({
       ) : (
         <>
           <div className="mercoa-grid mercoa-items-center mercoa-grid-cols-3">
-            <div className="mercoa-hidden md:mercoa-block md:mercoa-col-span-2">
-              {statusSelectionStyle == 'dropdown' && (
-                <div className="mercoa-grid mercoa-grid-cols-2">
-                  <StatusDropdown availableStatuses={statuses} onStatusChange={setSelectedStatuses} multiple />
+            <div className="mercoa-col-span-2 mercoa-grid mercoa-grid-cols-2">
+              {/* Status Dropdown */}
+              {statusSelectionStyle === 'dropdown' && (
+                <div className="mercoa-hidden md:mercoa-block">
+                  <StatusDropdown availableStatuses={availableStatuses} onStatusChange={setSelectedStatuses} multiple />
+                </div>
+              )}
+              {/* Invoice Type Selector */}
+              {showRecurringTemplates && (
+                <div
+                  className={`mercoa-flex ${
+                    statusSelectionStyle === 'dropdown' ? 'mercoa-justify-center' : 'mercoa-justify-left'
+                  }`}
+                >
+                  <div className="mercoa-border mercoa-border-gray-300 mercoa-rounded-lg mercoa-overflow-hidden">
+                    <MercoaButton
+                      hideOutline
+                      isEmphasized={invoiceType === 'invoice'}
+                      size="md"
+                      onClick={() => handleInvoiceTypeChange('invoice')}
+                    >
+                      Invoices
+                    </MercoaButton>
+                    <MercoaButton
+                      hideOutline
+                      isEmphasized={invoiceType === 'invoiceTemplate'}
+                      size="md"
+                      onClick={() => handleInvoiceTypeChange('invoiceTemplate')}
+                    >
+                      Recurring Invoices
+                    </MercoaButton>
+                  </div>
                 </div>
               )}
             </div>
-            <div className="mercoa-flex mercoa-w-full mercoa-rounded-mercoa mercoa-shadow-sm mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1">
+
+            {/* Search Bar */}
+            <div className="mercoa-flex mercoa-w-full mercoa-rounded-mercoa mercoa-shadow-sm mercoa-border-indigo-600 mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1">
               <DebouncedSearch placeholder="Search Vendors, Invoice #, Amount" onSettle={setSearch} />
             </div>
           </div>
-          {statusSelectionStyle != 'dropdown' && (
-            <StatusTabs statuses={statuses} search={search} onStatusChange={setSelectedStatuses} excludeReceivables />
+
+          {/* Status Tabs */}
+          {statusSelectionStyle !== 'dropdown' && (
+            <StatusTabs
+              invoiceType={invoiceType}
+              statuses={availableStatuses}
+              search={search}
+              onStatusChange={setSelectedStatuses}
+              excludeReceivables
+            />
           )}
-          <InvoiceMetrics statuses={selectedStatuses} search={search} excludeReceivables />
+          {invoiceType === 'invoice' && (
+            <InvoiceMetrics statuses={selectedStatuses} search={search} excludeReceivables />
+          )}
           <PayablesTable
+            invoiceType={invoiceType}
             statuses={selectedStatuses}
             search={search}
             onSelectInvoice={onSelectInvoice}

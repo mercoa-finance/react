@@ -1,6 +1,6 @@
-import { Mercoa } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { useFormContext } from 'react-hook-form'
+import { Mercoa } from '@mercoa/javascript'
 import { inputClassName, MercoaInput } from './generics'
 
 export function RecurringSchedule() {

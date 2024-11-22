@@ -10,9 +10,9 @@ import {
   PlusIcon,
   UsersIcon,
 } from '@heroicons/react/24/outline'
-import { Mercoa } from '@mercoa/javascript'
 import { jwtDecode } from 'jwt-decode'
 import { useEffect, useState } from 'react'
+import { Mercoa } from '@mercoa/javascript'
 import {
   AcceptToSButton,
   ApprovalPolicies,
