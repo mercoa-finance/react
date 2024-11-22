@@ -303,15 +303,11 @@ export type PayableFormChildrenProps = {
   selectedVendor?: Mercoa.CounterpartyResponse
   getVendorPaymentLink: () => Promise<string | undefined>
   formMethods: UseFormReturn<Mercoa.InvoiceCreationRequest>
-  setValue: (
-    name: UseFormSetValue<Mercoa.InvoiceCreationRequest>,
-    value: any,
-    options?: { shouldValidate?: boolean; shouldDirty?: boolean },
-  ) => void
+  setValue: UseFormSetValue<Mercoa.InvoiceCreationRequest>
   setError: UseFormSetError<Mercoa.InvoiceCreationRequest>
   clearErrors: UseFormClearErrors<Mercoa.InvoiceCreationRequest>
   control: Control<Mercoa.InvoiceCreationRequest>
-  watch: (name: UseFormWatch<Mercoa.InvoiceCreationRequest>) => any
+  watch: UseFormWatch<Mercoa.InvoiceCreationRequest>
   errors: FieldErrors<Mercoa.InvoiceCreationRequest>
   isLoading: boolean
   submitForm: () => void

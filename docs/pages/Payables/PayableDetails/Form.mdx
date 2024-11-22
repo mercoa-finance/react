@@ -59,13 +59,9 @@ type PayableFormChildrenProps = {
   selectedVendor?: Mercoa.CounterpartyResponse // Get the current selected vendor
   getVendorPaymentLink: () => Promise<string | undefined> // Generate a link for the vendor to accept the payment
 
-  setValue: (
-    name: UseFormSetValue<Mercoa.InvoiceCreationRequest>, // react-hook-form method to set the value of a form element. InvoiceRequest fields are used for the name.
-    value: any,
-    options?: { shouldValidate?: boolean; shouldDirty?: boolean },
-  ) => void
+  setValue: UseFormSetValue<Mercoa.InvoiceCreationRequest>
 
-  watch: (name: UseFormWatch<Mercoa.InvoiceCreationRequest>) => any // react-hook-form hook to get the real-time value of any form component
+  watch: UseFormWatch<Mercoa.InvoiceCreationRequest> // react-hook-form hook to get the real-time value of any form component
   errors: FieldErrors<Mercoa.InvoiceCreationRequest> // react-hook-form error object
 
   isLoading: boolean // If the invoice is being updated / saved, this state will be true

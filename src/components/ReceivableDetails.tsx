@@ -256,12 +256,8 @@ export type ReceivableFormChildrenProps = {
   refreshInvoice?: (invoiceId: Mercoa.InvoiceId) => void
   setSelectedPayer: (e?: Mercoa.CounterpartyResponse) => void
   selectedPayer?: Mercoa.CounterpartyResponse
-  setValue: (
-    name: UseFormSetValue<Mercoa.InvoiceCreationRequest>,
-    value: any,
-    options?: { shouldValidate?: boolean; shouldDirty?: boolean },
-  ) => void
-  watch: (name: UseFormWatch<Mercoa.InvoiceCreationRequest>) => any
+  setValue: UseFormSetValue<Mercoa.InvoiceCreationRequest>
+  watch: UseFormWatch<Mercoa.InvoiceCreationRequest>
   errors: FieldErrors<Mercoa.InvoiceCreationRequest>
 }
 
