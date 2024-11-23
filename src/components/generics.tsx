@@ -704,7 +704,23 @@ export function MercoaCombobox({
   readOnly?: boolean
   direction?: 'down' | 'up'
 }) {
-  const [query, setQuery] = useState('')
+  function displayInputValue(value: any) {
+    if (multiple && Array.isArray(value)) {
+      return value?.length > 0
+        ? value
+            .map((value: any) => {
+              const toDisplay = (displayIndex ? value?.[displayIndex] : value) ?? ''
+              return toDisplay
+            })
+            ?.join(', ')
+        : ''
+    } else {
+      const toDisplay = (displayIndex ? value?.[displayIndex] : value) ?? ''
+      return toDisplay
+    }
+  }
+
+  const [query, setQuery] = useState(displayInputValue(value))
   const [selectedValue, setSelectedValue] = useState(value ?? (multiple ? [] : ''))
 
   if (!displaySelectedAs) {
@@ -733,22 +749,6 @@ export function MercoaCombobox({
         ]
 
   const filteredOptionsLimited = filteredOptions.slice(0, 100)
-
-  function displayInputValue(value: any) {
-    if (multiple && Array.isArray(value)) {
-      return value?.length > 0
-        ? value
-            .map((value: any) => {
-              const toDisplay = (displayIndex ? value?.[displayIndex] : value) ?? ''
-              return toDisplay
-            })
-            ?.join(', ')
-        : ''
-    } else {
-      const toDisplay = (displayIndex ? value?.[displayIndex] : value) ?? ''
-      return toDisplay
-    }
-  }
 
   function displayPillValue(value: any) {
     if (!Array.isArray(value)) {
@@ -863,7 +863,6 @@ export function MercoaCombobox({
                     secondaryText = disabledText ?? 'Disabled'
                   } else if (secondaryDisplayIndex) {
                     if (Array.isArray(secondaryDisplayIndex)) {
-                      console.log(secondaryDisplayIndex)
                       secondaryText = secondaryDisplayIndex.map((index) => toString(value[index])).join(' - ')
                     } else {
                       secondaryText = toString(value[secondaryDisplayIndex])
