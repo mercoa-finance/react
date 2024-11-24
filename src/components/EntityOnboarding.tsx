@@ -17,6 +17,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { Fragment, useEffect, useState } from 'react'
 import Dropzone from 'react-dropzone'
@@ -24,7 +25,6 @@ import { usePlacesWidget } from 'react-google-autocomplete'
 import { Control, Controller, UseFormRegister, useForm } from 'react-hook-form'
 import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
 import { postalCodeRegex, usaStates } from '../lib/locations'
@@ -266,14 +266,15 @@ export function AddressBlock({
         e.types.includes('administrative_area_level_1'),
       )?.short_name
       const postalCode = place.address_components.find((e: any) => e.types.includes('postal_code'))?.long_name
+      const addressLine1 = (streetNumber ? `${streetNumber} ` : '') + streetName
       setShowAddress(true)
-      setValue(`${prefix}addressLine1`, streetNumber + ' ' + streetName, { shouldDirty: true })
+      setValue(`${prefix}addressLine1`, addressLine1, { shouldDirty: true })
       setValue(`${prefix}city`, city ?? '', { shouldDirty: true })
       setValue(`${prefix}stateOrProvince`, state ?? '', { shouldDirty: true })
       setValue(`${prefix}postalCode`, postalCode ?? '', { shouldDirty: true })
       setValue(`${prefix}country`, 'US', { shouldDirty: true })
       if (prefix) {
-        setValue(`${prefix}.full`, `${streetNumber} ${streetName}, ${city}, ${state} ${postalCode}`, {
+        setValue(`${prefix}.full`, `${addressLine1}, ${city}, ${state} ${postalCode}`, {
           shouldDirty: true,
         })
       }
@@ -293,34 +294,24 @@ export function AddressBlock({
   const [showAddress, setShowAddress] = useState(!!readOnly || stateOrProvince)
 
   return (
-    <div>
-      {!showAddress ? (
-        <>
-          <MercoaInputLabel label={label ?? 'Address'} name="addressLine1" />
-          <div className="mercoa-mt-1">
-            <input
-              ref={ref as any}
-              onBlur={() => {
-                setShowAddress(true)
-              }}
-              type="text"
-              placeholder={placeholder ?? 'Enter a location'}
-              className={inputClassName({})}
-              required={required}
-            />
-          </div>
-        </>
-      ) : (
-        <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-3 mercoa-mb-5">
-          <MercoaInput
-            label={label ?? 'Address'}
-            register={register}
-            name={`${prefix}addressLine1`}
-            className="mercoa-mt-1 mercoa-col-span-2"
-            errors={errors}
-            readOnly={readOnly}
+    <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-2 mercoa-mb-5">
+      <div className="mercoa-col-span-full">
+        <MercoaInputLabel label={label ?? 'Address'} name="addressLine1" />
+        <div className="mercoa-mt-1">
+          <input
+            ref={ref as any}
+            onBlur={() => setShowAddress(true)}
+            onChange={(e) => setValue(`${prefix}addressLine1`, e.target.value, { shouldDirty: true })}
+            value={watch(`${prefix}addressLine1`)}
+            type="text"
+            placeholder={placeholder ?? 'Enter a location'}
+            className={inputClassName({})}
             required={required}
           />
+        </div>
+      </div>
+      {showAddress && (
+        <>
           <MercoaInput
             label="Apartment, suite, etc."
             register={register}
@@ -357,6 +348,7 @@ export function AddressBlock({
               <p className="mercoa-text-sm mercoa-text-red-500 mercoa-text-left">{errors.stateOrProvince?.message}</p>
             )}
           </div>
+
           <MercoaInput
             label="Postal Code"
             register={register}
@@ -366,7 +358,7 @@ export function AddressBlock({
             readOnly={readOnly}
             required={required}
           />
-        </div>
+        </>
       )}
     </div>
   )
