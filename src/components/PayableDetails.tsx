@@ -23,6 +23,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { PhotoIcon } from '@heroicons/react/24/solid'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import accounting from 'accounting'
 import Big from 'big.js'
@@ -47,7 +48,6 @@ import {
 } from 'react-hook-form'
 import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { classNames } from '../lib/lib'
@@ -1198,8 +1198,9 @@ export function PayableForm({
       invoiceData.lineItems &&
       invoiceData.lineItems.length > 0
     ) {
-      lineItems.forEach((lineItem, index) => {
-        if (!lineItem.amount) {
+      for (let index = 0; index < lineItems.length; index++) {
+        const lineItem = lineItems[index]
+        if (!lineItem.amount && lineItem.amount !== 0) {
           setError(`lineItems.${index}.amount`, {
             type: 'manual',
             message: 'Please enter an amount',
@@ -1213,7 +1214,7 @@ export function PayableForm({
           })
           return
         }
-      })
+      }
     }
 
     // Make sure line items amount is equal to invoice amount
