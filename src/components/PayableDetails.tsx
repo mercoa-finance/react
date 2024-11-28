@@ -23,7 +23,6 @@ import {
 } from '@heroicons/react/24/outline'
 import { PhotoIcon } from '@heroicons/react/24/solid'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Mercoa } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import accounting from 'accounting'
 import Big from 'big.js'
@@ -48,6 +47,7 @@ import {
 } from 'react-hook-form'
 import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { classNames } from '../lib/lib'
@@ -2369,7 +2369,7 @@ export function PayableActions({
   ) : (
     <MercoaButton
       isEmphasized={false}
-      color="red"
+      color="secondary"
       onClick={() => {
         setValue('saveAsStatus', 'DELETE')
       }}
@@ -2387,7 +2387,7 @@ export function PayableActions({
   ) : (
     <MercoaButton
       isEmphasized={false}
-      color="red"
+      color="secondary"
       onClick={() => {
         setValue('saveAsStatus', Mercoa.InvoiceStatus.Archived)
       }}
@@ -2423,7 +2423,7 @@ export function PayableActions({
   ) : (
     <MercoaButton
       isEmphasized={false}
-      color="red"
+      color="secondary"
       onClick={() => {
         setValue('saveAsStatus', Mercoa.InvoiceStatus.Canceled)
       }}
@@ -2634,7 +2634,7 @@ export function PayableActions({
   ) : (
     <MercoaButton
       disabled={approverSlot?.action === Mercoa.ApproverAction.Reject}
-      color="red"
+      color="secondary"
       isEmphasized
       onClick={() => setValue('saveAsStatus', 'REJECT')}
     >
@@ -3357,6 +3357,7 @@ export function PayableSelectPaymentMethod({
           }}
           value={availableTypes.find((type) => type.key === selectedType)}
           displayIndex="value"
+          showAllOptions
         />
       )}
       {selectedType === Mercoa.PaymentMethodType.BankAccount && (
@@ -3401,6 +3402,7 @@ export function PayableSelectPaymentMethod({
                 <MercoaCombobox
                   displaySelectedAs="pill"
                   label="Payment Speed"
+                  showAllOptions
                   options={[
                     {
                       value: {
@@ -3476,6 +3478,7 @@ export function PayableSelectPaymentMethod({
                 <div className="mercoa-mt-2" />
                 <MercoaCombobox
                   label="Check Delivery Method"
+                  showAllOptions
                   displaySelectedAs="pill"
                   options={[
                     {
@@ -3537,7 +3540,7 @@ export function PayableSelectPaymentMethod({
               <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
                 <div
                   className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300
-mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2`}
+mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2`}
                 >
                   <div className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900`}>Automated Utility Pay</div>
                 </div>
@@ -3549,6 +3552,7 @@ mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-rin
               <div className="mercoa-mt-4">
                 <MercoaCombobox
                   label="Utility Account"
+                  showAllOptions
                   displaySelectedAs="pill"
                   options={counterpartyAccounts.map((account) => ({
                     value: {
@@ -3638,7 +3642,7 @@ mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-rin
             <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
               <div
                 className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300
-mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2`}
+mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2`}
               >
                 <div className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900`}>Off Platform</div>
               </div>
@@ -3853,6 +3857,7 @@ function ApproversSelection() {
           }) && (
             <MercoaCombobox
               label={'Assigned to'}
+              showAllOptions
               onChange={(e) => {
                 setValue(`approvers.${index}.assignedUserId`, e.id)
                 propagateApprovalPolicy({
@@ -4299,6 +4304,7 @@ export function MetadataSelection({
           onChange={(value) => {
             setValue(value?.key)
           }}
+          showAllOptions
           displayIndex="value"
           secondaryDisplayIndex="subtitle"
           value={valueState}
@@ -4315,6 +4321,7 @@ export function MetadataSelection({
         onChange={(value) => {
           setValue(value)
         }}
+        showAllOptions
         value={valueState}
         multiple={schema.allowMultiple}
         freeText={!schema.allowMultiple}

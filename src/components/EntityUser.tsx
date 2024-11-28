@@ -319,7 +319,7 @@ export function EntityUsersTable({
           className="mercoa-mt-2"
           placeholder="The ID of the user in your system"
         />
-        <MercoaButton isEmphasized={true} color="green" className="mercoa-mt-5 mercoa-w-full">
+        <MercoaButton isEmphasized={true} className="mercoa-mt-5 mercoa-w-full">
           Save
         </MercoaButton>
       </form>

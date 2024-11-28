@@ -291,6 +291,7 @@ export function EntitySelector({
       displayIndex="name"
       secondaryDisplayIndex="email"
       displaySelectedAs="pill"
+      showAllOptions
     />
   )
 }

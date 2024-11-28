@@ -1,6 +1,40 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --mercoa-font-family: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+    'Noto Color Emoji';
+  --mercoa-font-size-xs: 0.75rem;
+  --mercoa-font-size-sm: 0.875rem;
+  --mercoa-font-size-base: 1rem;
+  --mercoa-font-size-lg: 1.125rem;
+  --mercoa-font-size-xl: 1.25rem;
+  --mercoa-font-size-2xl: 1.5rem;
+  --mercoa-font-size-3xl: 2rem;
+  --mercoa-font-size-4xl: 2.5rem;
+  --mercoa-font-size-5xl: 3rem;
+  --mercoa-font-size-6xl: 3.75rem;
+  --mercoa-font-size-7xl: 4.5rem;
+  --mercoa-font-size-8xl: 6rem;
+  --mercoa-font-size-9xl: 8rem;
+  --mercoa-primary: #4f46e5;
+  --mercoa-primary-light: #6366f1;
+  --mercoa-primary-dark: #2b8a9a;
+  --primary-text: #4f46e5;
+  --primary-text-invert: #ffffff;
+  --mercoa-secondary: #ef4444;
+  --mercoa-secondary-light: #fed7d7;
+  --mercoa-secondary-dark: #c25252;
+  --secondary-text: #ef4444;
+  --secondary-text-invert: #ffffff;
+  --mercoa-logo-background: transparent;
+  --mercoa-border-radius: 6px;
+}
+
+[class*='mercoa-'] {
+  font-family: var(--mercoa-font-family);
+}
+
 .react-datepicker-wrapper {
   display: block !important;
 }

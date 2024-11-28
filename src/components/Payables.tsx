@@ -244,6 +244,7 @@ function AddApproverModal({
                 }}
                 value={selectedUser}
                 displaySelectedAs="pill"
+                showAllOptions
               />
 
               <MercoaButton
@@ -2291,6 +2292,7 @@ export function StatusDropdown({
         placeholder={placeholder ?? 'All Invoices'}
         label={label}
         inputClassName={className}
+        showAllOptions
       />
     </>
   )
@@ -2379,7 +2381,7 @@ export function Payables({
             </div>
 
             {/* Search Bar */}
-            <div className="mercoa-flex mercoa-w-full mercoa-rounded-mercoa mercoa-shadow-sm mercoa-border-indigo-600 mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1">
+            <div className="mercoa-flex mercoa-w-full mercoa-rounded-mercoa mercoa-shadow-sm mercoa-border-mercoa-primary mercoa-mr-2 mercoa-col-span-3 md:mercoa-col-span-1">
               <DebouncedSearch placeholder="Search Vendors, Invoice #, Amount" onSettle={setSearch} />
             </div>
           </div>

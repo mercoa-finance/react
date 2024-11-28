@@ -1272,7 +1272,7 @@ export function Counterparties({
           <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
             <MercoaButton
               isEmphasized={false}
-              color="red"
+              color="secondary"
               size="sm"
               onClick={async () => {
                 if (!mercoaSession.entityId) return
@@ -2125,7 +2125,7 @@ function VendorCreditsTable({
               className={vendorCredits && vendorCredits.length % 2 === 1 ? 'mercoa-bg-gray-50' : ''}
               onClick={() => setCreateVendorCreditOpen(true)}
             >
-              <div className="mercoa-flex mercoa-justify-center mercoa-items-center mercoa-cursor-pointer mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 hover:mercoa-bg-gray-100 hover:mercoa-text-gray-900">
+              <div className="mercoa-flex mercoa-justify-center mercoa-items-center mercoa-cursor-pointer mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 hover:mercoa-bg-gray-100 hover:mercoa-text-gray-900">
                 <PlusIcon className="mercoa-h-4 mercoa-w-5 mercoa-mr-2" />
                 <span className="mercoa-hidden md:mercoa-inline-block">Add New</span>
               </div>
@@ -2331,7 +2331,7 @@ export function CounterpartyAccount({
         key={account.accountId}
         className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
           selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
-        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
+        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 ${
           onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
         }`}
       >

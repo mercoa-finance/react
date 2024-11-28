@@ -8,7 +8,6 @@ import {
   TrashIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import dayjs from 'dayjs'
 import { jwtDecode } from 'jwt-decode'
@@ -31,6 +30,7 @@ import DatePicker from 'react-datepicker'
 import { Control, Controller, FieldErrors, UseFormRegister, useFormContext } from 'react-hook-form'
 import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { classNames, getEndpoint } from '../lib/lib'
 import { MercoaSession, TokenOptions, useMercoaSession } from './index'
 
@@ -39,7 +39,7 @@ export interface MercoaButtonProps extends HTMLAttributes<HTMLButtonElement> {
   hideOutline?: boolean
   tooltip?: string
   className?: string
-  color?: 'red' | 'green' | 'blue' | 'indigo' | 'yellow' | 'gray'
+  color?: 'red' | 'green' | 'blue' | 'indigo' | 'yellow' | 'gray' | 'secondary'
   size?: 'sm' | 'md' | 'lg'
   children: ReactNode
   [x: string]: any
@@ -79,14 +79,37 @@ export function MercoaButton({
       classNameInternal += ' mercoa-px-4 mercoa-py-2'
   }
 
-  const classNameIsEmphasized = `
+  const classNameIsEmphasized =
+    color === 'secondary'
+      ? `
+    mercoa-bg-mercoa-secondary
+    mercoa-text-mercoa-secondary-text-invert
+    mercoa-border-transparent
+    hover:mercoa-bg-mercoa-secondary-dark
+    focus:mercoa-ring-mercoa-secondary-light
+  `
+      : `
     mercoa-bg-mercoa-primary
     mercoa-text-mercoa-primary-text-invert
     mercoa-border-transparent
     hover:mercoa-bg-mercoa-primary-dark
     focus:mercoa-ring-mercoa-primary-light 
   `
-  const classNameIsNotEmphasized = `
+  const classNameIsNotEmphasized =
+    color === 'secondary'
+      ? `
+    mercoa-text-mercoa-secondary-text
+    ${
+      hideOutline
+        ? ''
+        : `mercoa-bg-white mercoa-border-mercoa-secondary-light
+    hover:mercoa-border-mercoa-secondary-dark
+    focus:mercoa-ring-mercoa-secondary-light
+    hover:mercoa-bg-white`
+    }
+    hover:mercoa-text-mercoa-secondary-dark
+  `
+      : `
     mercoa-text-mercoa-primary-text
     ${
       hideOutline
@@ -218,7 +241,7 @@ export function MercoaButton({
   }
 
   let classNameFinal = classNameInternal
-  if (color) {
+  if (color && color !== 'secondary') {
     classNameFinal = `${classNameInternal} ${isEmphasized ? colorOverrideIsEmphasized : colorOverride}`
   } else {
     classNameFinal = `${classNameInternal} ${isEmphasized ? classNameIsEmphasized : classNameIsNotEmphasized}`
@@ -546,7 +569,7 @@ export function PaymentMethodList({
                     mercoaSession.refresh()
                   }
                 }}
-                className="mercoa-ml-2 mercoa-text-red-500 hover:mercoa-text-red-700"
+                className="mercoa-ml-2 mercoa-text-mercoa-secondary hover:mercoa-text-mercoa-secondary-dark"
               >
                 <Tooltip title="Remove Account">
                   <TrashIcon className="mercoa-size-5" />
@@ -679,6 +702,7 @@ export function MercoaCombobox({
   className,
   labelClassName,
   inputClassName: suppliedInputClassName,
+  showAllOptions,
   multiple,
   freeText,
   showClear,
@@ -697,6 +721,7 @@ export function MercoaCombobox({
   className?: string
   labelClassName?: string
   inputClassName?: string
+  showAllOptions?: boolean
   multiple?: boolean
   freeText?: boolean
   showClear?: boolean
@@ -720,7 +745,7 @@ export function MercoaCombobox({
     }
   }
 
-  const [query, setQuery] = useState(displayInputValue(value))
+  const [query, setQuery] = useState(showAllOptions || multiple ? '' : displayInputValue(value))
   const [selectedValue, setSelectedValue] = useState(value ?? (multiple ? [] : ''))
 
   if (!displaySelectedAs) {
@@ -729,8 +754,8 @@ export function MercoaCombobox({
 
   useEffect(() => {
     setSelectedValue(value ?? (multiple ? [] : ''))
-    setQuery(displayInputValue(value))
-  }, [value, multiple])
+    if (!(showAllOptions || multiple)) setQuery(displayInputValue(value))
+  }, [value, multiple, showAllOptions])
 
   useEffect(() => {
     if (freeText && query !== '') {
@@ -1557,8 +1582,10 @@ export function PaymentMethodButton({
       onClick={() => {
         if (onSelect) onSelect(account)
       }}
-      className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 hover:mercoa-border-gray-400 ${
-        onSelect ? 'mercoa-cursor-pointer ' : ''
+      className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
+        selected ? `mercoa-border-mercoa-primary` : `mercoa-border-gray-300`
+      } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 ${
+        onSelect ? ' hover:mercoa-border-mercoa-primary-dark' : ''
       }`}
     >
       <div

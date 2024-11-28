@@ -17,7 +17,6 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { Fragment, useEffect, useState } from 'react'
 import Dropzone from 'react-dropzone'
@@ -25,6 +24,7 @@ import { usePlacesWidget } from 'react-google-autocomplete'
 import { Control, Controller, UseFormRegister, useForm } from 'react-hook-form'
 import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
 import { postalCodeRegex, usaStates } from '../lib/locations'
@@ -184,7 +184,7 @@ export function UploadBlock({
               <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm mercoa-text-gray-600">
                 <label
                   htmlFor="file-upload"
-                  className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-bg-white mercoa-font-semibold mercoa-primary-text focus-within:mercoa-outline-none focus-within:mercoa-ring-2 focus-within:mercoa-ring-primary focus-within:mercoa-ring-offset-2 hover:mercoa-text-indigo-500"
+                  className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-bg-white mercoa-font-semibold mercoa-primary-text focus-within:mercoa-outline-none focus-within:mercoa-ring-2 focus-within:mercoa-ring-primary focus-within:mercoa-ring-offset-2 hover:mercoa-text-mercoa-primary-dark"
                 >
                   <span>Upload {type}</span>
                   <input
@@ -2464,7 +2464,7 @@ export function EntityOnboardingForm({
         <div className="mercoa-flex-1" />
 
         {onCancel && (
-          <MercoaButton isEmphasized={false} color="red" className="mercoa-mr-2" type="button" onClick={onCancel}>
+          <MercoaButton isEmphasized={false} color="secondary" className="mercoa-mr-2" type="button" onClick={onCancel}>
             Cancel
           </MercoaButton>
         )}

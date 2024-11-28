@@ -125,7 +125,7 @@ export function CustomPaymentMethod({
           key={account?.id}
           className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
             selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
-          } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
+          } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 ${
             onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
           }`}
         >
@@ -198,7 +198,7 @@ export function CustomPaymentMethod({
         }}
         className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
           selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
-        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
+        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 ${
           onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
         }`}
       >

@@ -79,7 +79,48 @@ export function getEndpoint() {
 }
 
 export function setStyle({ colorScheme }: { colorScheme?: Mercoa.ColorSchemeResponse }) {
-  if (!colorScheme) return
+  type FontSizeConfig = {
+    [key: string]: number
+  }
+
+  const scalingFactors: FontSizeConfig = {
+    xs: 0.75,
+    sm: 0.875,
+    base: 1,
+    lg: 1.125,
+    xl: 1.25,
+    '2xl': 1.5,
+    '3xl': 2,
+    '4xl': 2.5,
+    '5xl': 3,
+    '6xl': 3.75,
+    '7xl': 4.5,
+    '8xl': 6,
+    '9xl': 8,
+  }
+
+  /**
+   * Updates CSS variables for font sizes based on a base size and scaling factors.
+   *
+   * @param baseSize - The base size as a string (e.g., "1rem", "16px").
+   */
+  function updateFontSizeVariables(baseSize: string): void {
+    const match = baseSize.match(/^([\d.]+)([a-z%]+)$/)
+    if (!match) {
+      console.error("Invalid base size format. Expected a number followed by a unit (e.g., '1rem').")
+      return
+    }
+
+    const [, baseValueStr, unit] = match
+    const baseValue = parseFloat(baseValueStr)
+
+    // Update the CSS variables using the scaling factors
+    Object.entries(scalingFactors).forEach(([key, scale]) => {
+      const calculatedSize = baseValue * scale
+      document.documentElement.style.setProperty(`--mercoa-font-size-${key}`, `${calculatedSize}${unit}`)
+    })
+  }
+
   const adjustBrightness = (col: string, amt: number) => {
     col = col.replace(/^#/, '')
     if (col.length === 3) col = col[0] + col[0] + col[1] + col[1] + col[2] + col[2]
@@ -98,11 +139,10 @@ export function setStyle({ colorScheme }: { colorScheme?: Mercoa.ColorSchemeResp
     return `#${rr}${gg}${bb}`
   }
 
-  const logoBackground = colorScheme.logoBackgroundColor || 'transparent' // default is transparent
-  const primary = colorScheme.primaryColor || '#4f46e5' // default is indigo-600
+  const logoBackground = colorScheme?.logoBackgroundColor || 'transparent' // default is transparent
+  const primary = colorScheme?.primaryColor || '#4f46e5' // default is indigo-600
   const primaryLight = adjustBrightness(primary, 40)
   const primaryDark = adjustBrightness(primary, -40)
-
   let primaryText = primary
   let primaryTextInvert = '#ffffff'
   // hardcode colors for white theme
@@ -111,11 +151,36 @@ export function setStyle({ colorScheme }: { colorScheme?: Mercoa.ColorSchemeResp
     primaryTextInvert = '#111827' // black
   }
 
+  const secondary = colorScheme?.secondaryColor || '#ef4444' // default is red-500
+  const secondaryLight = adjustBrightness(secondary, 40)
+  const secondaryDark = adjustBrightness(secondary, -40)
+  let secondaryText = secondary
+  let secondaryTextInvert = '#ffffff'
+  // hardcode colors for white theme
+  if (secondary === '#f8fafc') {
+    secondaryText = '#111827' // black
+    secondaryTextInvert = '#111827' // black
+  }
+
   document.documentElement.style.setProperty('--mercoa-logo-background', logoBackground)
+
   document.documentElement.style.setProperty('--mercoa-primary', primary)
   document.documentElement.style.setProperty('--mercoa-primary-light', primaryLight)
   document.documentElement.style.setProperty('--mercoa-primary-dark', primaryDark)
   document.documentElement.style.setProperty('--mercoa-primary-text', primaryText)
   document.documentElement.style.setProperty('--mercoa-primary-text-invert', primaryTextInvert)
-  document.documentElement.style.setProperty('--mercoa-border-radius', (colorScheme.roundedCorners ?? 6) + 'px')
+
+  document.documentElement.style.setProperty('--mercoa-secondary', secondary)
+  document.documentElement.style.setProperty('--mercoa-secondary-light', secondaryLight)
+  document.documentElement.style.setProperty('--mercoa-secondary-dark', secondaryDark)
+  document.documentElement.style.setProperty('--mercoa-secondary-text', secondaryText)
+  document.documentElement.style.setProperty('--mercoa-secondary-text-invert', secondaryTextInvert)
+
+  document.documentElement.style.setProperty('--mercoa-border-radius', (colorScheme?.roundedCorners ?? 6) + 'px')
+  if (colorScheme?.fontFamily) {
+    document.documentElement.style.setProperty('--mercoa-font-family', `${colorScheme?.fontFamily}`)
+  }
+  if (colorScheme?.fontSize) {
+    updateFontSizeVariables(colorScheme?.fontSize)
+  }
 }

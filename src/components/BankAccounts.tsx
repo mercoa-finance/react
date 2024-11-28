@@ -147,9 +147,9 @@ export function BankAccount({
           }}
           key={`${account?.routingNumber} ${account?.accountNumber}`}
           className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
-            selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
-          } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-indigo-500 focus-within:mercoa-ring-offset-2 ${
-            onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
+            selected ? 'mercoa-border-mercoa-primary' : 'mercoa-border-gray-300'
+          } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 ${
+            onSelect ? 'mercoa-cursor-pointer hover:mercoa-border-mercoa-primary-dark' : ''
           }`}
         >
           <div
@@ -894,6 +894,7 @@ export function EditBankAccount({
           displayIndex="value"
           value={externalBankAccountIds.find((e) => e.key === watch('externalAccountingSystemId'))}
           className="mercoa-mt-2"
+          showAllOptions
         />
       )}
       {account.accountType === 'CHECKING' && (
@@ -986,7 +987,7 @@ export function EditBankAccount({
                   Upload Image
                 </MercoaButton>
                 <MercoaButton
-                  color="red"
+                  color="secondary"
                   size="sm"
                   isEmphasized={false}
                   type="button"

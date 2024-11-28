@@ -509,6 +509,7 @@ function Trigger({
                   }
                 }
               }}
+              showAllOptions
               displayIndex="displayName"
             />
             {triggerWatch?.[triggerIndex]?.type === 'amount' && (

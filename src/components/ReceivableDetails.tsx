@@ -1228,6 +1228,7 @@ export function ReceivableSelectPaymentMethod({
         }}
         value={availableTypes.find((type) => type.key === selectedType)}
         displayIndex="value"
+        showAllOptions
       />
       {selectedType === Mercoa.PaymentMethodType.BankAccount && bankAccountJsx}
       {selectedType === Mercoa.PaymentMethodType.Check && checkJsx}
