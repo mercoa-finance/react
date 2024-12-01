@@ -4204,224 +4204,6 @@ export function MetadataSelection({
     return null
   }
 
-  function MetadataCombobox({
-    schema,
-    setValue,
-    value,
-    values,
-  }: {
-    schema: Mercoa.MetadataSchema
-    setValue: (e: string) => void
-    value?: string
-    values: string[]
-  }) {
-    const [options, setOptions] = useState<Array<{ disabled: boolean; value: any }>>([])
-    const [valueState, setValueState] = useState<string | string[]>()
-
-    // Get Options
-    useEffect(() => {
-      if (schema.type === Mercoa.MetadataType.KeyValue) {
-        setOptions(
-          values.map((value) => {
-            let parsedValue = {
-              key: '',
-              value: '' as any,
-              subtitle: '' as any,
-            }
-            try {
-              parsedValue = JSON.parse(value) as { key: string; value: string; subtitle: string }
-              parsedValue.key = `${parsedValue.key}`
-              try {
-                const value = parsedValue.value.value
-                  ? parsedValue.value
-                  : (JSON.parse(parsedValue.value) as {
-                      value: string
-                      title?: string
-                      subtitle?: string
-                    })
-                if (value.value) {
-                  parsedValue.value = value.title ?? value.value
-                  parsedValue.subtitle = value.subtitle
-                } else {
-                  parsedValue.value = `${parsedValue.value}`
-                }
-              } catch (e) {
-                parsedValue.value = `${parsedValue.value}`
-              }
-            } catch (e) {
-              console.error(e)
-            }
-            return { value: parsedValue, disabled: false }
-          }),
-        )
-      } else {
-        setOptions(
-          values.map((value) => {
-            return { value: value, disabled: false }
-          }),
-        )
-      }
-    }, [values])
-
-    // Get Value
-    useEffect(() => {
-      if (!value) return
-      if (schema.type === Mercoa.MetadataType.KeyValue) {
-        const foundValue = JSON.parse(
-          values.find((e) => {
-            let parsedValue = { key: '' }
-            try {
-              parsedValue = JSON.parse(e) as { key: string }
-              parsedValue.key = `${parsedValue.key}`
-            } catch (e) {
-              console.error(e)
-            }
-            return parsedValue?.key === `${value ?? ''}`
-          }) ?? '{}',
-        ) as any
-        try {
-          const valueParsed = JSON.parse(foundValue.value) as { value: string; title?: string; subtitle?: string }
-          if (valueParsed.value) {
-            foundValue.value = valueParsed.title ?? valueParsed.value
-          }
-        } catch (e) {}
-        setValueState(foundValue.value ? foundValue.value : foundValue)
-      } else {
-        let comboboxValue: string | string[] | undefined = value
-        if (schema.allowMultiple) {
-          // Metadata is stored as a comma separated string, but comboboxes expect an array
-          if (Array.isArray(value)) comboboxValue = value
-          else comboboxValue = value?.split(',')
-        }
-        setValueState(comboboxValue)
-      }
-    }, [value])
-
-    if (schema.type === Mercoa.MetadataType.KeyValue) {
-      return (
-        <MercoaCombobox
-          options={options}
-          onChange={(value) => {
-            setValue(value?.key)
-          }}
-          showAllOptions
-          displayIndex="value"
-          secondaryDisplayIndex="subtitle"
-          value={valueState}
-          multiple={schema.allowMultiple}
-          displaySelectedAs="pill"
-          showClear
-          readOnly={readOnly}
-        />
-      )
-    }
-    return (
-      <MercoaCombobox
-        options={options}
-        onChange={(value) => {
-          setValue(value)
-        }}
-        showAllOptions
-        value={valueState}
-        multiple={schema.allowMultiple}
-        freeText={!schema.allowMultiple}
-        displaySelectedAs="pill"
-        showClear
-        readOnly={readOnly}
-      />
-    )
-  }
-
-  function MetadataBoolean({ setValue, value }: { setValue: (e: string) => void; value?: string }) {
-    return (
-      <div className="mercoa-space-y-4 sm:mercoa-flex sm:mercoa-items-center sm:mercoa-space-x-10 sm:mercoa-space-y-0">
-        <div className="mercoa-flex mercoa-items-center">
-          <input
-            readOnly={readOnly}
-            type="radio"
-            defaultChecked={value === 'true'}
-            className="mercoa-size-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary checked:mercoa-bg-mercoa-primary"
-            onChange={() => setValue('true')}
-          />
-          <label className="mercoa-ml-3 mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
-            Yes
-          </label>
-        </div>
-
-        <div className="mercoa-flex mercoa-items-center">
-          <input
-            readOnly={readOnly}
-            type="radio"
-            defaultChecked={value === 'false'}
-            className="mercoa-size-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary checked:mercoa-bg-mercoa-primary"
-            onChange={() => setValue('false')}
-          />
-          <label className="mercoa-ml-3 mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
-            No
-          </label>
-        </div>
-      </div>
-    )
-  }
-
-  const metadataSelection = (
-    <>
-      {((!entityMetadata && schema.type === Mercoa.MetadataType.String) ||
-        schema.type === Mercoa.MetadataType.Number) && (
-        <MercoaInput
-          readOnly={readOnly}
-          type={schema.type === Mercoa.MetadataType.Number ? 'number' : 'text'}
-          name={field}
-          register={register}
-        />
-      )}
-      {entityMetadata &&
-        (schema.type === Mercoa.MetadataType.String || schema.type === Mercoa.MetadataType.KeyValue) &&
-        (entityMetadata.length > 0 ? (
-          <>
-            {renderCustom?.metadataCombobox ? (
-              renderCustom.metadataCombobox({
-                schema: schema,
-                value: watch(field),
-                setValue: (e) => {
-                  setValue(field, e)
-                },
-                values: entityMetadata,
-              })
-            ) : (
-              <MetadataCombobox
-                schema={schema}
-                values={entityMetadata}
-                value={watch(field)}
-                setValue={(e) => {
-                  setValue(field, e)
-                }}
-              />
-            )}
-          </>
-        ) : (
-          <>No Options Available</>
-        ))}
-      {schema.type === Mercoa.MetadataType.Boolean && (
-        <MetadataBoolean
-          value={watch(field)}
-          setValue={(e) => {
-            setValue(field, e)
-          }}
-        />
-      )}
-      {schema.type === Mercoa.MetadataType.Date && (
-        <MercoaInput
-          name={field}
-          type="date"
-          readOnly={readOnly}
-          className="md:mercoa-col-span-1 mercoa-col-span-full"
-          control={control}
-        />
-      )}
-    </>
-  )
-
   return (
     <div>
       {!hideLabel && (
@@ -4429,7 +4211,65 @@ export function MetadataSelection({
           {schema.displayName}
         </h3>
       )}
-      {metadataSelection}
+      <>
+        {((!entityMetadata && schema.type === Mercoa.MetadataType.String) ||
+          schema.type === Mercoa.MetadataType.Number) && (
+          <MercoaInput
+            readOnly={readOnly}
+            type={schema.type === Mercoa.MetadataType.Number ? 'number' : 'text'}
+            name={field}
+            register={register}
+          />
+        )}
+        {entityMetadata &&
+          (schema.type === Mercoa.MetadataType.String || schema.type === Mercoa.MetadataType.KeyValue) &&
+          (entityMetadata.length > 0 ? (
+            <>
+              {renderCustom?.metadataCombobox ? (
+                renderCustom.metadataCombobox({
+                  schema: schema,
+                  value: watch(field),
+                  setValue: (e) => {
+                    setValue(field, e)
+                  },
+                  values: entityMetadata,
+                })
+              ) : (
+                <>
+                  <MetadataCombobox
+                    schema={schema}
+                    values={entityMetadata}
+                    value={watch(field)}
+                    setValue={(e) => {
+                      setValue(field, e)
+                    }}
+                    readOnly={readOnly ?? false}
+                  />
+                </>
+              )}
+            </>
+          ) : (
+            <>No Options Available</>
+          ))}
+        {schema.type === Mercoa.MetadataType.Boolean && (
+          <MetadataBoolean
+            value={watch(field)}
+            setValue={(e) => {
+              setValue(field, e)
+            }}
+            readOnly={readOnly}
+          />
+        )}
+        {schema.type === Mercoa.MetadataType.Date && (
+          <MercoaInput
+            name={field}
+            type="date"
+            readOnly={readOnly}
+            className="md:mercoa-col-span-1 mercoa-col-span-full"
+            control={control}
+          />
+        )}
+      </>
     </div>
   )
 }
@@ -4492,6 +4332,176 @@ function showMetadata({
   }
 
   return true
+}
+
+function MetadataCombobox({
+  schema,
+  setValue,
+  value,
+  values,
+  readOnly = false,
+}: {
+  schema: Mercoa.MetadataSchema
+  setValue: (e: string) => void
+  value?: string
+  values: string[]
+  readOnly: boolean
+}) {
+  const [options, setOptions] = useState<Array<{ disabled: boolean; value: any }>>([])
+  const [valueState, setValueState] = useState<string | string[]>()
+
+  // Get Options
+  useEffect(() => {
+    if (schema.type === Mercoa.MetadataType.KeyValue) {
+      setOptions(
+        values.map((value) => {
+          let parsedValue = {
+            key: '',
+            value: '' as any,
+            subtitle: '' as any,
+          }
+          try {
+            parsedValue = JSON.parse(value) as { key: string; value: string; subtitle: string }
+            parsedValue.key = `${parsedValue.key}`
+            try {
+              const value = parsedValue.value.value
+                ? parsedValue.value
+                : (JSON.parse(parsedValue.value) as {
+                    value: string
+                    title?: string
+                    subtitle?: string
+                  })
+              if (value.value) {
+                parsedValue.value = value.title ?? value.value
+                parsedValue.subtitle = value.subtitle
+              } else {
+                parsedValue.value = `${parsedValue.value}`
+              }
+            } catch (e) {
+              parsedValue.value = `${parsedValue.value}`
+            }
+          } catch (e) {
+            console.error(e)
+          }
+          return { value: parsedValue, disabled: false }
+        }),
+      )
+    } else {
+      setOptions(
+        values.map((value) => {
+          return { value: value, disabled: false }
+        }),
+      )
+    }
+  }, [values])
+
+  // Get Value
+  useEffect(() => {
+    if (!value) return
+    if (schema.type === Mercoa.MetadataType.KeyValue) {
+      const foundValue = JSON.parse(
+        values.find((e) => {
+          let parsedValue = { key: '' }
+          try {
+            parsedValue = JSON.parse(e) as { key: string }
+            parsedValue.key = `${parsedValue.key}`
+          } catch (e) {
+            console.error(e)
+          }
+          return parsedValue?.key === `${value ?? ''}`
+        }) ?? '{}',
+      ) as any
+      try {
+        const valueParsed = JSON.parse(foundValue.value) as { value: string; title?: string; subtitle?: string }
+        if (valueParsed.value) {
+          foundValue.value = valueParsed.title ?? valueParsed.value
+        }
+      } catch (e) {}
+      setValueState(foundValue.value ? foundValue.value : foundValue)
+    } else {
+      let comboboxValue: string | string[] | undefined = value
+      if (schema.allowMultiple) {
+        // Metadata is stored as a comma separated string, but comboboxes expect an array
+        if (Array.isArray(value)) comboboxValue = value
+        else comboboxValue = value?.split(',')
+      }
+      setValueState(comboboxValue)
+    }
+  }, [value])
+
+  if (schema.type === Mercoa.MetadataType.KeyValue) {
+    return (
+      <MercoaCombobox
+        options={options}
+        onChange={(value) => {
+          setValue(value?.key)
+        }}
+        showAllOptions
+        displayIndex="value"
+        secondaryDisplayIndex="subtitle"
+        value={valueState}
+        multiple={schema.allowMultiple}
+        displaySelectedAs="pill"
+        showClear
+        readOnly={readOnly}
+      />
+    )
+  }
+  return (
+    <MercoaCombobox
+      options={options}
+      onChange={(value) => {
+        setValue(value)
+      }}
+      showAllOptions
+      value={valueState}
+      multiple={schema.allowMultiple}
+      freeText={!schema.allowMultiple}
+      displaySelectedAs="pill"
+      showClear
+      readOnly={readOnly}
+    />
+  )
+}
+
+function MetadataBoolean({
+  setValue,
+  value,
+  readOnly,
+}: {
+  setValue: (e: string) => void
+  value?: string
+  readOnly?: boolean
+}) {
+  return (
+    <div className="mercoa-space-y-4 sm:mercoa-flex sm:mercoa-items-center sm:mercoa-space-x-10 sm:mercoa-space-y-0">
+      <div className="mercoa-flex mercoa-items-center">
+        <input
+          readOnly={readOnly}
+          type="radio"
+          defaultChecked={value === 'true'}
+          className="mercoa-size-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary checked:mercoa-bg-mercoa-primary"
+          onChange={() => setValue('true')}
+        />
+        <label className="mercoa-ml-3 mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+          Yes
+        </label>
+      </div>
+
+      <div className="mercoa-flex mercoa-items-center">
+        <input
+          readOnly={readOnly}
+          type="radio"
+          defaultChecked={value === 'false'}
+          className="mercoa-size-4 mercoa-border-gray-300 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary checked:mercoa-bg-mercoa-primary"
+          onChange={() => setValue('false')}
+        />
+        <label className="mercoa-ml-3 mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+          No
+        </label>
+      </div>
+    </div>
+  )
 }
 
 function filterMetadataValues(entityMetadata: string[], schema: Mercoa.MetadataSchema) {
@@ -4563,6 +4573,7 @@ export function PayableLineItems({
 
   const addItem = () => {
     append({
+      id: `li-${Math.random()}`,
       name: '',
       description: `Line Item ${(lineItems?.length ?? 0) + 1}`,
       amount: 0,
@@ -4770,13 +4781,13 @@ export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
 
   return (
     <>
-      {lineItems.map((lineItem, index) => (
-        <Fragment key={`${lineItem.id}-${lineItem.description}`}>
+      {lineItems.map((lineItem, lineItemIndex) => (
+        <Fragment key={`${lineItem.id}`}>
           <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-my-4" />
           <div className="mercoa-flex mercoa-items-start">
             {/*  INVOICE NUMBER */}
             <MercoaInput
-              name={`lineItems.${index}.description`}
+              name={`lineItems.${lineItemIndex}.description`}
               placeholder="Description"
               label="Description"
               register={register}
@@ -4787,7 +4798,7 @@ export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
             {/*  INVOICE AMOUNT */}
             <MercoaInput
               control={control}
-              name={`lineItems.${index}.amount`}
+              name={`lineItems.${lineItemIndex}.amount`}
               label="Amount"
               type="currency"
               readOnly={readOnly}
@@ -4805,7 +4816,7 @@ export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
                 type="button"
                 color="gray"
                 onClick={() => {
-                  remove(index)
+                  remove(lineItemIndex)
                 }}
                 className="mercoa-ml-1"
               >
@@ -4823,13 +4834,15 @@ export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
                 readOnly={readOnly}
                 field={
                   schema.key === 'glAccountId'
-                    ? `lineItems[${index}].${schema.key}`
-                    : `lineItems[${index}].metadata.${schema.key}`
+                    ? `lineItems[${lineItemIndex}].${schema.key}`
+                    : `lineItems[${lineItemIndex}].metadata.${schema.key}`
                 }
               />
             ))}
           </div>
-          {lineItems.length - 1 === index && <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-my-4" />}
+          {lineItems.length - 1 === lineItemIndex && (
+            <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-my-4" />
+          )}
         </Fragment>
       ))}
     </>
