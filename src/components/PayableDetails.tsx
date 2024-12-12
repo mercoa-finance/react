@@ -1,5 +1,5 @@
 import { Bar, Container, Section } from '@column-resizer/react'
-import { Dialog, Menu, Transition } from '@headlessui/react'
+import { Menu, Transition } from '@headlessui/react'
 import {
   ArrowDownTrayIcon,
   ArrowPathRoundedSquareIcon,
@@ -24,6 +24,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { PhotoIcon } from '@heroicons/react/24/solid'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import accounting from 'accounting'
 import Big from 'big.js'
@@ -31,7 +32,7 @@ import dayjs from 'dayjs'
 import minMax from 'dayjs/plugin/minMax'
 import tz from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
-import { Dispatch, Fragment, SetStateAction, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Dispatch, Fragment, SetStateAction, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Dropzone from 'react-dropzone'
 import {
   Control,
@@ -46,11 +47,8 @@ import {
   useForm,
   useFormContext,
 } from 'react-hook-form'
-import { JsonView } from 'react-json-view-lite'
-import 'react-json-view-lite/dist/index.css'
 import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { classNames } from '../lib/lib'
@@ -86,7 +84,6 @@ import {
   useDebounce,
   useMercoaSession,
 } from './index'
-import { FinanceWithOatfi } from './Oatfi'
 import { RecurringSchedule } from './RecurringSchedule'
 dayjs.extend(utc)
 dayjs.extend(minMax)
@@ -292,161 +289,6 @@ export function PayableDetails({
         {documentPosition === 'right' ? leftComponent : rightComponent}
       </Section>
     </Container>
-  )
-}
-
-function JsonPayloadModal({
-  payload,
-  open,
-  onClose,
-}: {
-  payload: Record<string, any>
-  open: boolean
-  onClose: () => void
-}) {
-  return (
-    <Transition.Root show={open} as={Fragment}>
-      <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={onClose}>
-        <Transition.Child
-          as={Fragment}
-          enter="mercoa-ease-out mercoa-duration-300"
-          enterFrom="mercoa-opacity-0"
-          enterTo="mercoa-opacity-100"
-          leave="mercoa-ease-in mercoa-duration-200"
-          leaveFrom="mercoa-opacity-100"
-          leaveTo="mercoa-opacity-0"
-        >
-          <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75" />
-        </Transition.Child>
-
-        <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
-          <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
-            <Transition.Child
-              as={Fragment}
-              enter="mercoa-ease-out mercoa-duration-300"
-              enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
-              enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
-              leave="mercoa-ease-in mercoa-duration-200"
-              leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
-              leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
-            >
-              <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-6 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-4xl sm:mercoa-p-6">
-                <Dialog.Title
-                  as="h3"
-                  className="mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
-                >
-                  JSON Payload
-                </Dialog.Title>
-                <div className="mercoa-mt-4 mercoa-overflow-auto mercoa-max-h-[500px] mercoa-border mercoa-border-gray-300 mercoa-rounded-md mercoa-bg-gray-50 mercoa-p-4">
-                  <JsonView data={payload} shouldExpandNode={() => true} />
-                </div>
-                <div className="mercoa-mt-4 mercoa-flex mercoa-justify-end">
-                  <button
-                    onClick={onClose}
-                    className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-gray-500 mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-white hover:mercoa-bg-gray-600"
-                  >
-                    Close
-                  </button>
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
-          </div>
-        </div>
-      </Dialog>
-    </Transition.Root>
-  )
-}
-
-export function PayableEvents({ invoiceId }: { invoiceId: string }) {
-  const [events, setEvents] = useState<Mercoa.InvoiceEvent[]>([])
-  const [selectedPayload, setSelectedPayload] = useState<Record<string, any> | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-
-  const { client } = useMercoaSession()
-
-  const fetchInvoiceEvents = useCallback(async () => {
-    try {
-      const response = await client?.invoice.events(invoiceId)
-      if (response) {
-        setEvents(response.data)
-      }
-    } catch (error) {
-      console.error(error)
-    }
-  }, [client?.invoice, invoiceId])
-
-  useEffect(() => {
-    if (client) {
-      fetchInvoiceEvents()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, invoiceId])
-
-  return (
-    <>
-      {selectedPayload && (
-        <JsonPayloadModal payload={selectedPayload} open={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      )}
-
-      <div className="mercoa-overflow-x-auto mercoa-relative sm:mercoa-rounded-lg">
-        <table className="mercoa-w-full mercoa-text-sm mercoa-text-left mercoa-text-gray-500">
-          <thead className="mercoa-text-xs mercoa-uppercase mercoa-bg-gray-50 mercoa-text-gray-700">
-            <tr>
-              <th scope="col" className="mercoa-px-6 mercoa-py-3">
-                Created At
-              </th>
-              <th scope="col" className="mercoa-px-6 mercoa-py-3">
-                Event ID
-              </th>
-              <th scope="col" className="mercoa-px-6 mercoa-py-3">
-                User ID
-              </th>
-              <th scope="col" className="mercoa-px-6 mercoa-py-3">
-                Status
-              </th>
-              <th scope="col" className="mercoa-px-6 mercoa-py-3">
-                Ip Address
-              </th>
-              <th scope="col" className="mercoa-px-6 mercoa-py-3">
-                Payload
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {[...events].reverse().map((event, index) => (
-              <tr key={`event-${index}`} className="mercoa-bg-white mercoa-border-b">
-                <td className="mercoa-px-6 mercoa-py-4">{dayjs(event.createdAt).format('MMM DD, YYYY')}</td>
-                <td className="mercoa-px-6 mercoa-py-4 mercoa-max-w-[250px] mercoa-overflow-hidden mercoa-text-ellipsis mercoa-whitespace-nowrap">
-                  {event.webhookIds.map((ele) => {
-                    return (
-                      <>
-                        {ele} <br />
-                      </>
-                    )
-                  })}
-                </td>
-                <td className="mercoa-px-6 mercoa-py-4">{event.userId ?? 'N/A'}</td>
-                <td className="mercoa-px-3 mercoa-py-4">
-                  {event.status ? <InvoiceStatusPill status={event.status!} /> : null}
-                </td>
-                <td className="mercoa-px-3 mercoa-py-4">{event.ipAddress}</td>
-                <td className="mercoa-px-6 mercoa-py-4">
-                  <button
-                    onClick={() => {
-                      setSelectedPayload(event.data)
-                      setIsModalOpen(true)
-                    }}
-                    className="mercoa-whitespace-nowrap mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-mercoa-primary mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-white hover:mercoa-bg-mercoa-primary-light"
-                  >
-                    View Details
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
   )
 }
 
@@ -3670,19 +3512,6 @@ export function PayableSelectPaymentMethod({
                 </div>
               ))}
           </div>
-          {isSource && enableBNPL && (
-            <>
-              {showBNPL ? (
-                <FinanceWithOatfi paymentMethods={paymentMethods} setShowBNPL={setShowBNPL} />
-              ) : (
-                <div className="mercoa-flex mercoa-items-center mercoa-justify-end mercoa-mt-1">
-                  <MercoaButton isEmphasized={false} onClick={() => setShowBNPL(true)} size="sm">
-                    Extend payment terms
-                  </MercoaButton>
-                </div>
-              )}
-            </>
-          )}
           {isDestination &&
             !disableCreation &&
             !readOnly &&

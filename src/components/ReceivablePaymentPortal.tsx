@@ -9,7 +9,7 @@ import {
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
-import { MercoaApi as Mercoa } from 'sdks/typescript'
+import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { AddBankAccountButton, BankAccount, MercoaButton, PaymentMethodList, useMercoaSession } from './index'
 
