@@ -1092,8 +1092,8 @@ export function PayableForm({
     const incompleteInvoiceData: Omit<Mercoa.InvoiceCreationRequest, 'creatorEntityId' | 'creatorEntityGroupId'> = {
       status: data.saveAsStatus || nextInvoiceState,
       amount: Number(data.amount),
-      taxAmount: Number(data.taxAmount),
-      shippingAmount: Number(data.shippingAmount),
+      taxAmount: typeof data.taxAmount !== 'undefined' ? Number(data.taxAmount ?? 0) : undefined,
+      shippingAmount: typeof data.shippingAmount !== 'undefined' ? Number(data.shippingAmount ?? 0) : undefined,
       currency: data.currency,
       invoiceDate: data.invoiceDate,
       deductionDate: data.deductionDate,
@@ -1231,8 +1231,9 @@ export function PayableForm({
       invoiceData.lineItems?.forEach((lineItem, index) => {
         lineItemsTotal = lineItemsTotal.add(Number(lineItem.amount))
       })
-      lineItemsTotal = lineItemsTotal.add(Number(invoiceData.taxAmount ?? 0))
-      lineItemsTotal = lineItemsTotal.add(Number(invoiceData.shippingAmount ?? 0))
+      lineItemsTotal = lineItemsTotal
+        .add(Number(invoiceData.taxAmount ?? 0))
+        .add(Number(invoiceData.shippingAmount ?? 0))
       if (lineItemsTotal.toNumber() !== Number(data.amount)) {
         setError('amount', {
           type: 'manual',
@@ -1589,7 +1590,8 @@ export function PayableForm({
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <PayableOverview />
               <PayableLineItems />
-              {!mercoaSession.entityCustomizations?.ocr.taxAndShippingAsLineItems && <PayableTaxAndShipping />}
+              {mercoaSession.entityCustomizations?.ocr &&
+                !mercoaSession.entityCustomizations?.ocr.taxAndShippingAsLineItems && <PayableTaxAndShipping />}
               <PayableMetadata /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               {mercoaSession.entity?.id && (
                 <>
