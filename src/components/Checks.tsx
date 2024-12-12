@@ -1,20 +1,20 @@
-import { EnvelopeIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { EnvelopeIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { ReactNode, useEffect, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
-import { usaStates } from '../lib/locations'
+import { postalCodeRegex } from '../lib/locations'
 import {
   AddDialog,
   DefaultPaymentMethodIndicator,
   LoadingSpinnerIcon,
   MercoaButton,
-  MercoaCombobox,
   MercoaInput,
   NoSession,
   PaymentMethodButton,
   PaymentMethodList,
+  StateDropdown,
   useMercoaSession,
 } from './index'
 
@@ -153,13 +153,6 @@ export function Check({
           {showEdit && (
             <div className="mercoa-flex-shrink-0">
               <DefaultPaymentMethodIndicator paymentMethod={account} />
-              <button
-                className="mercoa-ml-1 mercoa-cursor-pointer hover:mercoa-text-red-300"
-                onClick={() => deleteAccount()}
-              >
-                {' '}
-                <TrashIcon className="mercoa-size-5" />
-              </button>
             </div>
           )}
         </div>
@@ -232,10 +225,19 @@ export function AddCheck({
   const schema = yup
     .object({
       payToTheOrderOf: yup.string().required(),
-      addressLine1: yup.string().required(),
-      city: yup.string().required(),
-      stateOrProvince: yup.string().required(),
-      postalCode: yup.string().required(),
+      addressLine1: yup
+        .string()
+        .required('Address is required')
+        .test('addressLine1', 'Address is required', (value) => {
+          if (value?.trim().startsWith('undefined')) {
+            return false
+          }
+          return true
+        }),
+      addressLine2: yup.string(),
+      city: yup.string().required('City is required'),
+      stateOrProvince: yup.string().length(2).required(),
+      postalCode: yup.string().matches(postalCodeRegex, 'Invalid Postal Code').required(),
     })
     .required()
 
@@ -289,48 +291,20 @@ export function AddCheckForm({ prefix }: { prefix?: string }) {
 
   return (
     <div className="mercoa-flex mercoa-flex-col mercoa-gap-y-2">
-      <MercoaInput
-        register={register}
-        name={prefix + 'payToTheOrderOf'}
-        label="Pay To The Order Of"
-        className="mercoa-mt-1"
-      />
-      <MercoaInput
-        register={register}
-        name={prefix + 'addressLine1'}
-        label="Address Line 1"
-        className="mercoa-mt-1"
-        errors={errors}
-      />
+      <MercoaInput register={register} name={prefix + 'payToTheOrderOf'} label="Pay To The Order Of" />
+      <MercoaInput register={register} name={prefix + 'addressLine1'} label="Address Line 1" errors={errors} />
       <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-x-4">
-        <MercoaInput
-          register={register}
-          name={prefix + 'addressLine2'}
-          label="Address Line 2"
-          className="mercoa-mt-1"
-          errors={errors}
-        />
-        <MercoaInput register={register} name={prefix + 'city'} label="City" className="mercoa-mt-1" errors={errors} />
+        <MercoaInput register={register} name={prefix + 'addressLine2'} label="Address Line 2" errors={errors} />
+        <MercoaInput register={register} name={prefix + 'city'} label="City" errors={errors} />
       </div>
       <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-x-4">
-        <MercoaCombobox
-          options={usaStates.map(({ name, abbreviation }) => ({
-            disabled: false,
-            value: abbreviation,
-          }))}
-          label="State"
+        <StateDropdown
           value={stateOrProvince}
-          onChange={(value) => {
-            setValue(prefix + 'stateOrProvince', value, { shouldDirty: true })
+          setValue={(value) => {
+            setValue(`${prefix}stateOrProvince`, value, { shouldDirty: true })
           }}
         />
-        <MercoaInput
-          register={register}
-          name={prefix + 'postalCode'}
-          label="Postal Code"
-          className="mercoa-mt-1"
-          errors={errors}
-        />
+        <MercoaInput register={register} name={prefix + 'postalCode'} label="Postal Code" errors={errors} />
       </div>
     </div>
   )

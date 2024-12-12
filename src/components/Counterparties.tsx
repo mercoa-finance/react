@@ -25,17 +25,16 @@ import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize, constructFullName } from '../lib/lib'
-import { usaStates } from '../lib/locations'
 import {
   DebouncedSearch,
   EntityOnboardingForm,
   LoadingSpinnerIcon,
   MercoaButton,
-  MercoaCombobox,
   MercoaContext,
   MercoaInput,
   NoSession,
   PaymentMethodButton,
+  StateDropdown,
   TableNavigation,
   Tooltip,
   inputClassName,
@@ -566,7 +565,7 @@ export function CounterpartySearchBase({
         .findPayees(mercoaSession.entity?.id, {
           paymentMethods: true,
           networkType,
-          name: search,
+          search,
           returnMetadata: 'true',
         })
         .then((resp) => {
@@ -574,7 +573,7 @@ export function CounterpartySearchBase({
         })
     } else {
       mercoaSession.client?.entity.counterparty
-        .findPayors(mercoaSession.entity?.id, { paymentMethods: true, networkType, name: search })
+        .findPayors(mercoaSession.entity?.id, { paymentMethods: true, networkType, search })
         .then((resp) => {
           setCounterparties(resp.data)
         })
@@ -864,6 +863,7 @@ function CounterpartyAddOrEditForm({
 
   const accountType = watch('vendor.accountType')
   const nameInput = watch('vendor.name')
+  const stateOrProvince = watch('vendor.stateOrProvince')
 
   useEffect(() => {
     if (!nameInput && !accountType) return
@@ -1020,17 +1020,11 @@ function CounterpartyAddOrEditForm({
           <MercoaInput label="City" register={register} name="vendor.city" className="mercoa-mt-1" errors={errors} />
 
           <div className="mercoa-mt-1">
-            <MercoaCombobox
-              options={usaStates.map(({ name, abbreviation }) => ({
-                disabled: false,
-                value: abbreviation,
-              }))}
-              label="State"
-              value={watch('vendor.stateOrProvince')}
-              onChange={(value) => {
-                setValue('vendor.stateOrProvince', value, { shouldDirty: true })
+            <StateDropdown
+              value={stateOrProvince}
+              setValue={(value) => {
+                setValue(`vendor.stateOrProvince`, value, { shouldDirty: true })
               }}
-              labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700 -mercoa-mb-1"
             />
           </div>
           <MercoaInput

@@ -1,7 +1,8 @@
 import { Bar, Container, Section } from '@column-resizer/react'
-import { Menu, Transition } from '@headlessui/react'
+import { Dialog, Menu, Transition } from '@headlessui/react'
 import {
   ArrowDownTrayIcon,
+  ArrowPathRoundedSquareIcon,
   ArrowRightIcon,
   CalendarDaysIcon,
   CheckCircleIcon,
@@ -30,7 +31,7 @@ import dayjs from 'dayjs'
 import minMax from 'dayjs/plugin/minMax'
 import tz from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
-import { Dispatch, Fragment, SetStateAction, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Dispatch, Fragment, SetStateAction, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Dropzone from 'react-dropzone'
 import {
   Control,
@@ -45,6 +46,8 @@ import {
   useForm,
   useFormContext,
 } from 'react-hook-form'
+import { JsonView } from 'react-json-view-lite'
+import 'react-json-view-lite/dist/index.css'
 import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
@@ -83,6 +86,7 @@ import {
   useDebounce,
   useMercoaSession,
 } from './index'
+import { FinanceWithOatfi } from './Oatfi'
 import { RecurringSchedule } from './RecurringSchedule'
 dayjs.extend(utc)
 dayjs.extend(minMax)
@@ -291,6 +295,161 @@ export function PayableDetails({
   )
 }
 
+function JsonPayloadModal({
+  payload,
+  open,
+  onClose,
+}: {
+  payload: Record<string, any>
+  open: boolean
+  onClose: () => void
+}) {
+  return (
+    <Transition.Root show={open} as={Fragment}>
+      <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="mercoa-ease-out mercoa-duration-300"
+          enterFrom="mercoa-opacity-0"
+          enterTo="mercoa-opacity-100"
+          leave="mercoa-ease-in mercoa-duration-200"
+          leaveFrom="mercoa-opacity-100"
+          leaveTo="mercoa-opacity-0"
+        >
+          <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75" />
+        </Transition.Child>
+
+        <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
+          <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="mercoa-ease-out mercoa-duration-300"
+              enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+              enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+              leave="mercoa-ease-in mercoa-duration-200"
+              leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+              leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+            >
+              <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-6 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-4xl sm:mercoa-p-6">
+                <Dialog.Title
+                  as="h3"
+                  className="mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
+                >
+                  JSON Payload
+                </Dialog.Title>
+                <div className="mercoa-mt-4 mercoa-overflow-auto mercoa-max-h-[500px] mercoa-border mercoa-border-gray-300 mercoa-rounded-md mercoa-bg-gray-50 mercoa-p-4">
+                  <JsonView data={payload} shouldExpandNode={() => true} />
+                </div>
+                <div className="mercoa-mt-4 mercoa-flex mercoa-justify-end">
+                  <button
+                    onClick={onClose}
+                    className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-gray-500 mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-white hover:mercoa-bg-gray-600"
+                  >
+                    Close
+                  </button>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition.Root>
+  )
+}
+
+export function PayableEvents({ invoiceId }: { invoiceId: string }) {
+  const [events, setEvents] = useState<Mercoa.InvoiceEvent[]>([])
+  const [selectedPayload, setSelectedPayload] = useState<Record<string, any> | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const { client } = useMercoaSession()
+
+  const fetchInvoiceEvents = useCallback(async () => {
+    try {
+      const response = await client?.invoice.events(invoiceId)
+      if (response) {
+        setEvents(response.data)
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  }, [client?.invoice, invoiceId])
+
+  useEffect(() => {
+    if (client) {
+      fetchInvoiceEvents()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client, invoiceId])
+
+  return (
+    <>
+      {selectedPayload && (
+        <JsonPayloadModal payload={selectedPayload} open={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      )}
+
+      <div className="mercoa-overflow-x-auto mercoa-relative sm:mercoa-rounded-lg">
+        <table className="mercoa-w-full mercoa-text-sm mercoa-text-left mercoa-text-gray-500">
+          <thead className="mercoa-text-xs mercoa-uppercase mercoa-bg-gray-50 mercoa-text-gray-700">
+            <tr>
+              <th scope="col" className="mercoa-px-6 mercoa-py-3">
+                Created At
+              </th>
+              <th scope="col" className="mercoa-px-6 mercoa-py-3">
+                Event ID
+              </th>
+              <th scope="col" className="mercoa-px-6 mercoa-py-3">
+                User ID
+              </th>
+              <th scope="col" className="mercoa-px-6 mercoa-py-3">
+                Status
+              </th>
+              <th scope="col" className="mercoa-px-6 mercoa-py-3">
+                Ip Address
+              </th>
+              <th scope="col" className="mercoa-px-6 mercoa-py-3">
+                Payload
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {[...events].reverse().map((event, index) => (
+              <tr key={`event-${index}`} className="mercoa-bg-white mercoa-border-b">
+                <td className="mercoa-px-6 mercoa-py-4">{dayjs(event.createdAt).format('MMM DD, YYYY')}</td>
+                <td className="mercoa-px-6 mercoa-py-4 mercoa-max-w-[250px] mercoa-overflow-hidden mercoa-text-ellipsis mercoa-whitespace-nowrap">
+                  {event.webhookIds.map((ele) => {
+                    return (
+                      <>
+                        {ele} <br />
+                      </>
+                    )
+                  })}
+                </td>
+                <td className="mercoa-px-6 mercoa-py-4">{event.userId ?? 'N/A'}</td>
+                <td className="mercoa-px-3 mercoa-py-4">
+                  {event.status ? <InvoiceStatusPill status={event.status!} /> : null}
+                </td>
+                <td className="mercoa-px-3 mercoa-py-4">{event.ipAddress}</td>
+                <td className="mercoa-px-6 mercoa-py-4">
+                  <button
+                    onClick={() => {
+                      setSelectedPayload(event.data)
+                      setIsModalOpen(true)
+                    }}
+                    className="mercoa-whitespace-nowrap mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-mercoa-primary mercoa-px-2 mercoa-py-1 mercoa-text-sm mercoa-font-semibold mercoa-text-white hover:mercoa-bg-mercoa-primary-light"
+                  >
+                    View Details
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )
+}
+
 export type PayableFormChildrenProps = {
   invoice?: Mercoa.InvoiceResponse
   ocrProcessing?: boolean
@@ -419,6 +578,8 @@ export function PayableForm({
       fees: yup.mixed().nullable(),
       failureType: yup.string().nullable(),
       vendorCreditIds: yup.array().nullable(),
+      taxAmount: yup.number().transform(removeThousands).positive().nullable(),
+      shippingAmount: yup.number().transform(removeThousands).positive().nullable(),
       createdAt: yup.date().nullable(),
       updatedAt: yup.date().nullable(),
     })
@@ -465,6 +626,8 @@ export function PayableForm({
       approvers: invoice?.approvers ?? [],
       fees: invoice?.fees,
       vendorCreditIds: invoice?.vendorCreditIds ?? [],
+      taxAmount: invoice?.taxAmount,
+      shippingAmount: invoice?.shippingAmount,
       createdAt: invoice?.createdAt,
       updatedAt: invoice?.updatedAt,
       newBankAccount: {
@@ -576,6 +739,8 @@ export function PayableForm({
     setValue('createdAt', invoice?.createdAt)
     setValue('updatedAt', invoice?.updatedAt)
     setValue('paymentSchedule', invoice?.paymentSchedule)
+    setValue('taxAmount', invoice?.taxAmount)
+    setValue('shippingAmount', invoice?.shippingAmount)
   }, [invoice])
 
   const { fields: lineItems } = useFieldArray({
@@ -645,6 +810,8 @@ export function PayableForm({
     }
     if (ocrResponse.invoice.currency) setValue('currency', ocrResponse.invoice.currency)
     if (ocrResponse.invoice.metadata) setValue('metadata', ocrResponse.invoice.metadata)
+    if (ocrResponse.invoice.taxAmount) setValue('taxAmount', ocrResponse.invoice.taxAmount)
+    if (ocrResponse.invoice.shippingAmount) setValue('shippingAmount', ocrResponse.invoice.shippingAmount)
     if (
       ocrResponse.invoice.lineItems &&
       mercoaSession.iframeOptions?.options?.invoice?.lineItems != Mercoa.LineItemAvailabilities.Disabled
@@ -1016,27 +1183,18 @@ export function PayableForm({
         }
         data.paymentSchedule = out
       } else if (data.paymentSchedule.type === 'monthly') {
-        if (
-          isNaN(data.paymentSchedule.dayOffset) ||
-          data.paymentSchedule.dayOffset < 1 ||
-          !data.paymentSchedule.dayOffset
-        ) {
-          data.paymentSchedule.dayOffset = 0
+        if (isNaN(data.paymentSchedule.repeatOnDay) || !data.paymentSchedule.repeatOnDay) {
+          data.paymentSchedule.repeatOnDay = 1
         }
         const out: Mercoa.PaymentSchedule = {
           type: 'monthly',
-          offsetType: data.paymentSchedule.offsetType ?? 'start',
-          dayOffset: Number(data.paymentSchedule.dayOffset),
+          repeatOnDay: Number(data.paymentSchedule.repeatOnDay),
           repeatEvery: Number(data.paymentSchedule.repeatEvery),
           ends: data.paymentSchedule.ends,
         }
         data.paymentSchedule = out
       } else if (data.paymentSchedule.type === 'yearly') {
-        if (
-          isNaN(data.paymentSchedule.repeatOnDay) ||
-          data.paymentSchedule.repeatOnDay < 1 ||
-          !data.paymentSchedule.repeatOnDay
-        ) {
+        if (isNaN(data.paymentSchedule.repeatOnDay) || !data.paymentSchedule.repeatOnDay) {
           data.paymentSchedule.repeatOnDay = 1
         }
         if (
@@ -1092,6 +1250,8 @@ export function PayableForm({
     const incompleteInvoiceData: Omit<Mercoa.InvoiceCreationRequest, 'creatorEntityId' | 'creatorEntityGroupId'> = {
       status: data.saveAsStatus || nextInvoiceState,
       amount: Number(data.amount),
+      taxAmount: Number(data.taxAmount),
+      shippingAmount: Number(data.shippingAmount),
       currency: data.currency,
       invoiceDate: data.invoiceDate,
       deductionDate: data.deductionDate,
@@ -1221,17 +1381,20 @@ export function PayableForm({
     if (
       ![Mercoa.InvoiceStatus.Draft, Mercoa.InvoiceStatus.Unassigned].includes(invoiceData.status as any) &&
       mercoaSession.iframeOptions?.options?.invoice?.lineItems != Mercoa.LineItemAvailabilities.Disabled &&
-      invoiceData.lineItems &&
-      invoiceData.lineItems.length > 0
+      ((invoiceData.lineItems && invoiceData.lineItems.length > 0) ||
+        invoiceData.taxAmount ||
+        invoiceData.shippingAmount)
     ) {
       let lineItemsTotal = new Big(0)
-      invoiceData.lineItems.forEach((lineItem, index) => {
+      invoiceData.lineItems?.forEach((lineItem, index) => {
         lineItemsTotal = lineItemsTotal.add(Number(lineItem.amount))
       })
+      lineItemsTotal = lineItemsTotal.add(Number(invoiceData.taxAmount ?? 0))
+      lineItemsTotal = lineItemsTotal.add(Number(invoiceData.shippingAmount ?? 0))
       if (lineItemsTotal.toNumber() !== Number(data.amount)) {
         setError('amount', {
           type: 'manual',
-          message: `Line item amounts do not match total amount.\nLine items: ${accounting.formatMoney(
+          message: `Sum of line item, tax, and shipping amounts does not match total amount.\nSum: ${accounting.formatMoney(
             lineItemsTotal.toNumber(),
             currencyCodeToSymbol(data.currency),
           )}, Invoice Total: ${accounting.formatMoney(Number(data.amount), currencyCodeToSymbol(data.currency))}`,
@@ -1444,6 +1607,12 @@ export function PayableForm({
           if (resp) {
             setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
             refreshInvoice(resp.id)
+          } else {
+            console.error(e)
+            console.error(e.body)
+            renderCustom?.toast
+              ? renderCustom?.toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+              : toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
           }
         } else {
           console.error(e)
@@ -1578,6 +1747,7 @@ export function PayableForm({
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <PayableOverview />
               <PayableLineItems />
+              {!mercoaSession.entityCustomizations?.ocr.taxAndShippingAsLineItems && <PayableTaxAndShipping />}
               <PayableMetadata /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               {mercoaSession.entity?.id && (
                 <>
@@ -1585,7 +1755,6 @@ export function PayableForm({
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                   <PayablePaymentDestination />
                   <PaymentDestinationProcessingTime />
-                  <PaymentOptions />
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                   <PayableFees />
                   {invoiceType === 'invoiceTemplate' && <PayableRecurringSchedule />}
@@ -1958,6 +2127,7 @@ export function PayableDocumentDisplay({
   const [numPages, setNumPages] = useState<number>()
   const [pageNumber, setPageNumber] = useState<number>(1)
   const [zoomLevel, setZoomLevel] = useState<number>(1)
+  const [rotate, setRotate] = useState<number>(0)
   const [debouncedWidth, setDebouncedWidth] = useDebounce(0, 20)
   const [numRenders, setNumRenders] = useState<number>(0)
 
@@ -2027,6 +2197,14 @@ export function PayableDocumentDisplay({
     else if (scale <= 5) return `mercoa-scale-[5]`
   }
 
+  function getRotate(angle: number) {
+    if (angle % 360 === 0) return 'mercoa-rotate-0'
+    else if (angle % 360 === 90) return 'mercoa-rotate-90'
+    else if (angle % 360 === 180) return 'mercoa-rotate-180'
+    else if (angle % 360 === 270) return 'mercoa-rotate-[270deg]'
+    else return 'mercoa-rotate-0'
+  }
+
   if (!mercoaSession.client) return <NoSession componentName="PayableDocumentDisplay" />
   if (!documents && !invoice)
     return <div>One of invoice or documents must be passed as a prop to PayableDocumentDisplay</div>
@@ -2090,6 +2268,15 @@ export function PayableDocumentDisplay({
                     <span className="mercoa-sr-only">Zoom In</span>
                     <MagnifyingGlassPlusIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
                   </button>
+                  <button
+                    type="button"
+                    disabled={zoomLevel === 0.1}
+                    onClick={() => setRotate(rotate + 90)}
+                    className="mercoa-p-1 mercoa-text-gray-600 disabled:mercoa-text-gray-200"
+                  >
+                    <span className="mercoa-sr-only">Rotate</span>
+                    <ArrowPathRoundedSquareIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
+                  </button>
                 </div>
                 <div className="mercoa-flex mercoa-items-center mercoa-justify-end mercoa-gap-x-1">
                   {onRemoveDocument ? (
@@ -2150,6 +2337,7 @@ export function PayableDocumentDisplay({
                       renderAnnotationLayer={false}
                       width={debouncedWidth - 5}
                       scale={zoomLevel}
+                      rotate={rotate % 360}
                     />
                   </Document>
                 ) : (
@@ -2158,7 +2346,7 @@ export function PayableDocumentDisplay({
                       src={document.fileReaderObj}
                       className={`mercoa-origin-top-left mercoa-object-contain mercoa-object-top ${getImageScale(
                         zoomLevel,
-                      )} mercoa-w-full`}
+                      )} ${getRotate(rotate)} mercoa-origin-center mercoa-w-full`}
                     />
                   </div>
                 )}
@@ -2793,6 +2981,14 @@ export type PayableOverviewChildrenProps = {
   setDescription?: (description: string) => void
 }
 
+export type PayableTaxAndShippingChildrenProps = {
+  readOnly?: boolean
+  taxAmount?: number
+  setTaxAmount?: (taxAmount: number) => void
+  shippingAmount?: number
+  setShippingAmount?: (shippingAmount: number) => void
+}
+
 export function PayableOverview({
   readOnly,
   supportedCurrencies,
@@ -3022,6 +3218,94 @@ export function PayableOverview({
   )
 }
 
+export function PayableTaxAndShipping({
+  readOnly,
+  children,
+}: {
+  readOnly?: boolean
+  children?: (props: PayableTaxAndShippingChildrenProps) => JSX.Element
+}) {
+  const {
+    control,
+    setValue,
+    formState: { errors },
+    watch,
+  } = useFormContext()
+
+  const currency = watch('currency')
+  const status = watch('status')
+
+  const notDraft = !!status && status !== Mercoa.InvoiceStatus.Draft
+
+  const useWidth = (target: any) => {
+    const [width, setWidth] = useState<number>(0)
+
+    useLayoutEffect(() => {
+      if (target.current) {
+        setWidth(target.current.getBoundingClientRect().width)
+      }
+    }, [target])
+
+    useResizeObserver(target, (entry) => setWidth(entry.contentRect.width))
+    return width
+  }
+
+  const wrapperDiv = useRef(null)
+  const width = useWidth(wrapperDiv)
+
+  if (children) {
+    return children({
+      readOnly,
+      taxAmount: watch('taxAmount'),
+      setTaxAmount: (taxAmount: number) => setValue('taxAmount', taxAmount),
+      shippingAmount: watch('shippingAmount'),
+      setShippingAmount: (shippingAmount: number) => setValue('shippingAmount', shippingAmount),
+    })
+  }
+
+  let formCols = 'mercoa-grid-cols-1'
+  if (width && width > 300) {
+    formCols = 'mercoa-grid-cols-2'
+  }
+  if (width && width > 500) {
+    formCols = 'mercoa-grid-cols-3'
+  }
+  if (width && width > 700) {
+    formCols = 'mercoa-grid-cols-4'
+  }
+  if (width && width > 900) {
+    formCols = 'mercoa-grid-cols-5'
+  }
+
+  return (
+    <div className={`mercoa-grid ${formCols} mercoa-col-span-full md:mercoa-gap-4 mercoa-gap-2`} ref={wrapperDiv}>
+      {/*  TAX AMOUNT */}
+      <MercoaInput
+        control={control}
+        name="taxAmount"
+        label="Tax"
+        type="currency"
+        readOnly={readOnly || notDraft}
+        className="md:mercoa-col-span-1 mercoa-col-span-full"
+        leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>}
+        errors={errors}
+      />
+
+      {/*  SHIPPING AMOUNT */}
+      <MercoaInput
+        control={control}
+        name="shippingAmount"
+        label="Shipping"
+        type="currency"
+        readOnly={readOnly || notDraft}
+        className="md:mercoa-col-span-1 mercoa-col-span-full"
+        leadingIcon={<span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>}
+        errors={errors}
+      />
+    </div>
+  )
+}
+
 function PrintDescriptionOnCheckRemittanceSwitch() {
   const {
     watch,
@@ -3074,6 +3358,8 @@ export function PayableSelectPaymentMethod({
   const [paymentMethods, setPaymentMethods] = useState<Array<Mercoa.PaymentMethodResponse>>([])
   const [offPlatformDestinationMethod, setOffPlatformDestinationMethod] = useState<Mercoa.PaymentMethodResponse>()
   const [firstRender, setFirstRender] = useState(true)
+
+  const [showBNPL, setShowBNPL] = useState(false)
 
   const { watch, setValue, clearErrors } = useFormContext()
 
@@ -3345,6 +3631,10 @@ export function PayableSelectPaymentMethod({
     }
   }, [selectedType, paymentMethods, paymentId])
 
+  const enableBNPL = mercoaSession.organization?.paymentMethods?.payerPayments.find(
+    (e) => e.type === 'bnpl' && e.active,
+  )
+
   if (!mercoaSession.client) return <NoSession componentName="SelectPaymentMethod" />
   return (
     <div>
@@ -3380,6 +3670,19 @@ export function PayableSelectPaymentMethod({
                 </div>
               ))}
           </div>
+          {isSource && enableBNPL && (
+            <>
+              {showBNPL ? (
+                <FinanceWithOatfi paymentMethods={paymentMethods} setShowBNPL={setShowBNPL} />
+              ) : (
+                <div className="mercoa-flex mercoa-items-center mercoa-justify-end mercoa-mt-1">
+                  <MercoaButton isEmphasized={false} onClick={() => setShowBNPL(true)} size="sm">
+                    Extend payment terms
+                  </MercoaButton>
+                </div>
+              )}
+            </>
+          )}
           {isDestination &&
             !disableCreation &&
             !readOnly &&
@@ -4852,7 +5155,6 @@ export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
 // Payment Options
 
 export function PaymentOptions() {
-  const mercoaSession = useMercoaSession()
   const {
     watch,
     register,

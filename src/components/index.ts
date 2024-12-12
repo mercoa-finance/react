@@ -19,7 +19,8 @@ export * from './PayableDetails'
 export * from './Payables'
 export * from './PaymentMethods'
 export * from './ReceivableDetails'
-export * from './ReceivablePayments'
+export * from './ReceivablePaymentPdf'
+export * from './ReceivablePaymentPortal'
 export * from './Receivables'
 
 export type onCloseFunction = (value: boolean) => void

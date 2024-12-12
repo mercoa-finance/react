@@ -27,7 +27,7 @@ import { toast } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
-import { postalCodeRegex, usaStates } from '../lib/locations'
+import { postalCodeRegex } from '../lib/locations'
 import { mccCodes } from '../lib/mccCodes'
 import {
   AddDialog,
@@ -40,6 +40,7 @@ import {
   MercoaInputLabel,
   NoSession,
   PaymentMethodButton,
+  StateDropdown,
   Tooltip,
   inputClassName,
   useMercoaSession,
@@ -332,17 +333,11 @@ export function AddressBlock({
           />
 
           <div className="mercoa-mt-1">
-            <MercoaCombobox
-              options={usaStates.map(({ name, abbreviation }) => ({
-                disabled: false,
-                value: abbreviation,
-              }))}
-              label="State"
+            <StateDropdown
               value={stateOrProvince}
-              onChange={(value) => {
+              setValue={(value) => {
                 setValue(`${prefix}stateOrProvince`, value, { shouldDirty: true })
               }}
-              labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 -mercoa-mb-1"
             />
             {errors.stateOrProvince?.message && (
               <p className="mercoa-text-sm mercoa-text-red-500 mercoa-text-left">{errors.stateOrProvince?.message}</p>
@@ -839,7 +834,7 @@ export function MCCBlock({ watch, setValue }: { watch: Function; setValue: Funct
       onChange={({ code }) => {
         setValue('mcc', code, { shouldDirty: true })
       }}
-      labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-700 -mercoa-mb-1"
+      labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 -mercoa-mb-1"
     />
   )
 }
@@ -1404,6 +1399,7 @@ export function RepresentativeOnboardingForm({
       firstName: representative?.name?.firstName,
       middleName: representative?.name?.middleName,
       lastName: representative?.name?.lastName,
+      suffix: representative?.name?.suffix,
       email: representative?.email,
       addressLine1: representative?.address?.addressLine1,
       addressLine2: representative?.address?.addressLine2,
@@ -1424,6 +1420,7 @@ export function RepresentativeOnboardingForm({
     setValue('firstName', representative.name.firstName as unknown as never)
     setValue('middleName', representative.name.middleName as unknown as never)
     setValue('lastName', representative.name.lastName as unknown as never)
+    setValue('suffix', representative.name.suffix as unknown as never)
     setValue('email', representative.email as unknown as never)
     setValue('addressLine1', representative.address.addressLine1 as unknown as never)
     setValue('addressLine2', representative.address.addressLine2 as unknown as never)
@@ -2069,6 +2066,9 @@ export function EntityOnboardingForm({
       isPayor: entity.isPayor,
       isPayee: entity.isPayee,
       isOrganizationEntity: mercoaSession.organization?.organizationEntityId === entity.id,
+      maxTransactionSize: entity.profile?.business?.maxTransactionSize,
+      averageMonthlyTransactionVolume: entity.profile?.business?.averageMonthlyTransactionVolume,
+      averageTransactionSize: entity.profile?.business?.averageTransactionSize,
     },
     resolver: async (data, context, options) => {
       if (data.accountType === Mercoa.AccountType.Individual) {

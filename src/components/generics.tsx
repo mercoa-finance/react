@@ -32,6 +32,7 @@ import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { classNames, getEndpoint } from '../lib/lib'
+import { usaStates } from '../lib/locations'
 import { MercoaSession, TokenOptions, useMercoaSession } from './index'
 
 export interface MercoaButtonProps extends HTMLAttributes<HTMLButtonElement> {
@@ -1670,4 +1671,48 @@ export function addToPaymentBatch({
   }
 
   return [...existingBatch, newInvoice]
+}
+
+export function StateDropdown({ value, setValue }: { value: string | null; setValue: (value: string) => void }) {
+  const [random] = useState(() => Math.floor(Math.random() * 1000).toString())
+
+  const randomInput = 'select-state-input' + random
+
+  useEffect(() => {
+    const input = document.querySelector('.' + randomInput) as HTMLInputElement
+    return input.addEventListener('change', (e: any) => {
+      // search for the state in the list of states
+      const state = usaStates.find(
+        (state) =>
+          state.abbreviation.toLowerCase() === e.target.value.toLowerCase() ||
+          state.name.toLowerCase() === e.target.value.toLowerCase(),
+      )
+      if (state) {
+        setValue(state.abbreviation)
+        input.value = state.name
+      }
+    })
+  }, [])
+
+  return (
+    <MercoaCombobox
+      value={usaStates.find((state) => state.abbreviation === value)}
+      onChange={(e) => {
+        setValue(e.abbreviation)
+      }}
+      displayIndex="name"
+      options={usaStates.map((state) => ({
+        value: {
+          name: state.name,
+          abbreviation: state.abbreviation,
+        },
+        disabled: false,
+      }))}
+      placeholder="State"
+      label="State"
+      inputClassName={inputClassName({ align: 'left' }) + ' ' + randomInput}
+      labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 -mercoa-mb-1"
+      showAllOptions
+    />
+  )
 }

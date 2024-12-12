@@ -124,32 +124,14 @@ export default function InvoicePreview({
         className="mercoa-h-[880px] mercoa-w-[680px] mercoa-grow mercoa-border mercoa-rounded-mercoa mercoa-shadow-md mercoa-p-10"
       >
         {previewType === 'pdf' && <InvoicePreviewPdf invoice={invoice} />}
-        {previewType === 'email' && <InvoicePreviewEmail invoice={invoice} />}
         {previewType === 'paymentPage' && <InvoicePreviewPaymentPage invoice={invoice} />}
       </div>
     </div>
   )
 }
 
-export function InvoicePreviewPdf({ invoice }: { invoice: Mercoa.InvoiceResponse }) {
-  return <ReceivablePaymentPdf invoice={invoice} />
-}
-
-// TODO: This is left in a partial state until the generatePaymentLinkEmail endpoint is refactored
-export function InvoicePreviewEmail({ invoice }: { invoice: Mercoa.InvoiceResponse }) {
-  const [html, setHtml] = useState<string>('')
-
-  useEffect(() => {
-    fetch('/api/generatePaymentLinkEmail', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(invoice),
-    })
-  }, [invoice])
-
-  return <div dangerouslySetInnerHTML={{ __html: html }} />
+export function InvoicePreviewPdf({ invoice, hideQR }: { invoice: Mercoa.InvoiceResponse; hideQR?: boolean }) {
+  return <ReceivablePaymentPdf invoice={invoice} hideQR={hideQR} />
 }
 
 export function InvoicePreviewPaymentPage({ invoice }: { invoice: Mercoa.InvoiceResponse }) {

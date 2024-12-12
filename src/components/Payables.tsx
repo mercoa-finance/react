@@ -1954,13 +1954,7 @@ export function InvoiceMetrics({
   returnByDate?: Mercoa.InvoiceMetricsPerDateGroupBy
   excludePayables?: boolean
   excludeReceivables?: boolean
-  children?: ({
-    metrics,
-  }: {
-    metrics?: {
-      [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse
-    }
-  }) => JSX.Element
+  children?: ({ metrics }: { metrics?: Mercoa.InvoiceMetricsResponse[] }) => JSX.Element
 }) {
   // default to AP
   if (typeof excludePayables === 'undefined' && typeof excludeReceivables === 'undefined') {
@@ -1969,45 +1963,36 @@ export function InvoiceMetrics({
 
   const mercoaSession = useMercoaSession()
 
-  const [invoiceMetrics, setInvoiceMetrics] = useState<{
-    [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse
-  }>()
+  const [invoiceMetrics, setInvoiceMetrics] = useState<Mercoa.InvoiceMetricsResponse[]>()
 
-  function sumTotalCount(metricsObject: {
-    [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse
-  }) {
-    const metrics = Object.entries(metricsObject).filter(
-      ([status]) => statuses.indexOf(status as Mercoa.InvoiceStatus) > -1,
-    )
-    return metrics?.reduce((acc, [, metric]) => {
+  function sumTotalCount(metrics: Mercoa.InvoiceMetricsResponse[]) {
+    return metrics?.reduce((acc, metric) => {
       acc += metric.totalCount
       return acc
     }, 0)
   }
 
-  function formatCurrencyMetrics(
-    metricsObject: {
-      [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse
-    },
-    key: 'totalAmount' | 'averageAmount',
-  ) {
-    const metrics = Object.entries(metricsObject).filter(
-      ([status]) => statuses.indexOf(status as Mercoa.InvoiceStatus) > -1,
-    )
-    if (!metrics || metrics.length < 1) return accounting.formatMoney(0, currencyCodeToSymbol('USD'))
-    if (metrics.length < 2)
-      return accounting.formatMoney(metrics[0][1][key] ?? 0 ?? '', currencyCodeToSymbol(metrics[0][1].currency))
+  function formatCurrencyMetrics(metrics: Mercoa.InvoiceMetricsResponse[], key: 'totalAmount' | 'averageAmount') {
+    if (!metrics || metrics.length < 1) {
+      return accounting.formatMoney(0, currencyCodeToSymbol('USD'))
+    }
+    if (metrics.length < 2) {
+      return accounting.formatMoney(metrics[0][key] ?? 0 ?? '', currencyCodeToSymbol(metrics[0].currency))
+    }
     return (
       <div>
-        {metrics.map(([status, metric]) => (
-          <p key={metric.currency} className="mercoa-text-xs">
-            <span className="mercoa-text-gray-600">{status}: </span>
-            <span className="mercoa-text-gray-900">
-              {accounting.formatMoney(metric[key] ?? 0 ?? '', currencyCodeToSymbol(metric.currency))}
-            </span>
-            <span className="mercoa-text-gray-500"> {metric.currency}</span>
-          </p>
-        ))}
+        {metrics.map((metric, index) => {
+          const statuses = metric.group?.map((e) => e.status) ?? []
+          return (
+            <p key={metric.currency + metric.group?.join('-')} className="mercoa-text-xs">
+              {statuses.length > 1 && <span className="mercoa-text-gray-600">{statuses.join(', ')}: </span>}
+              <span className="mercoa-text-gray-900">
+                {accounting.formatMoney(metric[key] ?? 0 ?? '', currencyCodeToSymbol(metric.currency))}
+              </span>
+              <span className="mercoa-text-gray-500"> {metric.currency}</span>
+            </p>
+          )
+        })}
       </div>
     )
   }
@@ -2027,21 +2012,7 @@ export function InvoiceMetrics({
         groupBy: ['STATUS'],
       })
       .then((metrics) => {
-        const results = (statuses ?? Object.keys(Mercoa.InvoiceStatus)).map((status) => {
-          return [
-            status.toUpperCase() as string,
-            metrics.find((e) => e.group?.some((e) => e.status === status.toUpperCase())) ?? {
-              totalAmount: 0,
-              totalInvoices: 0,
-              totalCount: 0,
-              currency: 'USD',
-            },
-          ]
-        })
-        const out = Object.fromEntries(results) as {
-          [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse
-        }
-        setInvoiceMetrics(out)
+        setInvoiceMetrics(metrics)
       })
   }, [search, statuses, mercoaSession.token, mercoaSession.entity, mercoaSession.refreshId])
 
@@ -2142,15 +2113,19 @@ export function StatusTabs({
       })
       .then((metrics) => {
         const results = (statuses ?? Object.keys(Mercoa.InvoiceStatus)).map((status) => {
-          return [
-            status.toUpperCase() as string,
-            metrics.find((e) => e.group?.some((e) => e.status === status.toUpperCase())) ?? {
-              totalAmount: 0,
-              totalInvoices: 0,
-              totalCount: 0,
-              currency: 'USD',
-            },
-          ]
+          const metric: Mercoa.InvoiceMetricsResponse = {
+            totalAmount: 0,
+            totalCount: 0,
+            averageAmount: 0,
+            currency: 'USD',
+          }
+          metrics.forEach((e) => {
+            if (e.group?.some((e) => e.status === status.toUpperCase())) {
+              metric.totalAmount += Number(e.totalAmount)
+              metric.totalCount += Number(e.totalCount)
+            }
+          })
+          return [status.toUpperCase() as string, metric]
         })
         const out = Object.fromEntries(results) as {
           [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse

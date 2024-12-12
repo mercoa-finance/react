@@ -68,6 +68,7 @@ export function ReceivableDetails({
   onUpdate,
   admin,
   documentPosition = 'left',
+  disableCustomerCreation = false,
   children,
 }: {
   invoiceId?: Mercoa.InvoiceId
@@ -75,6 +76,7 @@ export function ReceivableDetails({
   onUpdate: (invoice: Mercoa.InvoiceResponse | undefined) => void
   admin?: boolean
   documentPosition?: 'right' | 'left' | 'none'
+  disableCustomerCreation?: boolean
   children?: ({
     invoice,
     refreshInvoice,
@@ -189,6 +191,7 @@ export function ReceivableDetails({
           onUpdate={onUpdate}
           refreshInvoice={refreshInvoice}
           admin={admin}
+          disableCustomerCreation={disableCustomerCreation}
           supportedCurrencies={supportedCurrencies}
           setSupportedCurrencies={setSupportedCurrencies}
           setDestinationPaymentMethods={setDestinationPaymentMethods}
@@ -220,6 +223,7 @@ export function ReceivableDetails({
         onUpdate={onUpdate}
         refreshInvoice={refreshInvoice}
         admin={admin}
+        disableCustomerCreation={disableCustomerCreation}
         supportedCurrencies={supportedCurrencies}
         setSupportedCurrencies={setSupportedCurrencies}
         setDestinationPaymentMethods={setDestinationPaymentMethods}
@@ -265,9 +269,8 @@ export function ReceivableForm({
   invoice,
   onUpdate,
   refreshInvoice,
-  // height,              TODO: Is used in PayableDetails but not used at all here, implement
-  admin,
-  // invoicePreSubmit,
+  admin, // TODO: can this be removed?
+  disableCustomerCreation = false,
   supportedCurrencies,
   setSupportedCurrencies,
   setDestinationPaymentMethods,
@@ -281,6 +284,7 @@ export function ReceivableForm({
   onUpdate: (invoice: Mercoa.InvoiceResponse | undefined) => void
   refreshInvoice: (invoice: Mercoa.InvoiceId) => void
   admin?: boolean
+  disableCustomerCreation?: boolean
   supportedCurrencies: Mercoa.CurrencyCode[]
   setSupportedCurrencies: (currencies: Mercoa.CurrencyCode[]) => void
   setDestinationPaymentMethods: (paymentMethods: Mercoa.PaymentMethodResponse.BankAccount[]) => void
@@ -673,6 +677,7 @@ export function ReceivableForm({
                 clearErrors('payerId')
               }}
               counterparty={selectedPayer}
+              disableCreation={disableCustomerCreation}
             />
           </div>
           {errors.payerId?.message && (

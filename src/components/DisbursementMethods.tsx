@@ -126,7 +126,7 @@ export function DisbursementMethods({
 
     return (
       <button
-        className="mercoa-cursor-pointer  mercoa-rounded-mercoa mercoa-border mercoa-border-gray-100 mercoa-bg-white mercoa-shadow-lg hover:mercoa-shadow-xl"
+        className="mercoa-cursor-pointer mercoa-rounded-mercoa mercoa-border mercoa-border-gray-100 mercoa-bg-white mercoa-shadow-lg hover:mercoa-shadow-xl"
         onClick={async () => {
           if (method.type === Mercoa.PaymentMethodType.OffPlatform) {
             const pm = await mercoaSession.client?.entity.paymentMethod.create(entity.id, {
@@ -151,8 +151,6 @@ export function DisbursementMethods({
               ? paymentMethodSchemas?.find((e) => e.id === method.name)?.name
               : method.name}
           </p>
-          {/*<p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-500 mercoa-mt-2">{method.time}</p>*/}
-          {/* <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-500">{method.markup?.amount}</p>*/}
         </div>
       </button>
     )

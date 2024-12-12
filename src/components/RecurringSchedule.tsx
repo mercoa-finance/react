@@ -13,8 +13,7 @@ export function RecurringSchedule() {
   const repeatOn = watch('paymentSchedule.repeatOn') as Array<Mercoa.DayOfWeek>
 
   // Monthly
-  const dayOffset = watch('paymentSchedule.dayOffset') as number
-  const offsetType = watch('paymentSchedule.offsetType') as 'start' | 'end'
+  const repeatOnDay = watch('paymentSchedule.repeatOnDay') as number
 
   // Yearly
   const repeatOnMonth = watch('paymentSchedule.repeatOnMonth') as number
@@ -88,10 +87,9 @@ export function RecurringSchedule() {
             <input
               type="radio"
               value="start"
-              checked={offsetType === 'start' && dayOffset === 0}
+              checked={repeatOnDay === 1}
               onChange={() => {
-                setValue('paymentSchedule.offsetType', 'start')
-                setValue('paymentSchedule.dayOffset', 0)
+                setValue('paymentSchedule.repeatOnDay', 1)
               }}
               className="mercoa-size-4 mercoa-border-gray-400 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary"
             />
@@ -101,10 +99,9 @@ export function RecurringSchedule() {
             <input
               type="radio"
               value="end"
-              checked={offsetType === 'end' && dayOffset === 0}
+              checked={repeatOnDay === -1}
               onChange={() => {
-                setValue('paymentSchedule.offsetType', 'end')
-                setValue('paymentSchedule.dayOffset', 0)
+                setValue('paymentSchedule.repeatOnDay', -1)
               }}
               className="mercoa-size-4 mercoa-border-gray-400 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary"
             />
@@ -113,23 +110,24 @@ export function RecurringSchedule() {
           <div className="mercoa-flex mercoa-items-center mercoa-gap-2">
             <input
               type="radio"
-              value="end"
-              checked={offsetType === 'start' && dayOffset !== 0}
+              value="specific"
+              checked={repeatOnDay > 1}
               onChange={() => {
-                setValue('paymentSchedule.offsetType', 'start')
-                setValue('paymentSchedule.dayOffset', 1)
+                setValue('paymentSchedule.repeatOnDay', 2)
               }}
               className="mercoa-size-4 mercoa-border-gray-400 mercoa-text-mercoa-primary focus:mercoa-ring-mercoa-primary"
             />
             <label className="mercoa-text-gray-800">Specific day of the month</label>
-            {!!dayOffset && dayOffset !== 0 && (
+            {!!repeatOnDay && repeatOnDay !== 1 && repeatOnDay !== -1 && (
               <input
                 className={inputClassName({ width: 'mercoa-w-14' })}
                 type="number"
-                value={dayOffset + 1}
-                onChange={(e) => setValue('paymentSchedule.dayOffset', Number(e.target.value) - 1)}
+                value={repeatOnDay}
+                onChange={(e) => {
+                  setValue('paymentSchedule.repeatOnDay', Number(e.target.value))
+                }}
                 placeholder="1"
-                min={1}
+                min={2}
                 max={31}
               />
             )}

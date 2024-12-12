@@ -841,7 +841,7 @@ function CounterpartySearch({
     if (!mercoaSession.entity?.id) return
     let networkType: Mercoa.CounterpartyNetworkType[] = [Mercoa.CounterpartyNetworkType.Entity]
     mercoaSession.client?.entity.counterparty
-      .findPayees(mercoaSession.entity?.id, { paymentMethods: true, networkType, name: search })
+      .findPayees(mercoaSession.entity?.id, { paymentMethods: true, networkType, search })
       .then((resp) => {
         setCounterparties(resp.data)
       })

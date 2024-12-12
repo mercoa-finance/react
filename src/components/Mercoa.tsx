@@ -11,6 +11,7 @@ export interface MercoaContext {
   entityId?: string
   entityGroupId?: string
   entity: Mercoa.EntityResponse | undefined
+  entityCustomizations: Mercoa.EntityCustomizationResponse | undefined
   entityGroup: Mercoa.EntityGroupResponse | undefined
   entities: Mercoa.EntityResponse[] | undefined
   setEntity: (entity?: Mercoa.EntityResponse) => void
@@ -37,6 +38,7 @@ const sessionContext = createContext<MercoaContext>({
   entityId: '',
   entityGroupId: '',
   entity: undefined,
+  entityCustomizations: undefined,
   entityGroup: undefined,
   entities: undefined,
   setEntity: () => {},
@@ -201,6 +203,7 @@ function useProvideSession({
   const [iframeOptions, setIframeOptions] = useState<TokenOptions>()
   const [heightOffsetLocal, setHeightOffset] = useState<number>(heightOffset)
   const [entityGroup, setEntityGroup] = useState<Mercoa.EntityGroupResponse>()
+  const [entityCustomizations, setEntityCustomizations] = useState<Mercoa.EntityCustomizationResponse>()
 
   useEffect(() => {
     setHeightOffset(heightOffset)
@@ -330,6 +333,8 @@ function useProvideSession({
           returnMetadata: fetchMetadata,
         })
         setEntity(e)
+        const ec = await client.entity.customization.get(eid)
+        setEntityCustomizations(ec)
       } catch (e) {
         console.error(e)
         console.error('Failed to get entity ' + eid)
@@ -415,6 +420,7 @@ function useProvideSession({
     entityId: entityId ?? entity?.id,
     entityGroupId,
     entity,
+    entityCustomizations,
     entityGroup,
     entities: entityGroup?.entities,
     setEntity: (entity?: Mercoa.EntityResponse) => {
