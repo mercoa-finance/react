@@ -1,4 +1,4 @@
-![NPM Version](https://img.shields.io/npm/v/%40mercoa%2Freact)
+[<img src="https://img.shields.io/npm/v/%40mercoa%2Freact">](https://www.npmjs.com/package/@mercoa/react)
 
 # Mercoa React Component Library
 
