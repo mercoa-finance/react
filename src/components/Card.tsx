@@ -18,11 +18,15 @@ export function Cards({
   onSelect,
   showAdd,
   showEdit,
+  showDelete,
+  hideIndicators,
 }: {
   children?: Function
   onSelect?: (value?: Mercoa.PaymentMethodResponse.Card) => void
   showAdd?: boolean
   showEdit?: boolean
+  showDelete?: boolean
+  hideIndicators?: boolean
 }) {
   const [cards, setCards] = useState<Array<Mercoa.PaymentMethodResponse.Card>>()
   const [showDialog, setShowDialog] = useState(false)
@@ -60,10 +64,10 @@ export function Cards({
         )}
         <PaymentMethodList
           accounts={cards}
-          showEdit={showEdit}
+          showDelete={showDelete || showEdit}
           addAccount={
             cards && showAdd ? (
-              <div className="mercoa-mt-2">
+              <div>
                 <AddDialog
                   show={showDialog}
                   onClose={onClose}
@@ -80,7 +84,7 @@ export function Cards({
             ) : undefined
           }
           formatAccount={(account: Mercoa.PaymentMethodResponse.Card) => (
-            <Card account={account} onSelect={onSelect} showEdit={showEdit} />
+            <Card account={account} onSelect={onSelect} showEdit={showEdit} hideDefaultIndicator={hideIndicators} />
           )}
         />
       </>
@@ -169,12 +173,14 @@ export function Card({
   onSelect,
   showEdit,
   selected,
+  hideDefaultIndicator,
 }: {
   children?: Function
   account?: Mercoa.PaymentMethodResponse.Card
   onSelect?: (value?: Mercoa.PaymentMethodResponse.Card) => void
   selected?: boolean
   showEdit?: boolean
+  hideDefaultIndicator?: boolean
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -220,9 +226,13 @@ export function Card({
             </div>
           </div>
           {showEdit && (
-            <div className="mercoa-flex">
-              <DefaultPaymentMethodIndicator paymentMethod={account} />
-            </div>
+            <>
+              {!hideDefaultIndicator && (
+                <div className="mercoa-flex">
+                  <DefaultPaymentMethodIndicator paymentMethod={account} />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

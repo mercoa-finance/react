@@ -539,12 +539,12 @@ export function DefaultPaymentMethodIndicator({
 
 export function PaymentMethodList({
   accounts,
-  showEdit,
+  showDelete,
   addAccount,
   formatAccount,
 }: {
   accounts?: Mercoa.PaymentMethodResponse[]
-  showEdit?: boolean
+  showDelete?: boolean
   addAccount?: JSX.Element
   formatAccount: (account: any) => JSX.Element | JSX.Element[] | null
 }) {
@@ -555,7 +555,7 @@ export function PaymentMethodList({
         accounts.map((account) => (
           <div className="mercoa-mt-2 mercoa-flex" key={account.id}>
             <div className="mercoa-flex-grow">{formatAccount(account)}</div>
-            {showEdit && (
+            {showDelete && (
               <button
                 onClick={() => {
                   const del = confirm('Are you sure you want to remove this account? This action cannot be undone.')
@@ -582,7 +582,7 @@ export function PaymentMethodList({
       {addAccount && (
         <div className="mercoa-mt-2 mercoa-flex">
           <div className="mercoa-flex-grow">{addAccount}</div>
-          {showEdit && <div className="mercoa-ml-2 mercoa-size-5" />}
+          {showDelete && <div className="mercoa-ml-2 mercoa-size-5" />}
         </div>
       )}
     </>

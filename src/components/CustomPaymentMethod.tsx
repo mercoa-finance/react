@@ -26,12 +26,16 @@ export function CustomPaymentMethods({
   onSelect,
   showAdd,
   showEdit,
+  showDelete,
+  hideIndicators,
   schema,
 }: {
   children?: Function
   onSelect?: Function
   showAdd?: boolean
   showEdit?: boolean
+  showDelete?: boolean
+  hideIndicators?: boolean
   schema?: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
   const [paymentMethods, setPaymentMethods] = useState<Array<Mercoa.PaymentMethodResponse.Custom>>()
@@ -63,11 +67,11 @@ export function CustomPaymentMethods({
         )}
         <PaymentMethodList
           accounts={paymentMethods}
-          showEdit={showEdit}
+          showDelete={showDelete || showEdit}
           // TODO: Implement AddCustomPaymentMethod component, incorporate it correctly here
           // addAccount={
           //   paymentMethods && showAdd ? (
-          //     <div className="mercoa-mt-2">
+          //     <div>
           //       <AddDialog
           //         show={showDialog}
           //         onClose={onClose}
@@ -85,7 +89,13 @@ export function CustomPaymentMethods({
           //   ) : undefined
           // }
           formatAccount={(account: Mercoa.PaymentMethodResponse.Custom) => (
-            <CustomPaymentMethod account={account} onSelect={onSelect} schema={schema} showEdit={showEdit} />
+            <CustomPaymentMethod
+              account={account}
+              onSelect={onSelect}
+              schema={schema}
+              showEdit={showEdit}
+              hideDefaultIndicator={hideIndicators}
+            />
           )}
         />
         {paymentMethods && paymentMethods?.map((account) => <div className="mercoa-mt-2" key={account.id}></div>)}
@@ -100,6 +110,7 @@ export function CustomPaymentMethod({
   onSelect,
   selected,
   showEdit,
+  hideDefaultIndicator,
   schema,
 }: {
   children?: Function
@@ -107,6 +118,7 @@ export function CustomPaymentMethod({
   onSelect?: Function
   selected?: boolean
   showEdit?: boolean
+  hideDefaultIndicator?: boolean
   schema?: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
   const mercoaSession = useMercoaSession()
@@ -156,7 +168,7 @@ export function CustomPaymentMethod({
           <div className="mercoa-flex">
             {showEdit ? (
               <>
-                <DefaultPaymentMethodIndicator paymentMethod={account} />
+                {!hideDefaultIndicator && <DefaultPaymentMethodIndicator paymentMethod={account} />}
                 <MercoaButton
                   size="sm"
                   isEmphasized={false}
@@ -462,7 +474,7 @@ export function AddCustomPaymentMethodDialog({
   if (!schema) return <></>
 
   return (
-    <div className="mercoa-mt-2">
+    <div>
       <AddDialog
         show={showDialog}
         onClose={onClose}

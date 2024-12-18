@@ -9,12 +9,12 @@ import {
   PlusIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import { Fragment, ReactNode, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { PlaidLinkError, PlaidLinkOnExitMetadata, usePlaidLink } from 'react-plaid-link'
 import SignatureCanvas from 'react-signature-canvas'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
 import {
@@ -37,13 +37,17 @@ export function BankAccounts({
   onSelect,
   showAdd,
   showEdit,
+  showDelete,
   verifiedOnly,
+  hideIndicators,
 }: {
   children?: Function
   onSelect?: (value?: Mercoa.PaymentMethodResponse.BankAccount) => void
   showAdd?: boolean
   showEdit?: boolean
+  showDelete?: boolean
   verifiedOnly?: boolean
+  hideIndicators?: boolean
 }) {
   const [bankAccounts, setBankAccounts] = useState<Array<Mercoa.PaymentMethodResponse.BankAccount>>()
 
@@ -78,7 +82,7 @@ export function BankAccounts({
         )}
         <PaymentMethodList
           accounts={bankAccounts}
-          showEdit={showEdit}
+          showDelete={showDelete || showEdit}
           addAccount={
             bankAccounts && showAdd ? (
               <AddBankAccountButton
@@ -96,7 +100,15 @@ export function BankAccounts({
             ) : undefined
           }
           formatAccount={(account: Mercoa.PaymentMethodResponse.BankAccount) => (
-            <BankAccount account={account} onSelect={onSelect} showEdit={showEdit} />
+            <BankAccount
+              account={account}
+              onSelect={onSelect}
+              showEdit={showEdit}
+              hideDefaultIndicator={hideIndicators}
+              hideVerificationButton={hideIndicators}
+              hideVerificationStatus={hideIndicators}
+              hideCheckSendStatus={hideIndicators}
+            />
           )}
         />
         {bankAccounts && bankAccounts.length == 0 && verifiedOnly && (
@@ -926,7 +938,7 @@ export function EditBankAccount({
         />
       )}
       {account.accountType === 'CHECKING' && (
-        <div className="mercoa-relative mercoa-mt-5 mercoa-flex mercoa-items-start mercoa-items-center">
+        <div className="mercoa-relative mercoa-mt-5 mercoa-flex mercoa-items-center">
           <div className="mercoa-flex mercoa-h-5 mercoa-items-center">
             <input
               {...register('checkOptions.enabled')}
@@ -975,7 +987,7 @@ export function EditBankAccount({
             required
             className="mercoa-mt-2"
           />
-          <div className="mercoa-relative mercoa-mt-5 mercoa-flex mercoa-items-start mercoa-items-center">
+          <div className="mercoa-relative mercoa-mt-5 mercoa-flex mercoa-items-center">
             <div className="mercoa-flex mercoa-h-5 mercoa-items-center">
               <input
                 {...register('checkOptions.useSignatureImage')}

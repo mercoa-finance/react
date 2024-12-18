@@ -210,6 +210,7 @@ export function CounterpartySearch({
   disableCreation?: boolean
   counterpartyPreSubmit?: (
     counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
+    counterpartyId?: string,
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
   type: 'payee' | 'payor'
@@ -253,7 +254,7 @@ export function CounterpartySearch({
     let data = overall.vendor
     let profile = createCounterpartyRequest({ data, setError, type })
     if (counterpartyPreSubmit) {
-      profile = await counterpartyPreSubmit(profile)
+      profile = await counterpartyPreSubmit(profile, data.id)
     }
     if (data && profile) {
       await onSubmitCounterparty({
@@ -371,6 +372,7 @@ export function AddCounterpartyModal({
   setShow: (show: boolean) => void
   counterpartyPreSubmit?: (
     counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
+    counterpartyId?: string,
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
 }) {
   const mercoaSession = useMercoaSession()
@@ -406,7 +408,7 @@ export function AddCounterpartyModal({
     let data = overall.vendor
     let profile = createCounterpartyRequest({ data, setError, type })
     if (counterpartyPreSubmit) {
-      profile = await counterpartyPreSubmit(profile)
+      profile = await counterpartyPreSubmit(profile, data.id)
     }
     if (data && profile) {
       await onSubmitCounterparty({
@@ -1103,6 +1105,7 @@ export function Counterparties({
   hideCounterpartyVendorCredits?: boolean
   counterpartyPreSubmit?: (
     counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
+    counterpartyId?: string,
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   network?: Mercoa.CounterpartyNetworkType[]
   admin?: boolean

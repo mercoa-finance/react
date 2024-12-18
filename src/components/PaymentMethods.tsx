@@ -1,7 +1,21 @@
 import { Mercoa } from '@mercoa/javascript'
 import { BankAccounts, Cards, Checks, CustomPaymentMethods, NoSession, useMercoaSession } from './index'
 
-export function PaymentMethods({ isPayor, isPayee }: { isPayor?: boolean; isPayee?: boolean }) {
+export function PaymentMethods({
+  isPayor,
+  isPayee,
+  showAdd = true,
+  showEdit = true,
+  showDelete = true,
+  hideIndicators,
+}: {
+  isPayor?: boolean
+  isPayee?: boolean
+  showAdd?: boolean
+  showEdit?: boolean
+  showDelete?: boolean
+  hideIndicators?: boolean
+}) {
   const mercoaSession = useMercoaSession()
   if (!mercoaSession.client) return <NoSession componentName="PaymentMethods" />
 
@@ -42,28 +56,33 @@ export function PaymentMethods({ isPayor, isPayee }: { isPayor?: boolean; isPaye
   return (
     <div>
       {showBanksAccounts && (
-        <>
-          <h3 className="mercoa-mt-8">Bank Accounts</h3>
-          <BankAccounts showEdit showAdd />
-        </>
+        <div className="mercoa-mt-8">
+          <h3>Bank Accounts</h3>
+          <BankAccounts showAdd={showAdd} showEdit={showEdit} showDelete={showDelete} hideIndicators={hideIndicators} />
+        </div>
       )}
       {showCards && (
-        <>
-          <h3 className="mercoa-mt-8">Cards</h3>
-          <Cards showEdit showAdd />
-        </>
+        <div className="mercoa-mt-8">
+          <h3>Cards</h3>
+          <Cards showAdd={showAdd} showEdit={showEdit} showDelete={showDelete} hideIndicators={hideIndicators} />
+        </div>
       )}
       {showChecks && (
-        <>
-          <h3 className="mercoa-mt-8">Checks</h3>
-          <Checks showEdit showAdd />
-        </>
+        <div className="mercoa-mt-8">
+          <h3>Checks</h3>
+          <Checks showAdd={showAdd} showEdit={showEdit} showDelete={showDelete} hideIndicators={hideIndicators} />
+        </div>
       )}
       {showCustom && (
-        <>
-          <h3 className="mercoa-mt-8">Custom Payment Methods</h3>
-          <CustomPaymentMethods showEdit />
-        </>
+        <div className="mercoa-mt-8">
+          <h3>Custom Payment Methods</h3>
+          <CustomPaymentMethods
+            showAdd={showAdd}
+            showEdit={showEdit}
+            showDelete={showDelete}
+            hideIndicators={hideIndicators}
+          />
+        </div>
       )}
     </div>
   )

@@ -167,6 +167,7 @@ export function PayableDetails({
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
   counterpartyPreSubmit?: (
     counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
+    counterpartyId?: string,
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   children?: (props: PayableDetailsChildrenProps) => JSX.Element[]
@@ -347,6 +348,7 @@ export function PayableForm({
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
   counterpartyPreSubmit?: (
     counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
+    counterpartyId?: string,
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   fullWidth?: boolean
@@ -742,7 +744,7 @@ export function PayableForm({
     } else if (data.saveAsStatus === 'COUNTERPARTY') {
       let profile = createCounterpartyRequest({ data: data.vendor, setError, type: 'payee' })
       if (counterpartyPreSubmit) {
-        profile = await counterpartyPreSubmit(profile)
+        profile = await counterpartyPreSubmit(profile, data.id)
       }
       if (data.vendor && profile) {
         await onSubmitCounterparty({
@@ -914,14 +916,15 @@ export function PayableForm({
       return
     } else if (data.saveAsStatus === 'PRINT_CHECK') {
       if (!invoice?.id) return
-      const paymentDestinationOptions = invoice?.paymentDestinationOptions
-      if (
-        paymentDestinationOptions?.type === Mercoa.PaymentMethodType.Check &&
-        paymentDestinationOptions?.delivery === Mercoa.CheckDeliveryMethod.Print
-      ) {
-        if (confirm('Do you want to create a live check? This will mark the invoice as paid cannot be undone.')) {
+
+      if (invoice.status !== 'PAID' && invoice.status !== 'ARCHIVED') {
+        if (confirm('Do you want to create a printable check? This will mark the invoice as paid cannot be undone.')) {
           const resp = await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice?.id, {
             status: Mercoa.InvoiceStatus.Paid,
+            paymentDestinationOptions: {
+              type: 'check',
+              delivery: 'PRINT',
+            },
           })
           if (resp) {
             renderCustom?.toast
@@ -933,6 +936,7 @@ export function PayableForm({
           toast.success('VOID check created')
         }
       }
+
       const pdf = await getInvoiceClient(mercoaSession, invoiceType)?.document.generateCheckPdf(invoice.id)
       if (pdf) {
         window.open(pdf.uri, '_blank')
@@ -2490,7 +2494,6 @@ export function PayableActions({
     })
   ) : (
     <MercoaButton
-      type="button"
       isEmphasized
       onClick={() => {
         setValue('saveAsStatus', 'PRINT_CHECK')
@@ -2719,7 +2722,8 @@ export function PayableActions({
           nextButton = markPaidButtonComponent
         } else if (
           paymentDestinationType === Mercoa.PaymentMethodType.Check &&
-          paymentDestinationOptions === Mercoa.CheckDeliveryMethod.Print
+          (paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery ===
+            Mercoa.CheckDeliveryMethod.Print
         ) {
           nextButton = printCheckButtonComponent
         } else {
@@ -3635,11 +3639,11 @@ export function PayableSelectPaymentMethod({
                     setValue('paymentDestinationOptions.delivery', selected.key)
                   }}
                   displayIndex="value"
-                  value={() => {
-                    return (destinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery === 'PRINT'
+                  value={
+                    (destinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery === 'PRINT'
                       ? { key: 'PRINT', value: 'Print it myself' }
                       : { key: 'MAIL', value: 'Mail it for me' }
-                  }}
+                  }
                 />
               </>
             )}

@@ -23,11 +23,15 @@ export function Checks({
   onSelect,
   showAdd,
   showEdit,
+  showDelete,
+  hideIndicators,
 }: {
   children?: Function
   onSelect?: (value?: Mercoa.PaymentMethodResponse.Check) => void
   showAdd?: boolean
   showEdit?: boolean
+  showDelete?: boolean
+  hideIndicators?: boolean
 }) {
   const [checks, setChecks] = useState<Array<Mercoa.PaymentMethodResponse.Check>>()
   const [showDialog, setShowDialog] = useState(false)
@@ -65,10 +69,10 @@ export function Checks({
         )}
         <PaymentMethodList
           accounts={checks}
-          showEdit={showEdit}
+          showDelete={showDelete || showEdit}
           addAccount={
             checks && showAdd ? (
-              <div className="mercoa-mt-2">
+              <div>
                 <AddDialog
                   show={showDialog}
                   onClose={onClose}
@@ -85,7 +89,7 @@ export function Checks({
             ) : undefined
           }
           formatAccount={(account: Mercoa.PaymentMethodResponse.Check) => (
-            <Check account={account} onSelect={onSelect} showEdit={showEdit} />
+            <Check account={account} onSelect={onSelect} showEdit={showEdit} hideDefaultIndicator={hideIndicators} />
           )}
         />
       </>
@@ -98,21 +102,16 @@ export function Check({
   onSelect,
   showEdit,
   selected,
+  hideDefaultIndicator,
 }: {
   children?: Function
   account?: Mercoa.PaymentMethodResponse.Check
   onSelect?: (value?: Mercoa.PaymentMethodResponse.Check) => void
   showEdit?: boolean
   selected?: boolean
+  hideDefaultIndicator?: boolean
 }) {
   const mercoaSession = useMercoaSession()
-
-  async function deleteAccount() {
-    if (mercoaSession.token && mercoaSession.entity?.id && account?.id) {
-      await mercoaSession.client?.entity.paymentMethod.delete(mercoaSession.entity?.id, account?.id)
-      mercoaSession.refresh()
-    }
-  }
 
   if (!mercoaSession.client) return <NoSession componentName="CheckComponent" />
   if (account) {
@@ -151,9 +150,13 @@ export function Check({
             >{`${account?.city} ${account?.stateOrProvince}, ${account?.postalCode}`}</p>
           </div>
           {showEdit && (
-            <div className="mercoa-flex-shrink-0">
-              <DefaultPaymentMethodIndicator paymentMethod={account} />
-            </div>
+            <>
+              {!hideDefaultIndicator && (
+                <div className="mercoa-flex-shrink-0">
+                  <DefaultPaymentMethodIndicator paymentMethod={account} />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

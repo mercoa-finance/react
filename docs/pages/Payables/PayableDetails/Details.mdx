@@ -1,24 +1,24 @@
 import {
-  PayableDetails,
+  InvoiceComments,
   MercoaSession,
+  PayableActions,
+  PayableApprovers,
+  PayableCounterpartySearch,
+  PayableDetails,
+  PayableFees,
   PayableForm,
   PayableFormHeader,
-  PayableCounterpartySearch,
-  PayableOverview,
   PayableLineItems,
   PayableMetadata,
-  PayablePaymentSource,
+  PayableOverview,
   PayablePaymentDestination,
-  PaymentDestinationProcessingTime,
-  PayableApprovers,
-  InvoiceComments,
-  PayableFees,
-  PayableActions
+  PayablePaymentSource,
+  PaymentDestinationProcessingTime
 } from '@mercoa/react'
-import { payerEntity, vendorEntities, inv_new_ready, inv_scheduled } from '../../../mockData'
-import { ComponentContainer } from '../../../components/helpers'
 import { Callout } from 'nextra/components'
 import { useEffect } from 'react'
+import { ComponentContainer } from '../../../components/helpers'
+import { inv_new_ready, inv_scheduled, payerEntity, vendorEntities } from '../../../mockData'
 
 # Payable Details
 
@@ -39,7 +39,7 @@ The `<PayableDetails>` component is used to let users create and manage payable 
 | heightOffset          | `number`                                                                             |          | This component uses the screen size to set its height. If you have other elements on the screen, increase the height offset to shrink this component. |
 | documentPosition      | `'right' \| 'left' \| 'none'`                                                        |          | Control where to place the invoice doucment (or hide it). Default is `left`                                                                           |
 | invoicePreSubmit      | `(invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>` |          | This function is called after frontend validations are complete, and before the API call to create/update the invoice is sent.                        |
-| counterpartyPreSubmit | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Function to call before an entity is submitted to Mercoa. Useful for adding custom fields to the entity or preventing submission |
+| counterpartyPreSubmit | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined, counterPartyId: string \| undefined) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Function to call before an entity is submitted to Mercoa. Useful for adding custom fields to the entity or preventing submission |
 | children              | `(methods: PayableDetailsChildrenProps) => JSX.Element[]`                            |          | See [customization](#customization) for details on how to use the children prop.                                                                      |
 
 ```typescript

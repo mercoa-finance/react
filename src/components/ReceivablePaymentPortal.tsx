@@ -364,7 +364,7 @@ function SelectBankAccountButtons({
   return (
     <PaymentMethodList
       accounts={bankAccounts}
-      showEdit
+      showDelete
       formatAccount={(bankAccount) => (
         <BankAccount
           key={bankAccount.id}
