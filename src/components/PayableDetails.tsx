@@ -129,6 +129,7 @@ export type PayableDetailsChildrenProps = {
   invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
   counterpartyPreSubmit?: (
     counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
+    counterpartyId?: string,
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onOcrComplete: (ocrResponse?: Mercoa.OcrResponse) => void
   ocrProcessing?: boolean
@@ -744,7 +745,7 @@ export function PayableForm({
     } else if (data.saveAsStatus === 'COUNTERPARTY') {
       let profile = createCounterpartyRequest({ data: data.vendor, setError, type: 'payee' })
       if (counterpartyPreSubmit) {
-        profile = await counterpartyPreSubmit(profile, data.id)
+        profile = await counterpartyPreSubmit(profile, data.vendor.id)
       }
       if (data.vendor && profile) {
         await onSubmitCounterparty({
@@ -2278,6 +2279,33 @@ export type PayableActionChildrenProps = {
   submitForm?: () => void
 }
 
+export function findApproverSlot({
+  approverSlots,
+  userId,
+  users,
+}: {
+  approverSlots: Mercoa.ApprovalSlot[]
+  userId: string
+  users: Mercoa.EntityUserResponse[]
+}) {
+  return approverSlots.find((approver, index) => {
+    if (approver.assignedUserId === userId) {
+      return true
+    } else if (!approver.assignedUserId || approver.assignedUserId === 'ANY') {
+      const eligibleApprovers = filterApproverOptions({
+        approverSlotIndex: index,
+        eligibleRoles: approver.eligibleRoles,
+        eligibleUserIds: approver.eligibleUserIds,
+        users,
+        selectedApprovers: [],
+      })
+      if (eligibleApprovers.find((e) => e.user.id === userId)) {
+        return true
+      }
+    }
+  })
+}
+
 export function PayableActions({
   invoiceType = 'invoice',
   refreshInvoice,
@@ -2350,22 +2378,13 @@ export function PayableActions({
   const id = watch('id')
   const status = watch('status') as Mercoa.InvoiceStatus | undefined
   const approverSlots = watch('approvers') as Mercoa.ApprovalSlot[]
-  const approverSlot = approverSlots.find((approver, index) => {
-    if (approver.assignedUserId === mercoaSession.user?.id) {
-      return true
-    } else if (!approver.assignedUserId || approver.assignedUserId === 'ANY') {
-      const eligibleApprovers = filterApproverOptions({
-        approverSlotIndex: index,
-        eligibleRoles: approver.eligibleRoles,
-        eligibleUserIds: approver.eligibleUserIds,
+  const approverSlot = mercoaSession.user?.id
+    ? findApproverSlot({
+        approverSlots,
+        userId: mercoaSession.user?.id,
         users: mercoaSession.users,
-        selectedApprovers: [],
       })
-      if (eligibleApprovers.find((e) => e.user.id === mercoaSession.user?.id)) {
-        return true
-      }
-    }
-  })
+    : undefined
   const [selectedEntity, setSelectedEntity] = useState<Mercoa.EntityResponse>()
 
   const buttons: JSX.Element[] = []
