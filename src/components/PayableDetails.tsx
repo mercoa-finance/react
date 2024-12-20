@@ -330,6 +330,7 @@ export function PayableForm({
   admin,
   invoicePreSubmit,
   counterpartyPreSubmit,
+  lineItemDescriptionOptional = false,
   onInvoiceSubmit,
   fullWidth,
   children,
@@ -353,6 +354,7 @@ export function PayableForm({
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   fullWidth?: boolean
+  lineItemDescriptionOptional?: boolean
   children?: (props: PayableFormChildrenProps) => JSX.Element
   renderCustom?: {
     toast?: {
@@ -989,16 +991,6 @@ export function PayableForm({
       nextInvoiceState = Mercoa.InvoiceStatus.Approved
     } else if (invoice?.status === Mercoa.InvoiceStatus.Approved || invoice?.status === Mercoa.InvoiceStatus.Failed) {
       nextInvoiceState = Mercoa.InvoiceStatus.Scheduled
-    } else if (
-      invoice?.id &&
-      invoice.status !== Mercoa.InvoiceStatus.Unassigned &&
-      invoice.status !== Mercoa.InvoiceStatus.Canceled
-    ) {
-      // Invoice is already scheduled, there is no next state
-      renderCustom?.toast
-        ? renderCustom?.toast.error('This invoice is already scheduled and cannot be edited.')
-        : toast.error('This invoice is already scheduled and cannot be edited.')
-      return
     }
 
     if (data.paymentSchedule?.type) {
@@ -1214,7 +1206,7 @@ export function PayableForm({
           })
           return
         }
-        if (!lineItem.description) {
+        if (!lineItem.description && !lineItemDescriptionOptional) {
           setError(`lineItems.${index}.description`, {
             type: 'manual',
             message: 'Please enter a description',
