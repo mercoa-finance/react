@@ -643,27 +643,25 @@ export function PayableForm({
     }
   }, [mercoaSession.entity?.id, vendorId])
 
-  // OCR Merge
-  useEffect(() => {
-    if (!ocrResponse) return
-    mercoaSession.debug({ ocrResponse })
-    if (ocrResponse.invoice.amount) setValue('amount', ocrResponse.invoice.amount)
-    if (ocrResponse.invoice.invoiceNumber) setValue('invoiceNumber', ocrResponse.invoice.invoiceNumber)
-    if (ocrResponse.invoice.invoiceDate) {
-      setValue('invoiceDate', dayjs(dayjs(ocrResponse.invoice.invoiceDate).utc().format('YYYY-MM-DD')).toDate())
+  function ocrMerge(ocrData: Mercoa.OcrResponse) {
+    mercoaSession.debug({ ocrResponse: ocrData })
+    if (ocrData.invoice.amount) setValue('amount', ocrData.invoice.amount)
+    if (ocrData.invoice.invoiceNumber) setValue('invoiceNumber', ocrData.invoice.invoiceNumber)
+    if (ocrData.invoice.invoiceDate) {
+      setValue('invoiceDate', dayjs(dayjs(ocrData.invoice.invoiceDate).utc().format('YYYY-MM-DD')).toDate())
     }
-    if (ocrResponse.invoice.dueDate) {
-      setValue('dueDate', dayjs(dayjs(ocrResponse.invoice.dueDate).utc().format('YYYY-MM-DD')).toDate())
+    if (ocrData.invoice.dueDate) {
+      setValue('dueDate', dayjs(dayjs(ocrData.invoice.dueDate).utc().format('YYYY-MM-DD')).toDate())
     }
-    if (ocrResponse.invoice.currency) setValue('currency', ocrResponse.invoice.currency)
-    if (ocrResponse.invoice.metadata) setValue('metadata', ocrResponse.invoice.metadata)
-    if (ocrResponse.invoice.taxAmount) setValue('taxAmount', ocrResponse.invoice.taxAmount)
-    if (ocrResponse.invoice.shippingAmount) setValue('shippingAmount', ocrResponse.invoice.shippingAmount)
+    if (ocrData.invoice.currency) setValue('currency', ocrData.invoice.currency)
+    if (ocrData.invoice.metadata) setValue('metadata', ocrData.invoice.metadata)
+    if (ocrData.invoice.taxAmount) setValue('taxAmount', ocrData.invoice.taxAmount)
+    if (ocrData.invoice.shippingAmount) setValue('shippingAmount', ocrData.invoice.shippingAmount)
     if (
-      ocrResponse.invoice.lineItems &&
+      ocrData.invoice.lineItems &&
       mercoaSession.iframeOptions?.options?.invoice?.lineItems != Mercoa.LineItemAvailabilities.Disabled
     ) {
-      const ocrResponseLineItems = ocrResponse.invoice.lineItems.map((lineItem) => ({
+      const ocrResponseLineItems = ocrData.invoice.lineItems.map((lineItem) => ({
         description: lineItem.description ?? '',
         currency: lineItem.currency ?? 'USD',
         amount: lineItem.amount ?? 0,
@@ -672,7 +670,7 @@ export function PayableForm({
         name: lineItem.name ?? '',
         metadata: lineItem.metadata ?? {},
         glAccountId: lineItem.glAccountId ?? '',
-        category: lineItem.category ?? Mercoa.InvoiceLineItemCategory.Expense,
+        category: lineItem.category ?? 'EXPENSE',
         id: lineItem.id ?? '',
         createdAt: lineItem.createdAt ?? new Date(),
         updatedAt: lineItem.updatedAt ?? new Date(),
@@ -680,32 +678,39 @@ export function PayableForm({
       setValue('lineItems', reverseOcrResponse ? ocrResponseLineItems.reverse() : ocrResponseLineItems)
     }
 
-    if (ocrResponse.bankAccount) {
+    if (ocrData.bankAccount) {
       setValue('newBankAccount', {
-        routingNumber: ocrResponse.bankAccount.routingNumber,
-        accountNumber: ocrResponse.bankAccount.accountNumber,
-        bankName: ocrResponse.bankAccount.bankName,
+        routingNumber: ocrData.bankAccount.routingNumber,
+        accountNumber: ocrData.bankAccount.accountNumber,
+        bankName: ocrData.bankAccount.bankName,
         accountType: Mercoa.BankType.Checking,
       })
     }
 
-    if (ocrResponse.check) {
+    if (ocrData.check) {
       setValue('newCheck', {
-        addressLine1: ocrResponse.check.addressLine1,
-        addressLine2: ocrResponse.check.addressLine2 ?? '',
-        city: ocrResponse.check.city,
-        state: ocrResponse.check.stateOrProvince,
-        postalCode: ocrResponse.check.postalCode,
+        addressLine1: ocrData.check.addressLine1,
+        addressLine2: ocrData.check.addressLine2 ?? '',
+        city: ocrData.check.city,
+        state: ocrData.check.stateOrProvince,
+        postalCode: ocrData.check.postalCode,
         country: 'US',
-        payToTheOrderOf: ocrResponse.check.payToTheOrderOf,
+        payToTheOrderOf: ocrData.check.payToTheOrderOf,
       })
     }
 
-    if (ocrResponse.vendor.id === 'new' && mercoaSession.iframeOptions?.options?.vendors?.disableCreation) {
+    if (ocrData.vendor.id === 'new' && mercoaSession.iframeOptions?.options?.vendors?.disableCreation) {
       mercoaSession.debug('new vendor creation disabled')
-    } else if (ocrResponse.vendor.id) {
-      mercoaSession.debug('setting selected vendor', ocrResponse.vendor)
-      setSelectedVendor(ocrResponse.vendor)
+    } else if (ocrData.vendor.id) {
+      mercoaSession.debug('setting selected vendor', ocrData.vendor)
+      setSelectedVendor(ocrData.vendor)
+    }
+  }
+
+  // OCR Merge
+  useEffect(() => {
+    if (ocrResponse) {
+      ocrMerge(ocrResponse)
     }
   }, [ocrResponse])
 
@@ -1130,7 +1135,7 @@ export function PayableForm({
           amount: Number(lineItem.amount),
           quantity: Number(lineItem.quantity),
           unitPrice: Number(lineItem.unitPrice),
-          category: lineItem.category ?? Mercoa.InvoiceLineItemCategory.Expense,
+          category: lineItem.category ?? 'EXPENSE',
           metadata: lineItem.metadata
             ? (JSON.parse(JSON.stringify(lineItem.metadata)) as unknown as Record<string, string>)
             : {},
@@ -1206,6 +1211,7 @@ export function PayableForm({
           })
           return
         }
+
         if (!lineItem.description && !lineItemDescriptionOptional) {
           setError(`lineItems.${index}.description`, {
             type: 'manual',
@@ -1332,12 +1338,24 @@ export function PayableForm({
         return
       }
       if (!data.paymentDestinationId && invoice?.id) {
-        renderCustom?.toast
-          ? renderCustom?.toast.error('Please select a payment destination')
-          : toast.error('Please select a payment destination')
-        setError('paymentDestinationId', { type: 'manual', message: 'Please select how the vendor wants to get paid' })
-
-        return
+        // if the organization does not allow for na payment destination, check if the payment destination is set
+        if (
+          !mercoaSession.organization?.paymentMethods?.backupDisbursements?.find((e) => e.type === 'na')?.active ||
+          nextInvoiceState === 'SCHEDULED'
+        ) {
+          renderCustom?.toast
+            ? renderCustom?.toast.error('Please select a payment destination')
+            : toast.error('Please select a payment destination')
+          setError('paymentDestinationId', {
+            type: 'manual',
+            message:
+              'Please select how the vendor wants to get paid' +
+              (mercoaSession.organization?.paymentMethods?.backupDisbursements?.find((e) => e.type === 'na')?.active
+                ? ' or send the vendor an email for their payment details'
+                : ''),
+          })
+          return
+        }
       }
 
       // Check if approvers are assigned
@@ -2748,6 +2766,13 @@ export function PayableActions({
         if (paymentDestinationType === Mercoa.PaymentMethodType.OffPlatform) {
           buttons.push(markPaidButtonComponent)
         }
+        if (
+          paymentDestinationType === Mercoa.PaymentMethodType.Check &&
+          (paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery ===
+            Mercoa.CheckDeliveryMethod.Print
+        ) {
+          buttons.push(printCheckButtonComponent)
+        }
         buttons.push(cancelButtonComponent)
         break
 
@@ -3472,11 +3497,11 @@ export function PayableSelectPaymentMethod({
     }
   }, [isDestination, selectedType, paymentMethods, paymentId])
 
-  // Reset payment destination and fields on type change
-  useEffect(() => {
-    if (!isDestination) return
-    setValue('paymentDestinationOptions', undefined)
-  }, [isDestination, selectedType])
+  // // Reset payment destination and fields on type change
+  // useEffect(() => {
+  //   if (!isDestination) return
+  //   setValue('paymentDestinationOptions', undefined)
+  // }, [isDestination, selectedType])
 
   // If selected type is custom, find the schema
   useEffect(() => {
@@ -3831,12 +3856,24 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
     formState: { errors },
   } = useFormContext()
 
+  const mercoaSession = useMercoaSession()
+  const [vendorLink, setVendorLink] = useState<string>()
+
   const status = watch('status')
   readOnly = readOnly || (!!status && afterApprovedStatus.includes(status))
 
   const paymentSourceType = watch('paymentSourceType')
   const vendorId = watch('vendorId')
   const vendorName = watch('vendorName')
+  const id = watch('id')
+
+  useEffect(() => {
+    if (id && mercoaSession.organization?.paymentMethods?.backupDisbursements?.find((e) => e.type === 'na')?.active) {
+      mercoaSession.client?.invoice.paymentLinks.getVendorLink(id).then((link) => {
+        setVendorLink(link)
+      })
+    }
+  }, [id, mercoaSession.organization?.paymentMethods?.backupDisbursements])
 
   return (
     <>
@@ -3852,6 +3889,33 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
             )}
           </h2>
           <PayableSelectPaymentMethod isDestination readOnly={readOnly} />
+          {vendorLink && (
+            <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-mt-2">
+              <div className="mercoa-flex-auto" />
+              <MercoaButton
+                size="sm"
+                type="button"
+                isEmphasized
+                onClick={async () => {
+                  await mercoaSession.client?.invoice.paymentLinks.sendVendorEmail(id)
+                  toast.success('Email sent to vendor')
+                }}
+              >
+                Send Vendor Email
+              </MercoaButton>
+
+              <MercoaButton
+                size="sm"
+                type="link"
+                isEmphasized
+                href={vendorLink}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Vendor Portal
+              </MercoaButton>
+            </div>
+          )}
           {errors.paymentDestinationId?.message && (
             <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentDestinationId?.message.toString()}</p>
           )}
@@ -4729,7 +4793,7 @@ export function PayableLineItems({
       unitPrice: 0,
       quantity: 1,
       currency: currency,
-      category: Mercoa.InvoiceLineItemCategory.Expense,
+      category: 'EXPENSE',
     })
   }
 
@@ -4845,8 +4909,11 @@ function LineItemOptions() {
             amount: amount.toNumber(),
             quantity: 1,
             unitPrice: amount.toNumber(),
-            category: Mercoa.InvoiceLineItemCategory.Expense,
-            description: lineItems[0].description,
+            category: 'EXPENSE',
+            description: lineItems
+              .map((lineItem) => lineItem.description)
+              .join(', ')
+              .slice(0, 100),
             currency: lineItems[0].currency ?? 'USD',
             metadata: lineItems[0].metadata,
             createdAt: new Date(),
