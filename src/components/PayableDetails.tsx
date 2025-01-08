@@ -385,12 +385,12 @@ export function PayableForm({
           id: yup.string(),
           description: yup.string().nullable(),
           amount: yup.number().transform(removeThousands).nullable(),
-          quantity: yup.number().transform(removeThousands).required().typeError('Please enter a valid number'),
-          unitPrice: yup.number().transform(removeThousands).required().typeError('Please enter a valid number'),
+          quantity: yup.number().transform(removeThousands).nullable(),
+          unitPrice: yup.number().transform(removeThousands).nullable(),
           category: yup.mixed().nullable(),
           currency: yup.string().nullable(),
           metadata: yup.mixed().nullable(),
-          glAccountId: yup.string(),
+          glAccountId: yup.string().nullable(),
           createdAt: yup.date().nullable(),
           updatedAt: yup.date().nullable(),
         }),
@@ -1088,6 +1088,9 @@ export function PayableForm({
       data.paymentDestinationOptions?.type === Mercoa.PaymentMethodType.Check &&
       data.paymentDestinationType !== Mercoa.PaymentMethodType.Check
     ) {
+      data.paymentDestinationOptions = undefined
+    }
+    if (data.paymentDestinationOptions && !data.paymentDestinationOptions?.type) {
       data.paymentDestinationOptions = undefined
     }
 
