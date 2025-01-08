@@ -2795,12 +2795,12 @@ export function PayableActions({
         break
 
       case Mercoa.InvoiceStatus.Canceled:
+      case Mercoa.InvoiceStatus.Refused:
         buttons.push(recreateDraftButtonComponent, deleteButtonComponent)
         break
 
       case Mercoa.InvoiceStatus.Archived:
       case Mercoa.InvoiceStatus.Pending:
-      case Mercoa.InvoiceStatus.Refused:
       default:
         break
     }
