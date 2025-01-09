@@ -2800,6 +2800,11 @@ export function PayableActions({
         break
 
       case Mercoa.InvoiceStatus.Archived:
+        if (paymentDestinationType === Mercoa.PaymentMethodType.Check) {
+          buttons.push(viewCheckButtonComponent)
+        }
+        break
+
       case Mercoa.InvoiceStatus.Pending:
       default:
         break
