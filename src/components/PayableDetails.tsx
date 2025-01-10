@@ -4035,7 +4035,7 @@ export function PayableApprovers({ readOnly }: { readOnly?: boolean }) {
   useEffect(() => {
     approvers.forEach((approverSlot, index) => {
       const policy = invoicePolicy.find((e) => e.id === approverSlot.approvalPolicyId)
-      if (policy?.rule.autoAssign) {
+      if (policy?.rule.autoAssign && !approverSlot.assignedUserId) {
         setValue(`approvers.${index}.assignedUserId`, 'ANY')
       }
     })
