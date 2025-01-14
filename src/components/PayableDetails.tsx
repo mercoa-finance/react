@@ -195,7 +195,9 @@ export function PayableDetails({
     const resp = await getInvoiceClient(mercoaSession, invoiceType)?.get(invoiceId)
     if (resp) {
       setInvoice(resp)
-      if (onUpdate) onUpdate(resp)
+      if (onUpdate) {
+        onUpdate(resp)
+      }
     }
   }
 
@@ -427,6 +429,7 @@ export function PayableForm({
       vendorCreditIds: yup.array().nullable(),
       taxAmount: yup.number().transform(removeThousands).positive().nullable(),
       shippingAmount: yup.number().transform(removeThousands).positive().nullable(),
+      ocrJobId: yup.string().nullable(),
       createdAt: yup.date().nullable(),
       updatedAt: yup.date().nullable(),
     })
@@ -499,6 +502,7 @@ export function PayableForm({
       comments: invoice?.comments ?? [],
       creatorUser: invoice?.creatorUser,
       creatorEntityId: invoice?.creatorEntityId,
+      ocrJobId: invoice?.ocrJobId,
       vendor: {
         id: invoice?.vendor?.id,
         accountType: invoice?.vendor?.accountType,
@@ -588,6 +592,7 @@ export function PayableForm({
     setValue('paymentSchedule', invoice?.paymentSchedule)
     setValue('taxAmount', invoice?.taxAmount)
     setValue('shippingAmount', invoice?.shippingAmount)
+    setValue('ocrJobId', invoice?.ocrJobId)
   }, [invoice])
 
   const { fields: lineItems } = useFieldArray({
@@ -645,6 +650,7 @@ export function PayableForm({
 
   function ocrMerge(ocrData: Mercoa.OcrResponse) {
     mercoaSession.debug({ ocrResponse: ocrData })
+    if (ocrData.jobId) setValue('ocrJobId', ocrData.jobId)
     if (ocrData.invoice.amount) setValue('amount', ocrData.invoice.amount)
     if (ocrData.invoice.invoiceNumber) setValue('invoiceNumber', ocrData.invoice.invoiceNumber)
     if (ocrData.invoice.invoiceDate) {
@@ -713,6 +719,25 @@ export function PayableForm({
       ocrMerge(ocrResponse)
     }
   }, [ocrResponse])
+
+  // Get OCR Job Data
+  useEffect(() => {
+    if (!invoice?.ocrJobId) return
+    if (!(invoice?.status === Mercoa.InvoiceStatus.Draft || invoice?.status === Mercoa.InvoiceStatus.Unassigned)) return
+    if (invoice.vendor) return
+    mercoaSession.client?.ocr.getAsyncOcr(invoice.ocrJobId).then((resp) => {
+      mercoaSession.debug({ ocrJob: resp.data })
+      if (resp.data) {
+        ocrMerge({
+          vendor: resp.data.vendor,
+          bankAccount: resp.data.bankAccount,
+          check: resp.data.check,
+          jobId: resp.data.jobId,
+          invoice: {} as any,
+        })
+      }
+    })
+  }, [invoice?.ocrJobId, invoice?.vendor, invoice?.status])
 
   async function saveInvoiceLoadingWrapper(data: any) {
     setIsLoading(true)
@@ -907,7 +932,7 @@ export function PayableForm({
     } else if (data.saveAsStatus === 'DELETE') {
       if (invoice?.id) {
         try {
-          if (confirm('Are your sure you want to delete this invoice? This cannot be undone.')) {
+          if (confirm('Are you sure you want to delete this invoice? This cannot be undone.')) {
             await getInvoiceClient(mercoaSession, invoiceType)?.delete(invoice.id)
             renderCustom?.toast ? renderCustom.toast.success('Invoice deleted') : toast.success('Invoice deleted')
             if (onUpdate) onUpdate(undefined)
@@ -926,12 +951,15 @@ export function PayableForm({
       if (!invoice?.id) return
 
       if (invoice.status !== 'PAID' && invoice.status !== 'ARCHIVED') {
-        if (confirm('Do you want to create a printable check? This will mark the invoice as paid cannot be undone.')) {
+        if (
+          confirm('Do you want to create a printable check? This will mark the invoice as paid and cannot be undone.')
+        ) {
           const resp = await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice?.id, {
             status: Mercoa.InvoiceStatus.Paid,
             paymentDestinationOptions: {
               type: 'check',
               delivery: 'PRINT',
+              printDescription: !!data.paymentDestinationOptions?.printDescription,
             },
           })
           if (resp) {
@@ -1112,10 +1140,12 @@ export function PayableForm({
       paymentSchedule: data.paymentSchedule,
       paymentDestinationId: data.paymentDestinationId,
       batchPayment: data.batchPayment,
+      ocrJobId: data.ocrJobId,
       ...(data.paymentDestinationType === Mercoa.PaymentMethodType.Check && {
         paymentDestinationOptions: data.paymentDestinationOptions ?? {
           type: 'check',
           delivery: 'MAIL',
+          printDescription: !!data.paymentDestinationOptions?.printDescription,
         },
       }),
       ...(data.paymentDestinationType === Mercoa.PaymentMethodType.BankAccount && {
@@ -2894,8 +2924,8 @@ export function PayableOverview({
 }) {
   const mercoaSession = useMercoaSession()
 
-  const [finalSupportedCurrencies, setSupportedCurrencies] = useState<Array<Mercoa.CurrencyCode>>(
-    supportedCurrencies ?? [],
+  const [finalSupportedCurrencies, setFinalSupportedCurrencies] = useState<Array<Mercoa.CurrencyCode>>(
+    supportedCurrencies && supportedCurrencies.length > 0 ? supportedCurrencies : [Mercoa.CurrencyCode.Usd],
   )
 
   const {
@@ -2921,14 +2951,16 @@ export function PayableOverview({
     )
     // dedupe and add supported currencies
     if (hasMercoaPaymentRails) {
-      derivedSupportedCurrencies.push('USD')
+      derivedSupportedCurrencies.push(Mercoa.CurrencyCode.Usd)
     }
     mercoaSession.customPaymentMethodSchemas.forEach((p) => {
       if (p.supportedCurrencies) {
         derivedSupportedCurrencies = [...new Set([...derivedSupportedCurrencies, ...p.supportedCurrencies])]
       }
     })
-    setSupportedCurrencies([...new Set([...derivedSupportedCurrencies, ...(supportedCurrencies ?? [])])])
+    setFinalSupportedCurrencies([
+      ...new Set([...derivedSupportedCurrencies, ...(supportedCurrencies ?? [Mercoa.CurrencyCode.Usd])]),
+    ])
   }, [mercoaSession.client, mercoaSession.customPaymentMethodSchemas, mercoaSession.organization?.paymentMethods])
 
   // Reset currency dropdown
@@ -3211,11 +3243,11 @@ function PrintDescriptionOnCheckRemittanceSwitch() {
 
   // Only runs when paymentDestinationOptions is not set
   useEffect(() => {
-    if (paymentDestinationOptions?.printDescription && !paymentDestinationOptions?.type) {
+    if (!paymentDestinationOptions?.type) {
       setValue('paymentDestinationOptions', {
         type: 'check',
         delivery: 'MAIL',
-        printDescription: true,
+        printDescription: !!paymentDestinationOptions?.printDescription,
       })
     }
   }, [paymentDestinationOptions])
