@@ -1,6 +1,7 @@
 import { Bar, Container, Section } from '@column-resizer/react'
 import { DocumentDuplicateIcon, EnvelopeIcon, GlobeAltIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { useEffect, useState } from 'react'
@@ -14,7 +15,6 @@ import {
   useFormContext,
 } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import InvoicePreview from './InvoicePreview'
@@ -24,6 +24,7 @@ import {
   Check,
   CounterpartySearch,
   InvoiceStatusPill,
+  LoadingSpinnerIcon,
   MercoaButton,
   MercoaCombobox,
   MercoaInput,
@@ -101,7 +102,11 @@ export function ReceivableDetails({
     .object({
       id: yup.string().nullable(),
       status: yup.string(),
-      amount: yup.number().positive().required().typeError('Please enter a valid number'),
+      amount: yup
+        .number()
+        .positive('Amount must be a positive number')
+        .required()
+        .typeError('Please enter a valid number'),
       invoiceNumber: yup.string(),
       description: yup.string(),
       dueDate: yup.date().required('Please select a due date').typeError('Please select a due date'),
@@ -111,7 +116,9 @@ export function ReceivableDetails({
       lineItems: yup.array().of(
         yup.object({
           id: yup.string(),
-          description: yup.string().required(),
+          name: yup.string().required('Name is a required field'),
+          description: yup.string(),
+          showDescription: yup.boolean(),
           amount: yup.number().required().typeError('Please enter a valid number'),
           currency: yup.string(),
           quantity: yup.number().required().typeError('Please enter a valid number'),
@@ -122,7 +129,7 @@ export function ReceivableDetails({
           updatedAt: yup.date(),
         }),
       ),
-      currency: yup.string().required(),
+      currency: yup.string().required('Currency is a required field'),
       payerId: yup.string(),
       payerName: yup.string(),
       paymentDestinationId: yup.string(),
@@ -171,6 +178,9 @@ export function ReceivableDetails({
     if (resp) {
       setInvoiceLocal(resp)
       setSelectedPayer(resp.payer)
+      if (onUpdate) {
+        onUpdate(resp)
+      }
     }
   }
 
@@ -304,17 +314,11 @@ export function ReceivableForm({
 }) {
   const mercoaSession = useMercoaSession()
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    setError,
-    clearErrors,
-    watch,
-    setFocus,
-    control,
-    formState: { errors },
-  } = useFormContext()
+  const { register, handleSubmit, setValue, setError, clearErrors, watch, setFocus, control, formState } =
+    useFormContext()
+  const { errors } = formState
+
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     if (!invoice) return
@@ -375,15 +379,16 @@ export function ReceivableForm({
     setValue(
       'lineItems',
       invoice?.lineItems?.map((lineItem) => ({
+        id: lineItem.id ?? '',
+        name: lineItem.name ?? '',
         description: lineItem.description ?? '',
-        currency: lineItem.currency ?? 'USD',
+        showDescription: lineItem.description ? true : false,
         amount: lineItem.amount ?? 0,
+        currency: lineItem.currency ?? 'USD',
         quantity: lineItem.quantity ?? 0,
         unitPrice: lineItem.unitPrice ?? 0,
-        name: lineItem.name ?? '',
         metadata: lineItem.metadata ?? {},
         glAccountId: lineItem.glAccountId ?? '',
-        id: lineItem.id ?? '',
         createdAt: lineItem.createdAt ?? new Date(),
         updatedAt: lineItem.updatedAt ?? new Date(),
       })) ?? [],
@@ -497,71 +502,6 @@ export function ReceivableForm({
     }
   }, [supportedCurrencies])
 
-  async function getPDFLink() {
-    if (!invoice?.id) return
-    const pdfLink = await mercoaSession.client?.invoice.document.generateInvoicePdf(invoice.id)
-    if (pdfLink?.uri) {
-      // open in new window
-      window.open(pdfLink.uri, '_blank')
-    } else {
-      toast.error('There was an issue generating the Invoice PDF. Please refresh and try again.')
-    }
-  }
-
-  async function getPaymentLink() {
-    if (!invoice?.id) return
-    if (!invoice.payer) {
-      toast.error('There is no payer associated with this invoice. Please select a payer and save draft.')
-      return
-    }
-    const pdfLink = await mercoaSession.client?.invoice.paymentLinks.getPayerLink(invoice.id)
-    if (pdfLink) {
-      // open in new window
-      window.open(pdfLink, '_blank')
-    } else {
-      toast.error('There was an issue creating the payment link. Please refresh and try again.')
-    }
-  }
-
-  async function sendEmail() {
-    if (!invoice?.id) return
-    if (!invoice.payer) {
-      toast.error('There is no payer associated with this invoice. Please select a payer and save draft.')
-      return
-    }
-    if (!invoice.payer?.email) {
-      toast.error('There is no payer email address for this invoice. Please provide an email address and save draft.')
-      return
-    }
-    try {
-      await mercoaSession.client?.invoice.update(invoice.id, {
-        status: Mercoa.InvoiceStatus.Approved,
-      })
-      try {
-        await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(invoice.id, { attachInvoice: true })
-        toast.info('Email Sent')
-        refreshInvoice(invoice.id)
-      } catch (e) {
-        toast.error('There was an issue generating the email. Please refresh and try again.')
-      }
-    } catch (e: any) {
-      toast.error(`There was an issue saving the invoice.\n Error: ${e.body}`)
-    }
-  }
-
-  async function markAsPaid() {
-    if (!invoice?.id) return
-    try {
-      await mercoaSession.client?.invoice.update(invoice.id, {
-        status: Mercoa.InvoiceStatus.Paid,
-      })
-      toast.success('Invoice marked as paid')
-      refreshInvoice(invoice.id)
-    } catch (e: any) {
-      toast.error(`There was an issue marking the invoice as paid.\n Error: ${e.body}`)
-    }
-  }
-
   async function onSubmit(data: any) {
     if (!mercoaSession.entityId && !mercoaSession.entityGroupId) return
     const createUnassignedInvoice = !!mercoaSession.entityGroupId && !mercoaSession.entityId
@@ -598,47 +538,44 @@ export function ReceivableForm({
           creatorEntityId: mercoaSession.entityId!,
         }
 
+    setIsLoading(true)
+
     if (newInvoice.payerId && mercoaSession.entityId) {
       await mercoaSession.client?.entity.counterparty.addPayors(mercoaSession.entityId, {
         payors: [newInvoice.payerId],
       })
     }
+
     if (invoice) {
       const response = await mercoaSession.client?.invoice.update(invoice.id, newInvoice)
       mercoaSession.debug(response)
+      setIsLoading(false)
       if (response?.id) {
         toast.success('Invoice updated')
         refreshInvoice(invoice.id)
-        if (onUpdate) {
-          onUpdate(response)
-        }
       } else {
         toast.error('Invoice failed to update')
       }
     } else {
       const response = await mercoaSession.client?.invoice.create(newInvoice)
       mercoaSession.debug(response)
+      setIsLoading(false)
       if (response?.id) {
         toast.success('Invoice created')
-        if (onUpdate) {
-          onUpdate(response)
-        }
+        refreshInvoice(response.id)
       } else {
         toast.error('Invoice failed to create')
       }
     }
   }
 
-  const lineItemHeaders = ['Description', 'Quantity', 'Unit Price', 'Total Amount']
-  const showPaymentLinkButton = !!(
-    paymentSourceType !== 'offPlatform' &&
-    paymentDestinationType !== 'offPlatform' &&
-    selectedPayer
-  )
-
   if (!mercoaSession.client) return <NoSession componentName="ReceivableForm" />
   return (
-    <div className="mercoa-p-2 mercoa-mx-4">
+    <div
+      className={`mercoa-p-2 mercoa-pb-32 mercoa-mx-4 mercoa-relative ${
+        isLoading ? 'mercoa-opacity-50 mercoa-pointer-events-none' : ''
+      }`}
+    >
       <h2 className="mercoa-text-lg mercoa-font-bold mercoa-leading-7 mercoa-text-gray-900">
         Edit Invoice{' '}
         {invoice && (
@@ -725,102 +662,129 @@ export function ReceivableForm({
         <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
 
         <div>
-          <p className="mercoa-mb-1 mercoa-mt-5 mercoa-text-lg">Line Items</p>
-          <table className="mercoa-min-w-full">
-            <thead>
-              <tr className="mercoa-grid mercoa-grid-cols-[24%_24%_24%_24%_4%]">
-                {lineItemHeaders.map((header, index) => (
-                  <th
-                    key={header}
-                    className="mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
-                  >
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
+          <p className="mercoa-mt-6 mercoa-text-lg">Line Items</p>
+          <div className="mercoa-min-w-full">
+            <div className="mercoa-mt-2 mercoa-grid mercoa-grid-cols-1 mercoa-gap-4">
+              {/* Line Items */}
               {fields.map((field, index) => (
-                <tr key={field.id} className="mercoa-grid mercoa-grid-cols-[24%_24%_24%_24%_4%]">
-                  <td>
-                    <MercoaInput
-                      name={`lineItems.${index}.description`}
-                      errors={errors}
-                      register={register}
-                      placeholder="Item Description"
-                    />
-                  </td>
-                  <td>
-                    <MercoaInput
-                      name={`lineItems.${index}.quantity`}
-                      errors={errors}
-                      register={register}
-                      placeholder="Quantity"
-                      type="number"
-                    />
-                  </td>
-                  <td>
-                    {' '}
-                    <MercoaInput
-                      name={`lineItems.${index}.unitPrice`}
-                      errors={errors}
-                      control={control}
-                      placeholder="Unit Price"
-                      type="currency"
-                      leadingIcon={
-                        <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
-                      }
-                    />
-                  </td>
-                  <td>
-                    {' '}
-                    <MercoaInput
-                      name={`lineItems.${index}.amount`}
-                      errors={errors}
-                      control={control}
-                      placeholder="Total Amount"
-                      readOnly
-                      type="currency"
-                      leadingIcon={
-                        <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
-                      }
-                    />
-                  </td>
-                  <td className="mercoa-flex mercoa-items-center">
-                    <XCircleIcon
-                      className="mercoa-size-5 mercoa-cursor-pointer mercoa-text-gray-500"
-                      onClick={() => remove(index)}
-                    />
-                  </td>
-                </tr>
+                <div key={field.id}>
+                  <div className="mercoa-grid mercoa-grid-cols-[2fr_1fr_1fr_1fr_18px] mercoa-gap-2 mercoa-mb-1">
+                    <div>
+                      <MercoaInput
+                        label="Name"
+                        name={`lineItems.${index}.name`}
+                        errors={errors}
+                        register={register}
+                        placeholder="Item Name"
+                      />
+                    </div>
+                    <div>
+                      <MercoaInput
+                        label="Quantity"
+                        name={`lineItems.${index}.quantity`}
+                        errors={errors}
+                        register={register}
+                        placeholder="Quantity"
+                        type="number"
+                      />
+                    </div>
+                    <div>
+                      <MercoaInput
+                        label="Unit Price"
+                        name={`lineItems.${index}.unitPrice`}
+                        errors={errors}
+                        control={control}
+                        placeholder="Unit Price"
+                        type="currency"
+                        leadingIcon={
+                          <span className="mercoa-text-gray-500 sm:mercoa-text-sm">
+                            {currencyCodeToSymbol(currency)}
+                          </span>
+                        }
+                      />
+                    </div>
+                    <div>
+                      <MercoaInput
+                        label="Total Amount"
+                        name={`lineItems.${index}.amount`}
+                        errors={errors}
+                        control={control}
+                        placeholder="Total Amount"
+                        readOnly
+                        type="currency"
+                        leadingIcon={
+                          <span className="mercoa-text-gray-500 sm:mercoa-text-sm">
+                            {currencyCodeToSymbol(currency)}
+                          </span>
+                        }
+                      />
+                    </div>
+                    <div className="mercoa-flex mercoa-items-center">
+                      <XCircleIcon
+                        className="mercoa-size-5 mercoa-cursor-pointer mercoa-text-gray-500 mercoa-mt-[28px]"
+                        onClick={() => remove(index)}
+                      />
+                    </div>
+                  </div>
+                  {watch(`lineItems.${index}.showDescription`) ? (
+                    <>
+                      <div className="mercoa-grid mercoa-grid-cols-[1fr_18px] mercoa-gap-2">
+                        <MercoaInput
+                          label="Description"
+                          name={`lineItems.${index}.description`}
+                          errors={errors}
+                          register={register}
+                          placeholder="Description"
+                          type="text"
+                        />
+                      </div>
+                      <div
+                        className="mercoa-text-sm mercoa-text-gray-500 mercoa-cursor-pointer mercoa-mt-1 hover:mercoa-text-gray-700"
+                        onClick={() => {
+                          setValue(`lineItems.${index}.showDescription`, false)
+                          setValue(`lineItems.${index}.description`, '')
+                        }}
+                      >
+                        - Remove description
+                      </div>
+                    </>
+                  ) : (
+                    <div
+                      className="mercoa-text-sm mercoa-text-gray-500 mercoa-cursor-pointer mercoa-mt-1 hover:mercoa-text-gray-700"
+                      onClick={() => setValue(`lineItems.${index}.showDescription`, true)}
+                    >
+                      + Add description (optional)
+                    </div>
+                  )}
+                </div>
               ))}
-              <tr>
-                <td>
-                  <MercoaButton
-                    type="button"
-                    isEmphasized={false}
-                    className="mercoa-mt-1"
-                    size="sm"
-                    onClick={() =>
-                      append({
-                        id: 'new',
-                        description: '',
-                        quantity: 1,
-                        unitPrice: 0,
-                        amount: 0,
-                        currency: 'USD',
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                      })
-                    }
-                  >
-                    Add Line Item
-                  </MercoaButton>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <table className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-4 mercoa-gap-4 mercoa-items-start mercoa-p-0.5">
+            </div>
+
+            {/* Add Line Item Button */}
+            <div className={`${fields.length > 0 ? 'mercoa-mt-4' : ''}`}>
+              <MercoaButton
+                type="button"
+                isEmphasized
+                size="md"
+                onClick={() =>
+                  append({
+                    id: 'new',
+                    description: '',
+                    quantity: 1,
+                    unitPrice: 0,
+                    amount: 0,
+                    currency: 'USD',
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    showDescription: false,
+                  })
+                }
+              >
+                + Add Line Item
+              </MercoaButton>
+            </div>
+          </div>
+          <div className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-4 mercoa-gap-4 mercoa-items-start mercoa-p-0.5">
             <MercoaInput
               name="amount"
               label="Total Amount"
@@ -868,7 +832,7 @@ export function ReceivableForm({
                 />
               </div>
             </div>
-          </table>
+          </div>
         </div>
 
         <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
@@ -876,68 +840,13 @@ export function ReceivableForm({
         <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
         <ReceivablePaymentDestination />
 
-        {/* RECEIVABLE ACTIONS */}
-        <div className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-1 mercoa-gap-2 mercoa-items-end mercoa-p-0.5">
-          {!invoice?.id ? (
-            <MercoaButton className="mercoa-mt-5" isEmphasized>
-              Create Invoice
-            </MercoaButton>
-          ) : (
-            <>
-              {/* Preview Invoice */}
-              <MercoaButton
-                isEmphasized={false}
-                onClick={getPDFLink}
-                type="button"
-                className="mercoa-flex mercoa-justify-center"
-              >
-                <DocumentDuplicateIcon className="mercoa-size-5 md:mercoa-mr-2" /> Preview Invoice
-              </MercoaButton>
-
-              {/* Get Payment Link */}
-              {showPaymentLinkButton && (
-                <MercoaButton
-                  isEmphasized={false}
-                  onClick={getPaymentLink}
-                  type="button"
-                  className="mercoa-flex mercoa-justify-center"
-                >
-                  <GlobeAltIcon className="mercoa-size-5 md:mercoa-mr-2" /> Get Payment Link
-                </MercoaButton>
-              )}
-
-              {/* Save Draft */}
-              {invoice.status === Mercoa.InvoiceStatus.Draft && (
-                <MercoaButton isEmphasized={false}>Save Draft</MercoaButton>
-              )}
-
-              {/* Send / Resend Email */}
-              <MercoaButton
-                disabled={!selectedPayer}
-                isEmphasized
-                onClick={sendEmail}
-                type="button"
-                className="mercoa-flex mercoa-justify-center"
-              >
-                <EnvelopeIcon className="mercoa-size-5 md:mercoa-mr-2" />
-                {invoice.status === Mercoa.InvoiceStatus.Draft ? 'Send Invoice' : 'Resend Invoice'}
-              </MercoaButton>
-
-              {/* Mark as Paid */}
-              {invoice.status === Mercoa.InvoiceStatus.Approved &&
-                (paymentSourceType === 'offPlatform' || paymentDestinationType === 'offPlatform') && (
-                  <MercoaButton
-                    isEmphasized={true}
-                    onClick={markAsPaid}
-                    type="button"
-                    className="mercoa-flex mercoa-justify-center"
-                  >
-                    Mark as Paid
-                  </MercoaButton>
-                )}
-            </>
-          )}
-        </div>
+        <ReceivableActions
+          invoice={invoice}
+          selectedPayer={selectedPayer}
+          setIsLoading={setIsLoading}
+          refreshInvoice={refreshInvoice}
+          onUpdate={onUpdate}
+        />
       </form>
     </div>
   )
@@ -1290,6 +1199,305 @@ export function ReceivablePaymentDestination({ readOnly }: { readOnly?: boolean 
       <ReceivableSelectPaymentMethod isDestination />
       {errors.paymentDestinationId?.message && (
         <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentDestinationId?.message.toString()}</p>
+      )}
+    </div>
+  )
+}
+
+export function ReceivableActions({
+  invoice,
+  selectedPayer,
+  setIsLoading,
+  refreshInvoice,
+  onUpdate,
+}: {
+  invoice: Mercoa.InvoiceResponse | undefined
+  selectedPayer: Mercoa.CounterpartyResponse | undefined
+  setIsLoading: (isLoading: boolean) => void
+  refreshInvoice: (invoiceId: string) => void
+  onUpdate: (invoice: Mercoa.InvoiceResponse | undefined) => void
+}) {
+  const [isSaving, setIsSaving] = useState(false)
+  const { watch, formState } = useFormContext()
+  const paymentSourceType = watch('paymentSourceType')
+  const paymentDestinationType = watch('paymentDestinationType')
+  const mercoaSession = useMercoaSession()
+
+  useEffect(() => {
+    if (formState.isSubmitting || formState.isLoading) {
+      setIsSaving(true)
+    } else {
+      setTimeout(() => setIsSaving(false), 500)
+    }
+  }, [formState])
+
+  // Action Buttons
+  const createInvoiceButton = (
+    <MercoaButton className="mercoa-mt-5" isEmphasized>
+      Create Invoice
+    </MercoaButton>
+  )
+
+  const deleteableStatuses: Mercoa.InvoiceStatus[] = [
+    Mercoa.InvoiceStatus.Draft,
+    Mercoa.InvoiceStatus.Unassigned,
+    Mercoa.InvoiceStatus.New,
+    Mercoa.InvoiceStatus.Canceled,
+  ]
+  const showDeleteButton = invoice?.status && deleteableStatuses.includes(invoice?.status)
+  const deleteButton = (
+    <MercoaButton
+      isEmphasized={false}
+      onClick={async () => {
+        if (!invoice?.id) return
+        if (confirm('Are you sure you want to delete this invoice? This cannot be undone.')) {
+          try {
+            setIsLoading(true)
+            await mercoaSession.client?.invoice.delete(invoice.id)
+            setIsLoading(false)
+            toast.success('Invoice deleted')
+            if (onUpdate) onUpdate(undefined)
+          } catch (e: any) {
+            setIsLoading(false)
+            toast.error(`There was an issue deleting the invoice.\n Error: ${e.body}`)
+          }
+        }
+      }}
+      type="button"
+      color="secondary"
+      className="mercoa-flex mercoa-justify-center"
+    >
+      Delete Invoice
+    </MercoaButton>
+  )
+
+  const cancelableStatuses: Mercoa.InvoiceStatus[] = [Mercoa.InvoiceStatus.Approved, Mercoa.InvoiceStatus.Scheduled]
+  const showCancelButton = invoice?.status && cancelableStatuses.includes(invoice?.status)
+  const cancelButton = (
+    <MercoaButton
+      isEmphasized={false}
+      onClick={async () => {
+        if (!invoice?.id) return
+        if (confirm('Are you sure you want to cancel this invoice? This cannot be undone.')) {
+          try {
+            setIsLoading(true)
+            await mercoaSession.client?.invoice.update(invoice.id, {
+              status: Mercoa.InvoiceStatus.Canceled,
+            })
+            setIsLoading(false)
+            toast.success('Invoice canceled')
+            refreshInvoice(invoice.id)
+          } catch (e: any) {
+            setIsLoading(false)
+            toast.error(`There was an issue canceling the invoice.\n Error: ${e.body}`)
+          }
+        }
+      }}
+      type="button"
+      color="secondary"
+      className="mercoa-flex mercoa-justify-center"
+    >
+      Cancel Invoice
+    </MercoaButton>
+  )
+
+  const previewableStatuses: Mercoa.InvoiceStatus[] = [
+    Mercoa.InvoiceStatus.Unassigned,
+    Mercoa.InvoiceStatus.Draft,
+    Mercoa.InvoiceStatus.New,
+    Mercoa.InvoiceStatus.Approved,
+    Mercoa.InvoiceStatus.Scheduled,
+    Mercoa.InvoiceStatus.Pending,
+    Mercoa.InvoiceStatus.Paid,
+  ]
+  const showPreviewButton = invoice?.status && previewableStatuses.includes(invoice?.status)
+  const previewButton = (
+    <MercoaButton
+      isEmphasized={false}
+      onClick={async () => {
+        if (!invoice?.id) return
+        const pdfLink = await mercoaSession.client?.invoice.document.generateInvoicePdf(invoice.id)
+        if (pdfLink?.uri) {
+          window.open(pdfLink.uri, '_blank')
+        } else {
+          toast.error('There was an issue generating the Invoice PDF. Please refresh and try again.')
+        }
+      }}
+      type="button"
+      className="mercoa-flex mercoa-justify-center"
+    >
+      <DocumentDuplicateIcon className="mercoa-size-5 md:mercoa-mr-2" /> Preview Invoice
+    </MercoaButton>
+  )
+
+  const paymentLinkableStatuses: Mercoa.InvoiceStatus[] = [
+    Mercoa.InvoiceStatus.Unassigned,
+    Mercoa.InvoiceStatus.Draft,
+    Mercoa.InvoiceStatus.New,
+    Mercoa.InvoiceStatus.Approved,
+    Mercoa.InvoiceStatus.Scheduled,
+    Mercoa.InvoiceStatus.Pending,
+    Mercoa.InvoiceStatus.Paid,
+  ]
+  const showPaymentLinkButton =
+    paymentSourceType !== 'offPlatform' &&
+    paymentDestinationType !== 'offPlatform' &&
+    selectedPayer &&
+    invoice?.status &&
+    paymentLinkableStatuses.includes(invoice?.status)
+  const paymentLinkButton = (
+    <MercoaButton
+      isEmphasized={false}
+      onClick={async () => {
+        if (!invoice?.id) return
+        if (!invoice.payer) {
+          toast.error('There is no payer associated with this invoice. Please select a payer and save draft.')
+          return
+        }
+        const pdfLink = await mercoaSession.client?.invoice.paymentLinks.getPayerLink(invoice.id)
+        if (pdfLink) {
+          window.open(pdfLink, '_blank')
+        } else {
+          toast.error('There was an issue creating the payment link. Please refresh and try again.')
+        }
+      }}
+      type="button"
+      className="mercoa-flex mercoa-justify-center"
+    >
+      <GlobeAltIcon className="mercoa-size-5 md:mercoa-mr-2" /> Get Payment Link
+    </MercoaButton>
+  )
+
+  const showSaveDraftButton = invoice?.status === Mercoa.InvoiceStatus.Draft
+  const saveDraftButton = <MercoaButton isEmphasized={false}>Save Draft</MercoaButton>
+
+  const sendableStatuses: Mercoa.InvoiceStatus[] = [
+    Mercoa.InvoiceStatus.Draft,
+    Mercoa.InvoiceStatus.New,
+    Mercoa.InvoiceStatus.Approved,
+    Mercoa.InvoiceStatus.Scheduled,
+  ]
+  const showSendEmailButton = invoice?.status && sendableStatuses.includes(invoice?.status)
+  const sendEmailButton = (
+    <MercoaButton
+      disabled={!selectedPayer}
+      isEmphasized
+      onClick={async () => {
+        if (!invoice?.id) return
+        if (!invoice.payer) {
+          toast.error('There is no payer associated with this invoice. Please select a payer and save draft.')
+          return
+        }
+        if (!invoice.payer?.email) {
+          toast.error(
+            'There is no payer email address for this invoice. Please provide an email address and save draft.',
+          )
+          return
+        }
+        try {
+          setIsLoading(true)
+          await mercoaSession.client?.invoice.update(invoice.id, {
+            status: Mercoa.InvoiceStatus.Approved,
+          })
+          setIsLoading(false)
+          try {
+            await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(invoice.id, { attachInvoice: true })
+            toast.info('Email Sent')
+            refreshInvoice(invoice.id)
+          } catch (e) {
+            toast.error('There was an issue generating the email. Please refresh and try again.')
+          }
+        } catch (e: any) {
+          setIsLoading(false)
+          toast.error(`There was an issue saving the invoice.\n Error: ${e.body}`)
+        }
+      }}
+      type="button"
+      className="mercoa-flex mercoa-justify-center"
+    >
+      <EnvelopeIcon className="mercoa-size-5 md:mercoa-mr-2" />
+      {invoice?.status === Mercoa.InvoiceStatus.Draft ? 'Send Invoice' : 'Resend Invoice'}
+    </MercoaButton>
+  )
+
+  const showMarkAsPaidButton =
+    invoice?.status === Mercoa.InvoiceStatus.Approved &&
+    (paymentSourceType === 'offPlatform' || paymentDestinationType === 'offPlatform')
+  const markAsPaidButton = (
+    <MercoaButton
+      isEmphasized={true}
+      onClick={async () => {
+        if (!invoice?.id) return
+        try {
+          setIsLoading(true)
+          await mercoaSession.client?.invoice.update(invoice.id, {
+            status: Mercoa.InvoiceStatus.Paid,
+          })
+          setIsLoading(false)
+          toast.success('Invoice marked as paid')
+          refreshInvoice(invoice.id)
+        } catch (e: any) {
+          setIsLoading(false)
+          toast.error(`There was an issue marking the invoice as paid.\n Error: ${e.body}`)
+        }
+      }}
+      type="button"
+      className="mercoa-flex mercoa-justify-center"
+    >
+      Mark as Paid
+    </MercoaButton>
+  )
+
+  const showRestoreAsDraftButton = invoice?.status === Mercoa.InvoiceStatus.Canceled
+  const restoreAsDraftButton = (
+    <MercoaButton
+      isEmphasized={false}
+      color="green"
+      onClick={async () => {
+        if (!invoice?.id) return
+        try {
+          setIsLoading(true)
+          await mercoaSession.client?.invoice.update(invoice.id, {
+            status: Mercoa.InvoiceStatus.Draft,
+          })
+          setIsLoading(false)
+          toast.success('Invoice restored as draft')
+          refreshInvoice(invoice.id)
+        } catch (e: any) {
+          setIsLoading(false)
+          toast.error(`There was an issue restoring the invoice as draft.\n Error: ${e.body}`)
+        }
+      }}
+      type="button"
+      className="mercoa-flex mercoa-justify-center"
+    >
+      Restore as Draft
+    </MercoaButton>
+  )
+
+  return (
+    <div className="mercoa-absolute mercoa-bottom-0 mercoa-right-0 mercoa-w-full mercoa-bg-white mercoa-z-10">
+      {isSaving ? (
+        <div className="mercoa-flex mercoa-items-center mercoa-justify-center mercoa-p-2">
+          <LoadingSpinnerIcon />
+        </div>
+      ) : (
+        <div className="mercoa-mx-auto mercoa-flex mercoa-flex-row mercoa-justify-end mercoa-items-center mercoa-gap-2 mercoa-py-3 mercoa-px-6">
+          {!invoice?.id ? (
+            createInvoiceButton
+          ) : (
+            <>
+              {showDeleteButton && deleteButton}
+              {showCancelButton && cancelButton}
+              {showPreviewButton && previewButton}
+              {showPaymentLinkButton && paymentLinkButton}
+              {showSaveDraftButton && saveDraftButton}
+              {showSendEmailButton && sendEmailButton}
+              {showMarkAsPaidButton && markAsPaidButton}
+              {showRestoreAsDraftButton && restoreAsDraftButton}
+            </>
+          )}
+        </div>
       )}
     </div>
   )

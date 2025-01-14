@@ -1,10 +1,10 @@
+import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import Papa from 'papaparse'
 import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { classNames } from '../lib/lib'
 import {
@@ -857,6 +857,7 @@ export function Receivables({
   const defaultStatuses = statuses ?? [
     Mercoa.InvoiceStatus.Draft,
     Mercoa.InvoiceStatus.Approved,
+    Mercoa.InvoiceStatus.Scheduled,
     Mercoa.InvoiceStatus.Pending,
     Mercoa.InvoiceStatus.Paid,
   ]

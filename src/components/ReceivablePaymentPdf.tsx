@@ -1,8 +1,8 @@
+import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import QRCode from 'react-qr-code'
-import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { LoadingSpinnerIcon, useMercoaSession } from './index'
 
@@ -33,8 +33,9 @@ export function ReceivablePaymentPdf({
   if (!invoice) return <LoadingSpinnerIcon />
 
   const payerAddress = invoice.payer?.profile?.individual?.address ?? invoice.payer?.profile?.business?.address
+  const payerEmail = invoice.payer?.profile?.individual?.email ?? invoice.payer?.profile?.business?.email
   const vendorAddress = invoice.vendor?.profile?.individual?.address ?? invoice.vendor?.profile?.business?.address
-
+  const vendorEmail = invoice.vendor?.profile?.individual?.email ?? invoice.vendor?.profile?.business?.email
   const logo =
     invoice.vendor?.logo ??
     mercoaSession.organization?.logoUrl ??
@@ -55,6 +56,7 @@ export function ReceivablePaymentPdf({
             </p>
           </>
         )}
+        {payerEmail && <p>{payerEmail}</p>}
       </div>
 
       <div className="mercoa-border-l-2 mercoa-border-gray-500 mercoa-pl-6">
@@ -70,6 +72,7 @@ export function ReceivablePaymentPdf({
             </p>
           </>
         )}
+        {vendorEmail && <p>{vendorEmail}</p>}
       </div>
     </div>
   )
@@ -79,12 +82,16 @@ export function ReceivablePaymentPdf({
       <div className="mercoa-text-5xl mercoa-font-medium">INVOICE</div>
       <div>
         <div className="mercoa-flex mercoa-justify-between">
-          <span className="mercoa-text-gray-500">Invoice #</span>
+          <span className="mercoa-text-gray-500">Invoice #:</span>
           <span className="mercoa-text-gray-800 mercoa-pl-2">{invoice.invoiceNumber}</span>
         </div>
         <div className="mercoa-flex mercoa-justify-between">
-          <span className="mercoa-text-gray-500">Date</span>
+          <span className="mercoa-text-gray-500">Issued:</span>
           <span className="mercoa-text-gray-800 mercoa-pl-2">{dayjs(invoice.invoiceDate).format('MMM DD, YYYY')}</span>
+        </div>
+        <div className="mercoa-flex mercoa-justify-between">
+          <span className="mercoa-text-gray-500">Due:</span>
+          <span className="mercoa-text-gray-800 mercoa-pl-2">{dayjs(invoice.dueDate).format('MMM DD, YYYY')}</span>
         </div>
 
         {mercoaSession.organization?.metadataSchema?.map((schema) => {
@@ -157,59 +164,35 @@ export function ReceivablePaymentPdf({
 }
 
 function LineItems({ lineItems }: { lineItems: Mercoa.InvoiceLineItemResponse[] }) {
-  if (!lineItems.length) return <></>
-
   return (
-    <div className="mercoa-overflow-hidden mercoa-rounded-t-lg mercoa-mt-10 mercoa-pb-5 mercoa-border-b-2 mercoa-border-gray-300 ">
-      <table className="mercoa-min-w-full">
-        <thead>
-          <tr>
-            <th
-              scope="col"
-              className="mercoa-py-3.5 mercoa-pl-4 mercoa-pr-3 mercoa-text-left mercoa-font-semibold mercoa-text-gray-900 sm:mercoa-pl-6"
-            >
-              ITEM
-            </th>
-            <th
-              scope="col"
-              className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-font-semibold mercoa-text-gray-900"
-            >
-              PRICE
-            </th>
-            <th
-              scope="col"
-              className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-font-semibold mercoa-text-gray-900"
-            >
-              QTY
-            </th>
-            <th
-              scope="col"
-              className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-font-semibold mercoa-text-gray-900"
-            >
-              TOTAL
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {lineItems.map((lineItem) => (
-            <tr key={lineItem.id}>
-              <td className="mercoa-whitespace-nowrap mercoa-py-4 mercoa-pl-4 mercoa-pr-3 mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-6">
-                <p className="mercoa-text-md mercoa-font-medium mercoa-text-gray-900">{lineItem.name}</p>
-                <p className="mercoa-text-xs mercoa-font-medium mercoa-text-gray-400">{lineItem.description}</p>
-              </td>
-              <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-gray-700">
-                {accounting.formatMoney(lineItem.unitPrice ?? 0, currencyCodeToSymbol(lineItem.currency))}
-              </td>
-              <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-gray-700">
-                {lineItem.quantity}
-              </td>
-              <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-gray-800 mercoa-font-bold">
-                {accounting.formatMoney(lineItem.amount ?? 0, currencyCodeToSymbol(lineItem.currency))}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="mercoa-mt-10">
+      {/* Header */}
+      <div className="mercoa-grid mercoa-grid-cols-[2fr_1fr_1fr_1fr] mercoa-gap-4 mercoa-py-3.5 mercoa-font-semibold mercoa-text-gray-900 mercoa-border-b-[1px] mercoa-border-gray-500">
+        <div className="mercoa-text-left">Item</div>
+        <div className="mercoa-text-right">Quantity</div>
+        <div className="mercoa-text-right">Unit Price</div>
+        <div className="mercoa-text-right">Total</div>
+      </div>
+
+      {/* Line Items */}
+      {lineItems.map((lineItem) => (
+        <div
+          key={lineItem.id}
+          className="mercoa-grid mercoa-grid-cols-[2fr_1fr_1fr_1fr] mercoa-gap-4 mercoa-py-4 mercoa-border-b-[1px] mercoa-border-gray-300"
+        >
+          <div>
+            <p className="mercoa-text-md mercoa-font-medium mercoa-text-gray-900">{lineItem.name}</p>
+            <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-500">{lineItem.description}</p>
+          </div>
+          <div className="mercoa-text-gray-700 mercoa-text-right">{lineItem.quantity}</div>
+          <div className="mercoa-text-gray-700 mercoa-text-right">
+            {accounting.formatMoney(lineItem.unitPrice ?? 0, currencyCodeToSymbol(lineItem.currency))}
+          </div>
+          <div className="mercoa-text-gray-800 mercoa-font-bold mercoa-text-right">
+            {accounting.formatMoney(lineItem.amount ?? 0, currencyCodeToSymbol(lineItem.currency))}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
