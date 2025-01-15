@@ -535,7 +535,7 @@ export function PayableForm({
   useEffect(() => {
     if (!invoice) return
 
-    if (invoice.vendor && !selectedVendor) {
+    if (invoice.vendor) {
       setSelectedVendor(invoice.vendor)
     }
 
