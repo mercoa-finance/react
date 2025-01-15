@@ -312,7 +312,11 @@ export function PayablesTable({
   metadata?: Mercoa.MetadataFilter[]
   startDate?: Date
   endDate?: Date
-  onSelectInvoice?: (invoice: Mercoa.InvoiceResponse, isMiddleClick?: boolean) => any
+  onSelectInvoice?: (
+    invoice: Mercoa.InvoiceResponse,
+    isMiddleClick?: boolean,
+    columnClicked?: keyof Mercoa.InvoiceResponse | `${'metadata.'}${string}`,
+  ) => any
   columns?: InvoiceTableColumn[]
   children?: (props: PayablesTableChildrenProps) => ReactElement | null
 }) {
@@ -1073,7 +1077,7 @@ export function PayablesTable({
                   selectedInvoices.includes(invoice) ? 'mercoa-text-mercoa-primary-text' : 'mercoa-text-gray-900'
                 } ${index === 0 ? 'mercoa-font-medium' : ''}`}
                 onMouseDown={(event) => {
-                  if (onSelectInvoice) onSelectInvoice(invoice, event.button === 1)
+                  if (onSelectInvoice) onSelectInvoice(invoice, event.button === 1, column.field)
                 }}
               >
                 {toDisplay}
