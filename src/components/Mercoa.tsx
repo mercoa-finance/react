@@ -1,8 +1,8 @@
 import { CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, XCircleIcon } from '@heroicons/react/20/solid'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { jwtDecode } from 'jwt-decode'
 import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { ToastContainer } from 'react-toastify'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { setStyle } from '../lib/lib'
 import { EntityPortal, TokenOptions, getAllUsers } from './index'
 
@@ -223,7 +223,7 @@ function useProvideSession({
     }
 
     // validate token
-    if (tokenLocal && tokenLocal.indexOf('.') > -1) {
+    if (tokenLocal && typeof tokenLocal === 'string' && tokenLocal.indexOf('.') > -1) {
       try {
         const token = jwtDecode(String(tokenLocal)) as TokenOptions
         if (!token.organizationId) {
