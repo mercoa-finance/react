@@ -1665,32 +1665,36 @@ export function Representatives({
             <RepresentativeComponent onSelect={() => setShowDialog(true)} />
           </div>
         )}
-        <div className="mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-mt-5">
-          {reps?.some((e) => e.responsibilities.isController) ? (
-            <>
-              <CheckCircleIcon className="mercoa-size-5 mercoa-text-green-400" />
-              <p className="mercoa-font-gray-700 mercoa-text-sm">At least one controller is added</p>
-            </>
-          ) : (
-            <>
-              <XCircleIcon className="mercoa-size-5 mercoa-text-red-400" />
-              <p className="mercoa-font-gray-700 mercoa-text-sm">At least one controller needs to be added</p>
-            </>
-          )}
-        </div>
-        <div className="mercoa-flex mercoa-items-center mercoa-space-x-3">
-          {reps && reps?.length > 0 ? (
-            <>
-              <CheckCircleIcon className="mercoa-size-5 mercoa-text-green-400" />
-              <p className="mercoa-font-gray-700 mercoa-text-sm">At least one representative is added</p>
-            </>
-          ) : (
-            <>
-              <XCircleIcon className="mercoa-size-5 mercoa-text-red-400" />
-              <p className="mercoa-font-gray-700 mercoa-text-sm">At least one representative needs to be added</p>
-            </>
-          )}
-        </div>
+        {mercoaSession.organization?.payeeOnboardingOptions?.business.representatives.required && (
+          <>
+            <div className="mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-mt-5">
+              {reps?.some((e) => e.responsibilities.isController) ? (
+                <>
+                  <CheckCircleIcon className="mercoa-size-5 mercoa-text-green-400" />
+                  <p className="mercoa-font-gray-700 mercoa-text-sm">At least one controller is added</p>
+                </>
+              ) : (
+                <>
+                  <XCircleIcon className="mercoa-size-5 mercoa-text-red-400" />
+                  <p className="mercoa-font-gray-700 mercoa-text-sm">At least one controller needs to be added</p>
+                </>
+              )}
+            </div>
+            <div className="mercoa-flex mercoa-items-center mercoa-space-x-3">
+              {reps && reps?.length > 0 ? (
+                <>
+                  <CheckCircleIcon className="mercoa-size-5 mercoa-text-green-400" />
+                  <p className="mercoa-font-gray-700 mercoa-text-sm">At least one representative is added</p>
+                </>
+              ) : (
+                <>
+                  <XCircleIcon className="mercoa-size-5 mercoa-text-red-400" />
+                  <p className="mercoa-font-gray-700 mercoa-text-sm">At least one representative needs to be added</p>
+                </>
+              )}
+            </div>
+          </>
+        )}
       </>
     )
   }
@@ -1829,8 +1833,14 @@ export function VerifyOwnersButton({ entity }: { entity: Mercoa.EntityResponse }
     <MercoaButton
       onClick={async () => {
         if (entity.accountType === 'business') {
-          await mercoaSession.client?.entity.initiateKyb(entity.id)
-          toast.success('Verification Started')
+          try {
+            await mercoaSession.client?.entity.initiateKyb(entity.id)
+            toast.success('Verification Started')
+          } catch (e) {
+            toast.error(
+              'Failed to initiate KYB. Please make sure all required fields are filled out and at least one controller is provided.',
+            )
+          }
         } else if (entity.accountType === 'individual') {
           toast.error('not implemented yet!')
         }
@@ -2004,17 +2014,27 @@ export function AcceptTosForm({
 export function EntityOnboardingForm({
   entity,
   type,
+  onboardingOptions,
   onOnboardingSubmit,
   onCancel,
   admin,
+  readOnly,
 }: {
   entity: Mercoa.EntityResponse
   type: 'payee' | 'payor'
+  onboardingOptions?: Mercoa.OnboardingOptionsResponse
   onOnboardingSubmit?: (data: OnboardingFormData) => void
   onCancel?: () => void
   admin?: boolean
+  readOnly?: boolean
 }) {
   const mercoaSession = useMercoaSession()
+
+  const finalOnboardingOptions =
+    onboardingOptions ??
+    (type === 'payee'
+      ? mercoaSession.organization?.payeeOnboardingOptions
+      : mercoaSession.organization?.payorOnboardingOptions)
 
   const {
     register,
@@ -2075,12 +2095,12 @@ export function EntityOnboardingForm({
         return yupResolver(
           yup
             .object({
-              ...(onboardingOptions?.individual.name.required && nameBlockSchema),
-              ...(onboardingOptions?.individual.email.required && emailSchema),
-              ...(onboardingOptions?.individual.phone.required && phoneSchema),
-              ...(onboardingOptions?.individual.dateOfBirth.required && dateOfBirthSchema),
-              ...(onboardingOptions?.individual.address.required && addressBlockSchema),
-              ...(onboardingOptions?.individual.ssn.required && SSNSchema),
+              ...(finalOnboardingOptions?.individual.name.required && nameBlockSchema),
+              ...(finalOnboardingOptions?.individual.email.required && emailSchema),
+              ...(finalOnboardingOptions?.individual.phone.required && phoneSchema),
+              ...(finalOnboardingOptions?.individual.dateOfBirth.required && dateOfBirthSchema),
+              ...(finalOnboardingOptions?.individual.address.required && addressBlockSchema),
+              ...(finalOnboardingOptions?.individual.ssn.required && SSNSchema),
             })
             .required(),
         )(data, context, options as any) as any
@@ -2088,19 +2108,19 @@ export function EntityOnboardingForm({
         return yupResolver(
           yup
             .object({
-              ...(onboardingOptions?.business.name.required && legalBusinessNameSchema),
-              ...(onboardingOptions?.business.email.required && emailSchema),
-              ...(onboardingOptions?.business.phone.required && phoneSchema),
-              ...(onboardingOptions?.business.website.required && websiteSchema),
-              ...(onboardingOptions?.business.address.required && addressBlockSchema),
-              ...(onboardingOptions?.business.ein.required && einSchema),
-              ...(onboardingOptions?.business.mcc.required && mccSchema),
-              ...(onboardingOptions?.business.maxTransactionSize.required && maxTransactionSizeSchema),
-              ...(onboardingOptions?.business.averageMonthlyTransactionVolume.required &&
+              ...(finalOnboardingOptions?.business.name.required && legalBusinessNameSchema),
+              ...(finalOnboardingOptions?.business.email.required && emailSchema),
+              ...(finalOnboardingOptions?.business.phone.required && phoneSchema),
+              ...(finalOnboardingOptions?.business.website.required && websiteSchema),
+              ...(finalOnboardingOptions?.business.address.required && addressBlockSchema),
+              ...(finalOnboardingOptions?.business.ein.required && einSchema),
+              ...(finalOnboardingOptions?.business.mcc.required && mccSchema),
+              ...(finalOnboardingOptions?.business.maxTransactionSize.required && maxTransactionSizeSchema),
+              ...(finalOnboardingOptions?.business.averageMonthlyTransactionVolume.required &&
                 averageMonthlyTransactionVolumeSchema),
-              ...(onboardingOptions?.business.averageTransactionSize.required && averageTransactionSizeSchema),
-              ...(onboardingOptions?.business.formationDate.required && formationDateSchema),
-              ...(onboardingOptions?.business.description.required && descriptionSchema),
+              ...(finalOnboardingOptions?.business.averageTransactionSize.required && averageTransactionSizeSchema),
+              ...(finalOnboardingOptions?.business.formationDate.required && formationDateSchema),
+              ...(finalOnboardingOptions?.business.description.required && descriptionSchema),
             })
             .required(),
         )(data, context, options as any) as any
@@ -2113,23 +2133,20 @@ export function EntityOnboardingForm({
   if (!mercoaSession.client) return <NoSession componentName="EntityOnboardingForm" />
   if (!mercoaSession.organization) return <LoadingSpinner />
 
-  const onboardingOptions =
-    type === 'payee'
-      ? mercoaSession.organization?.payeeOnboardingOptions
-      : mercoaSession.organization?.payorOnboardingOptions
-
-  if (admin && onboardingOptions) {
-    ;(Object.keys(onboardingOptions.individual) as Array<keyof Mercoa.IndividualOnboardingOptions>).forEach((key) => {
-      onboardingOptions.individual[key].show = true
-      onboardingOptions.individual[key].edit = true
-      onboardingOptions.individual[key].required = false
+  if (admin && finalOnboardingOptions) {
+    ;(Object.keys(finalOnboardingOptions.individual) as Array<keyof Mercoa.IndividualOnboardingOptions>).forEach(
+      (key) => {
+        finalOnboardingOptions.individual[key].show = true
+        finalOnboardingOptions.individual[key].edit = readOnly ? false : true
+        finalOnboardingOptions.individual[key].required = false
+      },
+    )
+    ;(Object.keys(finalOnboardingOptions.business) as Array<keyof Mercoa.BusinessOnboardingOptions>).forEach((key) => {
+      finalOnboardingOptions.business[key].show = true
+      finalOnboardingOptions.business[key].edit = readOnly ? false : true
+      finalOnboardingOptions.business[key].required = false
     })
-    ;(Object.keys(onboardingOptions.business) as Array<keyof Mercoa.BusinessOnboardingOptions>).forEach((key) => {
-      onboardingOptions.business[key].show = true
-      onboardingOptions.business[key].edit = true
-      onboardingOptions.business[key].required = false
-    })
-    onboardingOptions.paymentMethod = false
+    finalOnboardingOptions.paymentMethod = false
   }
 
   return (
@@ -2186,43 +2203,43 @@ export function EntityOnboardingForm({
       <div className="sm:mercoa-grid sm:mercoa-grid-cols-2 mercoa-gap-3">
         {accountType === 'individual' && (
           <>
-            {onboardingOptions?.individual.email.show && (
+            {finalOnboardingOptions?.individual.email.show && (
               <div className="mercoa-col-span-2">
                 <EmailBlock
                   register={register}
                   errors={errors}
-                  readOnly={!onboardingOptions.individual.email.edit}
-                  required={onboardingOptions.individual.email.required}
+                  readOnly={!finalOnboardingOptions.individual.email.edit}
+                  required={finalOnboardingOptions.individual.email.required}
                 />
               </div>
             )}
-            {onboardingOptions?.individual.name.show && (
+            {finalOnboardingOptions?.individual.name.show && (
               <div className="mercoa-col-span-2">
                 <NameBlock
                   register={register}
                   errors={errors}
-                  readOnly={!onboardingOptions.individual.name.edit}
-                  required={onboardingOptions.individual.name.required}
+                  readOnly={!finalOnboardingOptions.individual.name.edit}
+                  required={finalOnboardingOptions.individual.name.required}
                 />
               </div>
             )}
-            {onboardingOptions?.individual.phone.show && (
+            {finalOnboardingOptions?.individual.phone.show && (
               <PhoneBlock
                 control={control}
                 errors={errors}
-                readOnly={!onboardingOptions.individual.phone.edit}
-                required={onboardingOptions.individual.phone.required}
+                readOnly={!finalOnboardingOptions.individual.phone.edit}
+                required={finalOnboardingOptions.individual.phone.required}
               />
             )}
-            {onboardingOptions?.individual.dateOfBirth.show && (
+            {finalOnboardingOptions?.individual.dateOfBirth.show && (
               <DateOfBirthBlock
                 control={control}
                 errors={errors}
-                readOnly={!onboardingOptions.individual.dateOfBirth.edit}
-                required={onboardingOptions.individual.dateOfBirth.required}
+                readOnly={!finalOnboardingOptions.individual.dateOfBirth.edit}
+                required={finalOnboardingOptions.individual.dateOfBirth.required}
               />
             )}
-            {onboardingOptions?.individual.address.show && (
+            {finalOnboardingOptions?.individual.address.show && (
               <div className="mercoa-col-span-2">
                 <AddressBlock
                   register={register}
@@ -2230,26 +2247,31 @@ export function EntityOnboardingForm({
                   setValue={setValue}
                   trigger={trigger}
                   watch={watch}
-                  readOnly={!onboardingOptions.individual.address.edit}
-                  required={onboardingOptions.individual.address.required}
+                  readOnly={!finalOnboardingOptions.individual.address.edit}
+                  required={finalOnboardingOptions.individual.address.required}
                 />
               </div>
             )}
-            {onboardingOptions?.individual.ssn.show && (
+            {finalOnboardingOptions?.individual.ssn.show && (
               <SSNBlock
                 control={control}
                 errors={errors}
-                readOnly={!onboardingOptions.individual.ssn.edit}
-                required={onboardingOptions.individual.ssn.required}
+                readOnly={!finalOnboardingOptions.individual.ssn.edit}
+                required={finalOnboardingOptions.individual.ssn.required}
               />
             )}
-            {onboardingOptions?.individual.termsOfService.show && (
+            {finalOnboardingOptions?.individual.w9.edit && <UploadBlock type="W9" entity={entity} />}
+            {finalOnboardingOptions?.individual.tenNinetyNine.edit && <UploadBlock type="1099" entity={entity} />}
+            {finalOnboardingOptions?.individual.bankStatement.edit && (
+              <UploadBlock type="Bank Statement" entity={entity} />
+            )}
+            {finalOnboardingOptions?.individual.termsOfService.show && (
               <div className="mercoa-col-span-2">
                 <TosBlock
                   register={register}
                   errors={errors}
-                  readOnly={!onboardingOptions.individual.termsOfService.edit}
-                  required={onboardingOptions.individual.termsOfService.required}
+                  readOnly={!finalOnboardingOptions.individual.termsOfService.edit}
+                  required={finalOnboardingOptions.individual.termsOfService.required}
                 />
               </div>
             )}
@@ -2257,48 +2279,48 @@ export function EntityOnboardingForm({
         )}
         {accountType === 'business' && (
           <>
-            {onboardingOptions?.business.logo.edit && <UploadBlock type="Logo" entity={entity} />}
-            {onboardingOptions?.business.name.show && (
+            {finalOnboardingOptions?.business.logo.edit && <UploadBlock type="Logo" entity={entity} />}
+            {finalOnboardingOptions?.business.name.show && (
               <LegalBusinessNameBlock
                 register={register}
                 errors={errors}
-                readOnly={!onboardingOptions.business.name.edit}
-                required={onboardingOptions.business.name.required}
+                readOnly={!finalOnboardingOptions.business.name.edit}
+                required={finalOnboardingOptions.business.name.required}
               />
             )}
-            {onboardingOptions?.business.doingBusinessAs.show && (
+            {finalOnboardingOptions?.business.doingBusinessAs.show && (
               <DoingBusinessAsBlock
                 register={register}
                 errors={errors}
-                readOnly={!onboardingOptions.business.doingBusinessAs.edit}
-                required={onboardingOptions.business.doingBusinessAs.required}
+                readOnly={!finalOnboardingOptions.business.doingBusinessAs.edit}
+                required={finalOnboardingOptions.business.doingBusinessAs.required}
               />
             )}
-            {onboardingOptions?.business.email.show && (
+            {finalOnboardingOptions?.business.email.show && (
               <EmailBlock
                 register={register}
                 errors={errors}
-                readOnly={!onboardingOptions.business.email.edit}
-                required={onboardingOptions.business.email.required}
+                readOnly={!finalOnboardingOptions.business.email.edit}
+                required={finalOnboardingOptions.business.email.required}
               />
             )}
-            {onboardingOptions?.business.phone.show && (
+            {finalOnboardingOptions?.business.phone.show && (
               <PhoneBlock
                 control={control}
                 errors={errors}
-                readOnly={!onboardingOptions.business.phone.edit}
-                required={onboardingOptions.business.phone.required}
+                readOnly={!finalOnboardingOptions.business.phone.edit}
+                required={finalOnboardingOptions.business.phone.required}
               />
             )}
-            {onboardingOptions?.business.website.show && (
+            {finalOnboardingOptions?.business.website.show && (
               <WebsiteBlock
                 register={register}
                 errors={errors}
-                readOnly={!onboardingOptions.business.website.edit}
-                required={onboardingOptions.business.website.required}
+                readOnly={!finalOnboardingOptions.business.website.edit}
+                required={finalOnboardingOptions.business.website.required}
               />
             )}
-            {onboardingOptions?.business.address.show && (
+            {finalOnboardingOptions?.business.address.show && (
               <div className="mercoa-col-span-2">
                 <AddressBlock
                   label="Business Address"
@@ -2307,80 +2329,82 @@ export function EntityOnboardingForm({
                   setValue={setValue}
                   trigger={trigger}
                   watch={watch}
-                  readOnly={!onboardingOptions.business.address.edit}
-                  required={onboardingOptions.business.address.required}
+                  readOnly={!finalOnboardingOptions.business.address.edit}
+                  required={finalOnboardingOptions.business.address.required}
                 />
               </div>
             )}
-            {onboardingOptions?.business.type.show && (
+            {finalOnboardingOptions?.business.type.show && (
               <BusinessTypeBlock
                 register={register}
                 errors={errors}
-                readOnly={!onboardingOptions.business.type.edit}
-                required={onboardingOptions.business.type.required}
+                readOnly={!finalOnboardingOptions.business.type.edit}
+                required={finalOnboardingOptions.business.type.required}
               />
             )}
-            {onboardingOptions?.business.ein.show && (
+            {finalOnboardingOptions?.business.ein.show && (
               <EINBlock
                 control={control}
                 errors={errors}
-                readOnly={!onboardingOptions.business.ein.edit}
-                required={onboardingOptions.business.ein.required}
+                readOnly={!finalOnboardingOptions.business.ein.edit}
+                required={finalOnboardingOptions.business.ein.required}
               />
             )}
-            {onboardingOptions?.business.mcc.show && <MCCBlock watch={watch} setValue={setValue} />}
-            {onboardingOptions?.business.maxTransactionSize.show && (
+            {finalOnboardingOptions?.business.mcc.show && <MCCBlock watch={watch} setValue={setValue} />}
+            {finalOnboardingOptions?.business.maxTransactionSize.show && (
               <MaxTransactionSizeBlock
                 register={register}
                 errors={errors}
-                readOnly={!onboardingOptions.business.maxTransactionSize.edit}
-                required={onboardingOptions.business.maxTransactionSize.required}
+                readOnly={!finalOnboardingOptions.business.maxTransactionSize.edit}
+                required={finalOnboardingOptions.business.maxTransactionSize.required}
               />
             )}
-            {onboardingOptions?.business.averageMonthlyTransactionVolume.show && (
+            {finalOnboardingOptions?.business.averageMonthlyTransactionVolume.show && (
               <AverageMonthlyTransactionVolumeBlock
                 register={register}
                 errors={errors}
-                readOnly={!onboardingOptions.business.averageMonthlyTransactionVolume.edit}
-                required={onboardingOptions.business.averageMonthlyTransactionVolume.required}
+                readOnly={!finalOnboardingOptions.business.averageMonthlyTransactionVolume.edit}
+                required={finalOnboardingOptions.business.averageMonthlyTransactionVolume.required}
               />
             )}
-            {onboardingOptions?.business.averageTransactionSize.show && (
+            {finalOnboardingOptions?.business.averageTransactionSize.show && (
               <AverageTransactionSizeBlock
                 register={register}
                 errors={errors}
-                readOnly={!onboardingOptions.business.averageTransactionSize.edit}
-                required={onboardingOptions.business.averageTransactionSize.required}
+                readOnly={!finalOnboardingOptions.business.averageTransactionSize.edit}
+                required={finalOnboardingOptions.business.averageTransactionSize.required}
               />
             )}
-            {onboardingOptions?.business.formationDate.show && (
+            {finalOnboardingOptions?.business.formationDate.show && (
               <FormationDateBlock
                 control={control}
                 errors={errors}
-                readOnly={!onboardingOptions.business.formationDate.edit}
-                required={onboardingOptions.business.formationDate.required}
+                readOnly={!finalOnboardingOptions.business.formationDate.edit}
+                required={finalOnboardingOptions.business.formationDate.required}
               />
             )}
-            {onboardingOptions?.business.description.show && (
+            {finalOnboardingOptions?.business.description.show && (
               <div className="mercoa-col-span-2">
                 <DescriptionBlock
                   register={register}
                   errors={errors}
-                  readOnly={!onboardingOptions.business.description.edit}
-                  required={onboardingOptions.business.description.required}
+                  readOnly={!finalOnboardingOptions.business.description.edit}
+                  required={finalOnboardingOptions.business.description.required}
                 />
               </div>
             )}
-            {onboardingOptions?.business.w9.show && <UploadBlock type="W9" entity={entity} />}
-            {onboardingOptions?.business.tenNinetyNine.show && <UploadBlock type="1099" entity={entity} />}
-            {onboardingOptions?.business.bankStatement.show && <UploadBlock type="Bank Statement" entity={entity} />}
-            {onboardingOptions?.business.termsOfService.show && (
+            {finalOnboardingOptions?.business.w9.edit && <UploadBlock type="W9" entity={entity} />}
+            {finalOnboardingOptions?.business.tenNinetyNine.edit && <UploadBlock type="1099" entity={entity} />}
+            {finalOnboardingOptions?.business.bankStatement.edit && (
+              <UploadBlock type="Bank Statement" entity={entity} />
+            )}
+            {finalOnboardingOptions?.business.termsOfService.edit && (
               <div className="mercoa-col-span-2">
                 <TosBlock
                   register={register}
                   errors={errors}
-                  readOnly={!onboardingOptions.business.termsOfService.edit}
-                  required={onboardingOptions.business.termsOfService.required}
+                  readOnly={!finalOnboardingOptions.business.termsOfService.edit}
+                  required={finalOnboardingOptions.business.termsOfService.required}
                 />
               </div>
             )}
@@ -2468,7 +2492,7 @@ export function EntityOnboardingForm({
             Cancel
           </MercoaButton>
         )}
-        <MercoaButton isEmphasized>{onCancel ? 'Update' : admin ? 'Submit' : 'Next'}</MercoaButton>
+        {!readOnly && <MercoaButton isEmphasized>{onCancel ? 'Update' : admin ? 'Submit' : 'Next'}</MercoaButton>}
       </div>
     </form>
   )
@@ -2597,6 +2621,7 @@ export function EntityOnboarding({
   entityId,
   connectedEntityName,
   connectedEntityId,
+  onboardingOptions,
   type,
   onComplete,
 }: {
@@ -2604,6 +2629,7 @@ export function EntityOnboarding({
   connectedEntityName?: string
   connectedEntityId?: Mercoa.EntityId
   entityId?: Mercoa.EntityId
+  onboardingOptions?: Mercoa.OnboardingOptionsResponse
   onComplete?: () => void
 }) {
   const [entity, setEntity] = useState<Mercoa.EntityResponse>()
@@ -2612,6 +2638,12 @@ export function EntityOnboarding({
   const [formState, setFormState] = useState<'entity' | 'representatives' | 'payments' | 'complete'>('entity')
 
   const mercoaSession = useMercoaSession()
+
+  const onboardingOptionsFinal =
+    onboardingOptions ??
+    (type === 'payee'
+      ? mercoaSession?.organization?.payeeOnboardingOptions
+      : mercoaSession?.organization?.payorOnboardingOptions)
 
   useEffect(() => {
     if (!mercoaSession.client || !entityId) return
@@ -2625,9 +2657,9 @@ export function EntityOnboarding({
     if (!mercoaSession.client) return
     if (!entity) return
     let getReps = false
-    if (type === 'payee' && mercoaSession.organization.payeeOnboardingOptions?.business.representatives.show) {
+    if (type === 'payee' && onboardingOptionsFinal?.business.representatives.show) {
       getReps = true
-    } else if (type === 'payor' && mercoaSession.organization.payorOnboardingOptions?.business.representatives.show) {
+    } else if (type === 'payor' && onboardingOptionsFinal?.business.representatives.show) {
       getReps = true
     }
     if (getReps) {
@@ -2635,7 +2667,7 @@ export function EntityOnboarding({
         setRepresentatives(resp)
       })
     }
-  }, [mercoaSession.organization, mercoaSession.client, entity, type])
+  }, [mercoaSession.organization, mercoaSession.client, entity, type, onboardingOptionsFinal])
 
   useEffect(() => {
     if (!mercoaSession.organization) return
@@ -2650,13 +2682,13 @@ export function EntityOnboarding({
       }
       // If not, still transition if business representatives is not shown
       if (type === 'payee') {
-        if (!mercoaSession.organization.payeeOnboardingOptions?.business.representatives.show) {
+        if (!onboardingOptionsFinal?.business.representatives.show) {
           setFormState('payments')
           return
         }
       }
       if (type === 'payor') {
-        if (!mercoaSession.organization.payorOnboardingOptions?.business.representatives.show) {
+        if (!onboardingOptionsFinal?.business.representatives.show) {
           setFormState('payments')
           return
         }
@@ -2666,12 +2698,12 @@ export function EntityOnboarding({
     if (formState === 'payments') {
       // Skip payments, transition to TOS if paymentMethod not set in onboarding options
       if (type === 'payee') {
-        if (!mercoaSession.organization.payeeOnboardingOptions?.paymentMethod) {
+        if (!onboardingOptionsFinal?.paymentMethod) {
           setFormState('complete')
           return
         }
       } else if (type === 'payor') {
-        if (!mercoaSession.organization.payorOnboardingOptions?.paymentMethod) {
+        if (!onboardingOptionsFinal?.paymentMethod) {
           setFormState('complete')
           return
         }
@@ -2679,7 +2711,11 @@ export function EntityOnboarding({
     }
     if (formState === 'complete') {
       if (entity.acceptedTos) {
-        mercoaSession.client?.entity.initiateKyb(entity.id)
+        mercoaSession.client?.entity.initiateKyb(entity.id).catch((e) => {
+          toast.error(
+            'Failed to initiate KYB. Please make sure all required fields are filled out and at least one controller is provided.',
+          )
+        })
       }
       if (connectedEntityId) {
         mercoaSession.client?.entity.update(entity.id, {
@@ -2688,7 +2724,7 @@ export function EntityOnboarding({
       }
       onComplete?.()
     }
-  }, [mercoaSession.organization, mercoaSession.client, entity, entityData, formState, type])
+  }, [mercoaSession.organization, mercoaSession.client, entity, entityData, formState, type, onboardingOptionsFinal])
 
   if (!entity || !mercoaSession.organization || !mercoaSession.client)
     return (
@@ -2740,6 +2776,7 @@ export function EntityOnboarding({
         <EntityOnboardingForm
           entity={entity}
           type={type}
+          onboardingOptions={onboardingOptionsFinal}
           onOnboardingSubmit={(data) => {
             setEntityData(data)
             setFormState('representatives')
@@ -2776,7 +2813,10 @@ export function EntityOnboarding({
           </div>
         </div>{' '}
         <div className="mercoa-mt-10">
-          <Representatives showAdd showEdit />
+          <Representatives
+            showAdd={onboardingOptionsFinal?.business.representatives.edit}
+            showEdit={onboardingOptionsFinal?.business.representatives.edit}
+          />
         </div>
         <div className="mercoa-flex mercoa-justify-between">
           <MercoaButton
@@ -2793,7 +2833,10 @@ export function EntityOnboarding({
             className="mercoa-mt-10 mercoa-ml-5"
             isEmphasized
             size="md"
-            disabled={!representatives.find((e) => e.responsibilities.isController)}
+            disabled={
+              onboardingOptionsFinal?.business.representatives.required &&
+              !representatives.find((e) => e.responsibilities.isController)
+            }
             onClick={() => {
               setFormState('payments')
             }}

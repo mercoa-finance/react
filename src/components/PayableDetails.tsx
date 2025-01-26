@@ -374,7 +374,7 @@ export function PayableForm({
     .object({
       id: yup.string().nullable(),
       status: yup.string(),
-      amount: yup.number().transform(removeThousands).positive().typeError('Please enter a valid number'),
+      amount: yup.number().transform(removeThousands).typeError('Please enter a valid number'),
       invoiceNumber: yup.string(),
       description: yup.string(),
       processedAt: yup.date().nullable(),
@@ -427,8 +427,8 @@ export function PayableForm({
       fees: yup.mixed().nullable(),
       failureType: yup.string().nullable(),
       vendorCreditIds: yup.array().nullable(),
-      taxAmount: yup.number().transform(removeThousands).positive().nullable(),
-      shippingAmount: yup.number().transform(removeThousands).positive().nullable(),
+      taxAmount: yup.number().transform(removeThousands).nullable(),
+      shippingAmount: yup.number().transform(removeThousands).nullable(),
       ocrJobId: yup.string().nullable(),
       createdAt: yup.date().nullable(),
       updatedAt: yup.date().nullable(),
@@ -3059,6 +3059,7 @@ export function PayableOverview({
             </label>
             <select
               {...register('currency')}
+              disabled={readOnly || notDraft}
               className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
             >
               {finalSupportedCurrencies.map((option: Mercoa.CurrencyCode, index: number) => (
@@ -3432,6 +3433,11 @@ export function PayableSelectPaymentMethod({
 
   // if selectedType changes, set the payment method id to the first payment method of that type
   function setMethodOnTypeChange(selectedType: Mercoa.PaymentMethodType | string) {
+    const backupDisbursement = mercoaSession.organization?.paymentMethods?.backupDisbursements.find((e) => {
+      if (!e.active) return false
+      if (e.type === 'custom') return e.name === selectedType
+      return e.type === selectedType
+    })
     if (isDestination) {
       setValue('paymentDestinationOptions', undefined)
     }
@@ -3440,6 +3446,12 @@ export function PayableSelectPaymentMethod({
         (paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount,
       ) as Mercoa.PaymentMethodResponse.BankAccount
       setValue(sourceOrDestination, account?.id)
+      if (isDestination) {
+        setValue('paymentDestinationOptions', {
+          type: 'bankAccount',
+          delivery: (backupDisbursement as Mercoa.PaymentRailResponse.BankAccount)?.defaultDeliveryMethod,
+        })
+      }
     } else if (selectedType === Mercoa.PaymentMethodType.Card) {
       setValue(
         sourceOrDestination,
@@ -3450,6 +3462,13 @@ export function PayableSelectPaymentMethod({
         sourceOrDestination,
         paymentMethods.find((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)?.id,
       )
+      if (isDestination) {
+        setValue('paymentDestinationOptions', {
+          type: 'check',
+          delivery: (backupDisbursement as Mercoa.PaymentRailResponse.Check)?.defaultDeliveryMethod,
+          printDescription: !!(backupDisbursement as Mercoa.PaymentRailResponse.Check)?.printDescription,
+        })
+      }
     } else if (selectedType === Mercoa.PaymentMethodType.Utility) {
       setValue(
         sourceOrDestination,
@@ -3560,6 +3579,11 @@ export function PayableSelectPaymentMethod({
   )
 
   if (!mercoaSession.client) return <NoSession componentName="SelectPaymentMethod" />
+  const backupDisbursement = mercoaSession.organization?.paymentMethods?.backupDisbursements.find((e) => {
+    if (!e.active) return false
+    if (e.type === 'custom') return e.name === selectedType
+    return e.type === selectedType
+  })
   return (
     <div>
       {!readOnly && (
@@ -3594,61 +3618,44 @@ export function PayableSelectPaymentMethod({
                 </div>
               ))}
           </div>
-          {isDestination &&
-            !disableCreation &&
-            !readOnly &&
-            vendorId &&
-            mercoaSession.organization?.paymentMethods?.backupDisbursements.some((e) => {
-              if (!e.active) return false
-              if (e.type === 'custom') return e.name === selectedType
-              return e.type === selectedType
-            }) && (
-              <>
-                <div className="mercoa-col-span-full mercoa-mt-1">
-                  <PayablesInlineForm
-                    form={<AddBankAccountForm prefix="newBankAccount." />}
-                    name="Bank Account"
-                    addNewButton={<BankAccount />}
-                    saveAsStatus="CREATE_BANK_ACCOUNT"
-                  />
-                </div>
-                <div className="mercoa-mt-2" />
-                <MercoaCombobox
-                  displaySelectedAs="pill"
-                  label="Payment Speed"
-                  showAllOptions
-                  options={[
-                    {
-                      value: {
-                        key: 'ACH_SAME_DAY',
-                        value: 'Same-Day ACH (2 Days)',
-                      },
-                      disabled: false,
-                    },
-                    {
-                      value: {
-                        key: 'ACH_STANDARD',
-                        value: 'Standard ACH (3-5 Days)',
-                      },
-                      disabled: false,
-                    },
-                  ]}
-                  onChange={(selected) => {
-                    setValue('paymentDestinationOptions', {
-                      type: 'bankAccount',
-                      delivery: selected.key,
-                    })
-                  }}
-                  displayIndex="value"
-                  value={() => {
-                    return (destinationOptions as Mercoa.PaymentDestinationOptions.BankAccount)?.delivery ===
-                      'ACH_STANDARD'
-                      ? { key: 'ACH_STANDARD', value: 'Standard ACH (3-5 Days)' }
-                      : { key: 'ACH_SAME_DAY', value: 'Same-Day ACH (2 Days)' }
-                  }}
+          {isDestination && !disableCreation && !readOnly && vendorId && backupDisbursement && (
+            <>
+              <div className="mercoa-col-span-full mercoa-mt-1">
+                <PayablesInlineForm
+                  form={<AddBankAccountForm prefix="newBankAccount." />}
+                  name="Bank Account"
+                  addNewButton={<BankAccount />}
+                  saveAsStatus="CREATE_BANK_ACCOUNT"
                 />
-              </>
-            )}
+              </div>
+              <div className="mercoa-mt-2" />
+              <MercoaCombobox
+                displaySelectedAs="pill"
+                label="Payment Speed"
+                showAllOptions
+                options={(backupDisbursement as Mercoa.PaymentRailResponse.BankAccount)?.availableDeliveryMethods.map(
+                  (e) => ({
+                    value: {
+                      key: e,
+                      value: BankSpeedEnumToLabel(e),
+                    },
+                    disabled: false,
+                  }),
+                )}
+                onChange={(selected) => {
+                  setValue('paymentDestinationOptions', {
+                    type: 'bankAccount',
+                    delivery: selected.key,
+                  })
+                }}
+                displayIndex="value"
+                value={() => {
+                  const speed = (destinationOptions as Mercoa.PaymentDestinationOptions.BankAccount)?.delivery
+                  return { key: speed, value: BankSpeedEnumToLabel(speed) }
+                }}
+              />
+            </>
+          )}
         </>
       )}
       {selectedType === Mercoa.PaymentMethodType.Check && (
@@ -3671,58 +3678,42 @@ export function PayableSelectPaymentMethod({
                 </div>
               ))}
           </div>
-          {isDestination &&
-            !disableCreation &&
-            !readOnly &&
-            vendorId &&
-            mercoaSession.organization?.paymentMethods?.backupDisbursements.some((e) => {
-              if (!e.active) return false
-              if (e.type === 'custom') return e.name === selectedType
-              return e.type === selectedType
-            }) && (
-              <>
-                <div className="mercoa-col-span-full mercoa-mt-1">
-                  <PayablesInlineForm
-                    form={<AddCheckForm prefix="newCheck." />}
-                    name="Check Address"
-                    addNewButton={<Check />}
-                    saveAsStatus="CREATE_CHECK"
-                  />
-                </div>
-                <div className="mercoa-mt-2" />
-                <MercoaCombobox
-                  label="Check Delivery Method"
-                  showAllOptions
-                  displaySelectedAs="pill"
-                  options={[
-                    {
-                      value: {
-                        key: 'MAIL',
-                        value: 'Mail it for me',
-                      },
-                      disabled: false,
-                    },
-                    {
-                      value: {
-                        key: 'PRINT',
-                        value: 'Print it myself',
-                      },
-                      disabled: false,
-                    },
-                  ]}
-                  onChange={(selected) => {
-                    setValue('paymentDestinationOptions.type', 'check')
-                    setValue('paymentDestinationOptions.delivery', selected.key)
-                  }}
-                  displayIndex="value"
-                  value={
-                    (destinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery === 'PRINT'
-                      ? { key: 'PRINT', value: 'Print it myself' }
-                      : { key: 'MAIL', value: 'Mail it for me' }
-                  }
+          {isDestination && !disableCreation && !readOnly && vendorId && backupDisbursement && (
+            <>
+              <div className="mercoa-col-span-full mercoa-mt-1">
+                <PayablesInlineForm
+                  form={<AddCheckForm prefix="newCheck." />}
+                  name="Check Address"
+                  addNewButton={<Check />}
+                  saveAsStatus="CREATE_CHECK"
                 />
-              </>
-            )}
+              </div>
+              <div className="mercoa-mt-2" />
+              <MercoaCombobox
+                label="Check Delivery Method"
+                showAllOptions
+                displaySelectedAs="pill"
+                options={(backupDisbursement as Mercoa.PaymentRailResponse.Check)?.availableDeliveryMethods.map(
+                  (e) => ({
+                    value: {
+                      key: e,
+                      value: CheckSpeedEnumToLabel(e),
+                    },
+                    disabled: false,
+                  }),
+                )}
+                onChange={(selected) => {
+                  setValue('paymentDestinationOptions.type', 'check')
+                  setValue('paymentDestinationOptions.delivery', selected.key)
+                }}
+                displayIndex="value"
+                value={() => {
+                  const speed = (destinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery
+                  return { key: speed, value: CheckSpeedEnumToLabel(speed) }
+                }}
+              />
+            </>
+          )}
         </>
       )}
       {selectedType === Mercoa.PaymentMethodType.Card && (
@@ -3820,34 +3811,26 @@ mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-rin
                 </div>
               ))}
           </div>
-          {isDestination &&
-            !disableCreation &&
-            !readOnly &&
-            vendorId &&
-            mercoaSession.organization?.paymentMethods?.backupDisbursements.some((e) => {
-              if (!e.active) return false
-              if (e.type === 'custom') return e.name === selectedType
-              return e.type === selectedType
-            }) && (
-              <>
-                <div className="mercoa-col-span-full mercoa-mt-1">
-                  <PayablesInlineForm
-                    form={
-                      <AddCustomPaymentMethodForm
-                        schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
-                      />
-                    }
-                    name={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)?.name ?? 'Other'}
-                    addNewButton={
-                      <CustomPaymentMethod
-                        schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
-                      />
-                    }
-                    saveAsStatus="CREATE_CUSTOM"
-                  />
-                </div>
-              </>
-            )}
+          {isDestination && !disableCreation && !readOnly && vendorId && backupDisbursement && (
+            <>
+              <div className="mercoa-col-span-full mercoa-mt-1">
+                <PayablesInlineForm
+                  form={
+                    <AddCustomPaymentMethodForm
+                      schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
+                    />
+                  }
+                  name={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)?.name ?? 'Other'}
+                  addNewButton={
+                    <CustomPaymentMethod
+                      schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
+                    />
+                  }
+                  saveAsStatus="CREATE_CUSTOM"
+                />
+              </div>
+            </>
+          )}
         </>
       )}
       {selectedType === Mercoa.PaymentMethodType.OffPlatform && (
@@ -5295,4 +5278,17 @@ export function PayableRecurringSchedule() {
       </div>
     </div>
   )
+}
+
+function BankSpeedEnumToLabel(speed?: Mercoa.BankDeliveryMethod) {
+  if (speed === Mercoa.BankDeliveryMethod.AchAccelerated) return 'Accelerated ACH (Same Day)'
+  if (speed === Mercoa.BankDeliveryMethod.AchSameDay) return 'Fast ACH (2 Days)'
+  if (speed === Mercoa.BankDeliveryMethod.AchStandard) return 'Standard ACH (3-5 Days)'
+  return 'Standard ACH (3-5 Days)'
+}
+
+function CheckSpeedEnumToLabel(speed?: Mercoa.CheckDeliveryMethod) {
+  if (speed === Mercoa.CheckDeliveryMethod.Print) return 'Print it myself'
+  if (speed === Mercoa.CheckDeliveryMethod.Mail) return 'Mail it for me'
+  return 'Mail it for me'
 }

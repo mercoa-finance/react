@@ -13,6 +13,25 @@ import {
   useMercoaSession,
 } from './index'
 
+const moovCssVariables: { [key: string]: string } = {
+  '--moov-color-background': '#FFFFFF',
+  '--moov-color-background-secondary': '#F5F6F9',
+  '--moov-color-background-tertiary': '#E7E7F1',
+  '--moov-color-mercoa-primary': '#4A5CF5',
+  '--moov-color-secondary': '#3D50EC',
+  '--moov-color-tertiary': '#B9BBC3',
+  '--moov-color-info': '#94CBFF',
+  '--moov-color-warn': '#EB5757',
+  '--moov-color-danger': '#EA0F43',
+  '--moov-color-success': '#62E599',
+  '--moov-color-low-contrast': '#5B5D6A',
+  '--moov-color-medium-contrast': '#494A57',
+  '--moov-color-high-contrast': '#000000',
+  '--moov-color-graphic-1': '#3D50EC',
+  '--moov-color-graphic-2': '#3D50EC',
+  '--moov-color-graphic-3': '#3D50EC',
+}
+
 export function Cards({
   children,
   onSelect,
@@ -96,50 +115,82 @@ export function AddCard({
   onSubmit,
   title,
   actions,
+  entityId,
 }: {
   onSubmit: (data: Mercoa.PaymentMethodResponse.Card) => void
   title?: ReactNode
   actions?: ReactNode
+  entityId?: Mercoa.EntityId
 }) {
   const mercoaSession = useMercoaSession()
 
-  // useEffect(() => {
-  //   if (!mercoaSession.entityId || !mercoaSession.moovToken || !mercoaSession.moovAccountId) return
+  const [moovScriptLoaded, setMoovScriptLoaded] = useState(false)
+  const [moovToken, setMoovToken] = useState<Mercoa.CardLinkTokenResponse | null>(null)
 
-  //   const root = document.documentElement
-  //   for (let variable in moovCssVariables) root.style.setProperty(variable, moovCssVariables[variable])
+  const entityIdFinal = entityId ?? mercoaSession.entityId
 
-  //   const cardInput = document.querySelector('moov-card-link')
-  //   if (!cardInput) return
+  const cardInput = document.querySelector("[id^='moov-card-link']") as HTMLFormElement
 
-  //   cardInput.setAttribute('oauth-token', mercoaSession.moovToken)
-  //   cardInput.setAttribute('account-id', mercoaSession.moovAccountId)
+  useEffect(() => {
+    if (window && document) {
+      if (document.getElementById('moov-script')) {
+        setMoovScriptLoaded(true)
+        return
+      }
+      const root = document.documentElement
+      for (let variable in moovCssVariables) root.style.setProperty(variable, moovCssVariables[variable])
+      const script = document.createElement('script')
+      const body = document.getElementsByTagName('body')[0]
+      script.src = 'https://js.moov.io/v1'
+      script.id = 'moov-script'
+      body.appendChild(script)
+      script.addEventListener('load', () => {
+        setMoovScriptLoaded(true)
+      })
+    }
+  }, [])
 
-  //   const successCallback = async (card: {
-  //     cardType: Mercoa.CardType
-  //     brand: string
-  //     lastFourCardNumber: string
-  //     expiration: { month: string; year: string }
-  //     cardID: string
-  //   }) => {
-  //     const resp = await mercoaSession.client?.entity.paymentMethod.create(mercoaSession?.entityId ?? '', {
-  //       type: 'card',
-  //       cardType: card.cardType,
-  //       cardBrand: card.brand.replace(' ', '') as Mercoa.CardBrand,
-  //       lastFour: card.lastFourCardNumber,
-  //       expMonth: card.expiration.month,
-  //       expYear: card.expiration.year,
-  //       token: card.cardID,
-  //     })
-  //     if (!resp) {
-  //       throw new Error('Failed to create payment method')
-  //     }
-  //     onSubmit(resp as Mercoa.PaymentMethodResponse.Card)
-  //   }
+  useEffect(() => {
+    if (!entityIdFinal || !mercoaSession.client) return
+    mercoaSession.client?.entity.paymentMethod.cardLinkToken(entityIdFinal).then((resp) => {
+      setMoovToken(resp)
+    })
+  }, [mercoaSession, entityIdFinal])
 
-  //   // @ts-ignore
-  //   cardInput.onSuccess = successCallback
-  // }, [mercoaSession.moovToken, mercoaSession.moovAccountId, mercoaSession.entityId])
+  useEffect(() => {
+    if (!entityIdFinal || !moovToken || !moovScriptLoaded || !cardInput) return
+
+    const { token, accountId } = moovToken
+
+    cardInput.setAttribute('oauth-token', token)
+    cardInput.setAttribute('account-id', accountId)
+
+    const successCallback = async (card: {
+      cardType: Mercoa.CardType
+      brand: string
+      lastFourCardNumber: string
+      expiration: { month: string; year: string }
+      cardID: string
+    }) => {
+      const resp = await mercoaSession.client?.entity.paymentMethod.create(entityIdFinal, {
+        type: 'card',
+        cardType: card.cardType,
+        cardBrand: card.brand.replace(' ', '') as Mercoa.CardBrand,
+        lastFour: card.lastFourCardNumber,
+        expMonth: card.expiration.month,
+        expYear: card.expiration.year,
+        token: card.cardID,
+      })
+      if (!resp) {
+        throw new Error('Failed to create payment method')
+      }
+      onSubmit(resp as Mercoa.PaymentMethodResponse.Card)
+      mercoaSession.refresh()
+    }
+
+    // @ts-ignore
+    cardInput.onSuccess = successCallback
+  }, [entityIdFinal, moovToken, moovScriptLoaded, cardInput])
 
   if (!mercoaSession.client) return <NoSession componentName="AddCreditCard" />
   return (
@@ -149,19 +200,21 @@ export function AddCard({
           Add Card
         </h3>
       )}
-      <div className="mercoa-flex mercoa-items-center mercoa-justify-center">
-        {/* @ts-ignore */}
-        <MercoaButton
-          isEmphasized
-          onClick={() => {
-            //const cardInput = document.querySelector('moov-card-link')
-            // @ts-ignore
-            //cardInput.submit()
-          }}
-        >
-          Add
-        </MercoaButton>
-      </div>
+      {moovScriptLoaded && (
+        <div className="mercoa-flex mercoa-items-center mercoa-justify-center mercoa-space-x-2">
+          {/* @ts-ignore */}
+          <moov-card-link />
+          <MercoaButton
+            isEmphasized
+            onClick={() => {
+              const cardInput = document.querySelector("[id^='moov-card-link']") as HTMLFormElement
+              cardInput.submit()
+            }}
+          >
+            Add
+          </MercoaButton>
+        </div>
+      )}
       {actions && <div className="mercoa-flex mercoa-justify-between">{actions}</div>}
     </div>
   )
@@ -248,4 +301,39 @@ export function Card({
       />
     )
   }
+}
+
+export function AddCardButton({
+  entityId,
+  onSelect,
+  card,
+}: {
+  entityId?: Mercoa.EntityId
+  onSelect?: Function
+  card?: Mercoa.PaymentMethodResponse.Card
+}) {
+  const [showDialog, setShowDialog] = useState(false)
+
+  const onClose = (account?: Mercoa.PaymentMethodResponse) => {
+    setShowDialog(false)
+    if (onSelect && account) onSelect(account)
+  }
+
+  return (
+    <div>
+      <AddDialog
+        show={showDialog}
+        onClose={onClose}
+        component={
+          <AddCard
+            onSubmit={(data) => {
+              onClose(data)
+            }}
+            entityId={entityId}
+          />
+        }
+      />
+      <Card onSelect={() => setShowDialog(true)} />
+    </div>
+  )
 }

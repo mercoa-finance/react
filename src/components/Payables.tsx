@@ -2250,6 +2250,7 @@ export function StatusDropdown({
       }
     }
   }, [selectedStatuses])
+
   return (
     <>
       <MercoaCombobox

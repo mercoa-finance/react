@@ -1,5 +1,5 @@
 import { Dialog, Transition } from '@headlessui/react'
-import { EnvelopeIcon, PlusCircleIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { EnvelopeIcon, PencilSquareIcon, PlusCircleIcon, TrashIcon } from '@heroicons/react/24/outline'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import { Fragment, useEffect, useState } from 'react'
@@ -207,7 +207,9 @@ export function EntityUserNotificationTable({
 
 export function EntityUsersTable({
   openNotificationPreferences,
+  readOnly,
 }: {
+  readOnly?: boolean
   openNotificationPreferences?: ({
     entityId,
     userId,
@@ -217,9 +219,6 @@ export function EntityUsersTable({
   }) => void
 }) {
   const [users, setUsers] = useState<Mercoa.EntityUserResponse[]>()
-  const [userNotificationPreferences, setUserNotificationPreferences] = useState<{
-    [key: Mercoa.EntityUserId]: Mercoa.UserNotificationPolicyResponse[]
-  }>({})
   const [roles, setRoles] = useState<string[]>([])
   const [selectedUser, setSelectedUser] = useState<Mercoa.EntityUserResponse>()
   const mercoaSession = useMercoaSession()
@@ -336,9 +335,8 @@ export function EntityUsersTable({
         >
           {users?.map((user, i) => (
             <li
-              onClick={() => setSelectedUser(user)}
               key={user?.id ?? i}
-              className="mercoa-relative mercoa-flex mercoa-gap-x-6 mercoa-px-4 mercoa-py-5 hover:mercoa-bg-gray-50 sm:mercoa-px-6 mercoa-cursor-pointer "
+              className="mercoa-relative mercoa-flex mercoa-gap-x-6 mercoa-px-4 mercoa-py-5 hover:mercoa-bg-gray-50 sm:mercoa-px-6 "
             >
               <div className="mercoa-flex mercoa-gap-x-4 mercoa-w-full">
                 <div className="mercoa-flex mercoa-justify-left">
@@ -350,17 +348,18 @@ export function EntityUsersTable({
                   </span>
                 </div>
                 <div>
-                  <p className="mercoa-text-sm mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-900">
-                    <a>{user.name}</a>
+                  <p className="mercoa-text-sm mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-900 mercoa-select-all">
+                    {user.name}
                   </p>
-                  <p className="mercoa-mt-1 mercoa-flex mercoa-text-xs mercoa-leading-5 mercoa-text-gray-600">
+                  <p className="mercoa-mt-1 mercoa-flex mercoa-text-xs mercoa-leading-5 mercoa-text-gray-600 mercoa-select-all">
                     {user.email}
                   </p>
-                  <p className="mercoa-mt-1 mercoa-flex mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
+                  <p className="mercoa-mt-1 mercoa-flex mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500 mercoa-select-all">
                     {user.id}
                   </p>
                 </div>
-                <div className="mercoa-flex mercoa-items-center mercoa-gap-x-2 grow">
+                <div className="mercoa-flex mercoa-items-start mercoa-gap-y-1 mercoa-grow mercoa-flex-col">
+                  <p className="mercoa-text-sm mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-900">Roles:</p>
                   {user?.roles?.map((role) => {
                     return (
                       <span
@@ -372,108 +371,77 @@ export function EntityUsersTable({
                     )
                   })}
                 </div>
-                <div
-                  className="mercoa-flex mercoa-items-center mercoa-rounded-mercoa mercoa-p-2 hover:mercoa-bg-gray-200"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                    if (openNotificationPreferences && mercoaSession.entity?.id && user.id) {
-                      openNotificationPreferences({
-                        entityId: mercoaSession.entity.id,
-                        userId: user.id,
-                      })
-                    }
-                  }}
-                >
-                  {userNotificationPreferences[user.id] && (
-                    <div className="mercoa-flex mercoa-flex-col mercoa-items-center mercoa-gap-y-2">
-                      {userNotificationPreferences[user.id]?.every((e) => e.disabled) ? (
-                        <span className="mercoa-inline-flex mercoa-items-center mercoa-px-2.5 mercoa-py-0.5 mercoa-rounded-full mercoa-text-xs mercoa-font-medium mercoa-bg-red-100 mercoa-text-red-800">
-                          Notifications Disabled
-                        </span>
-                      ) : (
-                        <span className="mercoa-inline-flex mercoa-items-center mercoa-px-2.5 mercoa-py-0.5 mercoa-rounded-full mercoa-text-xs mercoa-font-medium mercoa-bg-green-100 mercoa-text-green-800">
-                          Notifications Enabled
-                        </span>
-                      )}
-                      {userNotificationPreferences[user.id]?.every((e) => e.digest) && (
-                        <span className="mercoa-inline-flex mercoa-items-center mercoa-px-2.5 mercoa-py-0.5 mercoa-rounded-full mercoa-text-xs mercoa-font-medium mercoa-bg-blue-100 mercoa-text-blue-800">
-                          Daily Digest Enabled
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="mercoa-flex mercoa-gap-3">
-                  <button
-                    onMouseOver={(e) => {
-                      if (!mercoaSession.entity?.id || !user.id) return
-                      mercoaSession.client?.entity.user.notificationPolicy
-                        .getAll(mercoaSession.entity?.id, user.id)
-                        .then((resp) => {
-                          if (resp) {
-                            setUserNotificationPreferences((e) => ({
-                              ...e,
-                              [user.id]: resp,
-                            }))
-                          }
-                        })
-                    }}
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      if (openNotificationPreferences && mercoaSession.entity?.id && user.id) {
-                        openNotificationPreferences({
-                          entityId: mercoaSession.entity.id,
-                          userId: user.id,
-                        })
-                      }
-                    }}
-                  >
-                    <EnvelopeIcon className="mercoa-p-2 mercoa-rounded-xl mercoa-h-10 mercoa-w-10 mercoa-text-gray-400 hover:mercoa-text-gray-500 hover:mercoa-bg-gray-200" />
-                  </button>
+                {!readOnly && (
+                  <div className="mercoa-flex mercoa-gap-3">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        setSelectedUser(user)
+                      }}
+                    >
+                      <PencilSquareIcon className="mercoa-p-2 mercoa-rounded-xl mercoa-h-10 mercoa-w-10 mercoa-text-gray-400 hover:mercoa-text-gray-500 hover:mercoa-bg-gray-200" />
+                    </button>
 
-                  <button
-                    onClick={async (e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                      if (confirm('Are you sure you want to delete this user?')) {
-                        if (!mercoaSession.entity?.id) return
-                        if (user?.id && user?.id != 'new') {
-                          try {
-                            await mercoaSession.client?.entity.user.delete(mercoaSession.entity.id, user.id)
-                          } catch (e: any) {
-                            toast.error(e.body)
-                            return
-                          }
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        if (openNotificationPreferences && mercoaSession.entity?.id && user.id) {
+                          openNotificationPreferences({
+                            entityId: mercoaSession.entity.id,
+                            userId: user.id,
+                          })
                         }
-                        mercoaSession.refresh()
-                      }
-                    }}
-                  >
-                    <TrashIcon className="mercoa-p-2 mercoa-rounded-xl mercoa-h-10 mercoa-w-10 mercoa-text-gray-400 hover:mercoa-text-gray-500 hover:mercoa-bg-gray-200" />
-                  </button>
-                </div>
+                      }}
+                    >
+                      <EnvelopeIcon className="mercoa-p-2 mercoa-rounded-xl mercoa-h-10 mercoa-w-10 mercoa-text-gray-400 hover:mercoa-text-gray-500 hover:mercoa-bg-gray-200" />
+                    </button>
+
+                    <button
+                      onClick={async (e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        if (confirm('Are you sure you want to delete this user?')) {
+                          if (!mercoaSession.entity?.id) return
+                          if (user?.id && user?.id != 'new') {
+                            try {
+                              await mercoaSession.client?.entity.user.delete(mercoaSession.entity.id, user.id)
+                            } catch (e: any) {
+                              toast.error(e.body)
+                              return
+                            }
+                          }
+                          mercoaSession.refresh()
+                        }
+                      }}
+                    >
+                      <TrashIcon className="mercoa-p-2 mercoa-rounded-xl mercoa-h-10 mercoa-w-10 mercoa-text-gray-400 hover:mercoa-text-gray-500 hover:mercoa-bg-gray-200" />
+                    </button>
+                  </div>
+                )}
               </div>
             </li>
           ))}
-          <li
-            className="mercoa-relative mercoa-flex mercoa-gap-x-6 mercoa-px-4 mercoa-py-5 hover:mercoa-bg-gray-50 sm:mercoa-px-6 mercoa-cursor-pointer mercoa-items-center mercoa-justify-center mercoa-align-center"
-            onClick={() => {
-              setSelectedUser({
-                id: '',
-                roles: [''],
-                email: '',
-                name: '',
-                foreignId: '',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              })
-            }}
-          >
-            <PlusCircleIcon className="mercoa-h-6 mercoa-w-6 mercoa-text-gray-400" />
-            <div className="mercoa-text-sm mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-900">Add User</div>
-          </li>
+          {!readOnly && (
+            <li
+              className="mercoa-relative mercoa-flex mercoa-gap-x-6 mercoa-px-4 mercoa-py-5 hover:mercoa-bg-gray-50 sm:mercoa-px-6 mercoa-cursor-pointer mercoa-items-center mercoa-justify-center mercoa-align-center"
+              onClick={() => {
+                setSelectedUser({
+                  id: '',
+                  roles: [''],
+                  email: '',
+                  name: '',
+                  foreignId: '',
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                })
+              }}
+            >
+              <PlusCircleIcon className="mercoa-h-6 mercoa-w-6 mercoa-text-gray-400" />
+              <div className="mercoa-text-sm mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-900">Add User</div>
+            </li>
+          )}
         </ul>
       </div>
       <Transition.Root show={!!selectedUser} as={Fragment}>

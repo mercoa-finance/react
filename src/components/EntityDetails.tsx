@@ -237,10 +237,12 @@ export function EntityEmailLogs({
 
 export function EntitySelector({
   onSelect,
+  defaultEntityId,
   allowClear,
   direction,
 }: {
   onSelect?: (entity?: Mercoa.EntityResponse) => void
+  defaultEntityId?: Mercoa.EntityId
   allowClear?: boolean
   direction?: 'down' | 'up'
 }) {
@@ -271,6 +273,14 @@ export function EntitySelector({
     })
   }
 
+  let initialValue = mercoaSession.entity ?? selectedEntity
+  if (!initialValue && defaultEntityId) {
+    initialValue = mercoaSession.entities?.find((e) => e.id === defaultEntityId)
+  }
+  if (!initialValue && allowClear) {
+    initialValue = { id: 'clear', name: 'All', email: '' } as Mercoa.EntityResponse
+  }
+
   return (
     <MercoaCombobox
       direction={direction}
@@ -285,9 +295,7 @@ export function EntitySelector({
         if (onSelect) setSelectedEntity(e)
         else mercoaSession.setEntity(e)
       }}
-      value={
-        mercoaSession.entity ?? selectedEntity ?? (allowClear ? { id: 'clear', name: 'All', email: '' } : undefined)
-      }
+      value={initialValue}
       displayIndex="name"
       secondaryDisplayIndex="email"
       displaySelectedAs="pill"

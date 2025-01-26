@@ -135,11 +135,8 @@ export function InvoicePreviewPdf({ invoice, hideQR }: { invoice: Mercoa.Invoice
 }
 
 export function InvoicePreviewPaymentPage({ invoice }: { invoice: Mercoa.InvoiceResponse }) {
-  const [selectedPaymentType, setSelectedPaymentType] = useState<Mercoa.PaymentMethodType | string>(
-    Mercoa.PaymentMethodType.BankAccount,
-  )
-
   const mercoaSession = useMercoaSession()
+
   const supportEmail = mercoaSession.organization?.supportEmail ?? 'support@mercoa.com'
   const totalDisplay = accounting.formatMoney(invoice.amount ?? '', currencyCodeToSymbol(invoice.currency))
 
@@ -148,9 +145,7 @@ export function InvoicePreviewPaymentPage({ invoice }: { invoice: Mercoa.Invoice
       invoice={invoice}
       supportEmail={supportEmail}
       totalDisplay={totalDisplay}
-      selectedPaymentType={selectedPaymentType}
       updateInvoice={() => {}}
-      setSelectedPaymentType={setSelectedPaymentType}
     />
   )
 }

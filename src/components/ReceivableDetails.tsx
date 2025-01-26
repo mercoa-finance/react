@@ -1,5 +1,6 @@
 import { Bar, Container, Section } from '@column-resizer/react'
-import { DocumentDuplicateIcon, EnvelopeIcon, GlobeAltIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import { Menu, Transition } from '@headlessui/react'
+import { EllipsisVerticalIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Mercoa } from '@mercoa/javascript'
 import dayjs from 'dayjs'
@@ -438,8 +439,7 @@ export function ReceivableForm({
 
   const payerId = watch('payerId')
   const currency = watch('currency')
-  const paymentSourceType = watch('paymentSourceType')
-  const paymentDestinationType = watch('paymentDestinationType')
+  const notDraft = invoice?.status && invoice?.status !== Mercoa.InvoiceStatus.Draft
 
   function refreshVendorPaymentMethods() {
     if (!mercoaSession.entityId) return
@@ -615,6 +615,7 @@ export function ReceivableForm({
               }}
               counterparty={selectedPayer}
               disableCreation={disableCustomerCreation}
+              readOnly={notDraft}
             />
           </div>
           {errors.payerId?.message && (
@@ -633,6 +634,7 @@ export function ReceivableForm({
             className="sm:mercoa-col-span-1"
             control={control}
             errors={errors}
+            readOnly={notDraft}
           />
 
           {/*  DUE DATE */}
@@ -644,6 +646,7 @@ export function ReceivableForm({
             className="sm:mercoa-col-span-1"
             control={control}
             errors={errors}
+            readOnly={notDraft}
           />
 
           {/*  INVOICE NUMBER */}
@@ -655,6 +658,7 @@ export function ReceivableForm({
             label="Invoice #"
             type="text"
             className="sm:mercoa-col-span-1"
+            readOnly={notDraft}
           />
         </div>
 
@@ -676,6 +680,7 @@ export function ReceivableForm({
                         errors={errors}
                         register={register}
                         placeholder="Item Name"
+                        readOnly={notDraft}
                       />
                     </div>
                     <div>
@@ -686,6 +691,7 @@ export function ReceivableForm({
                         register={register}
                         placeholder="Quantity"
                         type="number"
+                        readOnly={notDraft}
                       />
                     </div>
                     <div>
@@ -701,6 +707,7 @@ export function ReceivableForm({
                             {currencyCodeToSymbol(currency)}
                           </span>
                         }
+                        readOnly={notDraft}
                       />
                     </div>
                     <div>
@@ -719,12 +726,14 @@ export function ReceivableForm({
                         }
                       />
                     </div>
-                    <div className="mercoa-flex mercoa-items-center">
-                      <XCircleIcon
-                        className="mercoa-size-5 mercoa-cursor-pointer mercoa-text-gray-500 mercoa-mt-[28px]"
-                        onClick={() => remove(index)}
-                      />
-                    </div>
+                    {!notDraft && (
+                      <div className="mercoa-flex mercoa-items-center">
+                        <XCircleIcon
+                          className="mercoa-size-5 mercoa-cursor-pointer mercoa-text-gray-500 mercoa-mt-[28px]"
+                          onClick={() => remove(index)}
+                        />
+                      </div>
+                    )}
                   </div>
                   {watch(`lineItems.${index}.showDescription`) ? (
                     <>
@@ -738,23 +747,29 @@ export function ReceivableForm({
                           type="text"
                         />
                       </div>
-                      <div
-                        className="mercoa-text-sm mercoa-text-gray-500 mercoa-cursor-pointer mercoa-mt-1 hover:mercoa-text-gray-700"
-                        onClick={() => {
-                          setValue(`lineItems.${index}.showDescription`, false)
-                          setValue(`lineItems.${index}.description`, '')
-                        }}
-                      >
-                        - Remove description
-                      </div>
+                      {!notDraft && (
+                        <div
+                          className="mercoa-text-sm mercoa-text-gray-500 mercoa-cursor-pointer mercoa-mt-1 hover:mercoa-text-gray-700"
+                          onClick={() => {
+                            setValue(`lineItems.${index}.showDescription`, false)
+                            setValue(`lineItems.${index}.description`, '')
+                          }}
+                        >
+                          - Remove description
+                        </div>
+                      )}
                     </>
                   ) : (
-                    <div
-                      className="mercoa-text-sm mercoa-text-gray-500 mercoa-cursor-pointer mercoa-mt-1 hover:mercoa-text-gray-700"
-                      onClick={() => setValue(`lineItems.${index}.showDescription`, true)}
-                    >
-                      + Add description (optional)
-                    </div>
+                    <>
+                      {!notDraft && (
+                        <div
+                          className="mercoa-text-sm mercoa-text-gray-500 mercoa-cursor-pointer mercoa-mt-1 hover:mercoa-text-gray-700"
+                          onClick={() => setValue(`lineItems.${index}.showDescription`, true)}
+                        >
+                          + Add description (optional)
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ))}
@@ -762,26 +777,28 @@ export function ReceivableForm({
 
             {/* Add Line Item Button */}
             <div className={`${fields.length > 0 ? 'mercoa-mt-4' : ''}`}>
-              <MercoaButton
-                type="button"
-                isEmphasized
-                size="md"
-                onClick={() =>
-                  append({
-                    id: 'new',
-                    description: '',
-                    quantity: 1,
-                    unitPrice: 0,
-                    amount: 0,
-                    currency: 'USD',
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                    showDescription: false,
-                  })
-                }
-              >
-                + Add Line Item
-              </MercoaButton>
+              {!notDraft && (
+                <MercoaButton
+                  type="button"
+                  isEmphasized
+                  size="md"
+                  onClick={() =>
+                    append({
+                      id: 'new',
+                      description: '',
+                      quantity: 1,
+                      unitPrice: 0,
+                      amount: 0,
+                      currency: 'USD',
+                      createdAt: new Date(),
+                      updatedAt: new Date(),
+                      showDescription: false,
+                    })
+                  }
+                >
+                  + Add Line Item
+                </MercoaButton>
+              )}
             </div>
           </div>
           <div className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-4 mercoa-gap-4 mercoa-items-start mercoa-p-0.5">
@@ -802,6 +819,7 @@ export function ReceivableForm({
                   </label>
                   <select
                     {...register('currency')}
+                    disabled={notDraft}
                     className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                   >
                     {supportedCurrencies.map((option: Mercoa.CurrencyCode, index: number) => (
@@ -855,9 +873,11 @@ export function ReceivableForm({
 export function ReceivableSelectPaymentMethod({
   isSource,
   isDestination,
+  readOnly,
 }: {
   isSource?: boolean
   isDestination?: boolean
+  readOnly?: boolean
 }) {
   /// Setup (ripped from PayableSelectPaymentMethod)
   const mercoaSession = useMercoaSession()
@@ -1078,12 +1098,14 @@ export function ReceivableSelectPaymentMethod({
     <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
       {paymentMethods
         ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)
+        .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))
         .map((paymentMethod) => (
           <div key={paymentMethod.id} className="mercoa-mt-1">
             <BankAccount
               account={paymentMethod as Mercoa.PaymentMethodResponse.BankAccount}
               selected={paymentId === paymentMethod.id}
               onSelect={() => {
+                if (readOnly) return
                 setValue(sourceOrDestination, paymentMethod.id)
                 clearErrors(sourceOrDestination)
               }}
@@ -1097,12 +1119,14 @@ export function ReceivableSelectPaymentMethod({
     <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
       {paymentMethods
         ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)
+        .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))
         .map((paymentMethod) => (
           <div key={paymentMethod.id} className="mercoa-mt-1">
             <Check
               account={paymentMethod as Mercoa.PaymentMethodResponse.Check}
               selected={paymentId === paymentMethod.id}
               onSelect={() => {
+                if (readOnly) return
                 setValue(sourceOrDestination, paymentMethod.id)
                 clearErrors(sourceOrDestination)
               }}
@@ -1116,12 +1140,14 @@ export function ReceivableSelectPaymentMethod({
     <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
       {paymentMethods
         ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
+        .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))
         .map((paymentMethod) => (
           <div key={paymentMethod.id} className="mercoa-mt-1">
             <Card
               account={paymentMethod as Mercoa.PaymentMethodResponse.Card}
               selected={paymentId === paymentMethod.id}
               onSelect={() => {
+                if (readOnly) return
                 setValue(sourceOrDestination, paymentMethod.id)
                 clearErrors(sourceOrDestination)
               }}
@@ -1134,16 +1160,18 @@ export function ReceivableSelectPaymentMethod({
   if (!mercoaSession.client) return <NoSession componentName="SelectPaymentMethod" />
   return (
     <div>
-      <MercoaCombobox
-        options={availableTypes.map((type) => ({ value: type, disabled: false }))}
-        onChange={(selected) => {
-          setValue(paymentMethodTypeKey, selected.key)
-          setMethodOnTypeChange(selected.key)
-        }}
-        value={availableTypes.find((type) => type.key === selectedType)}
-        displayIndex="value"
-        showAllOptions
-      />
+      {!readOnly && (
+        <MercoaCombobox
+          options={availableTypes.map((type) => ({ value: type, disabled: false }))}
+          onChange={(selected) => {
+            setValue(paymentMethodTypeKey, selected.key)
+            setMethodOnTypeChange(selected.key)
+          }}
+          value={availableTypes.find((type) => type.key === selectedType)}
+          displayIndex="value"
+          showAllOptions
+        />
+      )}
       {selectedType === Mercoa.PaymentMethodType.BankAccount && bankAccountJsx}
       {selectedType === Mercoa.PaymentMethodType.Check && checkJsx}
       {selectedType === Mercoa.PaymentMethodType.Card && cardJsx}
@@ -1169,10 +1197,18 @@ export function ReceivablePaymentSource({ readOnly }: { readOnly?: boolean }) {
       {payerId && payerName && paymentDestinationType !== 'offPlatform' && (
         <div className="mercoa-pb-6 mercoa-col-span-full">
           <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
-            Choose existing payment method on file for{' '}
-            <span className="mercoa-text-gray-800 mercoa-underline">{payerName}</span>:
+            {readOnly ? (
+              <>
+                Payment method on file for <span className="mercoa-text-gray-800 mercoa-underline">{payerName}</span>:
+              </>
+            ) : (
+              <>
+                Choose existing payment method on file for{' '}
+                <span className="mercoa-text-gray-800 mercoa-underline">{payerName}</span>:
+              </>
+            )}
           </h2>
-          <ReceivableSelectPaymentMethod isSource />
+          <ReceivableSelectPaymentMethod isSource readOnly={readOnly} />
           {errors.paymentSourceId?.message && (
             <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentSourceId?.message.toString()}</p>
           )}
@@ -1194,9 +1230,9 @@ export function ReceivablePaymentDestination({ readOnly }: { readOnly?: boolean 
   return (
     <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-16 mercoa-col-span-full">
       <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
-        How do you want to get paid?
+        {readOnly ? 'Paying to You:' : 'How do you want to get paid?'}
       </h2>
-      <ReceivableSelectPaymentMethod isDestination />
+      <ReceivableSelectPaymentMethod isDestination readOnly={readOnly} />
       {errors.paymentDestinationId?.message && (
         <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentDestinationId?.message.toString()}</p>
       )}
@@ -1234,13 +1270,13 @@ export function ReceivableActions({
   // Action Buttons
   const createInvoiceButton = (
     <MercoaButton className="mercoa-mt-5" isEmphasized>
-      Create Invoice
+      Create
     </MercoaButton>
   )
 
   const deleteableStatuses: Mercoa.InvoiceStatus[] = [
-    Mercoa.InvoiceStatus.Draft,
     Mercoa.InvoiceStatus.Unassigned,
+    Mercoa.InvoiceStatus.Draft,
     Mercoa.InvoiceStatus.New,
     Mercoa.InvoiceStatus.Canceled,
   ]
@@ -1265,9 +1301,8 @@ export function ReceivableActions({
       }}
       type="button"
       color="secondary"
-      className="mercoa-flex mercoa-justify-center"
     >
-      Delete Invoice
+      Delete
     </MercoaButton>
   )
 
@@ -1295,9 +1330,8 @@ export function ReceivableActions({
       }}
       type="button"
       color="secondary"
-      className="mercoa-flex mercoa-justify-center"
     >
-      Cancel Invoice
+      Cancel
     </MercoaButton>
   )
 
@@ -1312,22 +1346,27 @@ export function ReceivableActions({
   ]
   const showPreviewButton = invoice?.status && previewableStatuses.includes(invoice?.status)
   const previewButton = (
-    <MercoaButton
-      isEmphasized={false}
-      onClick={async () => {
-        if (!invoice?.id) return
-        const pdfLink = await mercoaSession.client?.invoice.document.generateInvoicePdf(invoice.id)
-        if (pdfLink?.uri) {
-          window.open(pdfLink.uri, '_blank')
-        } else {
-          toast.error('There was an issue generating the Invoice PDF. Please refresh and try again.')
-        }
-      }}
-      type="button"
-      className="mercoa-flex mercoa-justify-center"
-    >
-      <DocumentDuplicateIcon className="mercoa-size-5 md:mercoa-mr-2" /> Preview Invoice
-    </MercoaButton>
+    <Menu.Item>
+      {({ active }) => (
+        <a
+          href="#"
+          onClick={async () => {
+            if (!invoice?.id) return
+            const pdfLink = await mercoaSession.client?.invoice.document.generateInvoicePdf(invoice.id)
+            if (pdfLink?.uri) {
+              window.open(pdfLink.uri, '_blank')
+            } else {
+              toast.error('There was an issue generating the Invoice PDF. Please refresh and try again.')
+            }
+          }}
+          className={`${
+            active ? 'mercoa-bg-gray-100 mercoa-text-gray-900' : 'mercoa-text-gray-700'
+          } mercoa-block mercoa-px-4 mercoa-py-2 mercoa-text-sm`}
+        >
+          See Preview
+        </a>
+      )}
+    </Menu.Item>
   )
 
   const paymentLinkableStatuses: Mercoa.InvoiceStatus[] = [
@@ -1346,26 +1385,31 @@ export function ReceivableActions({
     invoice?.status &&
     paymentLinkableStatuses.includes(invoice?.status)
   const paymentLinkButton = (
-    <MercoaButton
-      isEmphasized={false}
-      onClick={async () => {
-        if (!invoice?.id) return
-        if (!invoice.payer) {
-          toast.error('There is no payer associated with this invoice. Please select a payer and save draft.')
-          return
-        }
-        const pdfLink = await mercoaSession.client?.invoice.paymentLinks.getPayerLink(invoice.id)
-        if (pdfLink) {
-          window.open(pdfLink, '_blank')
-        } else {
-          toast.error('There was an issue creating the payment link. Please refresh and try again.')
-        }
-      }}
-      type="button"
-      className="mercoa-flex mercoa-justify-center"
-    >
-      <GlobeAltIcon className="mercoa-size-5 md:mercoa-mr-2" /> Get Payment Link
-    </MercoaButton>
+    <Menu.Item>
+      {({ active }) => (
+        <a
+          href="#"
+          onClick={async () => {
+            if (!invoice?.id) return
+            if (!invoice.payer) {
+              toast.error('There is no payer associated with this invoice. Please select a payer and save draft.')
+              return
+            }
+            const pdfLink = await mercoaSession.client?.invoice.paymentLinks.getPayerLink(invoice.id)
+            if (pdfLink) {
+              window.open(pdfLink, '_blank')
+            } else {
+              toast.error('There was an issue creating the payment link. Please refresh and try again.')
+            }
+          }}
+          className={`${
+            active ? 'mercoa-bg-gray-100 mercoa-text-gray-900' : 'mercoa-text-gray-700'
+          } mercoa-block mercoa-px-4 mercoa-py-2 mercoa-text-sm`}
+        >
+          Get Payment Link
+        </a>
+      )}
+    </Menu.Item>
   )
 
   const showSaveDraftButton = invoice?.status === Mercoa.InvoiceStatus.Draft
@@ -1399,9 +1443,9 @@ export function ReceivableActions({
           await mercoaSession.client?.invoice.update(invoice.id, {
             status: Mercoa.InvoiceStatus.Approved,
           })
-          setIsLoading(false)
           try {
             await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(invoice.id, { attachInvoice: true })
+            setIsLoading(false)
             toast.info('Email Sent')
             refreshInvoice(invoice.id)
           } catch (e) {
@@ -1413,9 +1457,7 @@ export function ReceivableActions({
         }
       }}
       type="button"
-      className="mercoa-flex mercoa-justify-center"
     >
-      <EnvelopeIcon className="mercoa-size-5 md:mercoa-mr-2" />
       {invoice?.status === Mercoa.InvoiceStatus.Draft ? 'Send Invoice' : 'Resend Invoice'}
     </MercoaButton>
   )
@@ -1442,7 +1484,6 @@ export function ReceivableActions({
         }
       }}
       type="button"
-      className="mercoa-flex mercoa-justify-center"
     >
       Mark as Paid
     </MercoaButton>
@@ -1469,10 +1510,35 @@ export function ReceivableActions({
         }
       }}
       type="button"
-      className="mercoa-flex mercoa-justify-center"
     >
       Restore as Draft
     </MercoaButton>
+  )
+
+  const menu = (
+    <Menu as="div" className="mercoa-relative mercoa-inline-block mercoa-text-left">
+      <div>
+        <Menu.Button className="mercoa-inline-flex mercoa-w-full mercoa-justify-center mercoa-bg-gray-100 hover:mercoa-bg-gray-200 mercoa-rounded-full mercoa-p-1.5">
+          <EllipsisVerticalIcon className="mercoa-size-5" aria-hidden="true" />
+          <span className="mercoa-sr-only">More options</span>
+        </Menu.Button>
+      </div>
+      <Transition
+        enter="transition ease-out duration-100"
+        enterFrom="transform opacity-0 scale-95"
+        enterTo="transform opacity-100 scale-100"
+        leave="transition ease-in duration-75"
+        leaveFrom="transform opacity-100 scale-100"
+        leaveTo="transform opacity-0 scale-95"
+      >
+        <Menu.Items className="mercoa-absolute mercoa-right-0 mercoa-bottom-0 mercoa-z-10 mercoa-mb-10 mercoa-w-64 mercoa-origin-bottom-right mercoa-rounded-mercoa mercoa-bg-white mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none">
+          <div className="mercoa-py-1">
+            {showPreviewButton && previewButton}
+            {showPaymentLinkButton && paymentLinkButton}
+          </div>
+        </Menu.Items>
+      </Transition>
+    </Menu>
   )
 
   return (
@@ -1489,12 +1555,11 @@ export function ReceivableActions({
             <>
               {showDeleteButton && deleteButton}
               {showCancelButton && cancelButton}
-              {showPreviewButton && previewButton}
-              {showPaymentLinkButton && paymentLinkButton}
               {showSaveDraftButton && saveDraftButton}
               {showSendEmailButton && sendEmailButton}
               {showMarkAsPaidButton && markAsPaidButton}
               {showRestoreAsDraftButton && restoreAsDraftButton}
+              {menu}
             </>
           )}
         </div>

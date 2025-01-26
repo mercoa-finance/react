@@ -352,7 +352,8 @@ export function BankAccount({
                               {mercoaSession.organization?.sandbox && (
                                 <p className="mercoa-mt-3 mercoa-rounded-mercoa mercoa-bg-orange-200 mercoa-p-1 mercoa-text-sm">
                                   <b>Test Mode:</b> actual deposits will not be sent. Use 0 and 0 as the values to
-                                  instantly verify the account in the next step.
+                                  instantly verify the account in the next step. Any other values will set the account
+                                  to verification failed.
                                 </p>
                               )}
                               <MercoaButton
@@ -379,15 +380,28 @@ export function BankAccount({
                             <form
                               onSubmit={handleSubmit(async (data) => {
                                 if (mercoaSession.entity?.id && account?.id) {
-                                  await mercoaSession.client?.entity.paymentMethod.bankAccount.completeMicroDeposits(
-                                    mercoaSession.entity?.id,
-                                    account?.id,
-                                    {
-                                      amounts: [Number(data.md1), Number(data.md2)],
-                                    },
-                                  )
+                                  try {
+                                    const bankAccount =
+                                      await mercoaSession.client?.entity.paymentMethod.bankAccount.completeMicroDeposits(
+                                        mercoaSession.entity?.id,
+                                        account?.id,
+                                        {
+                                          amounts: [Number(data.md1), Number(data.md2)],
+                                        },
+                                      )
+                                    if (
+                                      bankAccount &&
+                                      bankAccount.type === Mercoa.PaymentMethodType.BankAccount &&
+                                      bankAccount.status === Mercoa.BankStatus.Verified
+                                    ) {
+                                      toast.info('Micro-deposits verified.')
+                                    } else {
+                                      toast.error('Micro-deposit verification failed.')
+                                    }
+                                  } catch (e) {
+                                    toast.error('Micro-deposit verification failed.')
+                                  }
                                   setVerify(false)
-                                  toast.info('Micro-deposits verified. Waiting for confirmation...')
                                   await mercoaSession.refresh()
                                   setTimeout(() => mercoaSession.refresh(), 5000)
                                 }
@@ -399,7 +413,8 @@ export function BankAccount({
                               </p>
                               {mercoaSession.organization?.sandbox && (
                                 <p className="mercoa-mt-3 mercoa-rounded-mercoa mercoa-bg-orange-200 mercoa-p-1 mercoa-text-sm">
-                                  <b>Test Mode:</b> use 0 and 0 to instantly verify this account.
+                                  <b>Test Mode:</b> use 0 and 0 to instantly verify this account. Any other values will
+                                  set the account to verification failed.
                                 </p>
                               )}
                               <MercoaInput
@@ -504,7 +519,7 @@ export function PlaidPopup({
 
   const generateToken = async () => {
     if (!mercoaSession.entityId) return
-    const token = await mercoaSession.client?.entity.plaidLinkToken(mercoaSession.entityId, {
+    const token = await mercoaSession.client?.entity.paymentMethod.plaidLinkToken(mercoaSession.entityId, {
       paymentMethodId,
     })
     if (token) setLinkToken(token)

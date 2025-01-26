@@ -8,6 +8,7 @@ import {
   TrashIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import dayjs from 'dayjs'
 import { jwtDecode } from 'jwt-decode'
@@ -30,12 +31,11 @@ import DatePicker from 'react-datepicker'
 import { Control, Controller, FieldErrors, UseFormRegister, useFormContext } from 'react-hook-form'
 import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { classNames, getEndpoint } from '../lib/lib'
 import { usaStates } from '../lib/locations'
 import { MercoaSession, TokenOptions, useMercoaSession } from './index'
 
-export interface MercoaButtonProps extends HTMLAttributes<HTMLButtonElement> {
+export interface MercoaButtonProps extends HTMLAttributes<HTMLButtonElement | HTMLAnchorElement> {
   isEmphasized: boolean
   hideOutline?: boolean
   tooltip?: string
@@ -248,11 +248,16 @@ export function MercoaButton({
     classNameFinal = `${classNameInternal} ${isEmphasized ? classNameIsEmphasized : classNameIsNotEmphasized}`
   }
 
-  const button = (
-    <button className={`${classNameFinal} ${className ?? ''}`} {...props}>
-      {children}
-    </button>
-  )
+  const button =
+    props.type === 'link' ? (
+      <a className={`${classNameFinal} ${className ?? ''}`} {...props}>
+        {children}
+      </a>
+    ) : (
+      <button className={`${classNameFinal} ${className ?? ''}`} {...props}>
+        {children}
+      </button>
+    )
   return tooltip ? (
     <Tooltip title="Please add at least one representative who is a controller" offset={50}>
       {button}
@@ -557,11 +562,11 @@ export function PaymentMethodList({
             <div className="mercoa-flex-grow">{formatAccount(account)}</div>
             {showDelete && (
               <button
-                onClick={() => {
+                onClick={async () => {
                   const del = confirm('Are you sure you want to remove this account? This action cannot be undone.')
                   if (del && mercoaSession.token && mercoaSession.entity?.id && account.id) {
                     try {
-                      mercoaSession.client?.entity.paymentMethod.delete(mercoaSession.entity?.id, account.id)
+                      await mercoaSession.client?.entity.paymentMethod.delete(mercoaSession.entity?.id, account.id)
                       toast.success('Account removed')
                     } catch (e: any) {
                       toast.error('Error removing account')
@@ -582,7 +587,7 @@ export function PaymentMethodList({
       {addAccount && (
         <div className="mercoa-mt-2 mercoa-flex">
           <div className="mercoa-flex-grow">{addAccount}</div>
-          {showDelete && <div className="mercoa-ml-2 mercoa-size-5" />}
+          {showDelete && accounts && accounts.length > 0 && <div className="mercoa-ml-2 mercoa-size-5" />}
         </div>
       )}
     </>
@@ -712,7 +717,7 @@ export function MercoaCombobox({
   direction,
 }: {
   onChange: (val: any) => any
-  options: { value: any; disabled: boolean; color?: string }[]
+  options: { value: any; disabled?: boolean; color?: string }[]
   value?: any // TODO: why was this required? and why were we passing a function to it???
   label?: string
   placeholder?: string
@@ -1586,7 +1591,7 @@ export function PaymentMethodButton({
       className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
         selected ? `mercoa-border-mercoa-primary` : `mercoa-border-gray-300`
       } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 ${
-        onSelect ? ' hover:mercoa-border-mercoa-primary-dark' : ''
+        onSelect ? 'mercoa-cursor-pointer hover:mercoa-border-mercoa-primary-dark' : ''
       }`}
     >
       <div

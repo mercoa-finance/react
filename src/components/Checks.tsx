@@ -227,7 +227,7 @@ export function AddCheck({
 
   const schema = yup
     .object({
-      payToTheOrderOf: yup.string().required(),
+      payToTheOrderOf: yup.string().required('Pay To The Order Of is required'),
       addressLine1: yup
         .string()
         .required('Address is required')
@@ -294,7 +294,7 @@ export function AddCheckForm({ prefix }: { prefix?: string }) {
 
   return (
     <div className="mercoa-flex mercoa-flex-col mercoa-gap-y-2">
-      <MercoaInput register={register} name={prefix + 'payToTheOrderOf'} label="Pay To The Order Of" />
+      <MercoaInput register={register} name={prefix + 'payToTheOrderOf'} label="Pay To The Order Of" errors={errors} />
       <MercoaInput register={register} name={prefix + 'addressLine1'} label="Address Line 1" errors={errors} />
       <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-x-4">
         <MercoaInput register={register} name={prefix + 'addressLine2'} label="Address Line 2" errors={errors} />

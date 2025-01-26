@@ -43,6 +43,7 @@ export function EntityPortal({ token }: { token: string }) {
   const { invoiceId } = params
 
   const [screen, setScreenLocal] = useState('inbox')
+  const [invoiceType, setInvoiceType] = useState<'invoice' | 'invoiceTemplate'>('invoice')
 
   const [invoice, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>()
 
@@ -277,7 +278,9 @@ export function EntityPortal({ token }: { token: string }) {
               }}
             >
               <PlusIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-size-5 md:mercoa-mr-2" />{' '}
-              <span className="mercoa-hidden md:mercoa-inline-block">New Invoice</span>
+              <span className="mercoa-hidden md:mercoa-inline-block">
+                New {invoiceType === 'invoice' ? '' : 'Recurring'} Invoice
+              </span>
             </MercoaButton>
           )}
         </div>
@@ -285,6 +288,10 @@ export function EntityPortal({ token }: { token: string }) {
       <div className={screen === 'inbox' ? '' : 'mercoa-hidden'}>
         <Payables
           statuses={tokenOptions?.invoice?.status}
+          showRecurringTemplates={!!tokenOptions?.invoice?.recurring}
+          onSelectInvoiceType={(invoiceType) => {
+            setInvoiceType(invoiceType)
+          }}
           onSelectInvoice={(invoice) => {
             setInvoice(invoice)
             setScreen('invoice')
@@ -346,6 +353,7 @@ export function EntityPortal({ token }: { token: string }) {
       {screen === 'invoice' && (
         <PayableDetails
           invoice={invoice}
+          invoiceType={invoiceType}
           onUpdate={(invoice) => {
             if (!invoice) {
               mercoaSession.refresh()

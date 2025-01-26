@@ -205,6 +205,7 @@ export function CounterpartySearch({
   onSelect,
   type,
   network,
+  readOnly,
 }: {
   counterparty?: Mercoa.CounterpartyResponse
   disableCreation?: boolean
@@ -215,6 +216,7 @@ export function CounterpartySearch({
   onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
   type: 'payee' | 'payor'
   network?: Mercoa.CounterpartyNetworkType[]
+  readOnly?: boolean
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -284,6 +286,7 @@ export function CounterpartySearch({
           network={network}
           edit={edit}
           setEdit={setEdit}
+          readOnly={readOnly}
         />
       </form>
     </FormProvider>
@@ -1357,7 +1360,7 @@ export function Counterparties({
             setStartingAfter([])
           }}
         />
-        {(admin || (!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation)) && (
+        {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation && (
           <MercoaButton
             isEmphasized
             type="button"
