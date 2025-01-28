@@ -5,6 +5,8 @@ import {
   DevicePhoneMobileIcon,
   DocumentIcon,
   EnvelopeIcon,
+  EyeIcon,
+  EyeSlashIcon,
   MapPinIcon,
   PencilSquareIcon,
   PlusIcon,
@@ -14,6 +16,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import debounce from 'lodash/debounce'
@@ -21,7 +24,6 @@ import Papa from 'papaparse'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize, constructFullName } from '../lib/lib'
@@ -1484,6 +1486,7 @@ export function CounterpartyDetails({
   const mercoaSession = useMercoaSession()
 
   const [isEditing, setIsEditing] = useState<boolean>(false)
+  const [showEin, setShowEin] = useState<boolean>(false)
 
   const [invoiceHistory, setInvoiceHistory] = useState<Mercoa.InvoiceResponse[] | undefined>(undefined)
   const [vendorCredits, setVendorCredits] = useState<Mercoa.VendorCreditResponse[] | undefined>(undefined)
@@ -1819,15 +1822,19 @@ export function CounterpartyDetails({
                 </dd>
               </div>
             )}
-            {counterparty?.profile.business?.taxIdProvided && (
+            {counterparty?.profile.business?.taxIdProvided && counterparty?.profile?.business?.taxId?.ein?.number && (
               <div className="mercoa-flex mercoa-w-full mercoa-flex-none mercoa-gap-x-2 mercoa-px-6 mercoa-mt-1">
                 <dt className="mercoa-flex-none">
                   <span className="mercoa-sr-only">EIN</span>
                   <ShieldCheckIcon className="mercoa-h-6 mercoa-w-5 mercoa-text-gray-500" aria-hidden="true" />
                 </dt>
-                <dd className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700 mercoa-select-all">
-                  EIN: **-*******
-                </dd>
+                <div className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-700 mercoa-select-all mercoa-flex mercoa-items-center mercoa-gap-2">
+                  EIN: {showEin ? counterparty?.profile?.business?.taxId?.ein?.number : '**-******'}
+                  <div className="mercoa-cursor-pointer mercoa-text-gray-400" onClick={() => setShowEin(!showEin)}>
+                    {!showEin && <EyeIcon className="mercoa-size-5" aria-hidden="true" />}
+                    {showEin && <EyeSlashIcon className="mercoa-size-5" aria-hidden="true" />}
+                  </div>
+                </div>
               </div>
             )}
             {counterparty?.profile.individual?.governmentIdProvided && (

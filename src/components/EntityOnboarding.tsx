@@ -17,6 +17,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { Fragment, useEffect, useState } from 'react'
 import Dropzone from 'react-dropzone'
@@ -24,7 +25,6 @@ import { usePlacesWidget } from 'react-google-autocomplete'
 import { Control, Controller, UseFormRegister, useForm } from 'react-hook-form'
 import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
 import { postalCodeRegex } from '../lib/locations'
@@ -2067,8 +2067,8 @@ export function EntityOnboardingForm({
       country: entity.profile.individual?.address?.country ?? entity.profile.business?.address?.country ?? 'US',
       taxID: entity.profile.individual?.governmentIdProvided
         ? '****'
-        : entity.profile.business?.taxIdProvided
-          ? '**-*******'
+        : entity.profile.business?.taxIdProvided && entity.profile.business?.taxId?.ein?.number
+          ? entity.profile.business?.taxId?.ein?.number
           : '',
       mcc: entity.profile.business?.industryCodes?.mcc ?? '',
       dob: new Date(),
