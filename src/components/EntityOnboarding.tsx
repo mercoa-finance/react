@@ -435,6 +435,18 @@ export const dateOfBirthSchema = {
     }),
 }
 
+export const dateOfBirthSchemaNotRequired = {
+  dob: yup
+    .date()
+    .nullable()
+    .test('dob', 'Must be at least 18 years old', (value) => {
+      if (value && dayjs(value).isAfter(dayjs().subtract(18, 'years'))) {
+        return false
+      }
+      return true
+    }),
+}
+
 export function DateOfBirthBlock({
   control,
   errors,
@@ -2071,7 +2083,7 @@ export function EntityOnboardingForm({
           ? entity.profile.business?.taxId?.ein?.number
           : '',
       mcc: entity.profile.business?.industryCodes?.mcc ?? '',
-      dob: new Date(),
+      dob: undefined,
       tos: entity.acceptedTos,
 
       businessType: entity.profile.business?.businessType,
@@ -2079,7 +2091,7 @@ export function EntityOnboardingForm({
       doingBusinessAs: entity.profile.business?.doingBusinessAs,
       description: entity.profile.business?.description,
       website: entity.profile.business?.website,
-      formationDate: new Date(),
+      formationDate: undefined,
       foreignId: entity.foreignId,
       emailTo: entity.emailTo,
       isCustomer: entity.isCustomer,
@@ -2099,6 +2111,9 @@ export function EntityOnboardingForm({
               ...(finalOnboardingOptions?.individual.email.required && emailSchema),
               ...(finalOnboardingOptions?.individual.phone.required && phoneSchema),
               ...(finalOnboardingOptions?.individual.dateOfBirth.required && dateOfBirthSchema),
+              ...(finalOnboardingOptions?.individual.dateOfBirth.edit &&
+                !finalOnboardingOptions?.individual.dateOfBirth.required &&
+                dateOfBirthSchemaNotRequired),
               ...(finalOnboardingOptions?.individual.address.required && addressBlockSchema),
               ...(finalOnboardingOptions?.individual.ssn.required && SSNSchema),
             })
