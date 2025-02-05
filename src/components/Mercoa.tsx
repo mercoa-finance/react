@@ -1,9 +1,10 @@
 import { CheckCircleIcon, ExclamationTriangleIcon, InformationCircleIcon, XCircleIcon } from '@heroicons/react/20/solid'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { jwtDecode } from 'jwt-decode'
 import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { ToastContainer } from 'react-toastify'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { setStyle } from '../lib/lib'
+import { MercoaQueryClientProvider } from '../lib/react-query/query-client-provider'
 import { EntityPortal, TokenOptions, getAllUsers } from './index'
 
 export interface MercoaContext {
@@ -112,53 +113,55 @@ export function MercoaSession({
         fetchMetadata: fetchMetadata,
       })}
     >
-      {disableToastContainer ? (
-        <></>
-      ) : (
-        <ToastContainer
-          toastClassName={(options) => {
-            const type = options?.type || 'default'
-            return `${contextClass[type]} mercoa-relative mercoa-flex mercoa-p-1 mercoa-min-h-10 mercoa-rounded-mercoa mercoa-justify-between mercoa-overflow-hidden mercoa-cursor-pointer`
-          }}
-          bodyClassName={() =>
-            'mercoa-text-sm mercoa-font-medium mercoa-p-3 mercoa-m-0 mercoa-flex mercoa-items-center'
-          }
-          position={'top-center'}
-          autoClose={3000}
-          hideProgressBar
-          icon={({ theme, type }) => {
-            switch (type) {
-              case 'error':
-                return (
-                  <div className="mercoa-flex-shrink-0">
-                    <XCircleIcon className="mercoa-size-5 mercoa-text-red-400" aria-hidden="true" />
-                  </div>
-                )
-              case 'info':
-                return (
-                  <div className="mercoa-flex-shrink-0">
-                    <InformationCircleIcon className="mercoa-size-5 mercoa-text-blue-400" aria-hidden="true" />
-                  </div>
-                )
-              case 'success':
-                return (
-                  <div className="mercoa-flex-shrink-0">
-                    <CheckCircleIcon className="mercoa-size-5 mercoa-text-green-400" aria-hidden="true" />
-                  </div>
-                )
-              case 'warning':
-                return (
-                  <div className="mercoa-flex-shrink-0">
-                    <ExclamationTriangleIcon className="mercoa-size-5 mercoa-text-yellow-400" aria-hidden="true" />
-                  </div>
-                )
-              case 'default':
-                return <div className="mercoa-flex-shrink-0"></div>
+      <MercoaQueryClientProvider>
+        {disableToastContainer ? (
+          <></>
+        ) : (
+          <ToastContainer
+            toastClassName={(options) => {
+              const type = options?.type || 'default'
+              return `${contextClass[type]} mercoa-relative mercoa-flex mercoa-p-1 mercoa-min-h-10 mercoa-rounded-mercoa mercoa-justify-between mercoa-overflow-hidden mercoa-cursor-pointer`
+            }}
+            bodyClassName={() =>
+              'mercoa-text-sm mercoa-font-medium mercoa-p-3 mercoa-m-0 mercoa-flex mercoa-items-center'
             }
-          }}
-        />
-      )}
-      {children || <EntityPortal token={token} />}
+            position={'top-center'}
+            autoClose={3000}
+            hideProgressBar
+            icon={({ theme, type }) => {
+              switch (type) {
+                case 'error':
+                  return (
+                    <div className="mercoa-flex-shrink-0">
+                      <XCircleIcon className="mercoa-size-5 mercoa-text-red-400" aria-hidden="true" />
+                    </div>
+                  )
+                case 'info':
+                  return (
+                    <div className="mercoa-flex-shrink-0">
+                      <InformationCircleIcon className="mercoa-size-5 mercoa-text-blue-400" aria-hidden="true" />
+                    </div>
+                  )
+                case 'success':
+                  return (
+                    <div className="mercoa-flex-shrink-0">
+                      <CheckCircleIcon className="mercoa-size-5 mercoa-text-green-400" aria-hidden="true" />
+                    </div>
+                  )
+                case 'warning':
+                  return (
+                    <div className="mercoa-flex-shrink-0">
+                      <ExclamationTriangleIcon className="mercoa-size-5 mercoa-text-yellow-400" aria-hidden="true" />
+                    </div>
+                  )
+                case 'default':
+                  return <div className="mercoa-flex-shrink-0"></div>
+              }
+            }}
+          />
+        )}
+        {children || <EntityPortal token={token} />}
+      </MercoaQueryClientProvider>
     </sessionContext.Provider>
   )
 }

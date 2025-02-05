@@ -13,6 +13,7 @@ import {
 import { jwtDecode } from 'jwt-decode'
 import { useEffect, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
+import { PayableDetailsV2 } from '../modules/payables/components/payable-details'
 import {
   AcceptToSButton,
   ApprovalPolicies,
@@ -24,8 +25,7 @@ import {
   LoadingSpinner,
   MercoaButton,
   NoSession,
-  PayableDetails,
-  Payables,
+  PayablesDashboardV2,
   PaymentMethods,
   Representatives,
   TokenOptions,
@@ -286,11 +286,22 @@ export function EntityPortal({ token }: { token: string }) {
         </div>
       </div>
       <div className={screen === 'inbox' ? '' : 'mercoa-hidden'}>
-        <Payables
-          statuses={tokenOptions?.invoice?.status}
-          showRecurringTemplates={!!tokenOptions?.invoice?.recurring}
-          onSelectInvoiceType={(invoiceType) => {
-            setInvoiceType(invoiceType)
+        <PayablesDashboardV2
+          readOnly
+          statusTabsOptions={{
+            isVisible: true,
+            statuses: [
+              Mercoa.InvoiceStatus.Draft,
+              Mercoa.InvoiceStatus.New,
+              Mercoa.InvoiceStatus.Approved,
+              Mercoa.InvoiceStatus.Scheduled,
+              Mercoa.InvoiceStatus.Pending,
+              Mercoa.InvoiceStatus.Paid,
+              Mercoa.InvoiceStatus.Canceled,
+              Mercoa.InvoiceStatus.Refused,
+              Mercoa.InvoiceStatus.Failed,
+              Mercoa.InvoiceStatus.Archived,
+            ],
           }}
           onSelectInvoice={(invoice) => {
             setInvoice(invoice)
@@ -351,9 +362,18 @@ export function EntityPortal({ token }: { token: string }) {
         </div>
       )}
       {screen === 'invoice' && (
-        <PayableDetails
+        <PayableDetailsV2
           invoice={invoice}
           invoiceType={invoiceType}
+          onInvoiceSubmit={(invoice) => {
+            if (!invoice) {
+              mercoaSession.refresh()
+              setScreen('inbox')
+            } else {
+              setInvoice(invoice)
+              mercoaSession.refresh()
+            }
+          }}
           onUpdate={(invoice) => {
             if (!invoice) {
               mercoaSession.refresh()

@@ -8,7 +8,6 @@ import {
   TrashIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import dayjs from 'dayjs'
 import { jwtDecode } from 'jwt-decode'
@@ -31,9 +30,12 @@ import DatePicker from 'react-datepicker'
 import { Control, Controller, FieldErrors, UseFormRegister, useFormContext } from 'react-hook-form'
 import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { classNames, getEndpoint } from '../lib/lib'
 import { usaStates } from '../lib/locations'
 import { MercoaSession, TokenOptions, useMercoaSession } from './index'
+
+import React from 'react'
 
 export interface MercoaButtonProps extends HTMLAttributes<HTMLButtonElement | HTMLAnchorElement> {
   isEmphasized: boolean
@@ -45,19 +47,9 @@ export interface MercoaButtonProps extends HTMLAttributes<HTMLButtonElement | HT
   children: ReactNode
   [x: string]: any
 }
-
-export function MercoaButton({
-  children,
-  tooltip,
-  isEmphasized,
-  hideOutline,
-  className,
-  color,
-  icon,
-  size,
-  ...props
-}: MercoaButtonProps) {
-  let classNameInternal = `
+export const MercoaButton = React.forwardRef<HTMLButtonElement | HTMLAnchorElement, MercoaButtonProps>(
+  ({ children, tooltip, isEmphasized, hideOutline, className, color, icon, size, ...props }, ref) => {
+    let classNameInternal = `
     disabled:mercoa-bg-gray-300 disabled:mercoa-text-gray-600
     mercoa-items-center mercoa-rounded-mercoa
     mercoa-font-medium 
@@ -69,36 +61,36 @@ export function MercoaButton({
     focus:mercoa-ring-offset-2`
     }`
 
-  switch (size) {
-    case 'sm':
-      classNameInternal += ' mercoa-px-2.5 mercoa-py-1.5 mercoa-text-xs'
-      break
-    case 'md':
-      classNameInternal += ' mercoa-px-3 mercoa-py-2 mercoa-text-sm'
-    case 'lg':
-    default:
-      classNameInternal += ' mercoa-px-4 mercoa-py-2'
-  }
+    switch (size) {
+      case 'sm':
+        classNameInternal += ' mercoa-px-2.5 mercoa-py-1.5 mercoa-text-xs'
+        break
+      case 'md':
+        classNameInternal += ' mercoa-px-3 mercoa-py-2 mercoa-text-sm'
+      case 'lg':
+      default:
+        classNameInternal += ' mercoa-px-4 mercoa-py-2'
+    }
 
-  const classNameIsEmphasized =
-    color === 'secondary'
-      ? `
+    const classNameIsEmphasized =
+      color === 'secondary'
+        ? `
     mercoa-bg-mercoa-secondary
     mercoa-text-mercoa-secondary-text-invert
     mercoa-border-transparent
     hover:mercoa-bg-mercoa-secondary-dark
     focus:mercoa-ring-mercoa-secondary-light
   `
-      : `
+        : `
     mercoa-bg-mercoa-primary
     mercoa-text-mercoa-primary-text-invert
     mercoa-border-transparent
     hover:mercoa-bg-mercoa-primary-dark
     focus:mercoa-ring-mercoa-primary-light 
   `
-  const classNameIsNotEmphasized =
-    color === 'secondary'
-      ? `
+    const classNameIsNotEmphasized =
+      color === 'secondary'
+        ? `
     mercoa-text-mercoa-secondary-text
     ${
       hideOutline
@@ -110,7 +102,7 @@ export function MercoaButton({
     }
     hover:mercoa-text-mercoa-secondary-dark
   `
-      : `
+        : `
     mercoa-text-mercoa-primary-text
     ${
       hideOutline
@@ -123,10 +115,10 @@ export function MercoaButton({
     hover:mercoa-text-mercoa-primary-dark
   `
 
-  let colorOverride = hideOutline ? '' : 'mercoa-bg-white'
-  let colorOverrideIsEmphasized = ''
-  if (color === 'red') {
-    colorOverride += `
+    let colorOverride = hideOutline ? '' : 'mercoa-bg-white'
+    let colorOverrideIsEmphasized = ''
+    if (color === 'red') {
+      colorOverride += `
       mercoa-text-red-600
       ${
         hideOutline
@@ -137,15 +129,15 @@ export function MercoaButton({
       }
       hover:mercoa-text-red-700
     `
-    colorOverrideIsEmphasized += `
+      colorOverrideIsEmphasized += `
       mercoa-bg-red-600
       mercoa-text-white
       mercoa-border-transparent
       hover:mercoa-bg-red-700
       focus:mercoa-ring-red-500
     `
-  } else if (color === 'green') {
-    colorOverride += `
+    } else if (color === 'green') {
+      colorOverride += `
       mercoa-text-green-600
       ${
         hideOutline
@@ -156,15 +148,15 @@ export function MercoaButton({
       }
       hover:mercoa-text-green-700
     `
-    colorOverrideIsEmphasized += `
+      colorOverrideIsEmphasized += `
       mercoa-bg-green-600
       mercoa-text-white
       mercoa-border-transparent
       hover:mercoa-bg-green-700
       focus:mercoa-ring-green-500
     `
-  } else if (color === 'blue') {
-    colorOverride += `
+    } else if (color === 'blue') {
+      colorOverride += `
       mercoa-text-blue-600
       ${
         hideOutline
@@ -175,15 +167,15 @@ export function MercoaButton({
       }
       hover:mercoa-text-blue-700
     `
-    colorOverrideIsEmphasized += `
+      colorOverrideIsEmphasized += `
       mercoa-bg-blue-600
       mercoa-text-white
       mercoa-border-transparent
       hover:mercoa-bg-blue-700
       focus:mercoa-ring-blue-500
     `
-  } else if (color === 'indigo') {
-    colorOverride += `
+    } else if (color === 'indigo') {
+      colorOverride += `
       mercoa-text-indigo-600
       ${
         hideOutline
@@ -194,15 +186,15 @@ export function MercoaButton({
       }
       hover:mercoa-text-indigo-700
     `
-    colorOverrideIsEmphasized += `
+      colorOverrideIsEmphasized += `
       mercoa-bg-indigo-600
       mercoa-text-white
       mercoa-border-transparent
       hover:mercoa-bg-indigo-700
       focus:mercoa-ring-indigo-500
     `
-  } else if (color === 'yellow') {
-    colorOverride += `
+    } else if (color === 'yellow') {
+      colorOverride += `
       mercoa-text-yellow-600
       ${
         hideOutline
@@ -213,15 +205,15 @@ export function MercoaButton({
       }
       hover:mercoa-text-yellow-700
     `
-    colorOverrideIsEmphasized += `
+      colorOverrideIsEmphasized += `
       mercoa-bg-yellow-600
       mercoa-text-white
       mercoa-border-transparent
       hover:mercoa-bg-yellow-700
       focus:mercoa-ring-yellow-500
     `
-  } else if (color === 'gray') {
-    colorOverride += `
+    } else if (color === 'gray') {
+      colorOverride += `
       mercoa-text-gray-600
       ${
         hideOutline
@@ -232,40 +224,43 @@ export function MercoaButton({
       }
       hover:mercoa-text-gray-700
     `
-    colorOverrideIsEmphasized += `
+      colorOverrideIsEmphasized += `
       mercoa-bg-gray-600
       mercoa-text-white
       mercoa-border-transparent
       hover:mercoa-bg-gray-700
       focus:mercoa-ring-gray-500
     `
-  }
+    }
 
-  let classNameFinal = classNameInternal
-  if (color && color !== 'secondary') {
-    classNameFinal = `${classNameInternal} ${isEmphasized ? colorOverrideIsEmphasized : colorOverride}`
-  } else {
-    classNameFinal = `${classNameInternal} ${isEmphasized ? classNameIsEmphasized : classNameIsNotEmphasized}`
-  }
+    let classNameFinal = classNameInternal
+    if (color && color !== 'secondary') {
+      classNameFinal = `${classNameInternal} ${isEmphasized ? colorOverrideIsEmphasized : colorOverride}`
+    } else {
+      classNameFinal = `${classNameInternal} ${isEmphasized ? classNameIsEmphasized : classNameIsNotEmphasized}`
+    }
 
-  const button =
-    props.type === 'link' ? (
-      <a className={`${classNameFinal} ${className ?? ''}`} {...props}>
-        {children}
-      </a>
+    const button =
+      props.type === 'link' ? (
+        <a ref={ref as Ref<HTMLAnchorElement>} className={`${classNameFinal} ${className ?? ''}`} {...props}>
+          {children}
+        </a>
+      ) : (
+        <button ref={ref as Ref<HTMLButtonElement>} className={`${classNameFinal} ${className ?? ''}`} {...props}>
+          {children}
+        </button>
+      )
+    return tooltip ? (
+      <Tooltip title="Please add at least one representative who is a controller" offset={50}>
+        {button}
+      </Tooltip>
     ) : (
-      <button className={`${classNameFinal} ${className ?? ''}`} {...props}>
-        {children}
-      </button>
+      button
     )
-  return tooltip ? (
-    <Tooltip title="Please add at least one representative who is a controller" offset={50}>
-      {button}
-    </Tooltip>
-  ) : (
-    button
-  )
-}
+  },
+)
+
+MercoaButton.displayName = 'MercoaButton'
 
 export function TableOrderHeader({
   orderDirection,
@@ -521,7 +516,7 @@ export function DefaultPaymentMethodIndicator({
       ) : (
         <MercoaButton
           isEmphasized={false}
-          onClick={async (e) => {
+          onClick={async (e: React.MouseEvent) => {
             e.preventDefault()
             e.stopPropagation()
             if (mercoaSession.token && mercoaSession.entity?.id && paymentMethod?.id) {
@@ -678,11 +673,16 @@ export function StatCard({
   title: string
   value: string | number | ReactNode
   icon?: ReactNode
-  size?: 'sm' | 'md'
+  size?: 'xs' | 'sm' | 'md'
 }) {
-  const padding = size === 'sm' ? 'mercoa-px-3 mercoa-py-2' : 'mercoa-px-4 mercoa-py-5 sm:mercoa-p-6'
-  const titleFontSize = size === 'sm' ? 'mercoa-text-xs' : 'mercoa-text-sm'
-  const valueFontSize = size === 'sm' ? 'mercoa-text-md' : 'mercoa-text-3xl'
+  const padding =
+    size === 'xs'
+      ? 'mercoa-px-3 mercoa-py-2'
+      : size === 'sm'
+        ? 'mercoa-px-3 mercoa-py-2'
+        : 'mercoa-px-4 mercoa-py-5 sm:mercoa-p-6'
+  const titleFontSize = size === 'xs' ? 'mercoa-text-xs' : size === 'sm' ? 'mercoa-text-xs' : 'mercoa-text-sm'
+  const valueFontSize = size === 'xs' ? 'mercoa-text-sm' : size === 'sm' ? 'mercoa-text-md' : 'mercoa-text-3xl'
   return (
     <div
       key={title}
@@ -1499,10 +1499,6 @@ export function NoSession({ componentName }: { componentName: string }) {
       for more information.
     </div>
   )
-}
-
-export function removeThousands(_value: any, originalValue: string | number) {
-  return typeof originalValue === 'string' ? Number(originalValue?.replace(/,/g, '')) : originalValue
 }
 
 export function PayablesInlineForm({

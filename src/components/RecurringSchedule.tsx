@@ -111,7 +111,7 @@ export function RecurringSchedule() {
             <input
               type="radio"
               value="specific"
-              checked={repeatOnDay > 1}
+              checked={!!repeatOnDay && repeatOnDay > 1}
               onChange={() => {
                 setValue('paymentSchedule.repeatOnDay', 2)
               }}

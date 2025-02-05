@@ -16,7 +16,6 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import debounce from 'lodash/debounce'
@@ -24,9 +23,11 @@ import Papa from 'papaparse'
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize, constructFullName } from '../lib/lib'
+import { PayableAction } from '../modules/payables/components/payable-form/constants'
 import {
   DebouncedSearch,
   EntityOnboardingForm,
@@ -546,14 +547,12 @@ export function CounterpartySearchBase({
     debouncedSearch(searchTerm)
   }, [searchTerm])
 
-  // Set selected counterparty, required for OCR
   useEffect(() => {
     if (counterparty) {
       setSelectedCounterparty(counterparty)
     }
   }, [counterparty])
 
-  // Get all counterparties
   useEffect(() => {
     if (!mercoaSession.entity?.id) return
     let networkType: Mercoa.CounterpartyNetworkType[] = [Mercoa.CounterpartyNetworkType.Entity]
@@ -819,6 +818,7 @@ function CounterpartyAddOrEditForm({
     setValue,
     formState: { errors, isSubmitting, isSubmitted },
   } = useFormContext()
+  const formAction = watch('formAction')
 
   useEffect(() => {
     if (isSubmitted) {
@@ -1058,9 +1058,10 @@ function CounterpartyAddOrEditForm({
         <MercoaButton
           isEmphasized
           type="submit"
-          className="mercoa-mt-2 mercoa-w-full"
+          className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-center"
           onClick={() => {
             setValue('saveAsStatus', 'COUNTERPARTY')
+            setValue('formAction', PayableAction.CREATE_UPDATE_COUNTERPARTY)
             setTimeout(() => {
               setIsSaving(true)
             }, 100)
@@ -1068,9 +1069,14 @@ function CounterpartyAddOrEditForm({
               setIsSaving(false)
             }, 2000)
           }}
-          disabled={isSubmitting || isSaving}
         >
-          Save
+          <div className="mercoa-w-20 mercoa-h-5 mercoa-flex mercoa-items-center mercoa-justify-center">
+            {formAction === PayableAction.CREATE_UPDATE_COUNTERPARTY ? (
+              <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
+            ) : (
+              'Save'
+            )}
+          </div>
         </MercoaButton>
       )}
     </>

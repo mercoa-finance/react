@@ -36,6 +36,10 @@ export function invertColor(hex: string, bw?: boolean) {
   }
 }
 
+export function removeThousands(_value: any, originalValue: string | number) {
+  return typeof originalValue === 'string' ? Number(originalValue?.replace(/,/g, '')) : originalValue
+}
+
 export function classNames(...classes: any[]) {
   return classes.filter(Boolean).join(' ')
 }
@@ -60,6 +64,7 @@ export const prettyPaymentMethodTypes = {
   bnpl: 'BNPL',
   virtualCard: 'Virtual Card',
   offPlatform: 'Off Platform',
+  utility: 'Utility',
 }
 
 export const prettyBusinessTypes = {
@@ -75,7 +80,35 @@ export const prettyBusinessTypes = {
 }
 
 export function getEndpoint() {
+  if (typeof window !== 'undefined' && window && window.location && window.location.href) {
+    if (window.location.href.includes('staging.mercoa.com')) {
+      return 'https://api.staging.mercoa.com'
+    } else if (
+      window &&
+      window.location &&
+      window.location.href &&
+      (window.location.href.includes('localhost') || window.location.href.includes('ngrok'))
+    ) {
+      if (process.env.NEXT_PUBLIC_ENABLE_HTTPS) {
+        return 'https://api-mercoa.ngrok.io'
+      }
+      return 'http://localhost:8080'
+    }
+  }
   return 'https://api.mercoa.com'
+}
+
+export function circularReplacer() {
+  const seen = new WeakSet()
+  return (key: any, value: any) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return
+      }
+      seen.add(value)
+    }
+    return value
+  }
 }
 
 export function setStyle({ colorScheme }: { colorScheme?: Mercoa.ColorSchemeResponse }) {
