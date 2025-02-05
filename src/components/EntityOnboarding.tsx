@@ -2661,11 +2661,15 @@ export function EntityOnboarding({
       : mercoaSession?.organization?.payorOnboardingOptions)
 
   useEffect(() => {
-    if (!mercoaSession.client || !entityId) return
-    mercoaSession.client.entity.get(entityId).then((resp) => {
-      setEntity(resp)
-    })
-  }, [mercoaSession.client, entityId, mercoaSession.refreshId])
+    if (!mercoaSession.client) return
+    if (entityId) {
+      mercoaSession.client.entity.get(entityId).then((resp) => {
+        setEntity(resp)
+      })
+    } else if (mercoaSession.entity) {
+      setEntity(mercoaSession.entity)
+    }
+  }, [mercoaSession.client, entityId, mercoaSession.refreshId, mercoaSession.entity])
 
   useEffect(() => {
     if (!mercoaSession.organization) return
