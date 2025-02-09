@@ -55,50 +55,100 @@ export function currencyCodeToSymbol(code?: string | Mercoa.CurrencyCode) {
   if (!code) return '$'
   code = code.trim()
   switch (code) {
-    case 'USD' || 'Usd' || Mercoa.CurrencyCode.Usd:
-    case 'CAD' || 'Cad' || Mercoa.CurrencyCode.Cad: // Need to do this for all symbols
-    case 'AUD' || 'Aud' || Mercoa.CurrencyCode.Aud:
-    case 'HKD' || 'Hkd' || Mercoa.CurrencyCode.Hkd:
+    case 'USD':
+    case 'Usd':
+    case Mercoa.CurrencyCode.Usd:
+    case 'CAD':
+    case 'Cad':
+    case Mercoa.CurrencyCode.Cad:
+    case 'AUD':
+    case 'Aud':
+    case Mercoa.CurrencyCode.Aud:
+    case 'HKD':
+    case 'Hkd':
+    case Mercoa.CurrencyCode.Hkd:
       return '$'
-    case 'EUR' || 'Eur' || Mercoa.CurrencyCode.Eur:
+    case 'EUR':
+    case 'Eur':
+    case Mercoa.CurrencyCode.Eur:
       return '€'
-    case 'GBP' || 'Gbp' || Mercoa.CurrencyCode.Gbp:
+    case 'GBP':
+    case 'Gbp':
+    case Mercoa.CurrencyCode.Gbp:
       return '£'
-    case 'JPY' || 'Jpy' || Mercoa.CurrencyCode.Jpy:
+    case 'JPY':
+    case 'Jpy':
+    case Mercoa.CurrencyCode.Jpy:
       return '¥'
-    case 'INR' || 'Inr' || Mercoa.CurrencyCode.Inr:
+    case 'INR':
+    case 'Inr':
+    case Mercoa.CurrencyCode.Inr:
       return '₹'
-    case 'RUB' || 'Rub' || Mercoa.CurrencyCode.Rub:
+    case 'RUB':
+    case 'Rub':
+    case Mercoa.CurrencyCode.Rub:
       return '₽'
-    case 'KRW' || 'Krw' || Mercoa.CurrencyCode.Krw:
+    case 'KRW':
+    case 'Krw':
+    case Mercoa.CurrencyCode.Krw:
       return '₩'
-    case 'ILS' || 'Ils' || Mercoa.CurrencyCode.Ils:
+    case 'ILS':
+    case 'Ils':
+    case Mercoa.CurrencyCode.Ils:
       return '₪'
-    case 'VND' || 'Vnd' || Mercoa.CurrencyCode.Vnd:
+    case 'VND':
+    case 'Vnd':
+    case Mercoa.CurrencyCode.Vnd:
       return '₫'
-    case 'LAK' || 'Lak' || Mercoa.CurrencyCode.Lak:
+    case 'LAK':
+    case 'Lak':
+    case Mercoa.CurrencyCode.Lak:
       return '₭'
-    case 'MNT' || 'Mnt' || Mercoa.CurrencyCode.Mnt:
+    case 'MNT':
+    case 'Mnt':
+    case Mercoa.CurrencyCode.Mnt:
       return '₮'
-    case 'PHP' || 'Php' || Mercoa.CurrencyCode.Php:
+    case 'PHP':
+    case 'Php':
+    case Mercoa.CurrencyCode.Php:
       return '₱'
-    case 'PYG' || 'Pyg' || Mercoa.CurrencyCode.Pyg:
+    case 'PYG':
+    case 'Pyg':
+    case Mercoa.CurrencyCode.Pyg:
       return '₲'
-    case 'UAH' || 'Uah' || Mercoa.CurrencyCode.Uah:
+    case 'UAH':
+    case 'Uah':
+    case Mercoa.CurrencyCode.Uah:
       return '₴'
-    case 'TRY' || 'Try' || Mercoa.CurrencyCode.Try:
+    case 'TRY':
+    case 'Try':
+    case Mercoa.CurrencyCode.Try:
       return '₺'
-    case 'AZN' || 'Azn' || Mercoa.CurrencyCode.Azn:
+    case 'AZN':
+    case 'Azn':
+    case Mercoa.CurrencyCode.Azn:
       return '₼'
-    case 'GEL' || 'Gel' || Mercoa.CurrencyCode.Gel:
+    case 'GEL':
+    case 'Gel':
+    case Mercoa.CurrencyCode.Gel:
       return '₾'
-    case 'IRR' || 'Irr' || Mercoa.CurrencyCode.Irr:
+    case 'IRR':
+    case 'Irr':
+    case Mercoa.CurrencyCode.Irr:
       return '﷼'
-    case 'CHF' || 'Chf' || Mercoa.CurrencyCode.Chf:
+    case 'CHF':
+    case 'Chf':
+    case Mercoa.CurrencyCode.Chf:
       return 'Fr.'
-    case 'DKK' || 'Dkk' || Mercoa.CurrencyCode.Dkk:
-    case 'SEK' || 'Sek' || Mercoa.CurrencyCode.Sek:
-    case 'NOK' || 'Nok' || Mercoa.CurrencyCode.Nok:
+    case 'DKK':
+    case 'Dkk':
+    case Mercoa.CurrencyCode.Dkk:
+    case 'SEK':
+    case 'Sek':
+    case Mercoa.CurrencyCode.Sek:
+    case 'NOK':
+    case 'Nok':
+    case Mercoa.CurrencyCode.Nok:
       return 'kr.'
     default:
       return code

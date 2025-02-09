@@ -374,7 +374,7 @@ export function EntityUsersTable({
                 {!readOnly && (
                   <div className="mercoa-flex mercoa-gap-3">
                     <button
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         e.preventDefault()
                         e.stopPropagation()
                         setSelectedUser(user)
@@ -384,7 +384,7 @@ export function EntityUsersTable({
                     </button>
 
                     <button
-                      onClick={(e) => {
+                      onClick={(e: React.MouseEvent) => {
                         e.preventDefault()
                         e.stopPropagation()
                         if (openNotificationPreferences && mercoaSession.entity?.id && user.id) {

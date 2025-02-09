@@ -1,8 +1,8 @@
-import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import QRCode from 'react-qr-code'
+import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { LoadingSpinnerIcon, useMercoaSession } from './index'
 
@@ -39,7 +39,8 @@ export function ReceivablePaymentPdf({
   const logo =
     invoice.vendor?.logo ??
     mercoaSession.organization?.logoUrl ??
-    'https://storage.googleapis.com/mercoa-partner-logos/mercoa-logo.png'
+    'https://1000logos.net/wp-content/uploads/2021/04/ACME-logo.png'
+  // 'https://storage.googleapis.com/mercoa-partner-logos/mercoa-logo.png'
 
   const invoiceHeader = (
     <div className="mercoa-flex mercoa-justify-between mercoa-mt-10">
@@ -163,6 +164,7 @@ export function ReceivablePaymentPdf({
   )
 }
 
+// NOTE: \u2014 is an em dash character
 function LineItems({ lineItems }: { lineItems: Mercoa.InvoiceLineItemResponse[] }) {
   return (
     <div className="mercoa-mt-10">
@@ -184,12 +186,32 @@ function LineItems({ lineItems }: { lineItems: Mercoa.InvoiceLineItemResponse[] 
             <p className="mercoa-text-md mercoa-font-medium mercoa-text-gray-900">{lineItem.name}</p>
             <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-500">{lineItem.description}</p>
           </div>
-          <div className="mercoa-text-gray-700 mercoa-text-right">{lineItem.quantity}</div>
+          <div className="mercoa-text-gray-700 mercoa-text-right">{lineItem.quantity ?? '\u2014'}</div>
           <div className="mercoa-text-gray-700 mercoa-text-right">
-            {accounting.formatMoney(lineItem.unitPrice ?? 0, currencyCodeToSymbol(lineItem.currency))}
+            {lineItem.unitPrice !== undefined
+              ? accounting.formatMoney(lineItem.unitPrice, {
+                  symbol: currencyCodeToSymbol(lineItem.currency),
+                  precision: 2,
+                  format: {
+                    pos: '%s%v',
+                    neg: '-%s%v',
+                    zero: '%s%v',
+                  },
+                })
+              : '\u2014'}
           </div>
           <div className="mercoa-text-gray-800 mercoa-font-bold mercoa-text-right">
-            {accounting.formatMoney(lineItem.amount ?? 0, currencyCodeToSymbol(lineItem.currency))}
+            {lineItem.amount !== undefined
+              ? accounting.formatMoney(lineItem.amount, {
+                  symbol: currencyCodeToSymbol(lineItem.currency),
+                  precision: 2,
+                  format: {
+                    pos: '%s%v',
+                    neg: '-%s%v',
+                    zero: '%s%v',
+                  },
+                })
+              : '\u2014'}
           </div>
         </div>
       ))}

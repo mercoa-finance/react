@@ -11,49 +11,56 @@ export function EntityDetails({ children }: { children: Function }) {
   if (children) return children({ entity: mercoaSession.entity, organization: mercoaSession.organization })
 }
 
-export function EntityStatus({ entity }: { entity?: Mercoa.EntityResponse }) {
+export function EntityStatus({
+  entity,
+  showTooltip = true,
+}: {
+  entity?: Mercoa.EntityResponse
+  showTooltip?: boolean
+}) {
   const mercoaSession = useMercoaSession()
   entity = entity || mercoaSession.entity
   if (!entity) {
     if (!mercoaSession.client && !entity) return <NoSession componentName="EntityStatus" />
     return <></>
   }
-  return (
-    <>
-      {entity.status === 'unverified' && (
-        /* @ts-ignore:next-line */
-        <Tooltip title="Can only receive funds">
-          <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-indigo-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-indigo-800">
-            Unverified
-          </span>
-        </Tooltip>
-      )}
-      {entity.status === 'verified' && (
-        /* @ts-ignore:next-line */
-        <Tooltip title="Can send and receive funds">
-          <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-green-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-green-800">
-            Verified
-          </span>
-        </Tooltip>
-      )}
-      {(entity.status === 'pending' || entity.status === 'review') && (
-        /* @ts-ignore:next-line */
-        <Tooltip title="Can only receive funds">
-          <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-yellow-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-yellow-800">
-            Pending
-          </span>
-        </Tooltip>
-      )}
-      {(entity.status === 'resubmit' || entity.status === 'failed') && (
-        /* @ts-ignore:next-line */
-        <Tooltip title="Can only receive funds">
-          <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-red-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-red-800">
-            VERIFICATION FAILED
-          </span>
-        </Tooltip>
-      )}
-    </>
-  )
+  let title = '',
+    color = '',
+    content = ''
+  if (entity.status === 'unverified')
+    (title = 'Can only receive funds'),
+      (color = 'mercoa-bg-indigo-100 mercoa-text-indigo-800'),
+      (content = 'Unverified')
+  if (entity.status === 'verified')
+    (title = 'Can send and receive funds'),
+      (color = 'mercoa-bg-green-100 mercoa-text-green-800'),
+      (content = 'Verified')
+  if (entity.status === 'pending')
+    (title = 'Can only receive funds'), (color = 'mercoa-bg-yellow-100 mercoa-text-yellow-800'), (content = 'Pending')
+  if (entity.status === 'resubmit')
+    (title = 'Can only receive funds'), (color = 'mercoa-bg-red-100 mercoa-text-red-800'), (content = 'Resubmit')
+  if (entity.status === 'failed')
+    (title = 'Can only receive funds'), (color = 'mercoa-bg-red-100 mercoa-text-red-800'), (content = 'Failed')
+
+  if (showTooltip) {
+    return (
+      <Tooltip title={title}>
+        <span
+          className={`mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium ${color}`}
+        >
+          {content}
+        </span>
+      </Tooltip>
+    )
+  } else {
+    return (
+      <span
+        className={`mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium ${color}`}
+      >
+        {content}
+      </span>
+    )
+  }
 }
 
 export function EntityInboxEmail({ layout, theme }: { layout?: 'left' | 'right'; theme?: 'light' | 'dark' }) {

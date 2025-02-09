@@ -1,5 +1,7 @@
 import { Mercoa } from '@mercoa/javascript'
 
+export * from '../modules/counterparties'
+export * from '../modules/payables'
 export * from './ApprovalPolicy'
 export * from './BankAccounts'
 export * from './Card'

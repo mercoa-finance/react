@@ -6,12 +6,16 @@
     "plugin:react-hooks/recommended",
     "plugin:jsx-a11y/recommended",
     "plugin:react/jsx-runtime",
-    "prettier"
+    "prettier",
   ],
   "settings": {
     "react": {
-      "version": "detect"
-    }
+      "version": "detect",
+    },
   },
-  "parser": "@typescript-eslint/parser"
+  "parser": "@typescript-eslint/parser",
+  "rules": {
+    "react/prop-types": "off",
+    "@typescript-eslint/ban-ts-comment": "off"
+  },
 }
