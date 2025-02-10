@@ -341,10 +341,11 @@ export const usePayableDetails = ({
     control,
     name: 'lineItems',
   })
-  const lineItems2 = watch('lineItems') as Mercoa.InvoiceLineItemUpdateRequest[]
 
   const [
     amount,
+    taxAmount,
+    shippingAmount,
     description,
     deductionDate,
     invoiceNumber,
@@ -378,6 +379,8 @@ export const usePayableDetails = ({
     //@ts-ignore
   ] = watch([
     'amount',
+    'taxAmount',
+    'shippingAmount',
     'description',
     'deductionDate',
     'invoiceNumber',
@@ -1465,27 +1468,6 @@ export const usePayableDetails = ({
     },
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleUpdateTotalAmount = () => {
-    let amount = new Big(0)
-    //@ts-ignore
-    lineItems?.forEach((lineItem, index) => {
-      if (typeof lineItem.amount === 'string' && (!lineItem.category || lineItem.category === 'EXPENSE')) {
-        const cleanedAmount = (lineItem.amount as unknown as string).replace(/,/g, '')
-        const parsedAmount = Number(cleanedAmount)
-        if (!isNaN(parsedAmount)) {
-          lineItem.amount = parsedAmount
-        }
-      }
-      if (!isNaN(Number(lineItem.amount))) {
-        amount = amount.add(Number(lineItem.amount))
-      }
-    })
-    clearErrors('amount')
-    setValue('amount', amount.toNumber())
-    setFocus('amount')
-  }
-
   const addItem = () => {
     append({
       id: `li-${Math.random()}`,
@@ -1592,14 +1574,80 @@ export const usePayableDetails = ({
     return availableTypes
   }
 
+  const handleUpdateTotalAmount = useCallback(() => {
+    if (!lineItems?.length) return
+    //@ts-ignore
+    const total = lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0)
+    const calculatedTotal = total + (taxAmount ?? 0) + (shippingAmount ?? 0)
+    if (calculatedTotal !== amount) {
+      let amount = new Big(0)
+      //@ts-ignore
+      lineItems?.forEach((lineItem, index) => {
+        if (typeof lineItem.amount === 'string' && (!lineItem.category || lineItem.category === 'EXPENSE')) {
+          const cleanedAmount = (lineItem.amount as unknown as string).replace(/,/g, '')
+          const parsedAmount = Number(cleanedAmount)
+          if (!isNaN(parsedAmount)) {
+            lineItem.amount = parsedAmount
+          }
+        }
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(lineItems), amount, taxAmount, shippingAmount])
+
   useEffect(() => {
     if (!lineItems?.length) return
     //@ts-ignore
     const total = lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0)
-    if (total !== amount) {
-      handleUpdateTotalAmount()
+    const calculatedTotal = total + (taxAmount ?? 0) + (shippingAmount ?? 0)
+    if (calculatedTotal !== amount) {
+      let amount = new Big(0)
+      //@ts-ignore
+      lineItems?.forEach((lineItem, index) => {
+        if (typeof lineItem.amount === 'string' && (!lineItem.category || lineItem.category === 'EXPENSE')) {
+          const cleanedAmount = (lineItem.amount as unknown as string).replace(/,/g, '')
+          const parsedAmount = Number(cleanedAmount)
+          if (!isNaN(parsedAmount)) {
+            lineItem.amount = parsedAmount
+          }
+        }
+        if (!isNaN(Number(lineItem.amount))) {
+          amount = amount.add(Number(lineItem.amount))
+        }
+      })
+
+      if (taxAmount) {
+        if (typeof taxAmount === 'string') {
+          //@ts-ignore
+          const cleanedTaxAmount = taxAmount.replace(/,/g, '')
+          const parsedTaxAmount = Number(cleanedTaxAmount)
+          if (!isNaN(parsedTaxAmount)) {
+            amount = amount.add(parsedTaxAmount)
+          }
+        } else if (!isNaN(Number(taxAmount))) {
+          amount = amount.add(Number(taxAmount))
+        }
+      }
+
+      if (shippingAmount) {
+        if (typeof shippingAmount === 'string') {
+          //@ts-ignore
+          const cleanedShippingAmount = shippingAmount.replace(/,/g, '')
+          const parsedShippingAmount = Number(cleanedShippingAmount)
+          if (!isNaN(parsedShippingAmount)) {
+            amount = amount.add(parsedShippingAmount)
+          }
+        } else if (!isNaN(Number(shippingAmount))) {
+          amount = amount.add(Number(shippingAmount))
+        }
+      }
+
+      clearErrors('amount')
+      setValue('amount', amount.toNumber())
+      setFocus('amount')
     }
-  }, [lineItems, amount, handleUpdateTotalAmount])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(lineItems), amount, taxAmount, shippingAmount, clearErrors, setValue, setFocus])
 
   const overviewContext: PayableOverviewContext = {
     currency,
