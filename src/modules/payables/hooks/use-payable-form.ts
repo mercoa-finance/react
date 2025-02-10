@@ -81,7 +81,7 @@ export interface UsePayableDetailsProps {
   toast: any
 }
 
-export const counterpartyYupValidation = {
+const counterpartyYupValidation = {
   id: yup.string().nullable(),
   name: yup.string().typeError('Please enter a name'),
   email: yup.string().email('Please enter a valid email'),
