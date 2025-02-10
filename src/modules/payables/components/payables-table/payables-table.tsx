@@ -390,9 +390,7 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
                             ? 'mercoa-bg-red-100 mercoa-text-red-800'
                             : ''
                         } ${
-                          approver.action === Mercoa.ApproverAction.None
-                            ? 'mercoa-bg-gray-50 mercoa-text-gray-800'
-                            : ''
+                          approver.action === Mercoa.ApproverAction.None ? 'mercoa-bg-gray-50 mercoa-text-gray-800' : ''
                         } mercoa-py-1 mercoa-px-2`}
                       >
                         {user?.name}
@@ -690,9 +688,37 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
                         className={cn(
                           'hover:mercoa-bg-gray-100 mercoa-cursor-pointer mercoa-relative mercoa-font-bold mercoa-border-r mercoa-whitespace-nowrap mercoa-text-left mercoa-px-4 mercoa-py-2 mercoa-text-gray-500  mercoa-text-xs mercoa-leading-4 mercoa-font-Inter  mercoa-border-gray-200 last:mercoa-border-r-0 mercoa-h-[32px]',
                           classNames?.table?.th,
+                          header.id === 'action' && 'mercoa-sticky-right',
+                          header.id === 'vendor' && 'mercoa-sticky-left',
+                          header.id === 'select' && 'mercoa-sticky-left',
                         )}
                         style={{
                           width: `calc(var(--header-${header.id}-size) * 1px)`,
+                          ...(header.id === 'action' && {
+                            position: 'sticky',
+                            right: 0,
+                            width: '50px',
+                            backgroundColor: 'white', // To ensure content doesn't show through
+                            zIndex: 1,
+                            boxShadow: '-1px 0 0 0 #e5e7eb',
+                            border: '1px solid #e5e7eb',
+                          }),
+                          ...(header.id === 'select' && {
+                            position: 'sticky',
+                            left: 0,
+                            backgroundColor: 'white',
+                            zIndex: 1,
+                            boxShadow: '1px 0 0 0 #e5e7eb',
+                            border: '1px solid #e5e7eb',
+                          }),
+                          ...(header.id === 'vendor' && {
+                            position: 'sticky',
+                            left: '50px', // After select column
+                            backgroundColor: 'white',
+                            zIndex: 1,
+                            borderRight: '1px solid #e5e7eb',
+                            boxShadow: '-1px 0 0 0 #e5e7eb',
+                          }),
                         }}
                       >
                         {flexRender(header.column.columnDef.header, header.getContext())}
@@ -741,11 +767,39 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
                         }}
                         style={{
                           width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
+                          ...(cell.column.id === 'action' && {
+                            position: 'sticky',
+                            width: '50px',
+                            right: 0,
+                            backgroundColor: 'white', // To ensure content doesn't show through
+                            zIndex: 1,
+                            borderLeft: '1px solid #e5e7eb',
+                            boxShadow: '1px 0 0 0 #e5e7eb',
+                          }),
+                          ...(cell.column.id === 'select' && {
+                            position: 'sticky',
+                            left: 0,
+                            backgroundColor: 'white',
+                            zIndex: 1,
+                            borderRight: '1px solid #e5e7eb',
+                            boxShadow: '-1px 0 0 0 #e5e7eb',
+                          }),
+                          ...(cell.column.id === 'vendor' && {
+                            position: 'sticky',
+                            left: '50px', // After select column
+                            backgroundColor: 'white',
+                            zIndex: 1,
+                            borderRight: '1px solid #e5e7eb',
+                            boxShadow: '-1px 0 0 0 #e5e7eb',
+                          }),
                         }}
                         key={cell.id}
                         className={cn(
-                          'mercoa-whitespace-nowrap mercoa-border-r mercoa-px-4 mercoa-text-gray-800 mercoa-text-sm  mercoa-border-gray-200 last:mercoa-border-r-0 mercoa-h-[48px] mercoa-align-middle',
+                          'mercoa-whitespace-nowrap mercoa-border-r mercoa-px-4 mercoa-text-gray-800 mercoa-text-sm  mercoa-border-gray-200  mercoa-h-[48px] mercoa-align-middle',
                           classNames?.table?.td,
+                          cell.column.id === 'action' && 'mercoa-sticky-right',
+                          cell.column.id === 'select' && 'mercoa-sticky-left',
+                          cell.column.id === 'vendor' && 'mercoa-sticky-left',
                         )}
                       >
                         <CellRenderer cell={cell} />
@@ -820,109 +874,109 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
           }}
         />
         {activeInvoiceAction?.action === PayableAction.Approve && (
-        <ApproveBillsDialog
-          open={activeInvoiceAction?.action === PayableAction.Approve}
-          setOpen={(_open) => {
-            if (!_open) {
-              setActiveInvoiceAction(null)
-            }
-          }}
-          onConfirm={() => {
-            if (activeInvoiceAction?.invoiceId) {
-              if (activeInvoiceAction.mode === 'single') {
-                approvePayable(
-                  {
-                    invoiceId: activeInvoiceAction.invoiceId as string,
-                    invoiceType: 'invoice',
-                  },
-                  {
-                    onSuccess: () => {
-                      setActiveInvoiceAction(null)
-                      toast.success('Invoice approved successfully')
-                    },
-                    onError: (error) => {
-                      setActiveInvoiceAction(null)
-                      toast.error(error.message)
-                    },
-                  },
-                )
-              } else {
-                bulkApprovePayables(
-                  {
-                    invoiceIds: activeInvoiceAction.invoiceId as string[],
-                    invoiceType: 'invoice',
-                  },
-                  {
-                    onSuccess: () => {
-                      setActiveInvoiceAction(null)
-                      setSelectedInvoiceIds([])
-                      toast.success('Invoices approved successfully')
-                    },
-                    onError: (error) => {
-                      setActiveInvoiceAction(null)
-                      toast.error(error.message)
-                    },
-                  },
-                )
+          <ApproveBillsDialog
+            open={activeInvoiceAction?.action === PayableAction.Approve}
+            setOpen={(_open) => {
+              if (!_open) {
+                setActiveInvoiceAction(null)
               }
-            }
-          }}
-          onCancel={() => {
-            setActiveInvoiceAction(null)
-          }}
-          isLoading={activeInvoiceAction?.mode === 'single' ? isApprovePayableLoading : isBulkApprovePayablesLoading}
-          billsCount={Array.isArray(activeInvoiceAction?.invoiceId) ? activeInvoiceAction.invoiceId.length : 1}
+            }}
+            onConfirm={() => {
+              if (activeInvoiceAction?.invoiceId) {
+                if (activeInvoiceAction.mode === 'single') {
+                  approvePayable(
+                    {
+                      invoiceId: activeInvoiceAction.invoiceId as string,
+                      invoiceType: 'invoice',
+                    },
+                    {
+                      onSuccess: () => {
+                        setActiveInvoiceAction(null)
+                        toast.success('Invoice approved successfully')
+                      },
+                      onError: (error) => {
+                        setActiveInvoiceAction(null)
+                        toast.error(error.message)
+                      },
+                    },
+                  )
+                } else {
+                  bulkApprovePayables(
+                    {
+                      invoiceIds: activeInvoiceAction.invoiceId as string[],
+                      invoiceType: 'invoice',
+                    },
+                    {
+                      onSuccess: () => {
+                        setActiveInvoiceAction(null)
+                        setSelectedInvoiceIds([])
+                        toast.success('Invoices approved successfully')
+                      },
+                      onError: (error) => {
+                        setActiveInvoiceAction(null)
+                        toast.error(error.message)
+                      },
+                    },
+                  )
+                }
+              }
+            }}
+            onCancel={() => {
+              setActiveInvoiceAction(null)
+            }}
+            isLoading={activeInvoiceAction?.mode === 'single' ? isApprovePayableLoading : isBulkApprovePayablesLoading}
+            billsCount={Array.isArray(activeInvoiceAction?.invoiceId) ? activeInvoiceAction.invoiceId.length : 1}
           />
         )}
         {activeInvoiceAction?.action === PayableAction.SchedulePayment && (
           <EditPaymentDateDialog
             open={activeInvoiceAction?.action === PayableAction.SchedulePayment}
-          setOpen={(_open) => {
-            if (!_open) {
-              setActiveInvoiceAction(null)
-            }
-          }}
-          onConfirm={(date) => {
-            if (activeInvoiceAction?.invoiceId) {
-              if (activeInvoiceAction.mode === 'single') {
-                schedulePayment(
-                  {
-                    invoice: data.find((d) => d.id === activeInvoiceAction.invoiceId)?.invoice!,
-                    deductionDate: date,
-                  },
-                  {
-                    onSuccess: () => {
-                      setActiveInvoiceAction(null)
-                      toast.success('Invoice scheduled successfully')
-                    },
-                    onError: (error) => {
-                      setActiveInvoiceAction(null)
-                      toast.error(error.message)
-                    },
-                  },
-                )
-              } else {
-                bulkSchedulePayment(
-                  {
-                    invoiceIds: activeInvoiceAction.invoiceId as string[],
-                    invoices: data.filter((d) => activeInvoiceAction.invoiceId.includes(d.id)).map((d) => d.invoice!),
-                    deductionDate: date,
-                  },
-                  {
-                    onSuccess: () => {
-                      setActiveInvoiceAction(null)
-                      setSelectedInvoiceIds([])
-                    },
-                    onError: (error) => {
-                      setActiveInvoiceAction(null)
-                      setSelectedInvoiceIds([])
-                    },
-                  },
-                )
+            setOpen={(_open) => {
+              if (!_open) {
+                setActiveInvoiceAction(null)
               }
-            }
-          }}
-          isLoading={activeInvoiceAction?.mode === 'single' ? isSchedulePaymentLoading : isBulkSchedulePaymentLoading}
+            }}
+            onConfirm={(date) => {
+              if (activeInvoiceAction?.invoiceId) {
+                if (activeInvoiceAction.mode === 'single') {
+                  schedulePayment(
+                    {
+                      invoice: data.find((d) => d.id === activeInvoiceAction.invoiceId)?.invoice!,
+                      deductionDate: date,
+                    },
+                    {
+                      onSuccess: () => {
+                        setActiveInvoiceAction(null)
+                        toast.success('Invoice scheduled successfully')
+                      },
+                      onError: (error) => {
+                        setActiveInvoiceAction(null)
+                        toast.error(error.message)
+                      },
+                    },
+                  )
+                } else {
+                  bulkSchedulePayment(
+                    {
+                      invoiceIds: activeInvoiceAction.invoiceId as string[],
+                      invoices: data.filter((d) => activeInvoiceAction.invoiceId.includes(d.id)).map((d) => d.invoice!),
+                      deductionDate: date,
+                    },
+                    {
+                      onSuccess: () => {
+                        setActiveInvoiceAction(null)
+                        setSelectedInvoiceIds([])
+                      },
+                      onError: (error) => {
+                        setActiveInvoiceAction(null)
+                        setSelectedInvoiceIds([])
+                      },
+                    },
+                  )
+                }
+              }
+            }}
+            isLoading={activeInvoiceAction?.mode === 'single' ? isSchedulePaymentLoading : isBulkSchedulePaymentLoading}
             numberOfBills={Array.isArray(activeInvoiceAction?.invoiceId) ? activeInvoiceAction.invoiceId.length : 1}
           />
         )}

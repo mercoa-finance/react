@@ -25,7 +25,7 @@ export const TableActionDropdown: FC<TableActionDropdownProps> = ({ validActions
       open={open}
       onOpenChange={setOpen}
       align="end"
-      sideOffset={12}
+      alignOffset={400}
       trigger={
         trigger ? (
           trigger
@@ -41,7 +41,7 @@ export const TableActionDropdown: FC<TableActionDropdownProps> = ({ validActions
         )
       }
     >
-      <div className="mercoa-flex mercoa-flex-col mercoa-w-[12rem] mercoa-bg-white mercoa-text-[#1A1919] mercoa-shadow-[rgba(0,0,0,0.15)_1px_4px_8px_0px,rgba(0,0,0,0.1)_2px_12px_24px_0px,rgba(163,157,153,0.2)_0px_0px_0px_1px]">
+      <div className="mercoa-translate-x-[-15px] mercoa-flex mercoa-flex-col mercoa-w-[12rem] mercoa-bg-white mercoa-text-[#1A1919] mercoa-shadow-[rgba(0,0,0,0.15)_1px_4px_8px_0px,rgba(0,0,0,0.1)_2px_12px_24px_0px,rgba(163,157,153,0.2)_0px_0px_0px_1px]">
         {tableActions.map((action, index) => (
           <div
             key={index}
