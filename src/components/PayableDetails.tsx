@@ -24,7 +24,6 @@ import {
 } from '@heroicons/react/24/outline'
 import { PhotoIcon } from '@heroicons/react/24/solid'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Mercoa } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import accounting from 'accounting'
 import Big from 'big.js'
@@ -49,9 +48,10 @@ import {
 } from 'react-hook-form'
 import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { classNames } from '../lib/lib'
+import { classNames, removeThousands } from '../lib/lib'
 import { isSupportedScheduleDate, isWeekday } from '../lib/scheduling'
 import {
   AddBankAccountForm,
@@ -80,10 +80,10 @@ import {
   createCounterpartyRequest,
   inputClassName,
   onSubmitCounterparty,
-  removeThousands,
   useDebounce,
   useMercoaSession,
 } from './index'
+import { FinanceWithOatfi } from './Oatfi'
 import { RecurringSchedule } from './RecurringSchedule'
 dayjs.extend(utc)
 dayjs.extend(minMax)
@@ -724,7 +724,7 @@ export function PayableForm({
   useEffect(() => {
     if (!invoice?.ocrJobId) return
     if (!(invoice?.status === Mercoa.InvoiceStatus.Draft || invoice?.status === Mercoa.InvoiceStatus.Unassigned)) return
-    if (invoice.vendor) return
+    if (invoice.vendor) return // only merge if vendor is not found
     mercoaSession.client?.ocr.getAsyncOcr(invoice.ocrJobId).then((resp) => {
       mercoaSession.debug({ ocrJob: resp.data })
       if (resp.data) {
@@ -1491,6 +1491,7 @@ export function PayableForm({
             : toast.error('There was an error updating the invoice')
         }
       } catch (e: any) {
+        console.log('error', e)
         // if the previous state was draft, we might need to refresh to get new approval rules
         if (invoiceDataFinal.status === Mercoa.InvoiceStatus.New && !postAction) {
           invoiceDataFinal.status = Mercoa.InvoiceStatus.Draft
@@ -1500,6 +1501,7 @@ export function PayableForm({
             refreshInvoice(resp.id)
           } else {
             console.error(e)
+
             console.error(e.body)
             renderCustom?.toast
               ? renderCustom?.toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
@@ -3618,6 +3620,19 @@ export function PayableSelectPaymentMethod({
                 </div>
               ))}
           </div>
+          {isSource && enableBNPL && (
+            <>
+              {showBNPL ? (
+                <FinanceWithOatfi paymentMethods={paymentMethods} setShowBNPL={setShowBNPL} />
+              ) : (
+                <div className="mercoa-flex mercoa-items-center mercoa-justify-end mercoa-mt-1">
+                  <MercoaButton isEmphasized={false} onClick={() => setShowBNPL(true)} size="sm">
+                    Extend payment terms
+                  </MercoaButton>
+                </div>
+              )}
+            </>
+          )}
           {isDestination && !disableCreation && !readOnly && vendorId && backupDisbursement && (
             <>
               <div className="mercoa-col-span-full mercoa-mt-1">

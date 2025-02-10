@@ -1,12 +1,14 @@
 # Define variables
-COMPONENTS_DIR := ./src/components
-ORIGINAL_DIR := ../core/components/@mercoa/react/src/components
-FILES := $(shell find $(COMPONENTS_DIR) -type f)
+REACT_SRC_DIR := ./src
+CORE_SRC_DIR := ../core/components/@mercoa/react/src
+FILES = $(shell find $(REACT_SRC_DIR) -type f)
 
 # Copy Components
 copy_components:
 	@echo "Copying Components..."
-	rsync -av $(ORIGINAL_DIR) ./src/
+	rsync -av $(CORE_SRC_DIR)/components ./src/
+	rsync -av $(CORE_SRC_DIR)/modules ./src/
+	rsync -av $(CORE_SRC_DIR)/lib ./src/
 
 ## rsync -av --exclude='Mercoa.tsx' $(ORIGINAL_DIR) ./src/
 
@@ -34,6 +36,9 @@ prettier:
 		npm run prettier
 
 # Define phony targets
-.PHONY: replace_string
+.PHONY: replace_string copy_components prettier
 
 sync: copy_components replace_import prettier
+
+
+

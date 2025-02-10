@@ -27,7 +27,7 @@ import {
   useMercoaSession,
 } from './index'
 
-function invoiceStatusToName({
+export function invoiceStatusToName({
   status,
   approvalPolicies,
   excludePayables,

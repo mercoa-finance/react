@@ -7,10 +7,10 @@ import {
   MapPinIcon,
   PrinterIcon,
 } from '@heroicons/react/24/outline'
-import { Mercoa } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import {
   AddBankAccountButton,
@@ -48,7 +48,7 @@ export function ReceivablePaymentPortal({
 
   return (
     <div className="mercoa-min-h-full">
-      <div className="mercoa-h-28 mercoa-flex mercoa-flex-col">
+      <div className="mercoa-h-28 mercoa-flex mercoa-items-center">
         <img src={logo} alt="logo" width={150} className=" mercoa-object-contain mercoa-min-h-0" />
       </div>
       {complete ? (
@@ -234,7 +234,9 @@ function MainCard({
       icon: <CreditCardIcon className="mercoa-size-5" />,
       text: 'Card',
     },
-  ].filter((method) => mercoaSession.organization?.paymentMethods?.payerPayments?.find((pm) => pm.type === method.type))
+  ].filter((method) =>
+    mercoaSession.organization?.paymentMethods?.payerPayments?.find((pm) => pm.type === method.type && pm.active),
+  )
 
   return (
     <div className="mercoa-shadow-sm mercoa-bg-white mercoa-rounded-mercoa mercoa-px-5 mercoa-py-6 mercoa-border mercoa-border-gray-300">

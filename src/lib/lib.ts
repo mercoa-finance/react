@@ -36,6 +36,10 @@ export function invertColor(hex: string, bw?: boolean) {
   }
 }
 
+export function removeThousands(_value: any, originalValue: string | number) {
+  return typeof originalValue === 'string' ? Number(originalValue?.replace(/,/g, '')) : originalValue
+}
+
 export function classNames(...classes: any[]) {
   return classes.filter(Boolean).join(' ')
 }
@@ -60,6 +64,7 @@ export const prettyPaymentMethodTypes = {
   bnpl: 'BNPL',
   virtualCard: 'Virtual Card',
   offPlatform: 'Off Platform',
+  utility: 'Utility',
 }
 
 export const prettyBusinessTypes = {
@@ -75,7 +80,35 @@ export const prettyBusinessTypes = {
 }
 
 export function getEndpoint() {
+  if (typeof window !== 'undefined' && window && window.location && window.location.href) {
+    if (window.location.href.includes('staging.mercoa.com')) {
+      return 'https://api.staging.mercoa.com'
+    } else if (
+      window &&
+      window.location &&
+      window.location.href &&
+      (window.location.href.includes('localhost') || window.location.href.includes('ngrok'))
+    ) {
+      if (process.env.NEXT_PUBLIC_ENABLE_HTTPS) {
+        return 'https://api-mercoa.ngrok.io'
+      }
+      return 'http://localhost:8080'
+    }
+  }
   return 'https://api.mercoa.com'
+}
+
+export function circularReplacer() {
+  const seen = new WeakSet()
+  return (key: any, value: any) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return
+      }
+      seen.add(value)
+    }
+    return value
+  }
 }
 
 export function setStyle({ colorScheme }: { colorScheme?: Mercoa.ColorSchemeResponse }) {
@@ -183,4 +216,211 @@ export function setStyle({ colorScheme }: { colorScheme?: Mercoa.ColorSchemeResp
   if (colorScheme?.fontSize) {
     updateFontSizeVariables(colorScheme?.fontSize)
   }
+}
+
+export type RBACPermissions = {
+  invoice: {
+    all: boolean
+    view: {
+      all: boolean
+      statuses: Mercoa.InvoiceStatus[]
+    }
+    create: {
+      all: boolean
+      statuses: Mercoa.InvoiceStatus[]
+    }
+    update: {
+      all: boolean
+      statuses: Mercoa.InvoiceStatus[]
+    }
+    delete: boolean
+    comment: {
+      view: boolean
+      create: boolean
+    }
+    approver: {
+      override: boolean
+    }
+    check: {
+      print: boolean
+    }
+  }
+  paymentMethod: {
+    all: boolean
+    view: boolean
+    create: boolean
+    update: boolean
+    delete: boolean
+  }
+}
+export function buildRbacPermissions(permissions: Mercoa.Permission[]): RBACPermissions {
+  // If no permissions provided, return all true
+  if (!permissions || permissions.length === 0) {
+    return {
+      invoice: {
+        all: true,
+        view: {
+          all: true,
+          statuses: [
+            Mercoa.InvoiceStatus.Draft,
+            Mercoa.InvoiceStatus.New,
+            Mercoa.InvoiceStatus.Approved,
+            Mercoa.InvoiceStatus.Scheduled,
+            Mercoa.InvoiceStatus.Pending,
+            Mercoa.InvoiceStatus.Paid,
+            Mercoa.InvoiceStatus.Archived,
+            Mercoa.InvoiceStatus.Refused,
+            Mercoa.InvoiceStatus.Failed,
+          ],
+        },
+        create: {
+          all: true,
+          statuses: [
+            Mercoa.InvoiceStatus.Draft,
+            Mercoa.InvoiceStatus.New,
+            Mercoa.InvoiceStatus.Approved,
+            Mercoa.InvoiceStatus.Scheduled,
+            Mercoa.InvoiceStatus.Pending,
+            Mercoa.InvoiceStatus.Paid,
+            Mercoa.InvoiceStatus.Canceled,
+          ],
+        },
+        update: {
+          all: true,
+          statuses: [
+            Mercoa.InvoiceStatus.Draft,
+            Mercoa.InvoiceStatus.New,
+            Mercoa.InvoiceStatus.Approved,
+            Mercoa.InvoiceStatus.Scheduled,
+            Mercoa.InvoiceStatus.Pending,
+            Mercoa.InvoiceStatus.Paid,
+            Mercoa.InvoiceStatus.Archived,
+            Mercoa.InvoiceStatus.Canceled,
+          ],
+        },
+        delete: true,
+        comment: {
+          view: true,
+          create: true,
+        },
+        approver: {
+          override: true,
+        },
+        check: {
+          print: true,
+        },
+      },
+      paymentMethod: {
+        all: true,
+        view: true,
+        create: true,
+        update: true,
+        delete: true,
+      },
+    }
+  }
+
+  const rbac: RBACPermissions = {
+    invoice: {
+      all: false,
+      view: {
+        all: false,
+        statuses: [],
+      },
+      create: {
+        all: false,
+        statuses: [],
+      },
+      update: {
+        all: false,
+        statuses: [],
+      },
+      delete: false,
+      comment: {
+        view: false,
+        create: false,
+      },
+      approver: {
+        override: false,
+      },
+      check: {
+        print: false,
+      },
+    },
+    paymentMethod: {
+      all: false,
+      view: false,
+      create: false,
+      update: false,
+      delete: false,
+    },
+  }
+
+  permissions.forEach((permission) => {
+    if (permission === Mercoa.Permission.InvoiceAll) rbac.invoice.all = true
+    else if (permission === Mercoa.Permission.InvoiceViewAll) rbac.invoice.view.all = true
+    else if (permission === Mercoa.Permission.InvoiceViewDraft)
+      rbac.invoice.view.statuses.push(Mercoa.InvoiceStatus.Draft)
+    else if (permission === Mercoa.Permission.InvoiceViewNew) rbac.invoice.view.statuses.push(Mercoa.InvoiceStatus.New)
+    else if (permission === Mercoa.Permission.InvoiceViewApproved)
+      rbac.invoice.view.statuses.push(Mercoa.InvoiceStatus.Approved)
+    else if (permission === Mercoa.Permission.InvoiceViewScheduled)
+      rbac.invoice.view.statuses.push(Mercoa.InvoiceStatus.Scheduled)
+    else if (permission === Mercoa.Permission.InvoiceViewPending)
+      rbac.invoice.view.statuses.push(Mercoa.InvoiceStatus.Pending)
+    else if (permission === Mercoa.Permission.InvoiceViewPaid)
+      rbac.invoice.view.statuses.push(Mercoa.InvoiceStatus.Paid)
+    else if (permission === Mercoa.Permission.InvoiceViewArchived)
+      rbac.invoice.view.statuses.push(Mercoa.InvoiceStatus.Archived)
+    else if (permission === Mercoa.Permission.InvoiceViewRefused)
+      rbac.invoice.view.statuses.push(Mercoa.InvoiceStatus.Refused)
+    else if (permission === Mercoa.Permission.InvoiceViewCanceled)
+      rbac.invoice.view.statuses.push(Mercoa.InvoiceStatus.Canceled)
+    else if (permission === Mercoa.Permission.InvoiceViewFailed)
+      rbac.invoice.view.statuses.push(Mercoa.InvoiceStatus.Failed)
+    else if (permission === Mercoa.Permission.InvoiceCreateAll) rbac.invoice.create.all = true
+    else if (permission === Mercoa.Permission.InvoiceCreateDraft)
+      rbac.invoice.create.statuses.push(Mercoa.InvoiceStatus.Draft)
+    else if (permission === Mercoa.Permission.InvoiceCreateNew)
+      rbac.invoice.create.statuses.push(Mercoa.InvoiceStatus.New)
+    else if (permission === Mercoa.Permission.InvoiceCreateApproved)
+      rbac.invoice.create.statuses.push(Mercoa.InvoiceStatus.Approved)
+    else if (permission === Mercoa.Permission.InvoiceCreateScheduled)
+      rbac.invoice.create.statuses.push(Mercoa.InvoiceStatus.Scheduled)
+    else if (permission === Mercoa.Permission.InvoiceCreateArchived)
+      rbac.invoice.create.statuses.push(Mercoa.InvoiceStatus.Archived)
+    else if (permission === Mercoa.Permission.InvoiceCreateCancel)
+      rbac.invoice.create.statuses.push(Mercoa.InvoiceStatus.Canceled)
+    else if (permission === Mercoa.Permission.InvoiceUpdateAll) rbac.invoice.update.all = true
+    else if (permission === Mercoa.Permission.InvoiceUpdateDraft)
+      rbac.invoice.update.statuses.push(Mercoa.InvoiceStatus.Draft)
+    else if (permission === Mercoa.Permission.InvoiceUpdateNew)
+      rbac.invoice.update.statuses.push(Mercoa.InvoiceStatus.New)
+    else if (permission === Mercoa.Permission.InvoiceUpdateApproved)
+      rbac.invoice.update.statuses.push(Mercoa.InvoiceStatus.Approved)
+    else if (permission === Mercoa.Permission.InvoiceUpdateScheduled)
+      rbac.invoice.update.statuses.push(Mercoa.InvoiceStatus.Scheduled)
+    else if (permission === Mercoa.Permission.InvoiceUpdateArchived)
+      rbac.invoice.update.statuses.push(Mercoa.InvoiceStatus.Archived)
+    else if (permission === Mercoa.Permission.InvoiceUpdateCancel)
+      rbac.invoice.update.statuses.push(Mercoa.InvoiceStatus.Canceled)
+    else if (permission === Mercoa.Permission.InvoiceDelete) rbac.invoice.delete = true
+    else if (permission === Mercoa.Permission.InvoiceCommentView) rbac.invoice.comment.view = true
+    else if (permission === Mercoa.Permission.InvoiceCommentCreate) rbac.invoice.comment.create = true
+    else if (permission === Mercoa.Permission.InvoiceApproverOverride) rbac.invoice.approver.override = true
+    else if (permission === Mercoa.Permission.InvoiceCheckPrint) {
+      rbac.invoice.check.print = true
+      rbac.invoice.create.statuses.push(Mercoa.InvoiceStatus.Paid)
+    } else if (permission === Mercoa.Permission.PaymentMethodAll) {
+      rbac.paymentMethod.view = true
+      rbac.paymentMethod.create = true
+      rbac.paymentMethod.update = true
+      rbac.paymentMethod.delete = true
+    } else if (permission === Mercoa.Permission.PaymentMethodView) rbac.paymentMethod.view = true
+    else if (permission === Mercoa.Permission.PaymentMethodCreate) rbac.paymentMethod.create = true
+    else if (permission === Mercoa.Permission.PaymentMethodUpdate) rbac.paymentMethod.update = true
+    else if (permission === Mercoa.Permission.PaymentMethodDelete) rbac.paymentMethod.delete = true
+  })
+
+  return rbac
 }
