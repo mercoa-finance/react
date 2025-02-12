@@ -50,8 +50,8 @@ export const Popover: FC<PropsWithChildren<IPopoverProps & ComponentProps<typeof
           side={side}
           {...rest}
           className={cn(
-            'p-[0 !important] z-[2147483647] rounded-md outline-none data-[state=open]:data-[side=bottom]:animate-slideUpAndFade data-[state=open]:data-[side=left]:animate-slideRightAndFade data-[state=open]:data-[side=right]:animate-slideLeftAndFade data-[state=open]:data-[side=top]:animate-slideDownAndFade shadow-[0px_1px_2px_0px_rgba(0,0,0,0.18)]',
-            'font-lato',
+            'mercoa-p-[0 !important] mercoa-z-[2147483647] mercoa-rounded-md mercoa-outline-none mercoa-data-[state=open]:mercoa-data-[side=bottom]:mercoa-animate-slideUpAndFade mercoa-data-[state=open]:mercoa-data-[side=left]:mercoa-animate-slideRightAndFade mercoa-data-[state=open]:mercoa-data-[side=right]:mercoa-animate-slideLeftAndFade mercoa-data-[state=open]:mercoa-data-[side=top]:mercoa-animate-slideDownAndFade',
+            'mercoa-font-lato',
           )}
         >
           {children}

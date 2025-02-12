@@ -1,8 +1,9 @@
-
-import { currencyCodeToSymbol } from '../../../../lib/currency'
+import accounting from 'accounting'
+import Big from 'big.js'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { MercoaContext } from '../../../../components'
+import { currencyCodeToSymbol } from '../../../../lib/currency'
 import {
   baseSaveDraftSchema,
   baseSchedulePaymentSchema,
@@ -12,8 +13,6 @@ import {
   PayableAction,
 } from './constants'
 import { PayableFormConfig, PayableFormData } from './types'
-import accounting from 'accounting'
-import Big from 'big.js'
 
 export async function onSubmitCounterparty({
   data,
@@ -157,6 +156,10 @@ export function showMetadata({
   paymentDestinationType?: Mercoa.PaymentMethodType
   paymentSourceType?: Mercoa.PaymentMethodType
 }) {
+  if (schema.showConditions?.alwaysHide) {
+    return false
+  }
+
   if (schema.showConditions?.hasDocument && !hasDocument) {
     return false
   }

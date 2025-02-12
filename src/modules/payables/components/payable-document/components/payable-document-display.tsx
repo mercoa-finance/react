@@ -261,6 +261,7 @@ export function PayableDocumentDisplay({
                   <div className={`mercoa-w-full mercoa-overflow-scroll`}>
                     <img
                       src={document.fileReaderObj}
+                      alt="Invoice Document"
                       className={`mercoa-origin-top-left mercoa-object-contain mercoa-object-top ${getImageScale(
                         zoomLevel,
                       )} ${getRotate(rotate)} mercoa-origin-center mercoa-w-full`}

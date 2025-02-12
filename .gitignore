@@ -4,6 +4,7 @@ dist
 !.vscode/extensions.json
 .idea
 .DS_Store
+.DS_Store.tmp
 
 *storybook.log
 storybook-static

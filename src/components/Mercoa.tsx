@@ -267,7 +267,7 @@ function useProvideSession({
         payorOnboardingOptions: true,
         metadataSchema: true,
         customDomains: true,
-        rolePermissionConfig: true,
+        rolePermissions: true,
       })
       const schemas = await client.customPaymentMethodSchema.getAll()
       setOrganization(o)
@@ -321,7 +321,7 @@ function useProvideSession({
         payeeOnboardingOptions: true,
         payorOnboardingOptions: true,
         metadataSchema: true,
-        rolePermissionConfig: true,
+        rolePermissions: true,
       })
       const schemas = await client.customPaymentMethodSchema.getAll()
       setOrganization(o)
@@ -422,8 +422,7 @@ function useProvideSession({
   const userPermissionConfig = useMemo(() => {
     const aggregatePermissions = user?.roles.reduce((acc, role) => {
       const rolePermissions =
-        ((organization?.rolePermissionConfig as Mercoa.RolePermissionConfigResponse)?.[role] as Mercoa.Permission[]) ||
-        []
+        ((organization?.rolePermissions as Mercoa.RolePermissionResponse)?.[role] as Mercoa.Permission[]) || []
       return Array.from(new Set([...acc, ...rolePermissions]))
     }, [] as Mercoa.Permission[])
 

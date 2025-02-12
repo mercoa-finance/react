@@ -466,7 +466,7 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
             return (
               <TableActionDropdown
                 validActions={getAvailableActions({
-                  rolePermissionConfig: mercoaSession.userPermissionConfig,
+                  rolePermissions: mercoaSession.userPermissionConfig,
                   selectedInvoices: [row.original.invoice],
                   currentStatuses: [row.original.status],
                   currentUserId: mercoaSession.user?.id,
@@ -581,7 +581,7 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
     }, [table.getState().columnSizingInfo, table.getState().columnSizing])
 
     const validActions = getAvailableActions({
-      rolePermissionConfig: mercoaSession.userPermissionConfig,
+      rolePermissions: mercoaSession.userPermissionConfig,
       selectedInvoices: allFetchedInvoices.filter((e) => selectedInvoiceIds.includes(e.id)),
       currentStatuses: allFetchedInvoices.map((e) => e.status),
       currentUserId: mercoaSession.user?.id,

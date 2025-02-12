@@ -5,6 +5,7 @@ import {
   ClockIcon,
   DocumentIcon,
   ExclamationCircleIcon,
+  EyeIcon,
   InformationCircleIcon,
   LockClosedIcon,
   PencilIcon,
@@ -104,7 +105,7 @@ export function UploadBlock({
     )
   } else if (type === 'Logo') {
     if (entity?.logo) {
-      defaultIcon = <img className="mercoa-mx-auto mercoa-h-12" src={entity?.logo} />
+      defaultIcon = <img className="mercoa-mx-auto mercoa-h-12" src={entity?.logo} alt="Logo" />
     }
   }
 
@@ -1628,11 +1629,13 @@ export function Representatives({
   onSelect,
   showAdd,
   showEdit,
+  showView,
 }: {
   children?: Function
   onSelect?: (rep?: Mercoa.RepresentativeResponse) => void
   showAdd?: boolean
   showEdit?: boolean
+  showView?: boolean
 }) {
   const [reps, setReps] = useState<Array<Mercoa.RepresentativeResponse>>()
   const [showDialog, setShowDialog] = useState(false)
@@ -1658,7 +1661,12 @@ export function Representatives({
         {reps &&
           reps.map((account) => (
             <div className="mercoa-mt-2" key={account.id}>
-              <RepresentativeComponent representative={account} onSelect={onSelect} showEdit={showEdit} />
+              <RepresentativeComponent
+                representative={account}
+                onSelect={onSelect}
+                showEdit={showEdit}
+                showView={showView}
+              />
             </div>
           ))}
         {showAdd && (
@@ -1717,18 +1725,20 @@ export function RepresentativeComponent({
   representative,
   onSelect,
   showEdit,
+  showView,
   selected,
 }: {
   children?: Function
   representative?: Mercoa.RepresentativeResponse
   onSelect?: (rep?: Mercoa.RepresentativeResponse) => void
   showEdit?: boolean
+  showView?: boolean
   selected?: boolean
 }) {
   const mercoaSession = useMercoaSession()
 
   const [showEditModal, setShowEditModal] = useState(false)
-
+  const [showViewModal, setShowViewModal] = useState(false)
   async function deleteAccount() {
     if (!confirm('Are you sure you want to delete this representative?')) return
     if (mercoaSession.token) {
@@ -1780,35 +1790,176 @@ export function RepresentativeComponent({
             </p>
           )}
         </div>
-        {showEdit && (
-          <div className="mercoa-flex-shrink-0">
-            <button
-              className="mercoa-ml-1 mercoa-cursor-pointer hover:mercoa-text-red-300"
-              onClick={() => setShowEditModal(true)}
-            >
-              <PencilIcon className="mercoa-size-5" />
-            </button>
-            <button
-              className="mercoa-ml-1 mercoa-cursor-pointer hover:mercoa-text-red-300"
-              onClick={() => deleteAccount()}
-            >
-              {' '}
-              <TrashIcon className="mercoa-size-5" />
-            </button>
-            <AddDialog
-              show={showEditModal}
-              onClose={() => setShowEditModal(false)}
-              component={
-                <RepresentativeOnboardingForm
-                  title="Create Representative"
-                  onClose={() => setShowEditModal(false)}
-                  entityId={mercoaSession.entity?.id ?? ''}
-                  representative={representative}
-                />
-              }
-            />
-          </div>
-        )}
+        <div className="mercoa-flex-shrink-0 mercoa-flex mercoa-items-center mercoa-space-x-3">
+          {showView && (
+            <>
+              <button
+                className="mercoa-cursor-pointer hover:mercoa-text-red-300"
+                onClick={() => setShowViewModal(true)}
+              >
+                <EyeIcon className="mercoa-size-5" />
+              </button>
+              <Transition.Root show={showViewModal} as={Fragment}>
+                <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={() => setShowViewModal(false)}>
+                  <Transition.Child
+                    as={Fragment}
+                    enter="mercoa-ease-out mercoa-duration-300"
+                    enterFrom="mercoa-opacity-0"
+                    enterTo="mercoa-opacity-100"
+                    leave="mercoa-ease-in mercoa-duration-200"
+                    leaveFrom="mercoa-opacity-100"
+                    leaveTo="mercoa-opacity-0"
+                  >
+                    <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
+                  </Transition.Child>
+
+                  <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
+                    <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
+                      <Transition.Child
+                        as={Fragment}
+                        enter="mercoa-ease-out mercoa-duration-300"
+                        enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+                        enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                        leave="mercoa-ease-in mercoa-duration-200"
+                        leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                        leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+                      >
+                        <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-3xl sm:mercoa-p-6">
+                          <div className="mercoa-space-y-6">
+                            <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-p-4 mercoa-bg-gray-50 mercoa-rounded-lg">
+                              <p className="mercoa-col-span-2 mercoa-text-lg mercoa-font-semibold mercoa-text-gray-900">
+                                Personal Info
+                              </p>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">First Name</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">{representative.name.firstName}</p>
+                              </div>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">Middle Name</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">{representative.name.middleName}</p>
+                              </div>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">Last Name</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">{representative.name.lastName}</p>
+                              </div>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">Suffix</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">{representative.name.suffix}</p>
+                              </div>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">Email</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">{representative.email}</p>
+                              </div>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">Phone</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">{representative.phone?.number}</p>
+                              </div>
+                            </div>
+
+                            <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-p-4 mercoa-bg-gray-50 mercoa-rounded-lg">
+                              <p className="mercoa-col-span-2 mercoa-text-lg mercoa-font-semibold mercoa-text-gray-900">
+                                Address
+                              </p>
+                              <div className="mercoa-col-span-2 mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">Street Address</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">
+                                  {representative.address.addressLine1} {representative.address.addressLine2}
+                                </p>
+                              </div>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">City</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">{representative.address.city}</p>
+                              </div>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">State</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">
+                                  {representative.address.stateOrProvince}
+                                </p>
+                              </div>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">Postal Code</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">{representative.address.postalCode}</p>
+                              </div>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">Country</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">{representative.address.country}</p>
+                              </div>
+                            </div>
+
+                            <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-p-4 mercoa-bg-gray-50 mercoa-rounded-lg">
+                              <p className="mercoa-col-span-2 mercoa-text-lg mercoa-font-semibold mercoa-text-gray-900">
+                                Role & Verification
+                              </p>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">Job Title</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">
+                                  {representative.responsibilities?.jobTitle}
+                                </p>
+                              </div>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">Ownership</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">
+                                  {representative.responsibilities?.ownershipPercentage}%
+                                </p>
+                              </div>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">Controller Status</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">
+                                  {representative.responsibilities?.isController ? 'Yes' : 'No'}
+                                </p>
+                              </div>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">Date of Birth</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">
+                                  {representative.birthDateProvided ? '****' : ''}
+                                </p>
+                              </div>
+                              <div className="mercoa-space-y-2">
+                                <p className="mercoa-text-sm mercoa-text-gray-500">SSN</p>
+                                <p className="mercoa-text-sm mercoa-font-medium">
+                                  {representative.governmentIdProvided ? '****' : ''}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </Dialog.Panel>
+                      </Transition.Child>
+                    </div>
+                  </div>
+                </Dialog>
+              </Transition.Root>
+            </>
+          )}
+          {showEdit && (
+            <>
+              <button
+                className="mercoa-ml-1 mercoa-cursor-pointer hover:mercoa-text-red-300"
+                onClick={() => setShowEditModal(true)}
+              >
+                <PencilIcon className="mercoa-size-5" />
+              </button>
+              <button
+                className="mercoa-ml-1 mercoa-cursor-pointer hover:mercoa-text-red-300"
+                onClick={() => deleteAccount()}
+              >
+                {' '}
+                <TrashIcon className="mercoa-size-5" />
+              </button>
+              <AddDialog
+                show={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                component={
+                  <RepresentativeOnboardingForm
+                    title="Create Representative"
+                    onClose={() => setShowEditModal(false)}
+                    entityId={mercoaSession.entity?.id ?? ''}
+                    representative={representative}
+                  />
+                }
+              />
+            </>
+          )}
+        </div>
       </div>
     )
   } else {

@@ -43,9 +43,9 @@ export function getAvailableActions(params: {
   currentStatuses: Mercoa.InvoiceStatus[]
   currentUserId?: string
   users?: Mercoa.EntityUserResponse[]
-  rolePermissionConfig?: RBACPermissions
+  rolePermissions?: RBACPermissions
 }): string[] {
-  const { selectedInvoices, currentStatuses, currentUserId, users, rolePermissionConfig } = params
+  const { selectedInvoices, currentStatuses, currentUserId, users, rolePermissions } = params
   if (!selectedInvoices.length) return []
 
   const actions: string[] = []
@@ -72,9 +72,9 @@ export function getAvailableActions(params: {
     )
   ) {
     if (
-      rolePermissionConfig?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Scheduled) ||
-      rolePermissionConfig?.invoice.create.all ||
-      rolePermissionConfig?.invoice.all
+      rolePermissions?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Scheduled) ||
+      rolePermissions?.invoice.create.all ||
+      rolePermissions?.invoice.all
     ) {
       actions.push('schedulePayment')
     }
@@ -83,9 +83,9 @@ export function getAvailableActions(params: {
   // Reschedule Payment
   if (currentStatuses.includes(Mercoa.InvoiceStatus.Scheduled)) {
     if (
-      rolePermissionConfig?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Scheduled) ||
-      rolePermissionConfig?.invoice.create.all ||
-      rolePermissionConfig?.invoice.all
+      rolePermissions?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Scheduled) ||
+      rolePermissions?.invoice.create.all ||
+      rolePermissions?.invoice.all
     ) {
       actions.push('schedulePayment')
     }
@@ -113,16 +113,16 @@ export function getAvailableActions(params: {
 
     if (hasEligibleInvoice) {
       if (
-        rolePermissionConfig?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Approved) ||
-        rolePermissionConfig?.invoice.create.all ||
-        rolePermissionConfig?.invoice.all
+        rolePermissions?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Approved) ||
+        rolePermissions?.invoice.create.all ||
+        rolePermissions?.invoice.all
       ) {
         actions.push('approve')
       }
       if (
-        rolePermissionConfig?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Refused) ||
-        rolePermissionConfig?.invoice.create.all ||
-        rolePermissionConfig?.invoice.all
+        rolePermissions?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Refused) ||
+        rolePermissions?.invoice.create.all ||
+        rolePermissions?.invoice.all
       ) {
         actions.push('reject')
       }
@@ -131,7 +131,7 @@ export function getAvailableActions(params: {
 
   //@ts-ignore
   if (currentStatuses.some((e) => [Mercoa.InvoiceStatus.Draft, Mercoa.InvoiceStatus.Canceled].includes(e))) {
-    if (rolePermissionConfig?.invoice.delete || rolePermissionConfig?.invoice.all) {
+    if (rolePermissions?.invoice.delete || rolePermissions?.invoice.all) {
       actions.push('delete')
     }
   }

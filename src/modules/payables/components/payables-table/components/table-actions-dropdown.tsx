@@ -25,7 +25,6 @@ export const TableActionDropdown: FC<TableActionDropdownProps> = ({ validActions
       open={open}
       onOpenChange={setOpen}
       align="end"
-      alignOffset={400}
       trigger={
         trigger ? (
           trigger
