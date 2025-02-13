@@ -429,8 +429,6 @@ function useProvideSession({
     return buildRbacPermissions(aggregatePermissions ?? [])
   }, [organization, user])
 
-  console.log('userPermissionConfig2', userPermissionConfig)
-
   return {
     refresh,
     refreshId,

@@ -128,6 +128,7 @@ export function BankAccount({
   account,
   onSelect,
   showEdit,
+  showVerification,
   selected,
   hideDefaultIndicator,
   hideVerificationButton,
@@ -138,6 +139,7 @@ export function BankAccount({
   account?: Mercoa.PaymentMethodResponse.BankAccount
   onSelect?: (value?: Mercoa.PaymentMethodResponse.BankAccount) => void
   showEdit?: boolean
+  showVerification?: boolean
   selected?: boolean
   hideDefaultIndicator?: boolean
   hideVerificationButton?: boolean
@@ -179,7 +181,6 @@ export function BankAccount({
           <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between mercoa-group">
             <div className="mercoa-flex">
               <div>
-                {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
                 <AddDialog
                   component={<EditBankAccount account={account} onSubmit={() => setShowNameEdit(false)} />}
                   onClose={() => setShowNameEdit(false)}
@@ -222,17 +223,24 @@ export function BankAccount({
               </div>
             </div>
           </div>
-          {showEdit && (
+          {(showEdit || showVerification) && (
             <div className="mercoa-flex mercoa-items-center mercoa-gap-x-1">
               {/* Default Payment Method Indicator */}
-              {!hideDefaultIndicator && <DefaultPaymentMethodIndicator paymentMethod={account} />}
+              {showEdit && !hideDefaultIndicator && <DefaultPaymentMethodIndicator paymentMethod={account} />}
 
               {/* Verification Button */}
               {(account?.status === Mercoa.BankStatus.New ||
                 account?.status === Mercoa.BankStatus.Pending ||
                 account?.status === Mercoa.BankStatus.VerificationFailed) &&
                 !hideVerificationButton && (
-                  <MercoaButton isEmphasized size="sm" className="mercoa-mr-2" onClick={() => setVerify(true)}>
+                  <MercoaButton
+                    isEmphasized
+                    size="sm"
+                    className="mercoa-mr-2"
+                    onClick={() => {
+                      setVerify(true)
+                    }}
+                  >
                     {account?.status === Mercoa.BankStatus.New && 'Start Verification'}
                     {account?.status === Mercoa.BankStatus.VerificationFailed && 'Retry Verification'}
                     {account?.status === Mercoa.BankStatus.Pending && 'Complete Verification'}
@@ -279,7 +287,7 @@ export function BankAccount({
               )}
 
               {/* Check Send Status Indicator */}
-              {!hideCheckSendStatus && (
+              {showEdit && !hideCheckSendStatus && (
                 <div>
                   {account.checkOptions?.enabled ? (
                     <Tooltip title="Can send checks">
@@ -298,16 +306,19 @@ export function BankAccount({
               )}
 
               {/* Edit Button */}
-              <MercoaButton
-                size="sm"
-                isEmphasized={false}
-                className="mercoa-mr-2 mercoa-px-[4px] mercoa-py-[4px]"
-                onClick={() => setShowNameEdit(true)}
-              >
-                <Tooltip title="Edit">
-                  <PencilIcon className="mercoa-size-4" />
-                </Tooltip>
-              </MercoaButton>
+              {showEdit && (
+                <MercoaButton
+                  size="sm"
+                  isEmphasized={false}
+                  className="mercoa-mr-2 mercoa-px-[4px] mercoa-py-[4px]"
+                  onClick={() => setShowNameEdit(true)}
+                >
+                  <Tooltip title="Edit">
+                    <PencilIcon className="mercoa-size-4" />
+                  </Tooltip>
+                </MercoaButton>
+              )}
+
               <Transition.Root show={!!verify} as={Fragment}>
                 <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={() => setVerify(false)}>
                   <Transition.Child

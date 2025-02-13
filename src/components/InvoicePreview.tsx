@@ -142,10 +142,11 @@ export function InvoicePreviewPaymentPage({ invoice }: { invoice: Mercoa.Invoice
 
   return (
     <ReceivablePaymentPortal
+      isPreview
       invoice={invoice}
       supportEmail={supportEmail}
       totalDisplay={totalDisplay}
-      updateInvoice={() => {}}
+      updateInvoice={() => Promise.resolve()}
     />
   )
 }

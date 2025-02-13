@@ -3,7 +3,6 @@ import {
   BuildingLibraryIcon,
   CreditCardIcon,
   DevicePhoneMobileIcon,
-  LockClosedIcon,
   MapPinIcon,
   PrinterIcon,
 } from '@heroicons/react/24/outline'
@@ -23,17 +22,19 @@ import {
 } from './index'
 
 export function ReceivablePaymentPortal({
+  isPreview,
   complete,
   invoice,
   supportEmail,
   totalDisplay,
   updateInvoice,
 }: {
+  isPreview?: boolean
   complete?: boolean
   invoice: Mercoa.InvoiceResponse
   supportEmail?: string
   totalDisplay: string
-  updateInvoice: (updateRequest: Mercoa.InvoiceUpdateRequest) => void
+  updateInvoice: (updateRequest: Mercoa.InvoiceUpdateRequest) => Promise<void>
 }) {
   const [selectedPaymentType, setSelectedPaymentType] = useState<Mercoa.PaymentMethodType | string>(
     Mercoa.PaymentMethodType.BankAccount,
@@ -57,6 +58,7 @@ export function ReceivablePaymentPortal({
         <div className="mercoa-m-auto mercoa-grid sm:mercoa-grid-cols-12 sm:mercoa-max-w-5xl sm:mercoa-gap-x-4 mercoa-px-2 sm:mercoa-px-0 ">
           <div className="mercoa-col-span-12 sm:mercoa-col-span-8">
             <MainCard
+              isPreview={isPreview}
               invoice={invoice}
               totalDisplay={totalDisplay}
               selectedPaymentType={selectedPaymentType}
@@ -68,13 +70,6 @@ export function ReceivablePaymentPortal({
             <div className="mercoa-flex mercoa-flex-col mercoa-gap-y-5">
               <InvoiceDetailsCard invoice={invoice} totalDisplay={totalDisplay} />
               {invoice.vendor && <VendorDetailsCard vendor={invoice.vendor} />}
-              <div className="mercoa-flex mercoa-items-center mercoa-border-t-2 mercoa-border-gray-200 mercoa-text-left mercoa-text-xs mercoa-text-gray-400">
-                <LockClosedIcon className="mercoa-mr-2 mercoa-h-16 mercoa-w-16" />
-                <span>
-                  All your account information will remain private, secure, and hidden from{' '}
-                  <b>{invoice.vendor?.name}</b> and other businesses.
-                </span>
-              </div>
             </div>
           </aside>
         </div>
@@ -183,44 +178,46 @@ function VendorDetailsCard({ vendor }: { vendor: Mercoa.EntityResponse }) {
 }
 
 function MainCard({
+  isPreview,
   invoice,
   totalDisplay,
   selectedPaymentType,
   setSelectedPaymentType,
   updateInvoice,
 }: {
+  isPreview?: boolean
   invoice: Mercoa.InvoiceResponse
   totalDisplay: string
   selectedPaymentType: Mercoa.PaymentMethodType | string
   setSelectedPaymentType: (paymentMethodType: Mercoa.PaymentMethodType | string) => void
-  updateInvoice: (updateRequest: Mercoa.InvoiceUpdateRequest) => void
+  updateInvoice: (updateRequest: Mercoa.InvoiceUpdateRequest) => Promise<void>
 }) {
   const mercoaSession = useMercoaSession()
-  const [bankAccounts, setBankAccounts] = useState<Array<Mercoa.PaymentMethodResponse.BankAccount>>()
-  const [cards, setCards] = useState<Array<Mercoa.PaymentMethodResponse.Card>>()
+  const [bankAccounts, setBankAccounts] = useState<Array<Mercoa.PaymentMethodResponse.BankAccount>>([])
+  const [cards, setCards] = useState<Array<Mercoa.PaymentMethodResponse.Card>>([])
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<Mercoa.PaymentMethodId | undefined>()
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Get Payment Methods
+  // Get Payment Methods (if not preview and session is authenticated)
   useEffect(() => {
-    if (mercoaSession.token && mercoaSession.entity?.id) {
-      mercoaSession.client?.entity.paymentMethod
-        .getAll(mercoaSession.entity?.id, { type: ['bankAccount', 'card'] })
-        .then((resp) => {
-          const respBankAccounts = resp
-            .filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
-            .map((e) => e as Mercoa.PaymentMethodResponse.BankAccount)
-            .reverse()
-          setBankAccounts(respBankAccounts)
-          const respCards = resp
-            .filter((e) => e.type === Mercoa.PaymentMethodType.Card)
-            .map((e) => e as Mercoa.PaymentMethodResponse.Card)
-            .reverse()
-          setCards(respCards)
-          if (!selectedPaymentMethodId && respBankAccounts.length > 0) {
-            setSelectedPaymentMethodId(respBankAccounts[0].id)
-          }
-        })
-    }
+    if (isPreview || !mercoaSession.token || !mercoaSession.entity?.id) return
+    mercoaSession.client?.entity.paymentMethod
+      .getAll(mercoaSession.entity?.id, { type: ['bankAccount', 'card'] })
+      .then((resp) => {
+        const respBankAccounts = resp
+          .filter((e) => e.type === Mercoa.PaymentMethodType.BankAccount)
+          .map((e) => e as Mercoa.PaymentMethodResponse.BankAccount)
+          .reverse()
+        setBankAccounts(respBankAccounts)
+        const respCards = resp
+          .filter((e) => e.type === Mercoa.PaymentMethodType.Card)
+          .map((e) => e as Mercoa.PaymentMethodResponse.Card)
+          .reverse()
+        setCards(respCards)
+        if (!selectedPaymentMethodId && respBankAccounts.length > 0) {
+          setSelectedPaymentMethodId(respBankAccounts[0].id)
+        }
+      })
   }, [mercoaSession.token, mercoaSession.entity?.id, mercoaSession.refreshId])
 
   const methods = [
@@ -237,6 +234,44 @@ function MainCard({
   ].filter((method) =>
     mercoaSession.organization?.paymentMethods?.payerPayments?.find((pm) => pm.type === method.type && pm.active),
   )
+
+  const handlePayment = async () => {
+    if (isLoading || isPreview) return
+    setIsLoading(true)
+    try {
+      if (!selectedPaymentMethodId || !bankAccounts) {
+        toast.error('Please select a payment method')
+        return
+      }
+      const selectedPaymentMethod = bankAccounts.find((account) => account.id === selectedPaymentMethodId)
+      if (!selectedPaymentMethod) {
+        toast.error('Selected payment method not found')
+        return
+      }
+      if (selectedPaymentMethod.status !== Mercoa.BankStatus.Verified) {
+        toast.error('The selected payment method is not verified')
+        return
+      }
+      const updateRequest: Mercoa.InvoiceUpdateRequest = {
+        status: Mercoa.InvoiceStatus.Scheduled,
+        paymentSourceId: selectedPaymentMethodId,
+        deductionDate: dayjs().toDate(),
+      }
+      await updateInvoice(updateRequest)
+    } catch (error) {
+      console.error('Payment failed:', error)
+      toast.error('Payment failed. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const acceptingPayments = invoice.status === Mercoa.InvoiceStatus.Approved
+  const payButtonText = isLoading
+    ? 'Processing...'
+    : !acceptingPayments
+      ? 'Invoice not ready for payment'
+      : `Pay ${totalDisplay}`
 
   return (
     <div className="mercoa-shadow-sm mercoa-bg-white mercoa-rounded-mercoa mercoa-px-5 mercoa-py-6 mercoa-border mercoa-border-gray-300">
@@ -268,12 +303,13 @@ function MainCard({
       </div>
 
       {/* Bank Accounts List */}
-      {selectedPaymentType === Mercoa.PaymentMethodType.BankAccount && bankAccounts && (
+      {selectedPaymentType === Mercoa.PaymentMethodType.BankAccount && (
         <div className="mercoa-w-full mercoa-mt-5">
           <p className="mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-text-sm">
             Select a bank account
           </p>
           <SelectBankAccountButtons
+            isPreview={isPreview}
             bankAccounts={bankAccounts}
             setBankAccounts={setBankAccounts}
             selectedPaymentMethodId={selectedPaymentMethodId}
@@ -287,6 +323,7 @@ function MainCard({
         <div className="mercoa-w-full mercoa-mt-5">
           <p className="mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600 mercoa-text-sm">Select a card</p>
           <SelectCardButtons
+            isPreview={isPreview}
             cards={cards}
             setCards={setCards}
             selectedPaymentMethodId={selectedPaymentMethodId}
@@ -301,29 +338,10 @@ function MainCard({
           isEmphasized
           size="lg"
           className="mercoa-w-full"
-          onClick={() => {
-            if (!selectedPaymentMethodId || !bankAccounts) {
-              toast.error('Please select a payment method')
-              return
-            }
-            const selectedPaymentMethod = bankAccounts.find((account) => account.id === selectedPaymentMethodId)
-            if (!selectedPaymentMethod) {
-              toast.error('Selected payment method not found')
-              return
-            }
-            if (selectedPaymentMethod.status !== Mercoa.BankStatus.Verified) {
-              toast.error('The selected payment method is not verified')
-              return
-            }
-            const updateRequest: Mercoa.InvoiceUpdateRequest = {
-              status: Mercoa.InvoiceStatus.Scheduled,
-              paymentSourceId: selectedPaymentMethodId,
-              deductionDate: dayjs().toDate(),
-            }
-            updateInvoice(updateRequest)
-          }}
+          disabled={isLoading || !acceptingPayments}
+          onClick={handlePayment}
         >
-          Pay {totalDisplay}
+          {payButtonText}
         </MercoaButton>
       </div>
     </div>
@@ -410,16 +428,35 @@ function SelectPaymentMethodTypeButtons({
 }
 
 function SelectBankAccountButtons({
+  isPreview,
   bankAccounts,
   setBankAccounts,
   selectedPaymentMethodId,
   setSelectedPaymentMethodId,
 }: {
+  isPreview?: boolean
   bankAccounts: Array<Mercoa.PaymentMethodResponse.BankAccount>
-  setBankAccounts: Dispatch<SetStateAction<Mercoa.PaymentMethodResponse.BankAccount[] | undefined>>
+  setBankAccounts: Dispatch<SetStateAction<Mercoa.PaymentMethodResponse.BankAccount[]>>
   selectedPaymentMethodId: string | undefined
   setSelectedPaymentMethodId: Dispatch<SetStateAction<string | undefined>>
 }) {
+  const addAccountButton = isPreview ? (
+    <BankAccount />
+  ) : (
+    <AddBankAccountButton
+      onSelect={(bankAccount: Mercoa.PaymentMethodResponse.BankAccount) => {
+        if (
+          !bankAccounts.find(
+            (e) => e.accountNumber === bankAccount.accountNumber && e.routingNumber === bankAccount.routingNumber,
+          )
+        ) {
+          setBankAccounts((prevBankAccounts) => (prevBankAccounts ? [...prevBankAccounts, bankAccount] : [bankAccount]))
+          setSelectedPaymentMethodId(bankAccount.id)
+        }
+      }}
+    />
+  )
+
   return (
     <PaymentMethodList
       accounts={bankAccounts}
@@ -427,47 +464,45 @@ function SelectBankAccountButtons({
       formatAccount={(bankAccount) => (
         <BankAccount
           key={bankAccount.id}
-          showEdit
+          showVerification
           account={bankAccount}
           selected={bankAccount.id === selectedPaymentMethodId}
           onSelect={() => {
             setSelectedPaymentMethodId(bankAccount.id)
           }}
-          hideDefaultIndicator
-          hideCheckSendStatus
         />
       )}
-      addAccount={
-        <AddBankAccountButton
-          onSelect={(bankAccount: Mercoa.PaymentMethodResponse.BankAccount) => {
-            if (
-              !bankAccounts.find(
-                (e) => e.accountNumber === bankAccount.accountNumber && e.routingNumber === bankAccount.routingNumber,
-              )
-            ) {
-              setBankAccounts((prevBankAccounts) =>
-                prevBankAccounts ? [...prevBankAccounts, bankAccount] : [bankAccount],
-              )
-              setSelectedPaymentMethodId(bankAccount.id)
-            }
-          }}
-        />
-      }
+      addAccount={addAccountButton}
     />
   )
 }
 
 function SelectCardButtons({
+  isPreview,
   cards,
   setCards,
   selectedPaymentMethodId,
   setSelectedPaymentMethodId,
 }: {
+  isPreview?: boolean
   cards: Array<Mercoa.PaymentMethodResponse.Card>
-  setCards: Dispatch<SetStateAction<Mercoa.PaymentMethodResponse.Card[] | undefined>>
+  setCards: Dispatch<SetStateAction<Mercoa.PaymentMethodResponse.Card[]>>
   selectedPaymentMethodId: string | undefined
   setSelectedPaymentMethodId: Dispatch<SetStateAction<string | undefined>>
 }) {
+  const addAccountButton = isPreview ? (
+    <Card />
+  ) : (
+    <AddCardButton
+      onSelect={(card: Mercoa.PaymentMethodResponse.Card) => {
+        if (!cards.find((e) => e.lastFour === card.lastFour)) {
+          setCards((prevCards) => (prevCards ? [...prevCards, card] : [card]))
+          setSelectedPaymentMethodId(card.id)
+        }
+      }}
+    />
+  )
+
   return (
     <PaymentMethodList
       accounts={cards}
@@ -484,16 +519,7 @@ function SelectCardButtons({
           hideDefaultIndicator
         />
       )}
-      addAccount={
-        <AddCardButton
-          onSelect={(card: Mercoa.PaymentMethodResponse.Card) => {
-            if (!cards.find((e) => e.lastFour === card.lastFour)) {
-              setCards((prevCards) => (prevCards ? [...prevCards, card] : [card]))
-              setSelectedPaymentMethodId(card.id)
-            }
-          }}
-        />
-      }
+      addAccount={addAccountButton}
     />
   )
 }

@@ -358,6 +358,7 @@ export const usePayableDetails = ({
     approvalPolicy,
     paymentDestinationOptions,
     paymentDestinationType,
+    paymentSourceType,
     printDescriptionOnCheckRemittance,
     paymentSourceId,
     paymentDestinationId,
@@ -393,6 +394,7 @@ export const usePayableDetails = ({
     'approvalPolicy',
     'paymentDestinationOptions',
     'paymentDestinationType',
+    'paymentSourceType',
     'paymentDestinationOptions.printDescription',
     'paymentSourceId',
     'paymentDestinationId',
@@ -560,7 +562,6 @@ export const usePayableDetails = ({
       return
     }
 
-    // only merge if vendor is not found
     if (
       invoiceData?.ocrJobId &&
       (invoiceData?.vendor ||
@@ -753,9 +754,10 @@ export const usePayableDetails = ({
     [paymentMethodsSource, paymentMethodsDestination, setValue, clearErrors],
   )
 
+  // set payment type defaults, and method defaults based on the type, should not run when source and destination payment types are already set
   useEffect(() => {
     if (!paymentMethodsSource && !paymentMethodsDestination) return
-    if (selectedSourcePaymentMethodId && selectedDestinationPaymentMethodId) return
+    if (paymentSourceType && paymentDestinationType) return
     // Check for default payment methods
     const defaultSourcePm = paymentMethodsSource?.find((e) => e.isDefaultSource)
     const defaultDestPm = paymentMethodsDestination?.find((e) => e.isDefaultDestination)
@@ -826,8 +828,8 @@ export const usePayableDetails = ({
   }, [
     paymentMethodsSource,
     paymentMethodsDestination,
-    selectedSourcePaymentMethodId,
-    selectedDestinationPaymentMethodId,
+    paymentSourceType,
+    paymentDestinationType,
     setValue,
     clearErrors,
     setMethodOnTypeChange,
