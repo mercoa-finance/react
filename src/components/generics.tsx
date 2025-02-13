@@ -4,6 +4,7 @@ import {
   ChevronDownIcon,
   ChevronUpDownIcon,
   ChevronUpIcon,
+  ExclamationTriangleIcon,
   MinusIcon,
   TrashIcon,
   XMarkIcon,
@@ -580,9 +581,11 @@ export function PaymentMethodList({
   formatAccount: (account: any) => JSX.Element | JSX.Element[] | null
 }) {
   const mercoaSession = useMercoaSession()
+  const hasAccounts = accounts && accounts.length > 0
   return (
     <>
-      {accounts &&
+      {/* List of payment methods if provided */}
+      {hasAccounts &&
         accounts.map((account) => (
           <div className="mercoa-mt-2 mercoa-flex" key={account.id}>
             <div className="mercoa-flex-grow">{formatAccount(account)}</div>
@@ -610,10 +613,22 @@ export function PaymentMethodList({
             )}
           </div>
         ))}
+      {/* Add account button */}
       {addAccount && (
         <div className="mercoa-mt-2 mercoa-flex">
           <div className="mercoa-flex-grow">{addAccount}</div>
-          {showDelete && accounts && accounts.length > 0 && <div className="mercoa-ml-2 mercoa-size-5" />}
+          {showDelete && hasAccounts && <div className="mercoa-ml-2 mercoa-size-5" />}
+        </div>
+      )}
+      {/* Empty state rendering (no accounts + no add account button provided) */}
+      {!hasAccounts && !addAccount && (
+        <div className="mercoa-mt-2 mercoa-flex">
+          <div className="mercoa-flex-grow">
+            <PaymentMethodButton
+              icon={<ExclamationTriangleIcon className="mercoa-size-5" />}
+              text="No payment methods found"
+            />
+          </div>
         </div>
       )}
     </>
@@ -729,6 +744,7 @@ export function StatCard({
 
 export function MercoaCombobox({
   onChange,
+  onRawChange,
   options,
   value,
   label,
@@ -748,6 +764,7 @@ export function MercoaCombobox({
   direction,
 }: {
   onChange: (val: any) => any
+  onRawChange?: (val: any) => any
   options: { value: any; disabled?: boolean; color?: string }[]
   value?: any // TODO: why was this required? and why were we passing a function to it???
   label?: string
@@ -795,6 +812,7 @@ export function MercoaCombobox({
   }, [value, multiple, showAllOptions])
 
   useEffect(() => {
+    onRawChange?.(query)
     if (freeText && query !== '') {
       setSelectedValue(query)
     }
@@ -1607,7 +1625,7 @@ export function PaymentMethodButton({
   onSelect?: (account?: any) => void
   account?: Mercoa.PaymentMethodResponse
   selected?: boolean
-  icon: JSX.Element
+  icon?: JSX.Element
   text: string | JSX.Element
 }) {
   return (
@@ -1621,15 +1639,17 @@ export function PaymentMethodButton({
         onSelect ? 'mercoa-cursor-pointer hover:mercoa-border-mercoa-primary-dark' : ''
       }`}
     >
-      <div
-        className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
-          selected
-            ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
-            : 'mercoa-bg-gray-200 mercoa-text-gray-600'
-        }`}
-      >
-        {icon}
-      </div>
+      {icon && (
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          {icon}
+        </div>
+      )}
       <div className="mercoa-min-w-0 mercoa-flex-1">
         <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
         <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">{text}</p>

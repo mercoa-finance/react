@@ -30,6 +30,7 @@ import * as yup from 'yup'
 import { capitalize } from '../lib/lib'
 import { postalCodeRegex } from '../lib/locations'
 import { mccCodes } from '../lib/mccCodes'
+import { onboardingOptionsToResponse } from '../lib/onboardingOptions'
 import {
   AddDialog,
   DisbursementMethods,
@@ -2185,7 +2186,7 @@ export function EntityOnboardingForm({
 }: {
   entity: Mercoa.EntityResponse
   type: 'payee' | 'payor'
-  onboardingOptions?: Mercoa.OnboardingOptionsResponse
+  onboardingOptions?: Mercoa.OnboardingOptionsRequest
   onOnboardingSubmit?: (data: OnboardingFormData) => void
   onCancel?: () => void
   admin?: boolean
@@ -2193,11 +2194,13 @@ export function EntityOnboardingForm({
 }) {
   const mercoaSession = useMercoaSession()
 
-  const finalOnboardingOptions =
-    onboardingOptions ??
-    (type === 'payee'
+  const organizationOnboardingOptions =
+    type === 'payee'
       ? mercoaSession.organization?.payeeOnboardingOptions
-      : mercoaSession.organization?.payorOnboardingOptions)
+      : mercoaSession.organization?.payorOnboardingOptions
+  const finalOnboardingOptions = onboardingOptions
+    ? onboardingOptionsToResponse(onboardingOptions)
+    : organizationOnboardingOptions
 
   const {
     register,
@@ -2300,18 +2303,20 @@ export function EntityOnboardingForm({
   if (!mercoaSession.organization) return <LoadingSpinner />
 
   if (admin && finalOnboardingOptions) {
-    ;(Object.keys(finalOnboardingOptions.individual) as Array<keyof Mercoa.IndividualOnboardingOptions>).forEach(
+    ;(
+      Object.keys(finalOnboardingOptions.individual) as Array<keyof Mercoa.IndividualOnboardingOptionsResponse>
+    ).forEach((key) => {
+      finalOnboardingOptions.individual[key].show = true
+      finalOnboardingOptions.individual[key].edit = readOnly ? false : true
+      finalOnboardingOptions.individual[key].required = false
+    })
+    ;(Object.keys(finalOnboardingOptions.business) as Array<keyof Mercoa.BusinessOnboardingOptionsResponse>).forEach(
       (key) => {
-        finalOnboardingOptions.individual[key].show = true
-        finalOnboardingOptions.individual[key].edit = readOnly ? false : true
-        finalOnboardingOptions.individual[key].required = false
+        finalOnboardingOptions.business[key].show = true
+        finalOnboardingOptions.business[key].edit = readOnly ? false : true
+        finalOnboardingOptions.business[key].required = false
       },
     )
-    ;(Object.keys(finalOnboardingOptions.business) as Array<keyof Mercoa.BusinessOnboardingOptions>).forEach((key) => {
-      finalOnboardingOptions.business[key].show = true
-      finalOnboardingOptions.business[key].edit = readOnly ? false : true
-      finalOnboardingOptions.business[key].required = false
-    })
     finalOnboardingOptions.paymentMethod = false
   }
 
@@ -2790,13 +2795,15 @@ export function EntityOnboarding({
   onboardingOptions,
   type,
   onComplete,
+  onStateChange,
 }: {
   type: 'payee' | 'payor'
   connectedEntityName?: string
   connectedEntityId?: Mercoa.EntityId
   entityId?: Mercoa.EntityId
-  onboardingOptions?: Mercoa.OnboardingOptionsResponse
+  onboardingOptions?: Mercoa.OnboardingOptionsRequest
   onComplete?: () => void
+  onStateChange?: (state: 'entity' | 'representatives' | 'payments' | 'complete') => void
 }) {
   const [entity, setEntity] = useState<Mercoa.EntityResponse>()
   const [representatives, setRepresentatives] = useState<Mercoa.RepresentativeResponse[]>([])
@@ -2805,11 +2812,17 @@ export function EntityOnboarding({
 
   const mercoaSession = useMercoaSession()
 
-  const onboardingOptionsFinal =
-    onboardingOptions ??
-    (type === 'payee'
-      ? mercoaSession?.organization?.payeeOnboardingOptions
-      : mercoaSession?.organization?.payorOnboardingOptions)
+  const organizationOnboardingOptions =
+    type === 'payee'
+      ? mercoaSession.organization?.payeeOnboardingOptions
+      : mercoaSession.organization?.payorOnboardingOptions
+  const onboardingOptionsFinal = onboardingOptions
+    ? onboardingOptionsToResponse(onboardingOptions)
+    : organizationOnboardingOptions
+
+  useEffect(() => {
+    onStateChange?.(formState)
+  }, [formState, onStateChange])
 
   useEffect(() => {
     if (!mercoaSession.client) return
