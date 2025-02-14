@@ -40,6 +40,7 @@ export function BankAccounts({
   showAdd,
   showEdit,
   showDelete,
+  showVerification,
   verifiedOnly,
   hideIndicators,
 }: {
@@ -48,6 +49,7 @@ export function BankAccounts({
   showAdd?: boolean
   showEdit?: boolean
   showDelete?: boolean
+  showVerification?: boolean
   verifiedOnly?: boolean
   hideIndicators?: boolean
 }) {
@@ -85,7 +87,7 @@ export function BankAccounts({
           <>
             <PaymentMethodList
               accounts={bankAccounts}
-              showDelete={showDelete || showEdit}
+              showDelete={showDelete || showEdit} // NOTE: For backwards compatibility, showEdit implies showDelete
               addAccount={
                 bankAccounts && showAdd ? (
                   <AddBankAccountButton
@@ -107,6 +109,7 @@ export function BankAccounts({
                   account={account}
                   onSelect={onSelect}
                   showEdit={showEdit}
+                  showVerification={showVerification}
                   hideDefaultIndicator={hideIndicators}
                   hideVerificationButton={hideIndicators}
                   hideVerificationStatus={hideIndicators}

@@ -19,7 +19,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import dayjs from 'dayjs'
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import Dropzone from 'react-dropzone'
 import { usePlacesWidget } from 'react-google-autocomplete'
 import { Control, Controller, UseFormRegister, useForm } from 'react-hook-form'
@@ -2816,9 +2816,10 @@ export function EntityOnboarding({
     type === 'payee'
       ? mercoaSession.organization?.payeeOnboardingOptions
       : mercoaSession.organization?.payorOnboardingOptions
-  const onboardingOptionsFinal = onboardingOptions
-    ? onboardingOptionsToResponse(onboardingOptions)
-    : organizationOnboardingOptions
+  const onboardingOptionsFinal = useMemo(
+    () => (onboardingOptions ? onboardingOptionsToResponse(onboardingOptions) : organizationOnboardingOptions),
+    [onboardingOptions, organizationOnboardingOptions],
+  )
 
   useEffect(() => {
     onStateChange?.(formState)

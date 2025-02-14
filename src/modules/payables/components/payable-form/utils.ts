@@ -639,8 +639,8 @@ export const validateAndConstructPayload = (props: {
   const incompleteInvoiceData: Omit<Mercoa.InvoiceCreationRequest, 'creatorEntityId' | 'creatorEntityGroupId'> = {
     status: saveAsStatus,
     amount: Number(formData.amount),
-    taxAmount: typeof formData.taxAmount !== 'undefined' ? Number(formData.taxAmount ?? 0) : undefined,
-    shippingAmount: typeof formData.shippingAmount !== 'undefined' ? Number(formData.shippingAmount ?? 0) : undefined,
+    taxAmount: formData.taxAmount !== undefined ? Number(formData.taxAmount ?? 0) : undefined,
+    shippingAmount: formData.shippingAmount !== undefined ? Number(formData.shippingAmount ?? 0) : undefined,
     currency: formData.currency as Mercoa.CurrencyCode,
     invoiceDate: formData.invoiceDate,
     deductionDate: formData.deductionDate,
