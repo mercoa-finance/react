@@ -60,45 +60,28 @@ export function CustomPaymentMethods({
   else {
     return (
       <>
-        {!paymentMethods && (
+        {!paymentMethods ? (
           <div className="mercoa-p-9 mercoa-text-center">
             <LoadingSpinnerIcon />
           </div>
-        )}
-        <PaymentMethodList
-          accounts={paymentMethods}
-          showDelete={showDelete || showEdit}
-          // TODO: Implement AddCustomPaymentMethod component, incorporate it correctly here
-          // addAccount={
-          //   paymentMethods && showAdd ? (
-          //     <div>
-          //       <AddDialog
-          //         show={showDialog}
-          //         onClose={onClose}
-          //         component={
-          //           <AddCustomPaymentMethod
-          //             onSubmit={(data) => {
-          //               onClose(data)
-          //             }}
-          //             schema={paymentMethods[0].schema}
-          //           />
-          //         }
-          //       />
-          //       <CustomPaymentMethod onSelect={() => setShowDialog(true)} />
-          //     </div>
-          //   ) : undefined
-          // }
-          formatAccount={(account: Mercoa.PaymentMethodResponse.Custom) => (
-            <CustomPaymentMethod
-              account={account}
-              onSelect={onSelect}
-              schema={schema}
-              showEdit={showEdit}
-              hideDefaultIndicator={hideIndicators}
+        ) : (
+          <>
+            <PaymentMethodList
+              accounts={paymentMethods}
+              showDelete={showDelete || showEdit}
+              formatAccount={(account: Mercoa.PaymentMethodResponse.Custom) => (
+                <CustomPaymentMethod
+                  account={account}
+                  onSelect={onSelect}
+                  schema={schema}
+                  showEdit={showEdit}
+                  hideDefaultIndicator={hideIndicators}
+                />
+              )}
             />
-          )}
-        />
-        {paymentMethods && paymentMethods?.map((account) => <div className="mercoa-mt-2" key={account.id}></div>)}
+            {paymentMethods?.map((account) => <div className="mercoa-mt-2" key={account.id}></div>)}
+          </>
+        )}
       </>
     )
   }

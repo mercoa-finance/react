@@ -76,36 +76,37 @@ export function Cards({
   else {
     return (
       <>
-        {!cards && (
+        {!cards ? (
           <div className="mercoa-p-9 mercoa-text-center">
             <LoadingSpinnerIcon />
           </div>
+        ) : (
+          <PaymentMethodList
+            accounts={cards}
+            showDelete={showDelete || showEdit}
+            addAccount={
+              cards && showAdd ? (
+                <div>
+                  <AddDialog
+                    show={showDialog}
+                    onClose={onClose}
+                    component={
+                      <AddCard
+                        onSubmit={(data: Mercoa.PaymentMethodResponse.Card) => {
+                          onClose(data)
+                        }}
+                      />
+                    }
+                  />
+                  <Card onSelect={() => setShowDialog(true)} />
+                </div>
+              ) : undefined
+            }
+            formatAccount={(account: Mercoa.PaymentMethodResponse.Card) => (
+              <Card account={account} onSelect={onSelect} showEdit={showEdit} hideDefaultIndicator={hideIndicators} />
+            )}
+          />
         )}
-        <PaymentMethodList
-          accounts={cards}
-          showDelete={showDelete || showEdit}
-          addAccount={
-            cards && showAdd ? (
-              <div>
-                <AddDialog
-                  show={showDialog}
-                  onClose={onClose}
-                  component={
-                    <AddCard
-                      onSubmit={(data: Mercoa.PaymentMethodResponse.Card) => {
-                        onClose(data)
-                      }}
-                    />
-                  }
-                />
-                <Card onSelect={() => setShowDialog(true)} />
-              </div>
-            ) : undefined
-          }
-          formatAccount={(account: Mercoa.PaymentMethodResponse.Card) => (
-            <Card account={account} onSelect={onSelect} showEdit={showEdit} hideDefaultIndicator={hideIndicators} />
-          )}
-        />
       </>
     )
   }

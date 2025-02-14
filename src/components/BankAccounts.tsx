@@ -77,46 +77,49 @@ export function BankAccounts({
   else {
     return (
       <>
-        {!bankAccounts && (
+        {!bankAccounts ? (
           <div className="mercoa-p-9 mercoa-text-center">
             <LoadingSpinnerIcon />
           </div>
-        )}
-        <PaymentMethodList
-          accounts={bankAccounts}
-          showDelete={showDelete || showEdit}
-          addAccount={
-            bankAccounts && showAdd ? (
-              <AddBankAccountButton
-                onSelect={(account: Mercoa.PaymentMethodResponse.BankAccount) => {
-                  if (
-                    !bankAccounts.find(
-                      (e) => e.accountNumber === account.accountNumber && e.routingNumber === account.routingNumber,
-                    )
-                  ) {
-                    setBankAccounts([...bankAccounts, account])
-                  }
-                  if (onSelect) onSelect(account)
-                }}
-              />
-            ) : undefined
-          }
-          formatAccount={(account: Mercoa.PaymentMethodResponse.BankAccount) => (
-            <BankAccount
-              account={account}
-              onSelect={onSelect}
-              showEdit={showEdit}
-              hideDefaultIndicator={hideIndicators}
-              hideVerificationButton={hideIndicators}
-              hideVerificationStatus={hideIndicators}
-              hideCheckSendStatus={hideIndicators}
+        ) : (
+          <>
+            <PaymentMethodList
+              accounts={bankAccounts}
+              showDelete={showDelete || showEdit}
+              addAccount={
+                bankAccounts && showAdd ? (
+                  <AddBankAccountButton
+                    onSelect={(account: Mercoa.PaymentMethodResponse.BankAccount) => {
+                      if (
+                        !bankAccounts.find(
+                          (e) => e.accountNumber === account.accountNumber && e.routingNumber === account.routingNumber,
+                        )
+                      ) {
+                        setBankAccounts([...bankAccounts, account])
+                      }
+                      if (onSelect) onSelect(account)
+                    }}
+                  />
+                ) : undefined
+              }
+              formatAccount={(account: Mercoa.PaymentMethodResponse.BankAccount) => (
+                <BankAccount
+                  account={account}
+                  onSelect={onSelect}
+                  showEdit={showEdit}
+                  hideDefaultIndicator={hideIndicators}
+                  hideVerificationButton={hideIndicators}
+                  hideVerificationStatus={hideIndicators}
+                  hideCheckSendStatus={hideIndicators}
+                />
+              )}
             />
-          )}
-        />
-        {bankAccounts && bankAccounts.length == 0 && verifiedOnly && (
-          <div className="mercoa-mt-2 mercoa-text-left mercoa-text-gray-700">
-            No verified bank accounts found. Please add and verify at least one bank account.
-          </div>
+            {bankAccounts.length == 0 && verifiedOnly && (
+              <div className="mercoa-mt-2 mercoa-text-left mercoa-text-gray-700">
+                No verified bank accounts found. Please add and verify at least one bank account.
+              </div>
+            )}
+          </>
         )}
       </>
     )

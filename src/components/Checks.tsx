@@ -62,36 +62,37 @@ export function Checks({
   else {
     return (
       <>
-        {!checks && (
+        {!checks ? (
           <div className="mercoa-p-9 mercoa-text-center">
             <LoadingSpinnerIcon />
           </div>
+        ) : (
+          <PaymentMethodList
+            accounts={checks}
+            showDelete={showDelete || showEdit}
+            addAccount={
+              checks && showAdd ? (
+                <div>
+                  <AddDialog
+                    show={showDialog}
+                    onClose={onClose}
+                    component={
+                      <AddCheck
+                        onSubmit={(data?: Mercoa.PaymentMethodResponse.Check) => {
+                          onClose(data)
+                        }}
+                      />
+                    }
+                  />
+                  <Check onSelect={() => setShowDialog(true)} />
+                </div>
+              ) : undefined
+            }
+            formatAccount={(account: Mercoa.PaymentMethodResponse.Check) => (
+              <Check account={account} onSelect={onSelect} showEdit={showEdit} hideDefaultIndicator={hideIndicators} />
+            )}
+          />
         )}
-        <PaymentMethodList
-          accounts={checks}
-          showDelete={showDelete || showEdit}
-          addAccount={
-            checks && showAdd ? (
-              <div>
-                <AddDialog
-                  show={showDialog}
-                  onClose={onClose}
-                  component={
-                    <AddCheck
-                      onSubmit={(data?: Mercoa.PaymentMethodResponse.Check) => {
-                        onClose(data)
-                      }}
-                    />
-                  }
-                />
-                <Check onSelect={() => setShowDialog(true)} />
-              </div>
-            ) : undefined
-          }
-          formatAccount={(account: Mercoa.PaymentMethodResponse.Check) => (
-            <Check account={account} onSelect={onSelect} showEdit={showEdit} hideDefaultIndicator={hideIndicators} />
-          )}
-        />
       </>
     )
   }
