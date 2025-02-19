@@ -61,6 +61,8 @@ export function PayableFormV2({ children }: { children?: ReactElement }) {
               <PayableFormHeader /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <PayableCounterpartySearch onSelect={setSelectedVendor} counterparty={selectedVendor} />{' '}
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+              {invoiceType === 'invoiceTemplate' && <PayableRecurringSchedule />}
+              <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <PayableOverview />
               <PayableLineItems />
               {mercoaSession.entityCustomizations?.ocr &&
@@ -74,7 +76,6 @@ export function PayableFormV2({ children }: { children?: ReactElement }) {
                   <PaymentDestinationProcessingTime />
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                   <PayableFees />
-                  {invoiceType === 'invoiceTemplate' && <PayableRecurringSchedule />}
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                   <PayableApprovers />
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />

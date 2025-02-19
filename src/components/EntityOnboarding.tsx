@@ -2789,11 +2789,12 @@ export function entityDetailsForMercoaPaymentsCompleted(entity: Mercoa.EntityRes
 }
 
 export function EntityOnboarding({
-  entityId,
+  type,
   connectedEntityName,
   connectedEntityId,
+  entityId,
   onboardingOptions,
-  type,
+  hideDefaultIntroduction,
   onComplete,
   onStateChange,
 }: {
@@ -2802,6 +2803,7 @@ export function EntityOnboarding({
   connectedEntityId?: Mercoa.EntityId
   entityId?: Mercoa.EntityId
   onboardingOptions?: Mercoa.OnboardingOptionsRequest
+  hideDefaultIntroduction?: boolean
   onComplete?: () => void
   onStateChange?: (state: 'entity' | 'representatives' | 'payments' | 'complete') => void
 }) {
@@ -2917,44 +2919,39 @@ export function EntityOnboarding({
       </div>
     )
 
-  const infoWell = (
-    <div className="mercoa-p-4 mercoa-text-sm mercoa-rounded-mercoa mercoa-bg-gray-100 mercoa-my-4 mercoa-grid mercoa-grid-cols-12 mercoa-gap-3 mercoa-items-center">
-      <div className="mercoa-w-full mercoa-flex mercoa-justify-center">
-        <LockClosedIcon className="mercoa-w-[22px]" />
-      </div>
-      <p className="mercoa-col-span-11">
-        Your information is used for verification purposes and isn&apos;t used for third-party marketing. We take your
-        privacy seriously.
-      </p>
-      <div className="mercoa-w-full mercoa-flex mercoa-justify-center">
-        <ClockIcon className="mercoa-w-[22px]" />
-      </div>
-      <p className="mercoa-col-span-11" style={{ lineHeight: '48px' }}>
-        This process should take approximately 5 minutes to complete.
-      </p>
-    </div>
-  )
+  const payeeIntroText = `${connectedEntityName ? connectedEntityName : 'A customer'} has opted to pay you using ${
+    mercoaSession.organization.name
+  }. To receive payments from ${
+    mercoaSession.organization.name
+  }, you'll need to provide us with a few pieces of information.`
+  const payorIntroText = `To pay bills and invoices with ${mercoaSession.organization.name}, you'll need to provide us with a few pieces of information.`
 
   if (!mercoaSession.client) return <NoSession componentName="EntityOnboarding" />
   return (
-    <div className="mercoa-flex mercoa-flex-col mercoa-rounded-l-md mercoa-p-8 mercoa-text-center mercoa-text-gray-900 mercoa-shadow-sm mercoa-w-full">
+    <div className="mercoa-flex mercoa-flex-col mercoa-p-8 mercoa-text-center mercoa-text-gray-900 mercoa-w-full">
       <div className={formState === 'entity' ? '' : 'mercoa-hidden'}>
-        {type === 'payee' ? (
+        {!hideDefaultIntroduction && (
           <div className="mercoa-text-gray-800 mercoa-text-left">
+            {/* Introduction Text */}
             <p className="mercoa-text-lg mercoa-font-normal mercoa-text-left">
-              {connectedEntityName ? connectedEntityName : 'A customer'} has opted to pay you using{' '}
-              {mercoaSession.organization.name}. To receive payments from {mercoaSession.organization.name}, you&apos;ll
-              need to provide us with a few pieces of information.
+              {type === 'payee' ? payeeIntroText : payorIntroText}
             </p>
-            {infoWell}
-          </div>
-        ) : (
-          <div className="mercoa-text-gray-800 mercoa-text-left">
-            <p className="mercoa-text-lg mercoa-font-normal mercoa-text-left">
-              To pay bills and invoices with {mercoaSession.organization.name}, you&apos;ll need to provide us with a
-              few pieces of information.
-            </p>
-            {infoWell}
+            {/* Info Well */}
+            <div className="mercoa-p-4 mercoa-text-sm mercoa-rounded-mercoa mercoa-bg-gray-100 mercoa-my-4 mercoa-grid mercoa-grid-cols-12 mercoa-gap-3 mercoa-items-center">
+              <div className="mercoa-w-full mercoa-flex mercoa-justify-center">
+                <LockClosedIcon className="mercoa-w-[22px]" />
+              </div>
+              <p className="mercoa-col-span-11">
+                Your information is used for verification purposes and isn&apos;t used for third-party marketing. We
+                take your privacy seriously.
+              </p>
+              <div className="mercoa-w-full mercoa-flex mercoa-justify-center">
+                <ClockIcon className="mercoa-w-[22px]" />
+              </div>
+              <p className="mercoa-col-span-11" style={{ lineHeight: '48px' }}>
+                This process should take approximately 5 minutes to complete.
+              </p>
+            </div>
           </div>
         )}
         <EntityOnboardingForm

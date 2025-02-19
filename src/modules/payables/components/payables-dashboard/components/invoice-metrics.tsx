@@ -1,8 +1,8 @@
 import { NoSession } from '../../../../../components'
 
 import accounting from 'accounting'
-import { currencyCodeToSymbol } from '../../../../../../src/lib/currency'
 import { Mercoa } from '@mercoa/javascript'
+import { currencyCodeToSymbol } from '../../../../../../src/lib/currency'
 import { Skeleton, StatCard, useMercoaSession } from '../../../../../components'
 
 export function InvoiceMetrics({

@@ -79,12 +79,12 @@ export function StatusTabs({
           aria-label="Tabs"
         >
           {tabs.map((status) => (
-            <a
+            <button
               onClick={() => {
                 if (onStatusChange) onStatusChange([status])
               }}
               key={status}
-              href="#"
+              type="button"
               className={`${
                 selectedStatuses.includes(status)
                   ? 'mercoa-text-mercoa-primary sm:mercoa-border-mercoa-primary'
@@ -99,7 +99,7 @@ export function StatusTabs({
                   selected={selectedStatuses.includes(status)}
                 />
               )}
-            </a>
+            </button>
           ))}
         </nav>
       </div>

@@ -3,7 +3,7 @@ import { UseFormReturn } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import { PayableAction } from '../components/payable-form/constants'
 import { PayableFormData } from '../components/payable-form/types'
-import { usePayableDetails, UsePayableDetailsProps } from '../hooks/use-payable-form'
+import { usePayableDetails, UsePayableDetailsProps } from '../hooks/use-payable-details'
 
 export type PayableDetailsContextValue = {
   invoice: Mercoa.InvoiceResponse | undefined

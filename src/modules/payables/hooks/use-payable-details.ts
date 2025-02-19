@@ -961,6 +961,9 @@ export const usePayableDetails = ({
     (invoiceId: string) => {
       queryClient.invalidateQueries({ queryKey: ['invoiceDetail', invoiceId, invoiceType] })
       queryClient.invalidateQueries({ queryKey: ['payables'] })
+      queryClient.invalidateQueries({ queryKey: ['recurringPayables'] })
+      queryClient.invalidateQueries({ queryKey: ['payableStatusTabsMetrics'] })
+      queryClient.invalidateQueries({ queryKey: ['payableMetrics'] })
     },
     [invoiceType],
   )
@@ -997,7 +1000,7 @@ export const usePayableDetails = ({
       ? updatePayable(
           {
             invoice: invoiceData,
-            invoiceType: invoiceType as 'invoice' | 'invoiceTemplate',
+            invoiceType: invoiceType ?? 'invoice',
             requestPayload,
             onInvoiceSubmit,
             refreshInvoice,
@@ -1027,7 +1030,7 @@ export const usePayableDetails = ({
                 updatePayable(
                   {
                     invoice: invoiceData,
-                    invoiceType: invoiceType as 'invoice' | 'invoiceTemplate',
+                    invoiceType: invoiceType ?? 'invoice',
                     requestPayload,
                     onInvoiceSubmit,
                     refreshInvoice,
@@ -1060,7 +1063,7 @@ export const usePayableDetails = ({
       : createPayable(
           {
             invoice: requestPayload,
-            invoiceType: 'invoice',
+            invoiceType: invoiceType ?? 'invoice',
             toast,
           },
           {
@@ -1089,7 +1092,7 @@ export const usePayableDetails = ({
   const handleApproveOrRejectPayable = async (invoice: Mercoa.InvoiceResponse, action: PayableAction) => {
     if (action === PayableAction.APPROVE) {
       approvePayable(
-        { invoice, invoiceType: 'invoice', toast, refreshInvoice },
+        { invoice, invoiceType: invoiceType ?? 'invoice', toast, refreshInvoice },
         {
           onSuccess: () => {
             setIsLoading(false)
@@ -1103,7 +1106,7 @@ export const usePayableDetails = ({
       )
     } else {
       rejectPayable(
-        { invoice, invoiceType: 'invoice', toast, refreshInvoice },
+        { invoice, invoiceType: invoiceType ?? 'invoice', toast, refreshInvoice },
         {
           onSuccess: () => {
             setIsLoading(false)
@@ -1122,7 +1125,7 @@ export const usePayableDetails = ({
     if (action === PayableAction.CANCEL) {
       if (confirm('Are you sure you want to cancel this invoice? This cannot be undone.')) {
         try {
-          await getInvoiceClient(mercoaSession, invoiceType!)?.update(data.id, {
+          await getInvoiceClient(mercoaSession, invoiceType ?? 'invoice')?.update(data.id, {
             status: Mercoa.InvoiceStatus.Canceled,
           })
         } catch (e: any) {
@@ -1135,7 +1138,7 @@ export const usePayableDetails = ({
       return
     } else if (action === PayableAction.ARCHIVE) {
       if (confirm('Are you sure you want to archive this invoice? This cannot be undone.')) {
-        await getInvoiceClient(mercoaSession, invoiceType!)?.update(data.id, {
+        await getInvoiceClient(mercoaSession, invoiceType ?? 'invoice')?.update(data.id, {
           status: Mercoa.InvoiceStatus.Archived,
         })
       }
@@ -1320,10 +1323,10 @@ export const usePayableDetails = ({
         return
       }
     } else if (action === PayableAction.DELETE) {
-      if (invoiceData?.id && invoiceType) {
+      if (invoiceData?.id) {
         try {
           if (confirm('Are your sure you want to delete this invoice? This cannot be undone.')) {
-            await getInvoiceClient(mercoaSession, invoiceType)?.delete(invoiceData.id)
+            await getInvoiceClient(mercoaSession, invoiceType ?? 'invoice')?.delete(invoiceData.id)
             toast.success('Invoice deleted')
             if (onInvoiceUpdate) onInvoiceUpdate(undefined)
           }
@@ -1360,7 +1363,7 @@ export const usePayableDetails = ({
             return
           }
 
-          const resp = await getInvoiceClient(mercoaSession, invoiceType!)?.update(invoiceData?.id, {
+          const resp = await getInvoiceClient(mercoaSession, invoiceType ?? 'invoice')?.update(invoiceData?.id, {
             ...requestPayload,
             status: Mercoa.InvoiceStatus.Paid,
             paymentDestinationOptions: {
@@ -1379,7 +1382,9 @@ export const usePayableDetails = ({
         }
       }
 
-      const pdf = await getInvoiceClient(mercoaSession, invoiceType!)?.document.generateCheckPdf(invoiceData.id)
+      const pdf = await getInvoiceClient(mercoaSession, invoiceType ?? 'invoice')?.document.generateCheckPdf(
+        invoiceData.id,
+      )
       if (pdf) {
         window.open(pdf.uri, '_blank')
       } else {
@@ -1485,8 +1490,6 @@ export const usePayableDetails = ({
       updatedAt: new Date(),
     })
   }
-
-  console.log(lineItems)
 
   const updateItem = (index: number, item: Mercoa.InvoiceLineItemUpdateRequest, id?: string) => {
     if (id) {
@@ -1846,7 +1849,7 @@ export const usePayableDetails = ({
   const out: PayableDetailsContextValue = {
     formSchema: schema as any,
     invoice: invoiceData,
-    invoiceType: invoiceType!,
+    invoiceType: invoiceType ?? 'invoice',
     invoiceLoading: invoiceDataLoading,
     documents: invoiceDocuments,
     documentsLoading,

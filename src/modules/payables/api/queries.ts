@@ -34,7 +34,7 @@ export function usePayables({
   orderBy = Mercoa.InvoiceOrderByField.CreatedAt,
   orderDirection = Mercoa.OrderDirection.Desc,
   excludeReceivables = false,
-  resultsPerPage = 5,
+  resultsPerPage,
   paymentType,
   metadata,
   dateType = Mercoa.InvoiceDateFilter.CreatedAt,
@@ -97,9 +97,71 @@ export function usePayables({
       initialPageParam: undefined,
       refetchInterval: 30000,
       getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
-      getPreviousPageParam: (_, allPages) => {
-        return allPages.length > 1 ? allPages[allPages.length - 2].nextCursor : undefined
-      },
+    },
+  })
+}
+
+export function useRecurringPayables({
+  currentStatuses,
+  search,
+  startDate,
+  endDate,
+  orderBy = Mercoa.InvoiceOrderByField.CreatedAt,
+  orderDirection = Mercoa.OrderDirection.Desc,
+  resultsPerPage,
+  paymentType,
+  metadata,
+  dateType = Mercoa.InvoiceDateFilter.CreatedAt,
+  approverId,
+  approverAction,
+}: UsePayablesRequestOptions) {
+  const mercoaSession = useMercoaSession()
+
+  return useQuery<Mercoa.InvoiceTemplateResponse[] | undefined>({
+    queryKey: [
+      'recurringPayables',
+      mercoaSession?.entity?.id,
+      currentStatuses,
+      search,
+      startDate,
+      endDate,
+      orderBy,
+      orderDirection,
+      resultsPerPage,
+      paymentType,
+      dateType,
+      approverId,
+      approverAction,
+    ],
+    queryFn: async () => {
+      if (!mercoaSession || !mercoaSession.client || !mercoaSession.entity?.id) {
+        return undefined
+      }
+
+      // TODO: Replace with the entity-level invoice template endpoint once it exists to use excludeReceivables
+      // Entity > Invoice > Get All and Get Metrics currently exist
+      // Entity > Invoice Template > Get All and Get Metrics should be added
+      const filter: Mercoa.invoiceTemplate.GetAllInvoiceTemplatesRequest = {
+        entityId: mercoaSession.entity.id,
+        status: currentStatuses,
+        search,
+        startDate,
+        endDate,
+        orderBy,
+        orderDirection,
+        limit: resultsPerPage,
+        metadata: metadata,
+        paymentType: paymentType,
+        dateType: dateType,
+        ...(approverId && approverAction && { approverId, approverAction }),
+      }
+
+      const response = await mercoaSession.client.invoiceTemplate.find(filter)
+
+      return response.data
+    },
+    options: {
+      enabled: !!mercoaSession?.client && !!mercoaSession?.entity?.id,
     },
   })
 }

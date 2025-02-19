@@ -22,6 +22,9 @@ export const useDeletePayable = () => {
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })
+        queryClient.invalidateQueries({
+          queryKey: ['recurringPayables'],
+        })
       },
     },
   })
@@ -60,6 +63,9 @@ export const useBulkDeletePayables = () => {
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })
+        queryClient.invalidateQueries({
+          queryKey: ['recurringPayables'],
+        })
       },
       onError: (error) => {
         console.error('Bulk delete failed:', error)
@@ -86,6 +92,9 @@ export const useApprovePayableN = () => {
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: ['payables'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['recurringPayables'],
         })
       },
       onError: (error) => {
@@ -128,6 +137,9 @@ export const useBulkApprovePayables = () => {
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })
+        queryClient.invalidateQueries({
+          queryKey: ['recurringPayables'],
+        })
       },
       onError: (error) => {
         console.error('Bulk approve failed:', error)
@@ -165,6 +177,9 @@ export const useSchedulePayment = () => {
       onSuccess: (res) => {
         queryClient.invalidateQueries({
           queryKey: ['payables'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['recurringPayables'],
         })
       },
       onError: (error) => {
@@ -223,6 +238,9 @@ export const useBulkSchedulePayment = () => {
       onSuccess: (result) => {
         queryClient.invalidateQueries({
           queryKey: ['payables'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['recurringPayables'],
         })
 
         if (result.successfulInvoices.length > 0) {
@@ -286,7 +304,10 @@ export const useUpdatePayable = () => {
     options: {
       onSuccess: (res) => {
         queryClient.invalidateQueries({
-          queryKey: ['payables', res?.id],
+          queryKey: ['payables', res.id],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['recurringPayables', res.id],
         })
       },
       onError: (error: any) => {
@@ -322,6 +343,9 @@ export function useCreatePayable() {
       onSuccess: (res) => {
         queryClient.invalidateQueries({
           queryKey: ['payables', res.id],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['recurringPayables', res.id],
         })
       },
       onError: (error: any) => {

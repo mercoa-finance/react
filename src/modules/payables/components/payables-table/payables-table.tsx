@@ -667,7 +667,7 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
         )}
 
         <div className="mercoa-overflow-x-auto mercoa-overflow-y-auto">
-          <div className="mercoa-overflow-x-auto mercoa-overflow-y-auto mercoa-h-[480px]">
+          <div className="mercoa-overflow-x-auto mercoa-overflow-y-auto mercoa-h-[522px]">
             <table
               className={cn('mercoa-w-full mercoa-border mercoa-border-gray-200 ', classNames?.table?.root)}
               style={{

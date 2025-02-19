@@ -18,6 +18,7 @@ import {
   usePayableMetricsByStatus,
   usePayableStatusTabsMetricsQuery,
   usePayables,
+  useRecurringPayables,
 } from '../api/queries'
 import { PayableAction } from '../components/payables-table/constants'
 import { usePayablesFilterStore } from '../stores/payables-filter-store'
@@ -89,6 +90,11 @@ export function usePayablesTable({ initialQueryOptions, currentQueryOptions }: U
     approverAction: memoizedApprovers.includes('current') ? Mercoa.ApproverAction.None : undefined,
   })
 
+  // TODO: Handle pagination for recurring payables (only supports fetching first page)
+  const { data: recurringPayablesData, isLoading: isRecurringPayablesLoading } = useRecurringPayables({
+    resultsPerPage: 100,
+  })
+
   const { data: metricsData, isLoading: isMetricsLoading } = usePayableMetricsByStatus({
     search: currentQueryOptions?.search ? currentQueryOptions.search : debouncedSearch,
     statuses: currentQueryOptions?.currentStatuses ? currentQueryOptions.currentStatuses : memoizedStatusFilters,
@@ -132,6 +138,7 @@ export function usePayablesTable({ initialQueryOptions, currentQueryOptions }: U
 
   useEffect(() => {
     setSelectedInvoiceIds([])
+    setPage(0)
   }, [
     currentQueryOptions?.currentStatuses,
     currentQueryOptions?.search,
@@ -163,32 +170,32 @@ export function usePayablesTable({ initialQueryOptions, currentQueryOptions }: U
   }
 
   const tableData = useMemo(() => {
-    if (currentPageData) {
-      return currentPageData.map((invoice) => ({
-        select: '',
-        id: invoice.id,
-        invoice: invoice,
-        invoiceNumber: invoice.invoiceNumber,
-        currencyCode: invoice.currency,
-        vendorName: invoice.vendor?.name,
-        vendorEmail: invoice.vendor?.email,
-        amount: invoice.amount,
-        status: invoice.status,
-        invoiceId: invoice.id,
-        dueDate: invoice.dueDate,
-        invoiceDate: invoice.invoiceDate,
-        deductionDate: invoice.deductionDate,
-        paymentDestination: invoice.paymentDestination,
-        invoiceType: invoice.paymentSchedule?.type === Mercoa.PaymentType.OneTime ? 'One Time' : 'Recurring',
-        failureType: invoice.failureType,
-        vendorId: invoice.vendorId,
-        payerId: invoice.payerId,
-        paymentDestinationId: invoice.paymentDestinationId,
-        paymentSourceId: invoice.paymentSourceId,
-        approvers: invoice.approvers,
-      }))
+    if (!currentPageData) {
+      return []
     }
-    return []
+    return currentPageData.map((invoice) => ({
+      select: '',
+      id: invoice.id,
+      invoice: invoice,
+      invoiceNumber: invoice.invoiceNumber,
+      currencyCode: invoice.currency,
+      vendorName: invoice.vendor?.name,
+      vendorEmail: invoice.vendor?.email,
+      amount: invoice.amount,
+      status: invoice.status,
+      invoiceId: invoice.id,
+      dueDate: invoice.dueDate,
+      invoiceDate: invoice.invoiceDate,
+      deductionDate: invoice.deductionDate,
+      paymentDestination: invoice.paymentDestination,
+      invoiceType: invoice.paymentSchedule?.type === Mercoa.PaymentType.OneTime ? 'One Time' : 'Recurring',
+      failureType: invoice.failureType,
+      vendorId: invoice.vendorId,
+      payerId: invoice.payerId,
+      paymentDestinationId: invoice.paymentDestinationId,
+      paymentSourceId: invoice.paymentSourceId,
+      approvers: invoice.approvers,
+    }))
   }, [currentPageData])
 
   const isAllSelected =
@@ -210,7 +217,10 @@ export function usePayablesTable({ initialQueryOptions, currentQueryOptions }: U
   }
 
   const goToNextPage = () => {
-    if (data?.pages ? page === data?.pages.length - 1 && hasNextPage && !isFetchingNextPage : false) {
+    if (isFetchingNextPage) {
+      return
+    }
+    if (data?.pages && page === data.pages.length - 1 && hasNextPage) {
       fetchNextPage()
     }
     setPage((prev) => prev + 1)
@@ -222,7 +232,7 @@ export function usePayablesTable({ initialQueryOptions, currentQueryOptions }: U
     }
   }
 
-  const isNextDisabled = data?.pages ? page === data?.pages.length - 1 && !hasNextPage : true
+  const isNextDisabled = isFetchingNextPage || !data?.pages || (page === data.pages.length - 1 && !hasNextPage)
   const isPrevDisabled = page === 0
 
   const toggleSelectedColumn = (field: any) => {
@@ -246,6 +256,10 @@ export function usePayablesTable({ initialQueryOptions, currentQueryOptions }: U
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['payables'] })
+    queryClient.invalidateQueries({ queryKey: ['recurringPayables'] })
+    queryClient.invalidateQueries({ queryKey: ['payableStatusTabsMetrics'] })
+    queryClient.invalidateQueries({ queryKey: ['payableMetrics'] })
+    setPage(0)
   }
 
   const invoicePaymentTypeMapper = (invoice: Mercoa.InvoiceResponse) => {
@@ -416,6 +430,8 @@ export function usePayablesTable({ initialQueryOptions, currentQueryOptions }: U
     handleRefresh,
     isRefreshLoading: isFetching,
     downloadInvoicesAsCSV,
+    recurringPayablesData,
+    isRecurringPayablesLoading,
     metricsData,
     isMetricsLoading,
     approvalPolicies,

@@ -2,13 +2,13 @@ import { Bar, Container, Section } from '@column-resizer/react'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import { NoSession, useMercoaSession } from '../../../../components'
-import { PayableDetailsViewMode } from '../../hooks/use-payable-form'
+import { PayableDetailsViewMode } from '../../hooks/use-payable-details'
 import { PayableDetailsProvider } from '../../providers/payables-detail-provider'
 import { PayableDocumentV2 } from '../payable-document'
 import { PayableFormV2 } from '../payable-form'
 
 export function PayableDetailsV2({
-  invoiceType = 'invoice',
+  invoiceType,
   invoiceId,
   invoice,
   onUpdate,
@@ -45,6 +45,15 @@ export function PayableDetailsV2({
   const mercoaSession = useMercoaSession()
 
   if (!mercoaSession.client) return <NoSession componentName="PayableDetails" />
+
+  // Try to infer invoiceType when not provided, defaulting to 'invoice' when unable to infer
+  if (!invoiceType) {
+    if (invoiceId) {
+      invoiceType = invoiceId.startsWith('invt_') ? 'invoiceTemplate' : 'invoice'
+    } else {
+      invoiceType = 'invoice'
+    }
+  }
 
   // Handle children prop
   let leftComponent: JSX.Element | undefined

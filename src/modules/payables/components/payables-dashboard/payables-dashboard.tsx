@@ -1,7 +1,7 @@
-import { ArrowPathIcon } from '@heroicons/react/24/outline'
+import { ArrowPathIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { FC, memo, ReactElement, useEffect, useMemo, useRef, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { useMercoaSession } from '../../../../components'
+import { EntityInboxEmail, useMercoaSession } from '../../../../components'
 import { DebouncedSearch, MercoaButton, Tooltip } from '../../../../components/generics'
 import { cn } from '../../../../lib/style'
 import { UsePayablesRequestOptions } from '../../api/queries'
@@ -15,6 +15,7 @@ import { ColumnFilterDropdown } from './components/column-filter-dropdown'
 import { DateTimeFilterDropdown } from './components/datetime-filter-dropdown'
 import { ExportsDropdown } from './components/exports-dropdown'
 import { InvoiceMetrics } from './components/invoice-metrics'
+import { RecurringPayablesList } from './components/recurring-payables-list'
 import { StatusTabs } from './components/status-tabs'
 
 type InvoiceTableColumn = {
@@ -38,6 +39,10 @@ export interface PayablesDashboardV2Props {
 
   showInvoiceMetrics?: boolean
 
+  onCreateInvoice?: () => void
+
+  onCreateRecurringInvoice?: () => void
+
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => void
 
   classNames?: {
@@ -56,6 +61,8 @@ export interface PayablesDashboardV2Props {
 
 export const PayablesDashboardV2: FC<PayablesDashboardV2Props> = memo(
   ({
+    onCreateInvoice,
+    onCreateRecurringInvoice,
     onSelectInvoice,
     statusTabsOptions,
     columns,
@@ -72,6 +79,7 @@ export const PayablesDashboardV2: FC<PayablesDashboardV2Props> = memo(
     const { selectedStatusFilters } = getFilters('payables')
     const [currentTabStatus, setCurrentTabStatus] = useState<Mercoa.InvoiceStatus[]>()
     const [showCumulativeFilter, setShowCumulativeFilter] = useState(true)
+    const [showRecurringInvoices, setShowRecurringInvoices] = useState(false)
     const queryData = usePayablesTable({ initialQueryOptions: initialPayablesOptions })
 
     const statusTabOptionsByUser = useMemo(() => {
@@ -105,6 +113,8 @@ export const PayablesDashboardV2: FC<PayablesDashboardV2Props> = memo(
       downloadInvoicesAsCSV,
       handleRefresh,
       isRefreshLoading,
+      recurringPayablesData,
+      isRecurringPayablesLoading,
       metricsData,
       isMetricsLoading,
       approvalPolicies,
@@ -114,7 +124,31 @@ export const PayablesDashboardV2: FC<PayablesDashboardV2Props> = memo(
     } = queryData
 
     return (
-      <>
+      <div className="mercoa-relative mercoa-pt-1">
+        <div className="mercoa-flex mercoa-justify-end mercoa-items-center mercoa-gap-2">
+          <div className="mercoa-flex mercoa-flex-col mercoa-mr-2">
+            <span className="mercoa-text-xs mercoa-text-gray-500">Forward invoices to:</span>
+            <EntityInboxEmail />
+          </div>
+          <MercoaButton
+            isEmphasized={false}
+            className={'mercoa-inline-flex mercoa-text-sm'}
+            type="button"
+            onClick={() => setShowRecurringInvoices((prev) => !prev)}
+          >
+            <span className="mercoa-hidden md:mercoa-inline-block">Recurring Invoices</span>
+          </MercoaButton>
+          <MercoaButton
+            isEmphasized={true}
+            className={'mercoa-inline-flex mercoa-text-sm'}
+            onClick={onCreateInvoice}
+            type="button"
+          >
+            <PlusIcon className="-mercoa-ml-1 mercoa-size-5 md:mercoa-mr-2" aria-hidden="true" />
+            <span className="mercoa-hidden md:mercoa-inline-block">Add Invoice</span>
+          </MercoaButton>
+        </div>
+
         <div className="mercoa-mt-2 mercoa-flex mercoa-justify-between mercoa-items-center mercoa-mb-4 mercoa-gap-5">
           <div className="mercoa-flex mercoa-w-[50%] mercoa-mr-2 mercoa-rounded-mercoa">
             <DebouncedSearch onSettle={setSearch}>
@@ -207,7 +241,73 @@ export const PayablesDashboardV2: FC<PayablesDashboardV2Props> = memo(
           classNames={classNames}
           onSelectInvoice={onSelectInvoice}
         />
-      </>
+
+        {/* TODO: Figure out how to correctly animate the slide in and out & the blur */}
+        {showRecurringInvoices && (
+          <>
+            {/* Recurring Invoices Panel */}
+            <div
+              className={cn(
+                'mercoa-absolute mercoa-top-0 mercoa-right-0 mercoa-h-full mercoa-w-1/2 mercoa-bg-white mercoa-transform mercoa-overflow-hidden mercoa-shadow-[-4px_0_4px_-4px_rgba(0,0,0,0.1)]',
+                showRecurringInvoices
+                  ? 'mercoa-translate-x-0 mercoa-transition-all mercoa-duration-300 mercoa-cubic-bezier-[0.2,1,0.5,0.95] mercoa-opacity-100'
+                  : 'mercoa-translate-x-full mercoa-transition-all mercoa-duration-300 mercoa-cubic-bezier-[0.2,1,0.5,0.95] mercoa-opacity-0',
+                'mercoa-z-[2]',
+              )}
+            >
+              <div className="mercoa-h-full mercoa-overflow-y-auto mercoa-flex mercoa-flex-col">
+                <div className="mercoa-flex mercoa-justify-between mercoa-items-start mercoa-p-6">
+                  <div className="mercoa-flex mercoa-flex-col mercoa-gap-2">
+                    <h2 className="mercoa-text-2xl mercoa-font-semibold mercoa-text-gray-900">Recurring Invoices</h2>
+                    <p className="mercoa-text-sm mercoa-text-gray-500">Create and manage recurring invoices</p>
+                  </div>
+                  <button
+                    onClick={() => setShowRecurringInvoices(false)}
+                    className="mercoa-p-2 mercoa-rounded-full hover:mercoa-bg-gray-100 mercoa-text-gray-500"
+                  >
+                    <XMarkIcon className="mercoa-h-5 mercoa-w-5" />
+                  </button>
+                </div>
+
+                <div className="mercoa-w-full mercoa-h-[1px] mercoa-bg-gray-200" />
+
+                <div className="mercoa-space-y-6 mercoa-p-6 mercoa-flex-1 mercoa-overflow-y-auto">
+                  <RecurringPayablesList
+                    recurringPayablesData={recurringPayablesData}
+                    isRecurringPayablesLoading={isRecurringPayablesLoading}
+                    onSelectInvoice={onSelectInvoice}
+                  />
+                </div>
+
+                <div className="mercoa-w-full mercoa-h-[1px] mercoa-bg-gray-200" />
+
+                <div className="mercoa-my-4 mercoa-flex mercoa-justify-end mercoa-px-6">
+                  <MercoaButton
+                    isEmphasized={true}
+                    className={'mercoa-inline-flex mercoa-text-sm'}
+                    onClick={onCreateRecurringInvoice}
+                    type="button"
+                  >
+                    <PlusIcon className="-mercoa-ml-1 mercoa-size-5 md:mercoa-mr-2" aria-hidden="true" />
+                    <span className="mercoa-hidden md:mercoa-inline-block">Add recurring invoice</span>
+                  </MercoaButton>
+                </div>
+              </div>
+            </div>
+
+            {/* Blur */}
+            <div
+              className={cn(
+                'mercoa-absolute mercoa-inset-0 mercoa-z-[1]',
+                showRecurringInvoices
+                  ? 'mercoa-opacity-100 mercoa-backdrop-blur-[3px]'
+                  : 'mercoa-opacity-0 mercoa-backdrop-blur-0',
+              )}
+              onClick={() => setShowRecurringInvoices(false)}
+            />
+          </>
+        )}
+      </div>
     )
   },
 )

@@ -45,7 +45,7 @@ export function EntityPortal({ token }: { token: string }) {
   const { invoiceId } = params
 
   const [screen, setScreenLocal] = useState('inbox')
-  const [version, setVersion] = useState<'old' | 'new'>('old')
+  const [version, setVersion] = useState<'old' | 'new'>('new')
   const [invoiceType, setInvoiceType] = useState<'invoice' | 'invoiceTemplate'>('invoice')
 
   const [invoice, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>()
@@ -172,16 +172,13 @@ export function EntityPortal({ token }: { token: string }) {
       <div className="mercoa-flex mercoa-items-center">
         <div className="mercoa-flex-auto mercoa-text-sm mercoa-text-gray-700 mercoa-my-4 sm:mercoa-mt-0">
           <div className="mercoa-flex mercoa-items-center mercoa-gap-4">
-            {screen === 'inbox' ? (
+            {screen === 'inbox' && version === 'old' && organization?.emailProvider?.inboxDomain && (
               <>
-                {organization?.emailProvider?.inboxDomain && (
-                  <>
-                    Forward invoices to: <br />
-                    <EntityInboxEmail />
-                  </>
-                )}
+                Forward invoices to: <br />
+                <EntityInboxEmail />
               </>
-            ) : (
+            )}
+            {screen !== 'inbox' && (
               <MercoaButton
                 onClick={() => {
                   mercoaSession.refresh()
@@ -286,13 +283,14 @@ export function EntityPortal({ token }: { token: string }) {
             </MercoaButton>
           )}
 
-          {screen !== 'invoice' && screen !== 'counterparties' && (
+          {screen !== 'invoice' && screen !== 'counterparties' && version === 'old' && (
             <MercoaButton
               isEmphasized
               type="button"
               className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
               onClick={() => {
                 setScreen('invoice')
+                setInvoiceType('invoice')
                 setInvoice(undefined)
               }}
             >
@@ -323,8 +321,19 @@ export function EntityPortal({ token }: { token: string }) {
                 Mercoa.InvoiceStatus.Archived,
               ],
             }}
+            onCreateInvoice={() => {
+              setScreen('invoice')
+              setInvoiceType('invoice')
+              setInvoice(undefined)
+            }}
+            onCreateRecurringInvoice={() => {
+              setScreen('invoice')
+              setInvoiceType('invoiceTemplate')
+              setInvoice(undefined)
+            }}
             onSelectInvoice={(invoice) => {
               setInvoice(invoice)
+              setInvoiceType('invoice')
               setScreen('invoice')
             }}
           />
@@ -344,6 +353,7 @@ export function EntityPortal({ token }: { token: string }) {
             ]}
             onSelectInvoice={(invoice) => {
               setInvoice(invoice)
+              setInvoiceType('invoice')
               setScreen('invoice')
             }}
           />
