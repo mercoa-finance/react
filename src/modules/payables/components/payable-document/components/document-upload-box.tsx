@@ -1,7 +1,8 @@
 import { PhotoIcon } from '@heroicons/react/24/outline'
-import { cn } from '../../../../../../src/lib/style'
 import Dropzone from 'react-dropzone'
 import { toast } from 'react-toastify'
+import { blobToDataUrl } from '../../../../../../src/lib/lib'
+import { cn } from '../../../../../../src/lib/style'
 
 export function DocumentUploadBox({
   onFileUpload,
@@ -18,20 +19,12 @@ export function DocumentUploadBox({
     }
   }
 }) {
-  const blobToDataUrl = (blob: Blob) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(String(reader.result))
-      reader.onerror = reject
-      reader.readAsDataURL(blob)
-    })
-
   return (
     <Dropzone
       onDropAccepted={(acceptedFiles) => {
-        console.log("called2")
+        console.log('called2')
         blobToDataUrl(acceptedFiles[0]).then((fileReaderObj) => {
-          console.log("called3")
+          console.log('called3')
           onFileUpload(fileReaderObj, acceptedFiles[0].type)
         })
       }}

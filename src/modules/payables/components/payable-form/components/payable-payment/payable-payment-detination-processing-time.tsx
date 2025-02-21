@@ -1,8 +1,7 @@
 import { ArrowRightIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
 import dayjs from 'dayjs'
 import { Mercoa } from '@mercoa/javascript'
-import { Tooltip } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { Tooltip, usePayableDetailsContext } from '../../../../../../components'
 
 export function PaymentDestinationProcessingTime({
   children,

@@ -1,7 +1,7 @@
 import { Menu, Transition } from '@headlessui/react'
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline'
 import { Big } from 'big.js'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { usePayableDetailsContext } from '../../../../../../components'
 
 export function LineItemOptions() {
   const { updateTotalAmount, formMethods, lineItems } = usePayableDetailsContext()

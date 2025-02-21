@@ -1,5 +1,5 @@
 import { Mercoa } from '@mercoa/javascript'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { usePayableDetailsContext } from '../../../../../../components'
 import { ApproversSelection } from './approver-selection'
 import { ApproverWells } from './approver-wells'
 

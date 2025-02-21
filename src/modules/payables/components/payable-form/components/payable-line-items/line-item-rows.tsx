@@ -1,8 +1,7 @@
 import { XCircleIcon } from '@heroicons/react/24/outline'
-import { currencyCodeToSymbol } from '../../../../../../lib/currency'
 import { Fragment } from 'react'
-import { MercoaButton, MercoaInput } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { MercoaButton, MercoaInput, usePayableDetailsContext } from '../../../../../../components'
+import { currencyCodeToSymbol } from '../../../../../../lib/currency'
 import { MetadataSelection } from '../payable-metadata/metadata-selection'
 
 export function LineItemRows({ readOnly }: { readOnly?: boolean }) {

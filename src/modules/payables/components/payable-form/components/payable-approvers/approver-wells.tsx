@@ -1,8 +1,7 @@
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { useMercoaSession, usePayableDetailsContext } from '../../../../../../components'
 import { filterApproverOptions } from './utils'
 
 export function ApproverWells() {

@@ -5,6 +5,18 @@ export function capitalize(str: string | undefined) {
   return str?.[0]?.toUpperCase() + str?.substring(1)?.toLowerCase()
 }
 
+export function getOrdinalSuffix(n: number) {
+  const enOrdinalRules = new Intl.PluralRules('en-US', { type: 'ordinal' })
+  const suffixes = new Map([
+    ['one', 'st'],
+    ['two', 'nd'],
+    ['few', 'rd'],
+    ['other', 'th'],
+  ])
+  const rule = enOrdinalRules.select(n)
+  return suffixes.get(rule)
+}
+
 export function invertColor(hex: string, bw?: boolean) {
   if (hex.indexOf('#') === 0) {
     hex = hex.slice(1)
@@ -424,3 +436,11 @@ export function buildRbacPermissions(permissions: Mercoa.Permission[]): RBACPerm
 
   return rbac
 }
+
+export const blobToDataUrl = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })

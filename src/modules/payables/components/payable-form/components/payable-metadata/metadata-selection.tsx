@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { MercoaCombobox, MercoaInput, useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { MercoaCombobox, MercoaInput, useMercoaSession, usePayableDetailsContext } from '../../../../../../components'
 import { showMetadata } from '../../utils'
 
 export function MetadataSelection({

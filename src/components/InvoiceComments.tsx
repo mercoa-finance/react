@@ -6,17 +6,17 @@ import { Mercoa } from '@mercoa/javascript'
 import { NoSession, useMercoaSession } from './index'
 dayjs.extend(relativeTime)
 
-export type InvoiceCommentsChildrenProps = {
+export type InvoiceCommentsV1ChildrenProps = {
   comments: Mercoa.CommentResponse[]
   addComment: (comment: string) => void
 }
 
-export function InvoiceComments({
+export function InvoiceCommentsV1({
   readOnly,
   children,
 }: {
   readOnly?: boolean
-  children?: (props: InvoiceCommentsChildrenProps) => JSX.Element
+  children?: (props: InvoiceCommentsV1ChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 

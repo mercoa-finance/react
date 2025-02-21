@@ -1,9 +1,8 @@
 import accounting from 'accounting'
-import { currencyCodeToSymbol } from '../../../../../../../src/lib/currency'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
-import { useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { currencyCodeToSymbol } from '../../../../../../../src/lib/currency'
+import { useMercoaSession, usePayableDetailsContext } from '../../../../../../components'
 
 export function PayableFees({
   children,

@@ -105,7 +105,7 @@ export function ReceivableDetails({
       status: yup.string(),
       amount: yup
         .number()
-        .positive('Amount must be a positive number')
+        .positive('Please add a line item to the invoice. Amount must be a positive number.')
         .required()
         .typeError('Please enter a valid number'),
       invoiceNumber: yup.string(),

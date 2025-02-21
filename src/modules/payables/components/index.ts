@@ -1,2 +1,4 @@
-export * from './payables-dashboard/payables-dashboard'
-export * from './payables-table/payables-table'
+export * from './payable-details'
+export * from './payable-document'
+export * from './payable-form'
+export * from './payables'

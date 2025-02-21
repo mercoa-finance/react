@@ -1,5 +1,4 @@
-import { MercoaSwitch } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { MercoaSwitch, usePayableDetailsContext } from '../../../../../../components'
 import { afterApprovedStatus } from '../../constants'
 
 export function PrintDescriptionOnCheckRemittanceSwitch() {

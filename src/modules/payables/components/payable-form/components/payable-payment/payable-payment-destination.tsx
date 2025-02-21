@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { MercoaButton, useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { MercoaButton, useMercoaSession, usePayableDetailsContext } from '../../../../../../components'
 import { afterApprovedStatus } from '../../constants'
 import { PayableSelectPaymentMethod } from './payable-select-payment-method'
 

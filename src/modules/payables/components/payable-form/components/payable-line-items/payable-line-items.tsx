@@ -2,8 +2,7 @@ import { EyeIcon, EyeSlashIcon, PlusCircleIcon, PlusIcon } from '@heroicons/reac
 import { useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
-import { MercoaButton, Tooltip, useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { MercoaButton, Tooltip, useMercoaSession, usePayableDetailsContext } from '../../../../../../components'
 import { LineItemOptions } from './line-item-options'
 import { LineItemRows } from './line-item-rows'
 

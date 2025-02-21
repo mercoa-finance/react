@@ -316,7 +316,7 @@ export const usePayableDetailQuery = (invoiceId?: string, invoiceType: 'invoice'
   const mercoaSession = useMercoaSession()
 
   return useQuery<Mercoa.InvoiceResponse | undefined>({
-    queryKey: ['invoiceDetail', invoiceId, invoiceType],
+    queryKey: ['payableDetail', invoiceId, invoiceType],
     queryFn: async () => {
       if (!mercoaSession || !mercoaSession.client || !invoiceId) {
         throw new Error('Mercoa session or invoiceId is missing')
