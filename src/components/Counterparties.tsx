@@ -175,6 +175,7 @@ export const counterpartyYupValidation = {
   id: yup.string().nullable(),
   name: yup.string().typeError('Please enter a name'),
   email: yup.string().email('Please enter a valid email'),
+  formAction: yup.string().nullable(),
   accountType: yup.string(),
   firstName: yup.string(),
   lastName: yup.string(),
@@ -247,12 +248,18 @@ export function CounterpartySearch({
             ? counterparty?.profile?.business?.email
             : counterparty?.profile?.individual?.email,
         website: counterparty?.profile?.business?.website,
+        formAction: '',
         description: counterparty?.profile?.business?.description,
       },
     },
   })
 
-  const { handleSubmit, setError } = methods
+  const {
+    handleSubmit,
+    setError,
+    setValue,
+    formState: { errors },
+  } = methods
 
   const onSubmit = async (overall: any) => {
     if (!mercoaSession.entity?.id) return
@@ -268,12 +275,19 @@ export function CounterpartySearch({
         profile,
         type,
         onSelect: (e) => {
+          setValue('formAction' as any, '')
           onSelect?.(e)
           setEdit(false)
         },
       })
     }
   }
+
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      setValue('formAction' as any, '')
+    }
+  }, [errors])
 
   return (
     <FormProvider {...methods}>
@@ -1061,7 +1075,9 @@ function CounterpartyAddOrEditForm({
           className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-center"
           onClick={() => {
             setValue('saveAsStatus', 'COUNTERPARTY')
-            setValue('formAction', PayableAction.CREATE_UPDATE_COUNTERPARTY)
+            if (accountType === 'individual' ? watch('vendor.firstName') && watch('vendor.lastName') : true) {
+              setValue('formAction', PayableAction.CREATE_UPDATE_COUNTERPARTY)
+            }
             setTimeout(() => {
               setIsSaving(true)
             }, 100)

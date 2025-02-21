@@ -153,14 +153,7 @@ function MetadataCombobox({
     if (schema.type === Mercoa.MetadataType.KeyValue) {
       if (schema.allowMultiple) {
         const parsedValue = (value ? JSON.parse(value) : []) as Array<any>
-        // Handle multiple key-value pairs
-        if (mercoaSession.debug) {
-          console.log('inside:parsedValue', parsedValue)
-        }
         const parsedValues = parsedValue.map((val) => {
-          if (mercoaSession.debug) {
-            console.log('inside:val2', val)
-          }
           const foundValue = JSON.parse(
             values.find((e) => {
               let parsedValue = { key: '' }
@@ -173,9 +166,7 @@ function MetadataCombobox({
               return parsedValue?.key === `${val}`
             }) ?? '{}',
           ) as any
-          if (mercoaSession.debug) {
-            console.log('inside:foundValue', foundValue)
-          }
+
           try {
             const valueParsed = JSON.parse(foundValue.value) as { value: string; title?: string; subtitle?: string }
             if (valueParsed.value) {
@@ -183,15 +174,9 @@ function MetadataCombobox({
             }
           } catch (e) {}
 
-          if (mercoaSession.debug) {
-            console.log('inside:foundValue2', foundValue)
-          }
           return foundValue.value ? foundValue.value : foundValue
         })
 
-        if (mercoaSession.debug) {
-          console.log('inside:parsedValues', parsedValues)
-        }
         return parsedValues
       } else {
         const foundValue = JSON.parse(
@@ -220,7 +205,6 @@ function MetadataCombobox({
       let comboboxValue: string | string[] | undefined = value
 
       if (schema.allowMultiple) {
-        // Metadata is stored as a comma separated string, but comboboxes expect an array
         if (Array.isArray(value)) comboboxValue = value
         else comboboxValue = value?.split(',')
       }
@@ -269,30 +253,17 @@ function MetadataCombobox({
     }
   }, [values, schema.type])
 
-  if (mercoaSession.debug) {
-    console.log('outside:value', values, options, value, valueState)
-  }
-
   if (schema.type === Mercoa.MetadataType.KeyValue) {
     return (
       <MercoaCombobox
         options={options}
         onChange={(value) => {
-          if (mercoaSession.debug) {
-            console.log('valueKv', value)
-          }
           if (Array.isArray(value)) {
             const finalValue = value.map((e: any) => {
               return e?.key
             })
-            if (mercoaSession.debug) {
-              console.log('valueKvfinalValue', finalValue)
-            }
             setValue(JSON.stringify(finalValue))
           } else {
-            if (mercoaSession.debug) {
-              console.log('valueKv', value?.key)
-            }
             setValue(value?.key)
           }
         }}
@@ -305,9 +276,6 @@ function MetadataCombobox({
             finalValue = JSON.parse(valueState as string)
           } catch (e) {
             finalValue = valueState
-          }
-          if (mercoaSession.debug) {
-            console.log('finalValue', finalValue)
           }
           return finalValue
         })()}
@@ -322,16 +290,10 @@ function MetadataCombobox({
     <MercoaCombobox
       options={options}
       onChange={(value) => {
-        if (mercoaSession.debug) {
-          console.log('valueString', value)
-        }
         if (Array.isArray(value)) {
           const finalValue = value.includes(undefined) ? '[]' : JSON.stringify(value)
           setValue(finalValue)
         } else {
-          if (mercoaSession.debug) {
-            console.log('valueString final', value)
-          }
           setValue(value)
         }
       }}
@@ -363,7 +325,6 @@ function MetadataBoolean({
   value?: string
   readOnly?: boolean
 }) {
-  console.log('valueBoolean', value)
   return (
     <div className="mercoa-space-y-4 sm:mercoa-flex sm:mercoa-items-center sm:mercoa-space-x-10 sm:mercoa-space-y-0">
       <div className="mercoa-flex mercoa-items-center">

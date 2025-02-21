@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import {
@@ -57,12 +57,7 @@ export function PayableSelectPaymentMethod({
 
   const vendorId = watch('vendorId')
 
-  let paymentMethodTypeKey: 'paymentSourceType' | 'paymentDestinationType' = 'paymentSourceType'
-  let sourceOrDestination: 'paymentSourceId' | 'paymentDestinationId' = 'paymentSourceId'
-  if (isDestination) {
-    paymentMethodTypeKey = 'paymentDestinationType'
-    sourceOrDestination = 'paymentDestinationId'
-  }
+  const paymentMethodTypeKey = isDestination ? 'paymentDestinationType' : 'paymentSourceType'
 
   const availableTypes = isSource ? availableSourceTypes : availableDestinationTypes
 
@@ -72,7 +67,6 @@ export function PayableSelectPaymentMethod({
   const setPaymentType = isSource ? setSelectedSourceType : setSelectedDestinationType
   const destinationOptions = watch('paymentDestinationOptions')
   const counterpartyAccounts: Array<Mercoa.CounterpartyCustomizationAccount> = watch('vendor.accounts')
-
 
   const enableBNPL = mercoaSession.organization?.paymentMethods?.payerPayments.find(
     (e) => e.type === 'bnpl' && e.active,

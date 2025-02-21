@@ -45,10 +45,6 @@ export function PayableCounterpartySearch({
 
   const status = watch('status')
 
-  useEffect(() => {
-    console.log('counterparty', counterparty)
-  }, [counterparty])
-
   return (
     <div className="sm:mercoa-col-span-3">
       {children ? (

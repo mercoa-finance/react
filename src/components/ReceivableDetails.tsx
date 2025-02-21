@@ -105,7 +105,7 @@ export function ReceivableDetails({
       status: yup.string(),
       amount: yup
         .number()
-        .positive('Amount must be a positive number')
+        .positive('Please add a line item to the invoice. Amount must be a positive number.')
         .required()
         .typeError('Please enter a valid number'),
       invoiceNumber: yup.string(),
@@ -801,38 +801,40 @@ export function ReceivableForm({
               )}
             </div>
           </div>
-          <div className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-4 mercoa-gap-4 mercoa-items-start mercoa-p-0.5">
-            <MercoaInput
-              name="amount"
-              label="Total Amount"
-              type="currency"
-              readOnly
-              errors={errors}
-              control={control}
-              leadingIcon={
-                <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
-              }
-              trailingIcon={
-                <>
-                  <label htmlFor="currency" className="mercoa-sr-only">
-                    Currency
-                  </label>
-                  <select
-                    {...register('currency')}
-                    disabled={notDraft}
-                    className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
-                  >
-                    {supportedCurrencies.map((option: Mercoa.CurrencyCode, index: number) => (
-                      <option key={index} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              }
-            />
+          <div className="mercoa-mt-5 mercoa-flex mercoa-gap-4 mercoa-items-start mercoa-p-0.5">
+            <div className="mercoa-max-w-[150px] mercoa-flex-1">
+              <MercoaInput
+                name="amount"
+                label="Total Amount"
+                type="currency"
+                readOnly
+                errors={errors}
+                control={control}
+                leadingIcon={
+                  <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
+                }
+                trailingIcon={
+                  <>
+                    <label htmlFor="currency" className="mercoa-sr-only">
+                      Currency
+                    </label>
+                    <select
+                      {...register('currency')}
+                      disabled={notDraft}
+                      className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+                    >
+                      {supportedCurrencies.map((option: Mercoa.CurrencyCode, index: number) => (
+                        <option key={index} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                }
+              />
+            </div>
             {/*  DESCRIPTION */}
-            <div className="mercoa-col-span-3">
+            <div className="mercoa-flex-1">
               <label
                 htmlFor="description"
                 className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 "

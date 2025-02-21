@@ -1254,7 +1254,7 @@ export function inputClassName({
     }
   }
   return `mercoa-block ${width ?? 'mercoa-w-full'} mercoa-flex-1 mercoa-rounded-mercoa mercoa-py-1.5 ${pl} ${
-    trailingIcon ? 'mercoa-pr-[4.4rem]' : 'mercoa-pr-2'
+    trailingIcon ? 'mercoa-pr-[3.7rem]' : 'mercoa-pr-2'
   } mercoa-text-gray-900 sm:mercoa-text-sm sm:mercoa-leading-6
   ${noBorder ? 'mercoa-ring-0' : 'mercoa-ring-1'}
   ${align === 'left' ? 'mercoa-text-left' : ''}

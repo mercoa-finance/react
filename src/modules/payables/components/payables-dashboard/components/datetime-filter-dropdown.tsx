@@ -276,7 +276,6 @@ export const DateTimeFilterDropdown: React.FC<DateTimeFilterDropdownProps> = ({ 
 
   useEffect(() => {
     if (dateRange.startDate && dateRange.endDate && dateType) {
-      console.log('setting Data')
       setFilters('payables', {
         dateRange: dateRange,
         dateType: dateType,

@@ -123,7 +123,6 @@ export function ApprovalPolicies({ onSave, additionalRoles }: { onSave?: () => v
             await mercoaSession.client?.entity.approvalPolicy.delete(mercoaSession.entity.id, policy.id)
             toasts.push({ id: policy.id, success: true })
           } catch (e: any) {
-            console.log(e)
             toasts.push({ id: policy.id, success: false })
           }
         }
@@ -199,7 +198,6 @@ export function ApprovalPolicies({ onSave, additionalRoles }: { onSave?: () => v
           idMap[data.id] = updatedPolicy?.id ?? ''
           toasts.push({ id: data.id, success: true })
         } catch (e: any) {
-          console.log(e)
           toasts.push({ id: data.id, success: false })
         }
       }),
@@ -881,7 +879,6 @@ function CounterpartySearch({
         value={null}
         as="div"
         onChange={(e: Mercoa.CounterpartyResponse) => {
-          console.log(e)
           if (!e || !e.id) return
           setValue(
             `policies.${index}.trigger.${triggerIndex}.vendorIds`,

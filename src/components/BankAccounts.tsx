@@ -18,7 +18,7 @@ import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { capitalize, removeThousands } from '../lib/lib'
+import { blobToDataUrl, capitalize, removeThousands } from '../lib/lib'
 import {
   AddDialog,
   DefaultPaymentMethodIndicator,
@@ -874,9 +874,10 @@ export function EditBankAccount({
 }) {
   const mercoaSession = useMercoaSession()
   const [showPlaid, setShowPlaid] = useState(false)
-  const sigRef = useRef<SignatureCanvas | null>(null)
-  const inputFile = useRef<HTMLInputElement | null>(null)
   const [externalBankAccountIds, setExternalBankAccountIds] = useState<{ key: string; value: string }[]>([])
+  const [signatureImage, setSignatureImage] = useState(
+    account.checkOptions?.signatureImage ? `data:image/png;base64,${account.checkOptions?.signatureImage}` : '',
+  )
 
   const { register, handleSubmit, watch, setValue } = useForm({
     defaultValues: {
@@ -892,10 +893,6 @@ export function EditBankAccount({
   })
 
   function onUpdate(data: Mercoa.BankAccountUpdateRequest) {
-    let signatureImage
-    if (data.checkOptions?.useSignatureImage) {
-      signatureImage = sigRef.current?.getCanvas().toDataURL('image/png') ?? ''
-    }
     if ((data.checkOptions?.signatoryName?.length ?? 0) > 30) {
       toast.error('Signatory name must be less than 30 characters. Use the signature image instead.')
       return
@@ -911,7 +908,8 @@ export function EditBankAccount({
             routingNumberOverride: data.checkOptions?.routingNumberOverride,
             signatoryName: `${data.checkOptions?.signatoryName}`,
             useSignatureImage: data.checkOptions?.useSignatureImage,
-            ...(signatureImage && { signatureImage }),
+            ...(signatureImage &&
+              signatureImage !== `data:image/png;base64,${account.checkOptions?.signatureImage}` && { signatureImage }),
           },
           type: Mercoa.PaymentMethodType.BankAccount,
           externalAccountingSystemId: data.externalAccountingSystemId,
@@ -931,24 +929,12 @@ export function EditBankAccount({
   const useSig = watch('checkOptions.useSignatureImage')
 
   useEffect(() => {
-    if (account.checkOptions?.signatureImage && sigRef.current) {
-      const canvasWidth = sigRef.current?.getCanvas()?.width ?? 375
-      const canvasHeight = sigRef.current?.getCanvas()?.height ?? 150
-      sigRef.current?.fromDataURL('data:image/gif;base64,' + account.checkOptions?.signatureImage, {
-        width: canvasWidth,
-        height: canvasHeight,
-      })
-    }
-  }, [account.checkOptions?.signatureImage, useSig])
-
-  useEffect(() => {
     if (!mercoaSession.entityId) return
     mercoaSession.client?.entity.metadata
       .get(mercoaSession.entityId, 'externalAccountingSystemBankAccounts')
       .then((resp) => {
         if (resp) {
           const externalBankAccountIds = resp.map((e) => JSON.parse(e) as { key: string; value: string })
-          console.log(externalBankAccountIds)
           setExternalBankAccountIds(externalBankAccountIds)
         }
       })
@@ -1035,43 +1021,7 @@ export function EditBankAccount({
               </label>
             </div>
           </div>
-          {useSig && (
-            <>
-              <div className="mercoa-mt-2 mercoa-bg-white">
-                <SignatureCanvas ref={sigRef} canvasProps={{ width: 375, height: 150 }} />
-              </div>
-              <div className="mercoa-mt-2 mercoa-flex mercoa-gap-x-2">
-                <input
-                  type="file"
-                  ref={inputFile}
-                  style={{ display: 'none' }}
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      const canvasWidth = sigRef.current?.getCanvas()?.width ?? 375
-                      const canvasHeight = sigRef.current?.getCanvas()?.height ?? 150
-                      sigRef.current?.fromDataURL(URL.createObjectURL(e.target.files[0]), {
-                        width: canvasWidth,
-                        height: canvasHeight,
-                      })
-                    }
-                  }}
-                />
-                <MercoaButton size="sm" isEmphasized={false} type="button" onClick={() => inputFile?.current?.click()}>
-                  Upload Image
-                </MercoaButton>
-                <MercoaButton
-                  color="secondary"
-                  size="sm"
-                  isEmphasized={false}
-                  type="button"
-                  onClick={() => sigRef.current?.clear()}
-                >
-                  Clear Signature
-                </MercoaButton>
-              </div>
-            </>
-          )}
+          {useSig && <SignatureImage signatureImage={signatureImage} setSignatureImage={setSignatureImage} />}
         </div>
       )}
       <MercoaButton
@@ -1097,6 +1047,78 @@ export function EditBankAccount({
         <MercoaButton isEmphasized>Update</MercoaButton>
       </div>
     </form>
+  )
+}
+
+function SignatureImage({
+  signatureImage,
+  setSignatureImage,
+}: {
+  signatureImage: string
+  setSignatureImage: (image: string) => void
+}) {
+  const [draw, setDraw] = useState(false)
+  const sigRef = useRef<SignatureCanvas | null>(null)
+  const inputFile = useRef<HTMLInputElement | null>(null)
+
+  return (
+    <>
+      <div className="mercoa-mt-2 mercoa-bg-white mercoa-relative">
+        {signatureImage && (
+          <MercoaButton
+            color="secondary"
+            size="sm"
+            isEmphasized={false}
+            type="button"
+            className="mercoa-absolute mercoa-right-2 mercoa-top-2"
+            onClick={() => {
+              setDraw(false)
+              sigRef.current?.clear()
+              setSignatureImage('')
+            }}
+          >
+            X
+          </MercoaButton>
+        )}
+        {draw ? (
+          <SignatureCanvas
+            ref={sigRef}
+            canvasProps={{ width: 375, height: 150 }}
+            onEnd={() => {
+              setSignatureImage(sigRef.current?.toDataURL('image/png') ?? '')
+            }}
+          />
+        ) : (
+          <div className="mercoa-w-full mercoa-h-full mercoa-bg-gray-100">
+            {signatureImage ? (
+              <img src={signatureImage} alt="Signature" className="mercoa-w-full mercoa-h-full mercoa-object-contain" />
+            ) : (
+              <p className="mercoa-text-gray-500 mercoa-text-center mercoa-py-12">No signature image uploaded</p>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="mercoa-mt-2 mercoa-flex mercoa-gap-x-2">
+        <input
+          type="file"
+          ref={inputFile}
+          style={{ display: 'none' }}
+          accept="image/png"
+          onChange={async (e) => {
+            if (e.target.files && e.target.files[0]) {
+              const dataUrl = await blobToDataUrl(e.target.files[0])
+              setSignatureImage(dataUrl)
+            }
+          }}
+        />
+        <MercoaButton size="sm" isEmphasized={false} type="button" onClick={() => inputFile?.current?.click()}>
+          Upload Image
+        </MercoaButton>
+        <MercoaButton size="sm" isEmphasized={false} type="button" onClick={() => setDraw(true)}>
+          Draw Signature
+        </MercoaButton>
+      </div>
+    </>
   )
 }
 

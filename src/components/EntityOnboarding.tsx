@@ -18,6 +18,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import Dropzone from 'react-dropzone'
@@ -25,9 +26,8 @@ import { usePlacesWidget } from 'react-google-autocomplete'
 import { Control, Controller, UseFormRegister, useForm } from 'react-hook-form'
 import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import * as yup from 'yup'
-import { capitalize } from '../lib/lib'
+import { blobToDataUrl, capitalize } from '../lib/lib'
 import { postalCodeRegex } from '../lib/locations'
 import { mccCodes } from '../lib/mccCodes'
 import { onboardingOptionsToResponse } from '../lib/onboardingOptions'
@@ -85,13 +85,6 @@ export function UploadBlock({
   entity: Mercoa.EntityResponse
 }) {
   const mercoaSession = useMercoaSession()
-  const blobToDataUrl = (blob: Blob) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(String(reader.result))
-      reader.onerror = reject
-      reader.readAsDataURL(blob)
-    })
 
   let defaultIcon = (
     <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
@@ -425,16 +418,21 @@ export function NameBlock({
 }
 
 export const dateOfBirthSchema = {
-  dob: yup
-    .date()
-    .typeError('Date of birth is required')
-    .required('Date of birth is required')
-    .test('dob', 'Must be at least 18 years old', (value) => {
-      if (dayjs(value).isAfter(dayjs().subtract(18, 'years'))) {
-        return false
-      }
-      return true
-    }),
+  dob: yup.lazy((value) => {
+    if (value === '****') {
+      return yup.string().nullable()
+    }
+    return yup
+      .date()
+      .typeError('Date of birth is required')
+      .required('Date of birth is required')
+      .test('dob', 'Must be at least 18 years old', (value) => {
+        if (dayjs(value).isAfter(dayjs().subtract(18, 'years'))) {
+          return false
+        }
+        return true
+      })
+  }),
 }
 
 export const dateOfBirthSchemaNotRequired = {
@@ -506,10 +504,15 @@ export function DateOfBirthBlock({
 }
 
 export const SSNSchema = {
-  taxID: yup
-    .string()
-    .matches(/^\d{3}-\d{2}-\d{4}$/, 'Invalid SSN')
-    .required('SSN is required'),
+  taxID: yup.lazy((value) => {
+    if (value === '****') {
+      return yup.string().nullable()
+    }
+    return yup
+      .string()
+      .matches(/^\d{3}-\d{2}-\d{4}$/, 'Invalid SSN')
+      .required('SSN is required')
+  }),
 }
 
 export function SSNBlock({
@@ -1069,7 +1072,7 @@ export function TosBlock({
         </a>
         .
       </div>
-      <div className="mercoa-relative mercoa-my-4 mercoa-flex mercoa-items-start mercoa-items-center">
+      <div className="mercoa-relative mercoa-my-4 mercoa-flex mercoa-items-center">
         <div className="mercoa-flex mercoa-h-5 mercoa-items-center">
           <input
             {...register('tos')}
@@ -1377,6 +1380,7 @@ export function RepresentativeOnboardingForm({
   onClose?: Function
   representative?: Mercoa.RepresentativeResponse
 }) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const mercoaSession = useMercoaSession()
 
   const schema = yup
@@ -1385,8 +1389,8 @@ export function RepresentativeOnboardingForm({
       ...phoneSchema,
       ...addressBlockSchema,
       ...nameBlockSchema,
-      ...(!representative && dateOfBirthSchema),
-      ...(!representative && SSNSchema),
+      ...dateOfBirthSchema,
+      ...SSNSchema,
       jobTitle: yup.string().required('Job title is required'),
       ownershipPercentage: yup
         .number()
@@ -1450,6 +1454,7 @@ export function RepresentativeOnboardingForm({
   }, [representative])
 
   async function onSubmit(data: any) {
+    setIsSubmitting(true)
     if (representative) {
       const postData: Mercoa.RepresentativeUpdateRequest = {
         email: data.email,
@@ -1493,9 +1498,11 @@ export function RepresentativeOnboardingForm({
       try {
         await mercoaSession.client?.entity.representative.update(entityId, representative.id, postData)
         await mercoaSession.refresh()
+        setIsSubmitting(false)
         if (onClose) onClose(data)
       } catch (e) {
         console.error(e)
+        setIsSubmitting(false)
         toast.error('There was an issue updating this representative. Please check your information and try again.')
       }
     } else {
@@ -1537,9 +1544,11 @@ export function RepresentativeOnboardingForm({
       try {
         await mercoaSession.client?.entity.representative.create(entityId, postData)
         await mercoaSession.refresh()
+        setIsSubmitting(false)
         if (onClose) onClose(data)
       } catch (e) {
         console.error(e)
+        setIsSubmitting(false)
         toast.error('There was an issue creating this representative. Please check your information and try again.')
       }
     }
@@ -1557,13 +1566,15 @@ export function RepresentativeOnboardingForm({
               {title || 'Create Account'}
             </h3>
             <div className="mercoa-flex-1" />
-            <XMarkIcon
-              className="mercoa-size-5 mercoa-cursor-pointer mercoa-rounded-mercoa mercoa-p-0.5 hover:mercoa-bg-gray-100"
-              type="button"
-              onClick={() => {
-                if (onClose) onClose()
-              }}
-            />
+            {!isSubmitting && (
+              <XMarkIcon
+                className="mercoa-size-5 mercoa-cursor-pointer mercoa-rounded-mercoa mercoa-p-0.5 hover:mercoa-bg-gray-100"
+                type="button"
+                onClick={() => {
+                  if (onClose) onClose()
+                }}
+              />
+            )}
           </div>
 
           <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-3">
@@ -1595,7 +1606,7 @@ export function RepresentativeOnboardingForm({
                 label="Residential Address"
               />
             </div>
-            <div className="mercoa-relative mercoa-mt-2 mercoa-flex mercoa-items-start mercoa-items-center mercoa-col-span-2">
+            <div className="mercoa-relative mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-col-span-2">
               <div className="mercoa-flex mercoa-h-5 mercoa-items-center">
                 <input
                   {...register('isController')}
@@ -1617,8 +1628,8 @@ export function RepresentativeOnboardingForm({
         </div>
       </div>
       <div className="mercoa-mt-5 sm:mercoa-mt-6">
-        <MercoaButton isEmphasized className="mercoa-w-full">
-          {representative ? 'Update' : 'Add Representative'}
+        <MercoaButton isEmphasized className="mercoa-w-full" disabled={isSubmitting}>
+          {isSubmitting ? <LoadingSpinnerIcon /> : representative ? 'Update' : 'Add Representative'}
         </MercoaButton>
       </div>
     </form>
@@ -2145,7 +2156,7 @@ export function AcceptTosForm({
         </a>
         .
       </div>
-      <div className="mercoa-relative mercoa-mt-2 mercoa-flex mercoa-items-start mercoa-items-center">
+      <div className="mercoa-relative mercoa-mt-2 mercoa-flex mercoa-items-center">
         <div className="mercoa-flex mercoa-h-5 mercoa-items-center">
           <input
             {...register('mercoa')}

@@ -51,7 +51,7 @@ import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { classNames, removeThousands } from '../lib/lib'
+import { blobToDataUrl, classNames, removeThousands } from '../lib/lib'
 import { isSupportedScheduleDate, isWeekday } from '../lib/scheduling'
 import {
   AddBankAccountForm,
@@ -1931,14 +1931,6 @@ export function DocumentUploadBox({
     }
   }
 }) {
-  const blobToDataUrl = (blob: Blob) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(String(reader.result))
-      reader.onerror = reject
-      reader.readAsDataURL(blob)
-    })
-
   return (
     <Dropzone
       onDropAccepted={(acceptedFiles) => {

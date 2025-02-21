@@ -1,9 +1,10 @@
 import { ArrowRightIcon } from '@heroicons/react/24/outline'
-import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
+import { Mercoa } from '@mercoa/javascript'
 import { Skeleton } from '../../../../../components'
 import { currencyCodeToSymbol } from '../../../../../lib/currency'
+import { getOrdinalSuffix } from '../../../../../lib/lib'
 
 export function RecurringPayablesList({
   recurringPayablesData,
@@ -93,14 +94,14 @@ function InvoiceTemplateCard({
     parts.push(accounting.formatMoney(amount, currencyCodeToSymbol(currency ?? 'USD')))
   }
   if (paymentSchedule && paymentSchedule.type !== 'oneTime') {
-    parts.push(paymentSchedule.type)
+    parts.push(formatPaymentSchedule(paymentSchedule))
   }
   if (deductionDate) {
     parts.push(`starting on ${dayjs(deductionDate).format('MMM D, YYYY')}`)
   }
 
   let text = parts.length >= 2 ? parts.join(' ') : 'Draft recurrence details pending'
-  text = text.charAt(0).toUpperCase() + text.slice(1)
+  text = `${text.charAt(0).toUpperCase()}${text.slice(1)}`
 
   return (
     <div
@@ -126,4 +127,39 @@ function InvoiceTemplateCard({
       </div>
     </div>
   )
+}
+
+// TODO: Unit test this
+function formatPaymentSchedule(schedule: Exclude<Mercoa.PaymentSchedule, Mercoa.PaymentSchedule.OneTime>): string {
+  const repeatEvery = schedule.repeatEvery ?? 1
+
+  const getDayDescription = (day: number) => {
+    if (day > 0) {
+      return `${day}${getOrdinalSuffix(day)}`
+    } else if (day === -1) {
+      return 'last'
+    } else {
+      return `${Math.abs(day)}${getOrdinalSuffix(Math.abs(day))} to last`
+    }
+  }
+
+  switch (schedule.type) {
+    case 'daily': {
+      return repeatEvery === 1 ? 'daily' : `every ${repeatEvery} days`
+    }
+    case 'weekly': {
+      return repeatEvery === 1 ? 'weekly' : `every ${repeatEvery} weeks`
+    }
+    case 'monthly': {
+      const ordinal = getDayDescription(schedule.repeatOnDay)
+      return repeatEvery === 1 ? `monthly on the ${ordinal}` : `every ${repeatEvery} months on the ${ordinal}`
+    }
+    case 'yearly': {
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      const ordinal = getDayDescription(schedule.repeatOnDay)
+      return repeatEvery === 1
+        ? `yearly on the ${ordinal} of ${monthNames[schedule.repeatOnMonth - 1]}`
+        : `every ${repeatEvery} years on the ${ordinal} of ${monthNames[schedule.repeatOnMonth - 1]}`
+    }
+  }
 }
