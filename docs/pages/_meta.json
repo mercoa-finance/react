@@ -4,9 +4,10 @@
   "Portal": "Drop In Portal",
   "Entity": "Entity",
   "Counterparties": "Counterparties",
-  "Payables": "Payables",
-  "Receivables": "Receivables",
+  "PayablesV1": "Payables (Legacy)",
+  "ReceivablesV1": "Receivables (Legacy)",
   "PaymentMethods": "Payment Methods",
   "Metrics": "Invoice Metrics / Graphs",
-  "Approvals": "Approvals"
+  "Approvals": "Approvals",
+  "React-V2": "React v2"
 }
