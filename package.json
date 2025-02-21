@@ -65,6 +65,7 @@
     "@heroicons/react": "^2.1.1",
     "@hookform/resolvers": "^3.3.2",
     "@mercoa/javascript": "^0.6.10",
+    "@mercoa/react": "^0.1.0-rc6",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-popover": "^1.1.6",
     "@radix-ui/react-slider": "^1.2.3",
