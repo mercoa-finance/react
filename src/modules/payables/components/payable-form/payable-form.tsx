@@ -1,8 +1,7 @@
 import classNames from 'classnames'
 import { ReactElement } from 'react'
 import { FormProvider, UseFormReturn } from 'react-hook-form'
-import { NoSession, useMercoaSession } from '../../../../components'
-import { usePayableDetailsContext } from '../../providers/payables-detail-provider'
+import { NoSession, useMercoaSession, usePayableDetailsContext } from '../../../../components'
 import { PayableActions } from './components/payable-actions'
 import { PayableApprovers } from './components/payable-approvers'
 import { PayableComments } from './components/payable-comments'
@@ -22,7 +21,7 @@ import { PayableTaxAndShipping } from './components/payable-tax-and-shipping/pay
 import { PayableAction } from './constants'
 import { PayableFormData } from './types'
 
-export function PayableFormV2({ children }: { children?: ReactElement }) {
+export function PayableForm({ children }: { children?: ReactElement }) {
   const mercoaSession = useMercoaSession()
   const {
     invoiceType,

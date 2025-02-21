@@ -192,6 +192,7 @@ export const counterpartyYupValidation = {
       return currentValue
     }),
   description: yup.string(),
+  formAction: yup.string(),
   accounts: yup.array().of(
     yup.object().shape({
       accountId: yup.string(),
@@ -247,12 +248,18 @@ export function CounterpartySearch({
             ? counterparty?.profile?.business?.email
             : counterparty?.profile?.individual?.email,
         website: counterparty?.profile?.business?.website,
+        formAction: '',
         description: counterparty?.profile?.business?.description,
       },
     },
   })
 
-  const { handleSubmit, setError } = methods
+  const {
+    handleSubmit,
+    setError,
+    setValue,
+    formState: { errors },
+  } = methods
 
   const onSubmit = async (overall: any) => {
     if (!mercoaSession.entity?.id) return
@@ -268,12 +275,19 @@ export function CounterpartySearch({
         profile,
         type,
         onSelect: (e) => {
+          setValue('formAction' as any, '')
           onSelect?.(e)
           setEdit(false)
         },
       })
     }
   }
+
+  useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      setValue('formAction' as any, '')
+    }
+  }, [errors])
 
   return (
     <FormProvider {...methods}>
@@ -296,7 +310,7 @@ export function CounterpartySearch({
   )
 }
 
-interface PayableCounterpartySearchChildrenProps {
+interface PayableCounterpartySearchV1ChildrenProps {
   counterparty?: Mercoa.CounterpartyResponse
   disableCreation?: boolean
   onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
@@ -307,7 +321,7 @@ interface PayableCounterpartySearchChildrenProps {
   errors: any
 }
 
-export function PayableCounterpartySearch({
+export function PayableCounterpartySearchV1({
   counterparty,
   disableCreation,
   onSelect,
@@ -318,7 +332,7 @@ export function PayableCounterpartySearch({
   disableCreation?: boolean
   onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
   network?: Mercoa.CounterpartyNetworkType[]
-  children?: (props: PayableCounterpartySearchChildrenProps) => React.ReactNode
+  children?: (props: PayableCounterpartySearchV1ChildrenProps) => React.ReactNode
 }) {
   const [edit, setEdit] = useState<boolean>(false)
   const {
@@ -1061,7 +1075,9 @@ function CounterpartyAddOrEditForm({
           className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-center"
           onClick={() => {
             setValue('saveAsStatus', 'COUNTERPARTY')
-            setValue('formAction', PayableAction.CREATE_UPDATE_COUNTERPARTY)
+            if (accountType === 'individual' ? watch('vendor.firstName') && watch('vendor.lastName') : true) {
+              setValue('formAction', PayableAction.CREATE_UPDATE_COUNTERPARTY)
+            }
             setTimeout(() => {
               setIsSaving(true)
             }, 100)

@@ -1,10 +1,8 @@
 import { Mercoa } from '@mercoa/javascript'
-import { useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { usePayableDetailsContext } from '../../../../../../components'
 import { MetadataSelection } from './metadata-selection'
 
 export function PayableMetadata({ skipValidation, readOnly }: { skipValidation?: boolean; readOnly?: boolean }) {
-
   const { formMethods, metadataSchemas } = usePayableDetailsContext()
   const { watch } = formMethods
   const status = watch('status')

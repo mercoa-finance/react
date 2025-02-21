@@ -23,7 +23,7 @@ import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../../../../../src/lib/currency'
 import { MercoaButton, Tooltip } from '../../../../components/generics'
 import { useMercoaSession } from '../../../../components/Mercoa'
-import { filterApproverOptions } from '../../../../components/PayableDetails'
+import { filterApproverOptionsV1 } from '../../../../components/PayableDetails'
 import { SkeletonLoader } from '../../../../lib/components'
 import { UsePayablesRequestOptions } from '../../api/queries'
 import { CrossIcon } from '../../assets/icons/cross-icon'
@@ -44,7 +44,7 @@ type InvoiceTableColumn = {
   format?: (value: string | number | Date | any, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
 }
 
-export interface PayablesTableV2Props {
+export interface PayablesTableProps {
   columns?: InvoiceTableColumn[]
 
   currentPayablesOptions?: UsePayablesRequestOptions
@@ -68,7 +68,7 @@ export interface PayablesTableV2Props {
   }
 }
 
-export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
+export const PayablesTable: FC<PayablesTableProps> = memo(
   ({ onSelectInvoice, columns, currentPayablesOptions, classNames, payableData, readOnly = false }) => {
     const [columnResizeMode, setColumnResizeMode] = useState<ColumnResizeMode>('onChange')
     const [columnResizeDirection, setColumnResizeDirection] = useState<ColumnResizeDirection>('ltr')
@@ -355,7 +355,7 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
               <div className="mercoa-gap-1 mercoa-grid">
                 {row.original.approvers?.map((approver, index) => {
                   if (!approver.assignedUserId) {
-                    const eligibleApprovers = filterApproverOptions({
+                    const eligibleApprovers = filterApproverOptionsV1({
                       approverSlotIndex: index,
                       eligibleRoles: approver.eligibleRoles,
                       eligibleUserIds: approver.eligibleUserIds,
@@ -985,7 +985,7 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
   },
 )
 
-PayablesTableV2.displayName = 'PayablesTableV2'
+PayablesTable.displayName = 'PayablesTableV2'
 
 const CellRenderer = React.memo(({ cell }: { cell: any }) => {
   return <>{flexRender(cell.column.columnDef.cell, cell.getContext())}</>

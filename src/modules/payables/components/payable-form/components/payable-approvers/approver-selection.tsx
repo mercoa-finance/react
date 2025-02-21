@@ -1,6 +1,5 @@
 import { Fragment } from 'react'
-import { MercoaCombobox } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { MercoaCombobox, usePayableDetailsContext } from '../../../../../../components'
 import { isUpstreamPolicyAssigned } from './utils'
 
 export function ApproversSelection() {

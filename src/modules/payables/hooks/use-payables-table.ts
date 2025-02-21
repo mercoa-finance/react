@@ -23,7 +23,7 @@ import {
 import { PayableAction } from '../components/payables-table/constants'
 import { usePayablesFilterStore } from '../stores/payables-filter-store'
 
-interface UsePayablesTableOptions {
+export interface UsePayablesTableOptions {
   initialQueryOptions?: UsePayablesRequestOptions
   currentQueryOptions?: UsePayablesRequestOptions
 }

@@ -1,2 +1,2 @@
-export * from './use-payable-details'
+export * from './use-payable-details-context'
 export * from './use-payables-table'

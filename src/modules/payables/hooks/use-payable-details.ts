@@ -5,7 +5,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useFieldArray, useForm } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
-import { filterApproverOptions, getInvoiceClient, propagateApprovalPolicy, useMercoaSession } from '../../../components'
+import {
+  filterApproverOptionsV1,
+  getInvoiceClient,
+  propagateApprovalPolicy,
+  useMercoaSession,
+} from '../../../components'
 import { queryClient } from '../../../lib/react-query/query-client-provider'
 import { useApprovePayable, useCreatePayable, useRejectPayable, useRunOcr, useUpdatePayable } from '../api/mutations'
 import {
@@ -54,6 +59,7 @@ export interface PayableDetailsHandlers {
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onCounterpartySubmit?: (data: any) => void
   onOcrPreSubmit?: (data: any) => void
+  onOcrComplete?: (ocr: Mercoa.OcrResponse) => void
 }
 
 export interface PayableDetailsQueryParams {
@@ -1822,7 +1828,7 @@ export const usePayableDetails = ({
       if (!slot) return []
       return [
         { disabled: false, value: { id: 'ANY', name: 'Any Approver', email: '' } },
-        ...filterApproverOptions({
+        ...filterApproverOptionsV1({
           //@ts-ignore
           approverSlotIndex: approvers.findIndex((a) => a.approvalSlotId === approvalSlotId),
           eligibleRoles: slot.eligibleRoles,

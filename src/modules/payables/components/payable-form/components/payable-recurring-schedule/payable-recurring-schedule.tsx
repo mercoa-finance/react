@@ -1,7 +1,7 @@
 import dayjs from 'dayjs'
 import { Mercoa } from '@mercoa/javascript'
 import { inputClassName, MercoaInput } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { usePayableDetailsContext } from '../../../../../../components'
 
 export function PayableRecurringSchedule() {
   const { type, repeatOn, repeatOnDay, repeatOnMonth, ends, formMethods } = usePayableDetailsContext()

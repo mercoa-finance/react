@@ -27,7 +27,7 @@ import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import * as yup from 'yup'
-import { capitalize } from '../lib/lib'
+import { blobToDataUrl, capitalize } from '../lib/lib'
 import { postalCodeRegex } from '../lib/locations'
 import { mccCodes } from '../lib/mccCodes'
 import { onboardingOptionsToResponse } from '../lib/onboardingOptions'
@@ -85,13 +85,6 @@ export function UploadBlock({
   entity: Mercoa.EntityResponse
 }) {
   const mercoaSession = useMercoaSession()
-  const blobToDataUrl = (blob: Blob) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(String(reader.result))
-      reader.onerror = reject
-      reader.readAsDataURL(blob)
-    })
 
   let defaultIcon = (
     <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />

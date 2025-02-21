@@ -2,8 +2,7 @@ import { CheckCircleIcon, UserIcon, XCircleIcon } from '@heroicons/react/24/outl
 import dayjs from 'dayjs'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
-import { NoSession, useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { NoSession, useMercoaSession, usePayableDetailsContext } from '../../../../../../components'
 import { PayableAction } from '../../constants'
 
 export type PayableCommentsChildrenProps = {
