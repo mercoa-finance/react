@@ -1,14 +1,13 @@
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { useMercoaSession, usePayableDetails } from '../../../../../../components'
 import { filterApproverOptions } from './utils'
 
 export function ApproverWells() {
   const mercoaSession = useMercoaSession()
   const seenUsers: string[] = []
-  const { approvers } = usePayableDetailsContext()
+  const { approvers } = usePayableDetails()
   return (
     <>
       {approvers.map((slot, index) => {

@@ -33,7 +33,7 @@ export function usePayables({
   endDate,
   orderBy = Mercoa.InvoiceOrderByField.CreatedAt,
   orderDirection = Mercoa.OrderDirection.Desc,
-  excludeReceivables = false,
+  excludeReceivables = true,
   resultsPerPage,
   paymentType,
   metadata,
@@ -46,7 +46,7 @@ export function usePayables({
   return useInfiniteQuery<PayablesResponse, string>({
     queryKey: [
       'payables',
-      mercoaSession?.entity?.id,
+      mercoaSession?.entityId,
       currentStatuses,
       search,
       startDate,
@@ -60,7 +60,7 @@ export function usePayables({
       approverAction,
     ],
     queryFn: async ({ pageParam = undefined }) => {
-      if (!mercoaSession || !mercoaSession.client || !mercoaSession.entity?.id) {
+      if (!mercoaSession || !mercoaSession.client || !mercoaSession.entityId) {
         return {
           count: 0,
           invoices: [],
@@ -84,7 +84,7 @@ export function usePayables({
         ...(approverId && approverAction && { approverId, approverAction }),
       }
 
-      const response = await mercoaSession.client.entity.invoice.find(mercoaSession.entity.id, filter)
+      const response = await mercoaSession.client.entity.invoice.find(mercoaSession.entityId, filter)
 
       return {
         count: response?.count ?? 0,
@@ -167,17 +167,21 @@ export function useRecurringPayables({
 }
 
 export const usePayableMetricsByStatus = ({
+  startDate,
+  endDate,
+  dateType,
   search,
   statuses,
   returnByDate,
-  excludeReceivables,
-  excludePayables,
+  excludeReceivables = true,
 }: {
+  startDate?: Date
+  endDate?: Date
+  dateType?: Mercoa.InvoiceDateFilter
   search?: string
   statuses?: Mercoa.InvoiceStatus[]
   returnByDate?: Mercoa.InvoiceMetricsPerDateGroupBy | undefined
   excludeReceivables?: boolean
-  excludePayables?: boolean
 }) => {
   const mercoaSession = useMercoaSession()
 
@@ -188,27 +192,31 @@ export const usePayableMetricsByStatus = ({
       statuses,
       returnByDate,
       excludeReceivables,
-      excludePayables,
-      mercoaSession?.entity?.id,
+      mercoaSession?.entityId,
+      startDate,
+      endDate,
+      dateType,
     ],
     queryFn: async () => {
-      if (!mercoaSession || !mercoaSession.client || !mercoaSession.entity?.id) {
+      if (!mercoaSession || !mercoaSession.client || !mercoaSession.entityId) {
         return undefined
       }
 
-      const response = await mercoaSession.client.entity.invoice.metrics(mercoaSession.entity.id, {
+      const response = await mercoaSession.client.entity.invoice.metrics(mercoaSession.entityId, {
         search,
         status: statuses,
+        startDate,
+        endDate,
+        dateType,
         returnByDate,
         excludeReceivables,
-        excludePayables,
         groupBy: ['STATUS'],
       })
 
       return response
     },
     options: {
-      enabled: !!mercoaSession?.client && !!mercoaSession?.entity?.id,
+      enabled: !!mercoaSession?.client && !!mercoaSession?.entityId,
     },
   })
 }
@@ -217,17 +225,17 @@ export const usePayableApprovalPoliciesQuery = () => {
   const mercoaSession = useMercoaSession()
 
   return useQuery<Mercoa.ApprovalPolicyResponse[] | undefined>({
-    queryKey: ['approvalPolicies', mercoaSession?.entity?.id],
+    queryKey: ['approvalPolicies', mercoaSession?.entityId],
     queryFn: async () => {
-      if (!mercoaSession || !mercoaSession.client || !mercoaSession.entity?.id) {
+      if (!mercoaSession || !mercoaSession.client || !mercoaSession.entityId) {
         return undefined
       }
 
-      const response = await mercoaSession.client.entity.approvalPolicy.getAll(mercoaSession.entity.id)
+      const response = await mercoaSession.client.entity.approvalPolicy.getAll(mercoaSession.entityId)
       return response
     },
     options: {
-      enabled: !!mercoaSession?.client && !!mercoaSession?.entity?.id,
+      enabled: !!mercoaSession?.client && !!mercoaSession?.entityId,
     },
   })
 }
@@ -237,11 +245,17 @@ export const usePayableStatusTabsMetricsQuery = ({
   statuses,
   excludeReceivables,
   excludePayables,
+  startDate,
+  endDate,
+  dateType,
 }: {
   search?: string
   statuses: Mercoa.InvoiceStatus[]
   excludeReceivables?: boolean
   excludePayables?: boolean
+  startDate?: Date
+  endDate?: Date
+  dateType?: Mercoa.InvoiceDateFilter
 }) => {
   const mercoaSession = useMercoaSession()
   const { userPermissionConfig } = mercoaSession
@@ -273,19 +287,25 @@ export const usePayableStatusTabsMetricsQuery = ({
       statusesByUser,
       excludeReceivables,
       excludePayables,
-      mercoaSession?.entity?.id,
+      mercoaSession?.entityId,
+      startDate,
+      endDate,
+      dateType,
     ],
     queryFn: async () => {
-      if (!mercoaSession || !mercoaSession.client || !mercoaSession.entity?.id) {
+      if (!mercoaSession || !mercoaSession.client || !mercoaSession.entityId) {
         return undefined
       }
 
-      const metrics = await mercoaSession.client.entity.invoice.metrics(mercoaSession.entity.id, {
+      const metrics = await mercoaSession.client.entity.invoice.metrics(mercoaSession.entityId, {
         search,
         status: statusesByUser,
         excludeReceivables,
         excludePayables,
         groupBy: ['STATUS'],
+        startDate,
+        endDate,
+        dateType,
       })
 
       const results = statusesByUser.map((status) => {

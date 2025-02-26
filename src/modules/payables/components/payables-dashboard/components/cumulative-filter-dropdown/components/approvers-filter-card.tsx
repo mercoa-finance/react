@@ -1,8 +1,8 @@
 import { Dispatch, FC, memo, SetStateAction, useEffect } from 'react'
 import { useMercoaSession } from '../../../../../../../components'
 import { Popover } from '../../../../../../../lib/components'
-import { useDropdownStore } from '../../../../../../../modules/common/stores/dropdown-store'
-import { CrossIcon } from '../../../../../assets/icons/cross-icon'
+import { CrossIcon } from '../../../../../../common/assets/icons/cross-icon'
+import { useDropdownStore } from '../../../../../../common/stores/dropdown-store'
 import { usePayablesFilterStore } from '../../../../../stores/payables-filter-store'
 
 interface ApproversFilterCardDropdownProps {

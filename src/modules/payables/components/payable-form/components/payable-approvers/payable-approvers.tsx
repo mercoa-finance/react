@@ -1,10 +1,10 @@
 import { Mercoa } from '@mercoa/javascript'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { usePayableDetails } from '../../../../../../components'
 import { ApproversSelection } from './approver-selection'
 import { ApproverWells } from './approver-wells'
 
 export function PayableApprovers({ readOnly }: { readOnly?: boolean }) {
-  const { approvers, formMethods } = usePayableDetailsContext()
+  const { approvers, formMethods } = usePayableDetails()
   const {
     formState: { errors },
     watch,

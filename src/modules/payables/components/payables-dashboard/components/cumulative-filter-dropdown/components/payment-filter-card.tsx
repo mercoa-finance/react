@@ -1,9 +1,9 @@
-import { Popover } from '../../../../../../../lib/components'
-import { useDropdownStore } from '../../../../../../../modules/common/stores/dropdown-store'
-import { usePayablesFilterStore } from '../../../../../stores/payables-filter-store'
 import { Dispatch, FC, memo, SetStateAction, useEffect } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { CrossIcon } from '../../../../../assets/icons/cross-icon'
+import { Popover } from '../../../../../../../lib/components'
+import { CrossIcon } from '../../../../../../common/assets/icons/cross-icon'
+import { useDropdownStore } from '../../../../../../common/stores/dropdown-store'
+import { usePayablesFilterStore } from '../../../../../stores/payables-filter-store'
 
 const paymentModes = [
   { id: 1, value: Mercoa.PaymentMethodType.BankAccount },

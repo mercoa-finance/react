@@ -1,9 +1,9 @@
-import { createContext, Dispatch, ReactNode, SetStateAction, useContext } from 'react'
+import { createContext, Dispatch, ReactNode, SetStateAction } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
-import { PayableAction } from '../components/payable-form/constants'
+import { PayableFormAction } from '../components/payable-form/constants'
 import { PayableFormData } from '../components/payable-form/types'
-import { usePayableDetails, UsePayableDetailsProps } from '../hooks/use-payable-details'
+import { usePayableDetailsInternal, UsePayableDetailsProps } from '../hooks/use-payable-details-internal'
 
 export type PayableDetailsContextValue = {
   invoice: Mercoa.InvoiceResponse | undefined
@@ -24,7 +24,7 @@ export type PayableDetailsContextValue = {
   height: number
   documentPosition: 'right' | 'left' | 'none'
   formMethods: UseFormReturn<any>
-  handleFormAction: (formData: PayableFormData, action: PayableAction) => void
+  handleFormAction: (formData: PayableFormData, action: PayableFormAction) => void
   formActionLoading: boolean
   selectedVendor: Mercoa.CounterpartyResponse | undefined
   setSelectedVendor: Dispatch<SetStateAction<Mercoa.CounterpartyResponse | undefined>>
@@ -159,7 +159,7 @@ export type PayableApproversContext = {
   selectedApproverBySlot: (approvalSlotId: string) => any
 }
 
-const PayableDetailsContext = createContext<PayableDetailsContextValue | undefined>(undefined)
+export const PayableDetailsContext = createContext<PayableDetailsContextValue | undefined>(undefined)
 
 export const PayableDetailsProvider = ({
   children,
@@ -168,15 +168,7 @@ export const PayableDetailsProvider = ({
   children: ReactNode
   payableDetailsProps: UsePayableDetailsProps
 }) => {
-  const details = usePayableDetails(payableDetailsProps)
+  const details = usePayableDetailsInternal(payableDetailsProps)
 
   return <PayableDetailsContext.Provider value={details}>{children}</PayableDetailsContext.Provider>
-}
-
-export const usePayableDetailsContext = () => {
-  const context = useContext(PayableDetailsContext)
-  if (!context) {
-    throw new Error('usePayableDetailsContext must be used within a PayableDetailsProvider')
-  }
-  return context
 }

@@ -129,7 +129,7 @@ export const baseSchedulePaymentSchema = baseSubmitForApprovalSchema.shape({
   paymentSourceId: yup.string().required('Please select a payment method'),
 })
 
-export enum PayableAction {
+export enum PayableFormAction {
   CREATE = 'CREATE',
   SAVE_AS_DRAFT = 'SAVE_AS_DRAFT',
   SUBMIT_FOR_APPROVAL = 'SUBMIT_FOR_APPROVAL',

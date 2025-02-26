@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import { CounterpartySearchBase } from '../../../../../../components'
-import { PayableAction } from '../../constants'
+import { PayableFormAction } from '../../constants'
 
 interface PayableCounterpartySearchChildrenProps {
   counterparty?: Mercoa.CounterpartyResponse
@@ -38,7 +38,7 @@ export function PayableCounterpartySearch({
   const formAction = watch('formAction')
 
   useEffect(() => {
-    if (formAction !== PayableAction.CREATE_UPDATE_COUNTERPARTY) {
+    if (formAction !== PayableFormAction.CREATE_UPDATE_COUNTERPARTY) {
       setEdit(false)
     }
   }, [formAction])

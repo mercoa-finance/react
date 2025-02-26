@@ -101,11 +101,19 @@ export function MercoaSession({
   debug?: boolean
   fetchMetadata?: string[]
 }) {
+  const [entityIdInternal, setEntityIdInternal] = useState(entityId)
+
+  useEffect(() => {
+    if (entityId) {
+      setEntityIdInternal(entityId)
+    }
+  }, [entityId])
+
   return (
     <sessionContext.Provider
       value={useProvideSession({
         token,
-        entityId,
+        entityId: entityIdInternal,
         entityUserId,
         entityGroupId,
         endpoint,

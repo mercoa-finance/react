@@ -11,12 +11,12 @@ import {
   useMercoaSession,
 } from '../../../../components'
 import { currencyCodeToSymbol } from '../../../../lib/currency'
-import { useReceivableDetailsContext } from '../../providers/receivable-detail-provider'
+import { useReceivableDetails } from '../../hooks/use-receivable-details'
 import { ReceivableActions } from './components/receivable-actions'
 import { ReceivablePaymentDestination } from './components/receivable-payment-destination'
 import { ReceivablePaymentSource } from './components/receivable-payment-source'
 
-export type ReceivableFormV2ChildrenProps = {
+export type ReceivableFormChildrenProps = {
   invoice?: Mercoa.InvoiceResponse
   refreshInvoice?: (invoiceId: Mercoa.InvoiceId) => void
   setSelectedPayer: (e?: Mercoa.CounterpartyResponse) => void
@@ -26,7 +26,7 @@ export type ReceivableFormV2ChildrenProps = {
   errors: FieldErrors<Mercoa.InvoiceCreationRequest>
 }
 
-export function ReceivableFormV2({ children }: { children?: ReactNode }) {
+export function ReceivableForm({ children }: { children?: ReactNode }) {
   const mercoaSession = useMercoaSession()
   const {
     formMethods,
@@ -36,7 +36,7 @@ export function ReceivableFormV2({ children }: { children?: ReactNode }) {
     setSelectedPayer,
     supportedCurrencies,
     disableCustomerCreation,
-  } = useReceivableDetailsContext()
+  } = useReceivableDetails()
 
   const {
     register,

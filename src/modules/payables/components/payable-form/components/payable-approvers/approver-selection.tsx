@@ -1,6 +1,5 @@
 import { Fragment } from 'react'
-import { MercoaCombobox } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { MercoaCombobox, usePayableDetails } from '../../../../../../components'
 import { isUpstreamPolicyAssigned } from './utils'
 
 export function ApproversSelection() {
@@ -10,7 +9,7 @@ export function ApproversSelection() {
     setApproverBySlot,
     selectedApproverBySlot,
     getApprovalSlotOptions,
-  } = usePayableDetailsContext()
+  } = usePayableDetails()
 
   if (!approvalPolicies) return <></>
 
