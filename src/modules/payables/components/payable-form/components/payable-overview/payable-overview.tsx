@@ -3,9 +3,8 @@ import dayjs from 'dayjs'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../../../../../../../src/lib/currency'
-import { MercoaInput, useMercoaSession } from '../../../../../../components'
+import { MercoaInput, useMercoaSession, usePayableDetails } from '../../../../../../components'
 import { isSupportedScheduleDate, isWeekday } from '../../../../../../lib/scheduling'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
 import { afterApprovedStatus, afterScheduledStatus } from '../../constants'
 import { PrintDescriptionOnCheckRemittanceSwitch } from './print-description-on-check-remittance-switch'
 
@@ -42,7 +41,7 @@ export function PayableOverview({
 }) {
   const mercoaSession = useMercoaSession()
 
-  const { currency, supportedCurrencies: finalSupportedCurrencies, formMethods, lineItems } = usePayableDetailsContext()
+  const { currency, supportedCurrencies: finalSupportedCurrencies, formMethods, lineItems } = usePayableDetails()
 
   const {
     register,

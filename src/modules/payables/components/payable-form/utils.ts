@@ -10,7 +10,7 @@ import {
   baseSchema,
   baseSubmitForApprovalSchema,
   INVOICE_FIELDS,
-  PayableAction,
+  PayableFormAction,
 } from './constants'
 import { PayableFormConfig, PayableFormData } from './types'
 
@@ -203,10 +203,10 @@ export function showMetadata({
   return true
 }
 
-export function getValidationSchema({ action, config }: { action: PayableAction; config: object }) {
-  if (action === PayableAction.SAVE_AS_DRAFT) return baseSaveDraftSchema
-  if (action === PayableAction.SUBMIT_FOR_APPROVAL) return baseSubmitForApprovalSchema
-  if (action === PayableAction.SCHEDULE_PAYMENT) return baseSchedulePaymentSchema
+export function getValidationSchema({ action, config }: { action: PayableFormAction; config: object }) {
+  if (action === PayableFormAction.SAVE_AS_DRAFT) return baseSaveDraftSchema
+  if (action === PayableFormAction.SUBMIT_FOR_APPROVAL) return baseSubmitForApprovalSchema
+  if (action === PayableFormAction.SCHEDULE_PAYMENT) return baseSchedulePaymentSchema
   return baseSchema
 }
 
@@ -607,7 +607,7 @@ export const validateAndConstructPayload = (props: {
   formData: PayableFormData
   invoice?: Mercoa.InvoiceResponse
   saveAsStatus: Mercoa.InvoiceStatus
-  action?: PayableAction
+  action?: PayableFormAction
   mercoaSession: MercoaContext
   uploadedDocument?: string
   toast: any
@@ -706,12 +706,17 @@ export const validateAndConstructPayload = (props: {
       }
 
   if (
-    [PayableAction.SUBMIT_FOR_APPROVAL, PayableAction.SCHEDULE_PAYMENT, PayableAction.RETRY_PAYMENT].includes(action!)
+    [
+      PayableFormAction.SUBMIT_FOR_APPROVAL,
+      PayableFormAction.SCHEDULE_PAYMENT,
+      PayableFormAction.RETRY_PAYMENT,
+    ].includes(action!)
   ) {
     if (
       !payableFormUtils.validateSchema({
         setError,
-        schema: action === PayableAction.SUBMIT_FOR_APPROVAL ? baseSubmitForApprovalSchema : baseSchedulePaymentSchema,
+        schema:
+          action === PayableFormAction.SUBMIT_FOR_APPROVAL ? baseSubmitForApprovalSchema : baseSchedulePaymentSchema,
         data: invoiceRequestData,
       })
     ) {
@@ -773,23 +778,23 @@ export const validateAndConstructPayload = (props: {
   return invoiceRequestData
 }
 
-export const getNextInvoiceStatus = (action: PayableAction, mercoaSession: MercoaContext) => {
-  if (action === PayableAction.CREATE) {
+export const getNextInvoiceStatus = (action: PayableFormAction, mercoaSession: MercoaContext) => {
+  if (action === PayableFormAction.CREATE) {
     return !!mercoaSession.entityGroup?.id && !mercoaSession.entity?.id
       ? Mercoa.InvoiceStatus.Unassigned
       : Mercoa.InvoiceStatus.Draft
   }
   if (
-    action === PayableAction.SUBMIT_FOR_APPROVAL ||
-    action === PayableAction.APPROVE ||
-    action === PayableAction.REJECT
+    action === PayableFormAction.SUBMIT_FOR_APPROVAL ||
+    action === PayableFormAction.APPROVE ||
+    action === PayableFormAction.REJECT
   ) {
     return Mercoa.InvoiceStatus.New
   }
-  if (action === PayableAction.SCHEDULE_PAYMENT || action === PayableAction.RETRY_PAYMENT) {
+  if (action === PayableFormAction.SCHEDULE_PAYMENT || action === PayableFormAction.RETRY_PAYMENT) {
     return Mercoa.InvoiceStatus.Scheduled
   }
-  if (action === PayableAction.MARK_PAID || action === PayableAction.PRINT_CHECK) {
+  if (action === PayableFormAction.MARK_PAID || action === PayableFormAction.PRINT_CHECK) {
     return Mercoa.InvoiceStatus.Paid
   }
   return Mercoa.InvoiceStatus.Draft

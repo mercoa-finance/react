@@ -1,8 +1,7 @@
 import classNames from 'classnames'
 import { ReactElement } from 'react'
 import { FormProvider, UseFormReturn } from 'react-hook-form'
-import { NoSession, useMercoaSession } from '../../../../components'
-import { usePayableDetailsContext } from '../../providers/payables-detail-provider'
+import { NoSession, useMercoaSession, usePayableDetails } from '../../../../components'
 import { PayableActions } from './components/payable-actions'
 import { PayableApprovers } from './components/payable-approvers'
 import { PayableComments } from './components/payable-comments'
@@ -19,10 +18,10 @@ import {
 } from './components/payable-payment'
 import { PayableRecurringSchedule } from './components/payable-recurring-schedule'
 import { PayableTaxAndShipping } from './components/payable-tax-and-shipping/payable-tax-and-shipping'
-import { PayableAction } from './constants'
+import { PayableFormAction } from './constants'
 import { PayableFormData } from './types'
 
-export function PayableFormV2({ children }: { children?: ReactElement }) {
+export function PayableForm({ children }: { children?: ReactElement }) {
   const mercoaSession = useMercoaSession()
   const {
     invoiceType,
@@ -33,7 +32,7 @@ export function PayableFormV2({ children }: { children?: ReactElement }) {
     setSelectedVendor,
     formActionLoading,
     refreshInvoice,
-  } = usePayableDetailsContext()
+  } = usePayableDetails()
 
   const { handleSubmit } = formMethods as UseFormReturn<any>
 
@@ -47,7 +46,7 @@ export function PayableFormV2({ children }: { children?: ReactElement }) {
           onSubmit={(e) => {
             e.preventDefault()
             e.stopPropagation()
-            handleSubmit((data: PayableFormData) => handleFormAction(data, data.formAction as PayableAction))()
+            handleSubmit((data: PayableFormData) => handleFormAction(data, data.formAction as PayableFormAction))()
           }}
           className={classNames(
             `mercoa-grid-cols-3 mercoa-mt-6 mercoa-grid md:mercoa-gap-x-6 md:mercoa-gap-y-4 mercoa-gap-2 mercoa-p-0.5`,
@@ -84,7 +83,9 @@ export function PayableFormV2({ children }: { children?: ReactElement }) {
               <PayableComments />
               <PayableActions
                 submitForm={() =>
-                  handleSubmit((data: PayableFormData) => handleFormAction(data, data.formAction as PayableAction))()
+                  handleSubmit((data: PayableFormData) =>
+                    handleFormAction(data, data.formAction as PayableFormAction),
+                  )()
                 }
                 refreshInvoice={refreshInvoice}
                 invoiceType={invoiceType}

@@ -18,7 +18,6 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import Dropzone from 'react-dropzone'
@@ -26,6 +25,7 @@ import { usePlacesWidget } from 'react-google-autocomplete'
 import { Control, Controller, UseFormRegister, useForm } from 'react-hook-form'
 import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { blobToDataUrl, capitalize } from '../lib/lib'
 import { postalCodeRegex } from '../lib/locations'
@@ -698,16 +698,14 @@ export function BusinessTypeBlock({
       <MercoaInputLabel label="Business Type" name="businessType" />
       <div className="mercoa-mt-1">
         <select {...register('businessType')} disabled={readOnly} required={required} className={inputClassName({})}>
-          <option value="" disabled>
-            Select an option
-          </option>
-          <option value="soleProprietorship">Sole proprietorship</option>
+          <option value="">Select an option</option>
           <option value="llc">LLC</option>
-          <option value="trust">Trust</option>
-          <option value="publicCorporation">Public Corporation</option>
+          <option value="soleProprietorship">Sole Proprietorship</option>
           <option value="privateCorporation">Private Corporation</option>
+          <option value="trust">Trust</option>
           <option value="partnership">Partnership</option>
-          <option value="unincorporatedAssociation">Unincorporated association</option>
+          <option value="publicCorporation">Public Corporation</option>
+          <option value="unincorporatedAssociation">Unincorporated Association</option>
           <option value="unincorporatedNonProfit">Unincorporated Non-Profit </option>
           <option value="incorporatedNonProfit">Incorporated Non-Profit </option>
         </select>
@@ -1170,7 +1168,7 @@ export async function createOrUpdateEntity({
           countryCode: '1',
         },
       }),
-      businessType: data.businessType ?? 'llc',
+      businessType: data.businessType,
       legalBusinessName: data.legalBusinessName,
       doingBusinessAs: data.doingBusinessAs,
       website: data.website,
@@ -2256,7 +2254,8 @@ export function EntityOnboardingForm({
       doingBusinessAs: entity.profile.business?.doingBusinessAs,
       description: entity.profile.business?.description,
       website: entity.profile.business?.website,
-      formationDate: undefined,
+      //@ts-ignore
+      formationDate: entity.profile.business?.formationDate,
       foreignId: entity.foreignId,
       emailTo: entity.emailTo,
       isCustomer: entity.isCustomer,

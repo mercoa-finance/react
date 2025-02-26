@@ -1,6 +1,6 @@
 import { FC, ReactElement, useState } from 'react'
 import { Popover } from '../../../../../lib/components'
-import { ThreeDotIcon } from '../../../assets/icons'
+import { ThreeDotIcon } from '../../../../common/assets/icons'
 
 interface TableActionDropdownProps {
   validActions: string[]

@@ -2,9 +2,8 @@ import { CheckCircleIcon, UserIcon, XCircleIcon } from '@heroicons/react/24/outl
 import dayjs from 'dayjs'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
-import { NoSession, useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
-import { PayableAction } from '../../constants'
+import { NoSession, useMercoaSession, usePayableDetails } from '../../../../../../components'
+import { PayableFormAction } from '../../constants'
 
 export type PayableCommentsChildrenProps = {
   comments: Mercoa.CommentResponse[]
@@ -22,7 +21,7 @@ export function PayableComments({
   const { userPermissionConfig } = mercoaSession
 
   const { register, watch } = useFormContext()
-  const { comments, getCommentAuthor, addComment } = usePayableDetailsContext()
+  const { comments, getCommentAuthor, addComment } = usePayableDetails()
   const formAction = watch('formAction')
 
   function getApprovalIcon(action: Mercoa.AssociatedApprovalAction) {
@@ -146,7 +145,7 @@ export function PayableComments({
                 className="mercoa-rounded-mercoa mercoa-bg-white mercoa-px-2.5 mercoa-py-1.5 mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 hover:mercoa-bg-gray-50"
               >
                 <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-                  {formAction === PayableAction.COMMENT ? (
+                  {formAction === PayableFormAction.COMMENT ? (
                     <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
                   ) : (
                     'Comment'

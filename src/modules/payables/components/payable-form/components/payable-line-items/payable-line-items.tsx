@@ -2,8 +2,7 @@ import { EyeIcon, EyeSlashIcon, PlusCircleIcon, PlusIcon } from '@heroicons/reac
 import { useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
-import { MercoaButton, Tooltip, useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { MercoaButton, Tooltip, useMercoaSession, usePayableDetails } from '../../../../../../components'
 import { LineItemOptions } from './line-item-options'
 import { LineItemRows } from './line-item-rows'
 
@@ -11,7 +10,7 @@ export function PayableLineItems({ readOnly, children }: { readOnly?: boolean; c
   const mercoaSession = useMercoaSession()
   const [isHidden, setIsHidden] = useState<boolean>(false)
 
-  const { lineItems, addItem, currency } = usePayableDetailsContext()
+  const { lineItems, addItem, currency } = usePayableDetails()
 
   const { control, watch, setValue } = useFormContext()
 

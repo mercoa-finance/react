@@ -1,10 +1,9 @@
 import dayjs from 'dayjs'
 import { Mercoa } from '@mercoa/javascript'
-import { inputClassName, MercoaInput } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { inputClassName, MercoaInput, usePayableDetails } from '../../../../../../components'
 
 export function PayableRecurringSchedule() {
-  const { type, repeatOn, repeatOnDay, repeatOnMonth, ends, formMethods } = usePayableDetailsContext()
+  const { type, repeatOn, repeatOnDay, repeatOnMonth, ends, formMethods } = usePayableDetails()
   const { register, setValue, control } = formMethods
   // Utility function to toggle a day in our selection
   const toggleDay = (day: Mercoa.DayOfWeek) => {

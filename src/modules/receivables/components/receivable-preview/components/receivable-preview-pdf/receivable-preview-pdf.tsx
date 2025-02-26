@@ -4,10 +4,10 @@ import QRCode from 'react-qr-code'
 import { Mercoa } from '@mercoa/javascript'
 import { LoadingSpinnerIcon, useMercoaSession } from '../../../../../../components'
 import { currencyCodeToSymbol } from '../../../../../../lib/currency'
-import { useReceivableDetailsContext } from '../../../../providers/receivable-detail-provider'
+import { useReceivableDetails } from '../../../../hooks/use-receivable-details'
 import { LineItems } from './lineItems'
 
-export function ReceivablePreviewPdfV2({
+export function ReceivablePreviewPdf({
   invoice,
   hideQR = false,
 }: {
@@ -16,7 +16,7 @@ export function ReceivablePreviewPdfV2({
 }) {
   const mercoaSession = useMercoaSession()
 
-  const { paymentLink } = useReceivableDetailsContext()
+  const { paymentLink } = useReceivableDetails()
 
   if (!invoice) return <LoadingSpinnerIcon />
 

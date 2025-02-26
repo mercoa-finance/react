@@ -6,7 +6,7 @@ import { MainCardV2 } from './components/main-card'
 import { PaymentCompleteV2 } from './components/payment-complete'
 import { VendorDetailsCard } from './components/vendor-details-card'
 
-export function ReceivablePaymentPortalV2({
+export function ReceivablePaymentPortal({
   isPreview,
   complete,
   invoice,
@@ -33,14 +33,14 @@ export function ReceivablePaymentPortalV2({
     'https://storage.googleapis.com/mercoa-partner-logos/mercoa-logo.png'
 
   return (
-    <div className="mercoa-min-h-full">
-      <div className="mercoa-h-28 mercoa-flex mercoa-items-center">
+    <div className="mercoa-min-h-full mercoa-w-full">
+      <div className="mercoa-m-auto mercoa-h-28 mercoa-flex mercoa-items-center mercoa-max-w-5xl">
         <img src={logo} alt="logo" width={150} className=" mercoa-object-contain mercoa-min-h-0" />
       </div>
       {complete ? (
         <PaymentCompleteV2 invoice={invoice} totalDisplay={totalDisplay} />
       ) : (
-        <div className="mercoa-m-auto mercoa-grid sm:mercoa-grid-cols-12 sm:mercoa-max-w-5xl sm:mercoa-gap-x-4 mercoa-px-2 sm:mercoa-px-0 ">
+        <div className="mercoa-m-auto mercoa-grid sm:mercoa-grid-cols-12 mercoa-max-w-5xl sm:mercoa-gap-x-4 mercoa-px-2 sm:mercoa-px-0 ">
           <div className="mercoa-col-span-12 sm:mercoa-col-span-8">
             <MainCardV2
               isPreview={isPreview}

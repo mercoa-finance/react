@@ -4,10 +4,10 @@ import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import { NoSession, useMercoaSession } from '../../../../components'
 import { ReceivableDetailsProvider } from '../../providers/receivable-detail-provider'
-import { ReceivableFormV2 } from '../receivable-form/receivable-form'
-import ReceivablePreviewV2 from '../receivable-preview/receivable-preview'
+import { ReceivableForm } from '../receivable-form/receivable-form'
+import InvoicePreview from '../receivable-preview/receivable-preview'
 
-export function ReceivableDetailsV2({
+export function ReceivableDetails({
   invoiceId,
   onUpdate,
   documentPosition = 'left',
@@ -27,17 +27,17 @@ export function ReceivableDetailsV2({
   if (!mercoaSession.client) return <NoSession componentName="ReceivableDetails" />
 
   if (documentPosition === 'none') {
-    return <ReceivableFormV2>{children}</ReceivableFormV2>
+    return <ReceivableForm>{children}</ReceivableForm>
   }
 
   const invoicePreview = (
     <Section minSize={300} maxSize={800}>
-      <ReceivablePreviewV2 />
+      <InvoicePreview />
     </Section>
   )
   const invoiceDetails = (
     <Section className={`mercoa-relative ${documentPosition === 'left' ? 'mercoa-pl-5' : 'mercoa-pr-5'}`} minSize={400}>
-      <ReceivableFormV2>{children}</ReceivableFormV2>
+      <ReceivableForm>{children}</ReceivableForm>
     </Section>
   )
 

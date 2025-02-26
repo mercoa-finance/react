@@ -1,9 +1,9 @@
 import { Mercoa } from '@mercoa/javascript'
-import { useReceivableDetailsContext } from '../../../providers/receivable-detail-provider'
+import { useReceivableDetails } from '../../../hooks/use-receivable-details'
 import { ReceivableSelectPaymentMethod } from './receivable-select-payment-method'
 
 export function ReceivablePaymentSource({ readOnly }: { readOnly?: boolean }) {
-  const { formMethods } = useReceivableDetailsContext()
+  const { formMethods } = useReceivableDetails()
   const {
     watch,
     formState: { errors },

@@ -1,15 +1,14 @@
 import { ArrowRightIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
 import dayjs from 'dayjs'
 import { Mercoa } from '@mercoa/javascript'
-import { Tooltip } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { Tooltip, usePayableDetails } from '../../../../../../components'
 
 export function PaymentDestinationProcessingTime({
   children,
 }: {
   children?: ({ timing }: { timing?: Mercoa.CalculatePaymentTimingResponse }) => JSX.Element
 }) {
-  const { paymentTiming, formMethods } = usePayableDetailsContext()
+  const { paymentTiming, formMethods } = usePayableDetails()
   const { watch } = formMethods
 
   const deductionDate = watch('deductionDate') as Date

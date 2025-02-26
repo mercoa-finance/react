@@ -1,4 +1,4 @@
-export enum ReceivableAction {
+export enum ReceivableFormAction {
   Create = 'create',
   SaveDraft = 'saveDraft',
   Delete = 'delete',

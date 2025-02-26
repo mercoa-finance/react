@@ -1,8 +1,8 @@
-import { createContext, ReactNode, useContext } from 'react'
+import { createContext, ReactNode } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
-import { ReceivableAction } from '../constants'
-import { useReceivableDetails, UseReceivableDetailsProps } from '../hooks/use-receivable-details'
+import { ReceivableFormAction } from '../constants'
+import { useReceivableDetailsInternal, UseReceivableDetailsProps } from '../hooks/use-receivable-details-internal'
 
 export type PaymentMethodContext = {
   setMethodOnTypeChange: (paymentMethodType: Mercoa.PaymentMethodType | string, type: 'source' | 'destination') => void
@@ -27,14 +27,14 @@ export type ReceivableDetailsContextValue = {
   formMethods: UseFormReturn<any>
   handleFormSubmit: (data: any) => void
   formLoading: boolean
-  handleActionClick: (action: ReceivableAction) => void
+  handleActionClick: (action: ReceivableFormAction) => void
   supportedCurrencies: Mercoa.CurrencyCode[] | undefined
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
   disableCustomerCreation: boolean
   paymentLink: string | undefined
 } & PaymentMethodContext
 
-const ReceivableDetailsContext = createContext<ReceivableDetailsContextValue | undefined>(undefined)
+export const ReceivableDetailsContext = createContext<ReceivableDetailsContextValue | undefined>(undefined)
 
 export const ReceivableDetailsProvider = ({
   children,
@@ -43,15 +43,7 @@ export const ReceivableDetailsProvider = ({
   children: ReactNode
   receivableDetailsProps: UseReceivableDetailsProps
 }) => {
-  const contextValue = useReceivableDetails(receivableDetailsProps)
+  const contextValue = useReceivableDetailsInternal(receivableDetailsProps)
 
   return <ReceivableDetailsContext.Provider value={contextValue}>{children}</ReceivableDetailsContext.Provider>
-}
-
-export const useReceivableDetailsContext = () => {
-  const context = useContext(ReceivableDetailsContext)
-  if (!context) {
-    throw new Error('useReceivableDetailsContext must be used within a ReceivableDetailsProvider')
-  }
-  return context
 }
