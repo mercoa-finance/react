@@ -16,6 +16,7 @@ import {
   AddCardButton,
   BankAccount,
   Card,
+  LoadingSpinner,
   MercoaButton,
   PaymentMethodList,
   useMercoaSession,
@@ -42,20 +43,22 @@ export function ReceivablePaymentPortal({
 
   const mercoaSession = useMercoaSession()
 
+  if (!invoice || mercoaSession.isLoading) return <LoadingSpinner />
+
   const logo =
     invoice.vendor?.logo ??
     mercoaSession.organization?.logoUrl ??
     'https://storage.googleapis.com/mercoa-partner-logos/mercoa-logo.png'
 
   return (
-    <div className="mercoa-min-h-full">
-      <div className="mercoa-h-28 mercoa-flex mercoa-items-center">
-        <img src={logo} alt="logo" width={150} className=" mercoa-object-contain mercoa-min-h-0" />
+    <div className="mercoa-min-h-full mercoa-w-full">
+      <div className="mercoa-m-auto mercoa-h-28 mercoa-flex mercoa-items-center mercoa-max-w-5xl">
+        <img src={logo} alt="logo" style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'contain' }} />
       </div>
       {complete ? (
         <PaymentComplete invoice={invoice} totalDisplay={totalDisplay} />
       ) : (
-        <div className="mercoa-m-auto mercoa-grid sm:mercoa-grid-cols-12 sm:mercoa-max-w-5xl sm:mercoa-gap-x-4 mercoa-px-2 sm:mercoa-px-0 ">
+        <div className="mercoa-m-auto mercoa-grid sm:mercoa-grid-cols-12 mercoa-max-w-5xl sm:mercoa-gap-x-4 mercoa-px-2 sm:mercoa-px-0 ">
           <div className="mercoa-col-span-12 sm:mercoa-col-span-8">
             <MainCard
               isPreview={isPreview}
@@ -239,16 +242,21 @@ function MainCard({
     if (isLoading || isPreview) return
     setIsLoading(true)
     try {
-      if (!selectedPaymentMethodId || !bankAccounts) {
+      if (!selectedPaymentMethodId || !bankAccounts || !cards) {
         toast.error('Please select a payment method')
         return
       }
-      const selectedPaymentMethod = bankAccounts.find((account) => account.id === selectedPaymentMethodId)
+      const selectedPaymentMethod = [...bankAccounts, ...cards].find(
+        (account) => account.id === selectedPaymentMethodId,
+      )
       if (!selectedPaymentMethod) {
         toast.error('Selected payment method not found')
         return
       }
-      if (selectedPaymentMethod.status !== Mercoa.BankStatus.Verified) {
+      if (
+        selectedPaymentMethod.type === Mercoa.PaymentMethodType.BankAccount &&
+        selectedPaymentMethod.status !== Mercoa.BankStatus.Verified
+      ) {
         toast.error('The selected payment method is not verified')
         return
       }

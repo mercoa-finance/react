@@ -18,7 +18,6 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import Dropzone from 'react-dropzone'
@@ -26,6 +25,7 @@ import { usePlacesWidget } from 'react-google-autocomplete'
 import { Control, Controller, UseFormRegister, useForm } from 'react-hook-form'
 import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { blobToDataUrl, capitalize } from '../lib/lib'
 import { postalCodeRegex } from '../lib/locations'
@@ -698,16 +698,14 @@ export function BusinessTypeBlock({
       <MercoaInputLabel label="Business Type" name="businessType" />
       <div className="mercoa-mt-1">
         <select {...register('businessType')} disabled={readOnly} required={required} className={inputClassName({})}>
-          <option value="" disabled>
-            Select an option
-          </option>
-          <option value="soleProprietorship">Sole proprietorship</option>
+          <option value="">Select an option</option>
           <option value="llc">LLC</option>
-          <option value="trust">Trust</option>
-          <option value="publicCorporation">Public Corporation</option>
+          <option value="soleProprietorship">Sole Proprietorship</option>
           <option value="privateCorporation">Private Corporation</option>
+          <option value="trust">Trust</option>
           <option value="partnership">Partnership</option>
-          <option value="unincorporatedAssociation">Unincorporated association</option>
+          <option value="publicCorporation">Public Corporation</option>
+          <option value="unincorporatedAssociation">Unincorporated Association</option>
           <option value="unincorporatedNonProfit">Unincorporated Non-Profit </option>
           <option value="incorporatedNonProfit">Incorporated Non-Profit </option>
         </select>
@@ -836,23 +834,29 @@ export const mccSchema = {
   mcc: yup.string().required('MCC is required'),
 }
 
-export function MCCBlock({ watch, setValue }: { watch: Function; setValue: Function }) {
+export function MCCBlock({ watch, setValue, errors }: { watch: Function; setValue: Function; errors: any }) {
   const mcc = watch('mcc')
 
   return (
-    <MercoaCombobox
-      options={mccCodes.map((value) => ({
-        disabled: false,
-        value,
-      }))}
-      displayIndex="name"
-      label="Merchant Categorization Code"
-      value={mccCodes.find((e) => e.code === mcc)}
-      onChange={({ code }) => {
-        setValue('mcc', code, { shouldDirty: true })
-      }}
-      labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 -mercoa-mb-1"
-    />
+    <div>
+      <MercoaCombobox
+        options={mccCodes.map((value) => ({
+          disabled: false,
+          value,
+        }))}
+        showAllOptions
+        displayIndex="name"
+        label="Merchant Categorization Code"
+        value={mccCodes.find((e) => e.code === mcc)}
+        onChange={({ code }) => {
+          setValue('mcc', code, { shouldDirty: true })
+        }}
+        labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 -mercoa-mb-1"
+      />
+      {errors.mcc?.message && (
+        <p className="mercoa-text-sm mercoa-text-red-500 mercoa-text-left">{errors.mcc?.message}</p>
+      )}
+    </div>
   )
 }
 
@@ -1170,7 +1174,7 @@ export async function createOrUpdateEntity({
           countryCode: '1',
         },
       }),
-      businessType: data.businessType ?? 'llc',
+      businessType: data.businessType,
       legalBusinessName: data.legalBusinessName,
       doingBusinessAs: data.doingBusinessAs,
       website: data.website,
@@ -2203,6 +2207,7 @@ export function EntityOnboardingForm({
   admin?: boolean
   readOnly?: boolean
 }) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const mercoaSession = useMercoaSession()
 
   const organizationOnboardingOptions =
@@ -2256,7 +2261,7 @@ export function EntityOnboardingForm({
       doingBusinessAs: entity.profile.business?.doingBusinessAs,
       description: entity.profile.business?.description,
       website: entity.profile.business?.website,
-      formationDate: undefined,
+      formationDate: entity.profile.business?.formationDate,
       foreignId: entity.foreignId,
       emailTo: entity.emailTo,
       isCustomer: entity.isCustomer,
@@ -2337,48 +2342,57 @@ export function EntityOnboardingForm({
         if (!entity) return
         if (!entityData) return
         if (!mercoaSession.client) return
-        // Handle entity updates
-        await createOrUpdateEntity({
-          data: entityData,
-          entityId: entity.id,
-          mercoaClient: mercoaSession.client,
-          isPayee: admin ? entityData.isPayee : type === 'payee',
-          isPayor: admin ? entityData.isPayor : type === 'payor',
-        })
-        if (entityData.tos && !entity.acceptedTos) {
-          await mercoaSession.client?.entity.acceptTermsOfService(entity.id)
-        }
-        // Handle organization updates (organizationEntity)
-        if (entityData.isOrganizationEntity && mercoaSession.organization?.organizationEntityId !== entity.id) {
-          await fetch('/api/updateOrganizationEntity', {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${mercoaSession.token}`,
-            },
-            body: JSON.stringify({
-              entityId: entity.id,
-            }),
+
+        setIsSubmitting(true)
+        try {
+          // Handle entity updates
+          await createOrUpdateEntity({
+            data: entityData,
+            entityId: entity.id,
+            mercoaClient: mercoaSession.client,
+            isPayee: admin ? entityData.isPayee : type === 'payee',
+            isPayor: admin ? entityData.isPayor : type === 'payor',
           })
-        } else if (!entityData.isOrganizationEntity && mercoaSession.organization?.organizationEntityId === entity.id) {
-          await fetch('/api/updateOrganizationEntity', {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${mercoaSession.token}`,
-            },
-            body: JSON.stringify({
-              entityId: null,
-            }),
-          })
-        }
-        if (admin || onCancel) {
-          toast.success('Entity Updated')
-        }
-        if (onOnboardingSubmit) {
-          onOnboardingSubmit(entityData)
-        } else {
-          await mercoaSession.refresh()
+          if (entityData.tos && !entity.acceptedTos) {
+            await mercoaSession.client?.entity.acceptTermsOfService(entity.id)
+          }
+          // Handle organization updates (organizationEntity)
+          if (entityData.isOrganizationEntity && mercoaSession.organization?.organizationEntityId !== entity.id) {
+            await fetch('/api/updateOrganizationEntity', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${mercoaSession.token}`,
+              },
+              body: JSON.stringify({
+                entityId: entity.id,
+              }),
+            })
+          } else if (
+            !entityData.isOrganizationEntity &&
+            mercoaSession.organization?.organizationEntityId === entity.id
+          ) {
+            await fetch('/api/updateOrganizationEntity', {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${mercoaSession.token}`,
+              },
+              body: JSON.stringify({
+                entityId: null,
+              }),
+            })
+          }
+          if (admin || onCancel) {
+            toast.success('Entity Updated')
+          }
+          if (onOnboardingSubmit) {
+            onOnboardingSubmit(entityData)
+          } else {
+            await mercoaSession.refresh()
+          }
+        } finally {
+          setIsSubmitting(false)
         }
       })}
     >
@@ -2532,7 +2546,9 @@ export function EntityOnboardingForm({
                 required={finalOnboardingOptions.business.ein.required}
               />
             )}
-            {finalOnboardingOptions?.business.mcc.show && <MCCBlock watch={watch} setValue={setValue} />}
+            {finalOnboardingOptions?.business.mcc.show && (
+              <MCCBlock watch={watch} setValue={setValue} errors={errors} />
+            )}
             {finalOnboardingOptions?.business.maxTransactionSize.show && (
               <MaxTransactionSizeBlock
                 register={register}
@@ -2674,7 +2690,11 @@ export function EntityOnboardingForm({
             Cancel
           </MercoaButton>
         )}
-        {!readOnly && <MercoaButton isEmphasized>{onCancel ? 'Update' : admin ? 'Submit' : 'Next'}</MercoaButton>}
+        {!readOnly && (
+          <MercoaButton isEmphasized disabled={isSubmitting}>
+            {isSubmitting ? 'Loading...' : onCancel ? 'Update' : admin ? 'Submit' : 'Next'}
+          </MercoaButton>
+        )}
       </div>
     </form>
   )

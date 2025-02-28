@@ -70,16 +70,21 @@ export function MainCardV2({
     if (isLoading || isPreview) return
     setIsLoading(true)
     try {
-      if (!selectedPaymentMethodId || !bankAccounts) {
+      if (!selectedPaymentMethodId || !bankAccounts || !cards) {
         toast.error('Please select a payment method')
         return
       }
-      const selectedPaymentMethod = bankAccounts.find((account) => account.id === selectedPaymentMethodId)
+      const selectedPaymentMethod = [...bankAccounts, ...cards].find(
+        (account) => account.id === selectedPaymentMethodId,
+      )
       if (!selectedPaymentMethod) {
         toast.error('Selected payment method not found')
         return
       }
-      if (selectedPaymentMethod.status !== Mercoa.BankStatus.Verified) {
+      if (
+        selectedPaymentMethod.type === Mercoa.PaymentMethodType.BankAccount &&
+        selectedPaymentMethod.status !== Mercoa.BankStatus.Verified
+      ) {
         toast.error('The selected payment method is not verified')
         return
       }

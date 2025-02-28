@@ -45,7 +45,7 @@ export function EntityPortal({ token }: { token: string }) {
   const { invoiceId } = params
 
   const [screen, setScreenLocal] = useState('inbox')
-  const [version, setVersion] = useState<'old' | 'new'>('new')
+  const [version, setVersion] = useState<'old' | 'new'>('old')
   const [invoiceType, setInvoiceType] = useState<'invoice' | 'invoiceTemplate'>('invoice')
 
   const [invoice, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>()

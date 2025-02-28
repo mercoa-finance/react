@@ -33,7 +33,7 @@ export interface MercoaContext {
   heightOffset: number
   setHeightOffset: Function
   debug: Function
-  fetchMetadata?: string[] | boolean
+  isLoading: boolean
 }
 const sessionContext = createContext<MercoaContext>({
   token: '',
@@ -61,7 +61,7 @@ const sessionContext = createContext<MercoaContext>({
   heightOffset: 100,
   setHeightOffset: () => {},
   debug: () => {},
-  fetchMetadata: undefined,
+  isLoading: true,
 })
 
 interface contextClassType {
@@ -209,6 +209,7 @@ function useProvideSession({
   const [heightOffsetLocal, setHeightOffset] = useState<number>(heightOffset)
   const [entityGroup, setEntityGroup] = useState<Mercoa.EntityGroupResponse>()
   const [entityCustomizations, setEntityCustomizations] = useState<Mercoa.EntityCustomizationResponse>()
+  const [isLoading, setIsLoading] = useState<boolean>(true)
 
   useEffect(() => {
     setHeightOffset(heightOffset)
@@ -253,8 +254,12 @@ function useProvideSession({
   }, [tokenLocal])
 
   async function refresh() {
+    setIsLoading(true)
     setRefreshId(Math.random())
-    if (!tokenLocal) return
+    if (!tokenLocal) {
+      setIsLoading(false)
+      return
+    }
 
     // Get org data
     try {
@@ -279,15 +284,18 @@ function useProvideSession({
 
     if (entityId) {
       await refreshEntity(entityId)
+      setIsLoading(false)
       return
     }
     try {
       const { entityId: tokenEid, entityGroupId } = jwtDecode(String(tokenLocal)) as TokenOptions
       if (tokenEid && !entityGroupId) {
         await refreshEntity(tokenEid)
+        setIsLoading(false)
         return
       } else if (entityGroupId) {
         await refreshEntityGroup()
+        setIsLoading(false)
         return
       }
     } catch (e) {
@@ -295,8 +303,11 @@ function useProvideSession({
     }
     if (entityGroupId) {
       await refreshEntityGroup()
+      setIsLoading(false)
       return
     }
+
+    setIsLoading(false)
   }
 
   async function refreshEntity(eid?: string) {
@@ -462,5 +473,6 @@ function useProvideSession({
         console.log(val)
       }
     },
+    isLoading,
   }
 }
