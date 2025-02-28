@@ -1122,15 +1122,16 @@ function SignatureImage({
   )
 }
 
-export function AcceleratedAchFunds({
+export function MercoaWallet({
   global,
   entityId: passedEntityId,
+  title,
 }: {
   global?: boolean
   entityId?: Mercoa.EntityId
+  title?: string
 }) {
   const mercoaSession = useMercoaSession()
-
   const [balanceIsResolved, setBalanceIsResolved] = useState(false)
   const [availableBalance, setAvailableBalance] = useState<number>(0)
   const [pendingBalance, setPendingBalance] = useState<number>(0)
@@ -1160,7 +1161,7 @@ export function AcceleratedAchFunds({
     },
   })
 
-  // Consolidated useEffect for fetching bank accounts and acceleration funds
+  // Consolidated useEffect for fetching bank accounts and wallet funds
   useEffect(() => {
     const fetchBankAccountsAndFunds = async () => {
       if (!mercoaSession.token || !entityId || !mercoaSession.client) return
@@ -1174,7 +1175,7 @@ export function AcceleratedAchFunds({
         setBankAccounts(bankAccountPms)
         setSelectedBankAccount(firstBankAccount)
 
-        // Fetch acceleration funds if a bank account exists
+        // Fetch wallet funds if a bank account exists
         if (firstBankAccount) {
           const fundsResp = await mercoaSession.client.entity.paymentMethod.bankAccount.getAccelerationFunds(
             entityId,
@@ -1185,19 +1186,19 @@ export function AcceleratedAchFunds({
           setBalanceIsResolved(true)
         }
       } catch (error) {
-        console.error('Error fetching bank accounts or acceleration funds:', error)
+        console.error('Error fetching bank accounts or wallet:', error)
       }
     }
 
     fetchBankAccountsAndFunds()
   }, [mercoaSession.client, entityId, mercoaSession.token])
 
-  // Add acceleration funds
+  // Add wallet funds
   const handleAddFunds = async (data: { amount?: number }) => {
     if (!data.amount) return
     if (!confirm('Are you sure you want to add funds?')) return
     if (!mercoaSession.token || !entityId || !mercoaSession.client || !balanceIsResolved) {
-      toast.error('Failed to resolve acceleration funds')
+      toast.error('Failed to resolve wallet funds')
       return
     }
     if (!selectedBankAccount?.id) {
@@ -1211,20 +1212,20 @@ export function AcceleratedAchFunds({
         { amount: data.amount, currency: Mercoa.CurrencyCode.Usd },
       )
     } catch (e) {
-      toast.error('Failed to add acceleration funds')
+      toast.error('Failed to add funds to wallet')
       return
     }
-    // Keep local state in sync with acceleration funds
+    // Keep local state in sync with wallet funds
     setPendingBalance((prevBalance) => prevBalance + (data?.amount ?? 0))
     addMethods.setValue('amount', 0)
   }
 
-  // Remove acceleration funds
+  // Remove wallet funds
   const handleRemoveFunds = async (data: { amount?: number }) => {
     if (!data.amount) return
     if (!confirm('Are you sure you want to remove funds?')) return
     if (!mercoaSession.token || !entityId || !mercoaSession.client || !balanceIsResolved) {
-      toast.error('Failed to resolve acceleration funds')
+      toast.error('Failed to resolve wallet funds')
       return
     }
     if (!selectedBankAccount?.id) {
@@ -1238,10 +1239,10 @@ export function AcceleratedAchFunds({
         { amount: data.amount, currency: Mercoa.CurrencyCode.Usd },
       )
     } catch (e) {
-      toast.error('Failed to remove acceleration funds')
+      toast.error('Failed to remove funds from wallet')
       return
     }
-    // Keep local state in sync with acceleration funds
+    // Keep local state in sync with wallet funds
     setAvailableBalance((prevBalance) => prevBalance - (data?.amount ?? 0))
     removeMethods.setValue('amount', 0)
   }
@@ -1252,7 +1253,7 @@ export function AcceleratedAchFunds({
         <div className="sm:mercoa-flex sm:mercoa-items-center">
           <div className="sm:mercoa-flex-auto">
             <h1 className="mercoa-text-xl mercoa-font-semibold mercoa-text-gray-900">
-              {global ? 'Global' : ''} Accelerated ACH - Disabled
+              {title ?? `${global ? 'Global ' : ''}${mercoaSession.organization?.name || ''} Wallet`} - Disabled
             </h1>
           </div>
         </div>
@@ -1265,10 +1266,10 @@ export function AcceleratedAchFunds({
       <div className="sm:mercoa-flex sm:mercoa-items-center">
         <div className="sm:mercoa-flex-auto">
           <h1 className="mercoa-text-xl mercoa-font-semibold mercoa-text-gray-900">
-            {global ? 'Global' : ''} Accelerated ACH
+            {title ?? `${global ? 'Global ' : ''}${mercoaSession.organization?.name} Wallet`}
           </h1>
 
-          {/* Current Acceleration Funds Balance */}
+          {/* Current Wallet Balance */}
           <div className="mercoa-mt-8">
             <div className="mercoa-grid mercoa-grid-cols-4 mercoa-gap-2">
               <div className="mercoa-flex mercoa-flex-col mercoa-items-center mercoa-justify-center">
@@ -1331,7 +1332,7 @@ export function AcceleratedAchFunds({
                                 <PaymentMethodButton
                                   selected
                                   icon={<WalletIcon className="mercoa-size-5" />}
-                                  text={'Acceleration Wallet'}
+                                  text={title ?? `${mercoaSession.organization?.name} Wallet`}
                                 />
                               </div>
                             </>
@@ -1371,7 +1372,7 @@ export function AcceleratedAchFunds({
                                   <PaymentMethodButton
                                     selected
                                     icon={<WalletIcon className="mercoa-size-5" />}
-                                    text={'Acceleration Wallet'}
+                                    text={title ?? `${mercoaSession.organization?.name} Wallet`}
                                   />
                                 </div>
                               </>

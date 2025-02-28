@@ -1,5 +1,5 @@
-import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
+import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../../../../../../lib/currency'
 
 export function InvoiceTotal({ invoice }: { invoice: Mercoa.InvoiceResponse }) {

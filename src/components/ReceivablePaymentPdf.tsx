@@ -103,7 +103,9 @@ function InvoiceHeader({ invoice, logo }: { invoice: Mercoa.InvoiceResponse; log
 
       <div className="mercoa-border-l-2 mercoa-border-gray-500 mercoa-pl-6">
         {logo && <img src={logo} alt="logo" style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'contain' }} />}
-        <p className="mercoa-text-xl mercoa-mt-2">{invoice.vendor?.name}</p>
+        <p className="mercoa-text-xl mercoa-mt-2">
+          {invoice.vendor?.profile?.business?.doingBusinessAs ?? invoice.vendor?.name}
+        </p>
         {vendorAddress?.addressLine1 && (
           <>
             <p>
