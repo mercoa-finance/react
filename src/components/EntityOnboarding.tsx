@@ -18,6 +18,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import dayjs from 'dayjs'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import Dropzone from 'react-dropzone'
@@ -25,7 +26,6 @@ import { usePlacesWidget } from 'react-google-autocomplete'
 import { Control, Controller, UseFormRegister, useForm } from 'react-hook-form'
 import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { blobToDataUrl, capitalize } from '../lib/lib'
 import { postalCodeRegex } from '../lib/locations'
@@ -2927,21 +2927,32 @@ export function EntityOnboarding({
       }
     }
     if (formState === 'complete') {
-      if (entity.acceptedTos) {
-        mercoaSession.client?.entity.initiateKyb(entity.id).catch((e) => {
-          toast.error(
-            'Failed to initiate KYB. Please make sure all required fields are filled out and at least one controller is provided.',
-          )
-        })
-      }
-      if (connectedEntityId) {
-        mercoaSession.client?.entity.update(entity.id, {
-          connectedEntityId: connectedEntityId,
-        })
-      }
-      onComplete?.()
+      onCompleteCallback(entity, mercoaSession.client, connectedEntityId, onComplete)
     }
   }, [mercoaSession.organization, mercoaSession.client, entity, entityData, formState, type, onboardingOptionsFinal])
+
+  async function onCompleteCallback(
+    entity: Mercoa.EntityResponse,
+    client: MercoaClient,
+    connectedEntityId?: Mercoa.EntityId,
+    onComplete?: () => void,
+  ) {
+    if (entity.acceptedTos) {
+      try {
+        await client?.entity.initiateKyb(entity.id)
+      } catch (e) {
+        toast.error(
+          'Failed to initiate KYB. Please make sure all required fields are filled out and at least one controller is provided.',
+        )
+      }
+    }
+    if (connectedEntityId) {
+      await client?.entity.update(entity.id, {
+        connectedEntityId: connectedEntityId,
+      })
+    }
+    onComplete?.()
+  }
 
   if (!entity || !mercoaSession.organization || !mercoaSession.client)
     return (
