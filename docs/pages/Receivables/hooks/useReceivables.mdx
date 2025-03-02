@@ -144,7 +144,11 @@ const CustomReceivablesTableContent = () => {
 
 // Wrapper component that provides the ReceivablesTable context
 const CustomReceivablesTable = () => {
-  return <Receivables>{() => <CustomReceivablesTableContent />}</ReceivablesTable>
+  return (
+    <Receivables>
+      <CustomReceivablesTableContent />
+    </Receivables>
+  )
 }
 ```
 

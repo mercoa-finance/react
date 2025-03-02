@@ -146,7 +146,11 @@ const CustomPayablesTableContent = () => {
 
 // Wrapper component that provides the PayablesTable context
 const CustomPayablesTable = () => {
-  return <PayablesTable>{() => <CustomPayablesTableContent />}</PayablesTable>
+  return (
+    <Payables>
+      <CustomPayablesTableContent />
+    </Payables>
+  )
 }
 ```
 
