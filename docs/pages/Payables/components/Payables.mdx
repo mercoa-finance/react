@@ -1,0 +1,120 @@
+import { Payables } from '@mercoa/react'
+import { ComponentContainer } from '../../../components/helpers'
+
+# Payables
+
+The `<Payables>` component displays all payables for an entity. It includes built-in filters, invoice metrics, and customizable table options. The entity is determined from the JWT token provided to `<MercoaSession>`.
+
+## Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ✅     |        ✅        |
+
+## Props
+
+### Main Props
+
+| Name             | Type                                         | Required | Description                                                                 |
+| ---------------- | -------------------------------------------- | -------- | --------------------------------------------------------------------------- |
+| `queryOptions`   | [`PayablesQueryOptions`](#query-options)     |          | Data-related options such as filtering invoices by status, date, or search. |
+| `renderCustom`   | [`PayablesRenderCustom`](#custom-rendering)  |          | Allows customization of table columns and formatting.                       |
+| `displayOptions` | [`PayablesDisplayOptions`](#display-options) |          | Options for displaying table, filters, and metrics.                         |
+| `handlers`       | [`PayablesHandlers`](#event-handlers)        |          | Callback functions for handling invoice interactions.                       |
+| `config`         | [`PayablesConfig`](#functional-options)      |          | Configuration settings such as `readOnly`.                                  |
+
+---
+
+<a id="event-handlers"></a>
+### Event Handlers (`handlers`)
+
+| Name                       | Type                                        | Required | Description                                           |
+| -------------------------- | ------------------------------------------- | -------- | ----------------------------------------------------- |
+| `onCreateInvoice`          | `() => void`                                |          | Triggered when the user initiates invoice creation.   |
+| `onCreateRecurringInvoice` | `() => void`                                |          | Triggered when a recurring invoice is being created.  |
+| `onSelectInvoice`          | `(invoice: Mercoa.InvoiceResponse) => void` |          | Triggered when an invoice is selected from the table. |
+
+---
+
+<a id="query-options"></a>
+### Query Options (`queryOptions`)
+
+| Name                 | Type                                               | Required | Description                          |
+| -------------------- | -------------------------------------------------- | -------- | ------------------------------------ |
+| `currentStatuses`    | `Mercoa.InvoiceStatus[]`                           |          | List of invoice statuses to filter.  |
+| `search`             | `string`                                           |          | Search query for filtering invoices. |
+| `startDate`          | `Date`                                             |          | Start date filter.                   |
+| `endDate`            | `Date`                                             |          | End date filter.                     |
+| `orderBy`            | `Mercoa.InvoiceOrderByField`                       |          | Field to order the invoices by.      |
+| `orderDirection`     | `Mercoa.OrderDirection`                            |          | Order direction (`asc` or `desc`).   |
+| `excludeReceivables` | `boolean`                                          |          | Whether to exclude receivables.      |
+| `resultsPerPage`     | `number`                                           | ✅       | Number of results per page.          |
+| `paymentType`        | `Mercoa.PaymentType[]`                             |          | Filter invoices by payment type.     |
+| `metadata`           | `Mercoa.MetadataFilter \| Mercoa.MetadataFilter[]` |          | Additional metadata filters.         |
+| `dateType`           | `Mercoa.InvoiceDateFilter`                         |          | The type of date filter to apply.    |
+| `approverId`         | `string`                                           |          | Filter invoices by approver ID.      |
+| `approverAction`     | `Mercoa.ApproverAction`                            |          | Filter invoices by approver action.  |
+| `isInitial`          | `boolean`                                          |          | Whether this is the initial load.    |
+
+---
+
+<a id="display-options"></a>
+### Display Options (`displayOptions`)
+
+| Name                   | Type                                                       | Required | Description                                                |
+| ---------------------- | ---------------------------------------------------------- | -------- | ---------------------------------------------------------- |
+| `tableOnly`            | `boolean`                                                  |          | Show only the table, hiding filters and other UI elements. |
+| `showCumulativeFilter` | `boolean`                                                  |          | Whether to show a cumulative filter toggle.                |
+| `statusTabsOptions`    | `{ isVisible: boolean, statuses: Mercoa.InvoiceStatus[] }` |          | Configure visibility and statuses for the status tabs.     |
+| `showInvoiceMetrics`   | `boolean`                                                  |          | Whether to display invoice metrics.                        |
+| `classNames`           | `object`                                                   |          | Custom class names for table and UI elements.              |
+
+---
+
+<a id="custom-rendering"></a>
+### Custom Rendering (`renderCustom`)
+
+| Name      | Type                   | Required | Description                           |
+| --------- | ---------------------- | -------- | ------------------------------------- |
+| `columns` | `InvoiceTableColumn[]` |          | Custom columns for the invoice table. |
+
+---
+
+<a id="functional-options"></a>
+### Functional Options (`config`)
+
+| Name       | Type      | Required | Description                         |
+| ---------- | --------- | -------- | ----------------------------------- |
+| `readOnly` | `boolean` |          | Whether the component is read-only. |
+
+---
+
+## Examples
+
+### Default Usage
+
+<ComponentContainer>
+  <Payables />
+  ```jsx
+  <Payables />
+  ```
+</ComponentContainer>
+
+### Select Invoice Handler
+
+<ComponentContainer>
+  <Payables
+    handlers={{
+      onSelectInvoice: (invoice) => router.push(`/dashboard/vendors/${mercoaSession.entityId}/invoices/${invoice.id}`),
+    }}
+  />
+  ```jsx
+  <Payables
+    handlers={{
+      onSelectInvoice: (invoice) => {
+        router.push(`/dashboard/vendors/${mercoaSession.entityId}/invoices/${invoice.id}`)
+      },
+    }}
+  />
+  ```
+</ComponentContainer>

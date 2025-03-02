@@ -1,11 +1,13 @@
 import { Menu, Transition } from '@headlessui/react'
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline'
 import { Big } from 'big.js'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { usePayableDetails } from '../../../../../../components'
 
 export function LineItemOptions() {
-  const { updateTotalAmount, formMethods, lineItems } = usePayableDetailsContext()
+  const { formContextValue } = usePayableDetails()
+  const { formMethods, lineItemsContextValue } = formContextValue
   const { setValue } = formMethods
+  const { lineItems } = lineItemsContextValue
 
   //doubt: why it it setting lineItems to an empty array?
   function collapseLineItems() {

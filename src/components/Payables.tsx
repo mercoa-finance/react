@@ -274,7 +274,7 @@ export type InvoiceTableColumn = {
   format?: (value: string | number | Date | any, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
 }
 
-export type PayablesTableChildrenProps = {
+export type PayablesTableV1ChildrenProps = {
   dataLoaded: boolean
   invoices: Mercoa.InvoiceResponse[]
   hasNext: boolean
@@ -295,7 +295,7 @@ export type PayablesTableChildrenProps = {
   downloadCSV: () => void
 }
 
-export function PayablesTable({
+export function PayablesTableV1({
   invoiceType = 'invoice',
   statuses,
   search,
@@ -314,7 +314,7 @@ export function PayablesTable({
   endDate?: Date
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse, isMiddleClick?: boolean) => any
   columns?: InvoiceTableColumn[]
-  children?: (props: PayablesTableChildrenProps) => ReactElement | null
+  children?: (props: PayablesTableV1ChildrenProps) => ReactElement | null
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1324,7 +1324,7 @@ export function GroupPayablesTable({
   endDate?: Date
   onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => any
   columns?: InvoiceTableColumn[]
-  children?: (props: PayablesTableChildrenProps) => ReactElement | null
+  children?: (props: PayablesTableV1ChildrenProps) => ReactElement | null
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -2274,7 +2274,7 @@ export function StatusDropdown({
   )
 }
 
-export function Payables({
+export function PayablesV1({
   statuses,
   onSelectInvoice,
   onSelectInvoiceType,
@@ -2375,7 +2375,7 @@ export function Payables({
           {invoiceType === 'invoice' && (
             <InvoiceMetrics statuses={selectedStatuses} search={search} excludeReceivables />
           )}
-          <PayablesTable
+          <PayablesTableV1
             invoiceType={invoiceType}
             statuses={selectedStatuses}
             search={search}

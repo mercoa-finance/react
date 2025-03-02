@@ -22,7 +22,7 @@ import {
   useMercoaSession,
 } from './index'
 
-export function ReceivablePaymentPortal({
+export function ReceivablePaymentPortalV1({
   isPreview,
   complete,
   invoice,
@@ -56,7 +56,7 @@ export function ReceivablePaymentPortal({
         <img src={logo} alt="logo" style={{ maxWidth: '150px', maxHeight: '150px', objectFit: 'contain' }} />
       </div>
       {complete ? (
-        <PaymentComplete invoice={invoice} totalDisplay={totalDisplay} />
+        <PaymentCompleteV1 invoice={invoice} totalDisplay={totalDisplay} />
       ) : (
         <div className="mercoa-m-auto mercoa-grid sm:mercoa-grid-cols-12 mercoa-max-w-5xl sm:mercoa-gap-x-4 mercoa-px-2 sm:mercoa-px-0 ">
           <div className="mercoa-col-span-12 sm:mercoa-col-span-8">
@@ -532,7 +532,7 @@ function SelectCardButtons({
   )
 }
 
-function PaymentComplete({ invoice, totalDisplay }: { invoice: Mercoa.InvoiceResponse; totalDisplay: string }) {
+function PaymentCompleteV1({ invoice, totalDisplay }: { invoice: Mercoa.InvoiceResponse; totalDisplay: string }) {
   const mercoaSession = useMercoaSession()
 
   const sourcePaymentMethod = invoice.paymentSource

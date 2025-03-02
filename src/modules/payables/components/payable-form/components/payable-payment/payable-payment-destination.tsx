@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { MercoaButton, useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { MercoaButton, useMercoaSession, usePayableDetails } from '../../../../../../components'
 import { afterApprovedStatus } from '../../constants'
 import { PayableSelectPaymentMethod } from './payable-select-payment-method'
 
@@ -12,7 +11,10 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
     formState: { errors },
   } = useFormContext()
 
-  const { getVendorPaymentLink } = usePayableDetailsContext()
+  const { formContextValue, dataContextValue } = usePayableDetails()
+  const { paymentMethodContextValue } = formContextValue
+  const { getVendorPaymentLink } = paymentMethodContextValue
+  const { invoice } = dataContextValue
 
   const mercoaSession = useMercoaSession()
   const [vendorLink, setVendorLink] = useState<string>()
@@ -26,13 +28,16 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
   const id = watch('id')
 
   useEffect(() => {
-    if (id && mercoaSession.organization?.paymentMethods?.backupDisbursements?.find((e) => e.type === 'na')?.active) {
+    if (
+      id &&
+      invoice?.vendor?.id &&
+      mercoaSession.organization?.paymentMethods?.backupDisbursements?.find((e) => e.type === 'na')?.active
+    ) {
       getVendorPaymentLink(id).then((link) => {
         setVendorLink(link)
       })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, mercoaSession.organization?.paymentMethods?.backupDisbursements])
+  }, [id, invoice?.vendor?.id, mercoaSession.organization?.paymentMethods?.backupDisbursements])
 
   return (
     <>

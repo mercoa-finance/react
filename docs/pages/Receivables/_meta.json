@@ -1,4 +1,4 @@
 {
-  "Inbox": "Receivables Dashboard",
-  "Form": "Receivables Creation / Edit"
+  "components": "Components",
+  "hooks": "Hooks"
 }

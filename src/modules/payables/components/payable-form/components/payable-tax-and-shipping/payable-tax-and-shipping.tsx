@@ -1,9 +1,8 @@
 import useResizeObserver from '@react-hook/resize-observer'
-import { currencyCodeToSymbol } from '../../../../../../lib/currency'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { MercoaInput } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { MercoaInput, usePayableDetails } from '../../../../../../components'
+import { currencyCodeToSymbol } from '../../../../../../lib/currency'
 
 export type PayableTaxAndShippingChildrenProps = {
   readOnly?: boolean
@@ -20,10 +19,11 @@ export function PayableTaxAndShipping({
   readOnly?: boolean
   children?: (props: PayableTaxAndShippingChildrenProps) => JSX.Element
 }) {
-  const { formMethods, taxAmount, shippingAmount, setTaxAmount, setShippingAmount } = usePayableDetailsContext()
+  const { formContextValue } = usePayableDetails()
+  const { formMethods, taxAndShippingContextValue } = formContextValue
+  const { taxAmount, shippingAmount, setTaxAmount, setShippingAmount } = taxAndShippingContextValue
   const {
     control,
-    setValue,
     formState: { errors },
     watch,
   } = formMethods
