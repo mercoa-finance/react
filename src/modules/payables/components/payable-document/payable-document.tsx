@@ -1,13 +1,16 @@
-import { NoSession, useMercoaSession } from '../../../../components'
-import { usePayableDetailsContext } from '../../providers/payables-detail-provider'
+import { useCallback, useEffect, useState } from 'react'
+import { NoSession, useMercoaSession, usePayableDetails } from '../../../../components'
 import { DocumentUploadBox } from './components/document-upload-box'
 import { OcrProgressBar } from './components/ocr-progress-bar'
 import { PayableDocumentDisplay } from './components/payable-document-display'
 
-export function PayableDocumentV2() {
+export function PayableDocument() {
   const mercoaSession = useMercoaSession()
 
-  const { handleFileUpload, ocrProcessing, documents, sourceEmails, invoice, height } = usePayableDetailsContext()
+  const { documentContextValue, propsContextValue, dataContextValue, displayContextValue } = usePayableDetails()
+  const { documents, ocrProcessing, sourceEmails, handleFileUpload } = documentContextValue
+  const { invoice } = dataContextValue
+  const { height } = displayContextValue
 
   if (!mercoaSession.client) return <NoSession componentName="PayableDocument" />
 

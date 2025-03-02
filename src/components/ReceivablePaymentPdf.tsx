@@ -6,7 +6,7 @@ import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { LoadingSpinner, useMercoaSession } from './index'
 
-export function ReceivablePaymentPdf({
+export function ReceivablePaymentPdfV1({
   invoice,
   hideQR = false,
 }: {

@@ -1,10 +1,10 @@
-import { createContext, ReactNode, useContext } from 'react'
+import { createContext, ReactNode } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
-import { ReceivableAction } from '../constants'
-import { useReceivableDetails, UseReceivableDetailsProps } from '../hooks/use-receivable-details'
+import { ReceivableFormAction } from '../constants'
+import { ReceivableDetailsProps, useReceivableDetailsInternal } from '../hooks/use-receivable-details-internal'
 
-export type PaymentMethodContext = {
+export type ReceivablePaymentMethodContext = {
   setMethodOnTypeChange: (paymentMethodType: Mercoa.PaymentMethodType | string, type: 'source' | 'destination') => void
   sourcePaymentMethods: Mercoa.PaymentMethodResponse[] | undefined
   destinationPaymentMethods: Mercoa.PaymentMethodResponse[] | undefined
@@ -18,40 +18,44 @@ export type PaymentMethodContext = {
   availableDestinationTypes: Array<{ key: string; value: string }>
   selectedDestinationType: Mercoa.PaymentMethodType | undefined
   setSelectedDestinationType: (type: Mercoa.PaymentMethodType) => void
+  paymentLink: string | undefined
 }
 
 export type ReceivableDetailsContextValue = {
-  receivableData: Mercoa.InvoiceResponse | undefined
-  selectedPayer: Mercoa.EntityResponse | undefined
-  setSelectedPayer: (payer: Mercoa.EntityResponse | undefined) => void
+  formContextValue: ReceivableFormContext
+  dataContextValue: ReceivableDataContext
+  propsContextValue: ReceivableDetailsProps
+}
+
+export type ReceivableFormContext = {
   formMethods: UseFormReturn<any>
   handleFormSubmit: (data: any) => void
   formLoading: boolean
-  handleActionClick: (action: ReceivableAction) => void
-  supportedCurrencies: Mercoa.CurrencyCode[] | undefined
-  refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
-  disableCustomerCreation: boolean
-  paymentLink: string | undefined
-} & PaymentMethodContext
+  handleActionClick: (action: ReceivableFormAction) => void
+  paymentMethodContextValue: ReceivablePaymentMethodContext
+  payerContextValue: ReceivablePayerContext
+}
 
-const ReceivableDetailsContext = createContext<ReceivableDetailsContextValue | undefined>(undefined)
+export type ReceivableDataContext = {
+  receivableData: Mercoa.InvoiceResponse | undefined
+  refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
+}
+
+export type ReceivablePayerContext = {
+  selectedPayer: Mercoa.EntityResponse | undefined
+  setSelectedPayer: (payer: Mercoa.EntityResponse | undefined) => void
+}
+
+export const ReceivableDetailsContext = createContext<ReceivableDetailsContextValue | undefined>(undefined)
 
 export const ReceivableDetailsProvider = ({
   children,
   receivableDetailsProps,
 }: {
   children: ReactNode
-  receivableDetailsProps: UseReceivableDetailsProps
+  receivableDetailsProps: ReceivableDetailsProps
 }) => {
-  const contextValue = useReceivableDetails(receivableDetailsProps)
+  const contextValue = useReceivableDetailsInternal(receivableDetailsProps)
 
   return <ReceivableDetailsContext.Provider value={contextValue}>{children}</ReceivableDetailsContext.Provider>
-}
-
-export const useReceivableDetailsContext = () => {
-  const context = useContext(ReceivableDetailsContext)
-  if (!context) {
-    throw new Error('useReceivableDetailsContext must be used within a ReceivableDetailsProvider')
-  }
-  return context
 }

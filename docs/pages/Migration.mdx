@@ -1,0 +1,113 @@
+---
+title: 'Migration Guide'
+description: 'Guide for migrating from legacy implementations to the standardized Provider + Context model.'
+---
+
+# Migration Guide
+
+## Overview
+
+If your current infrastructure does not follow a structured **Provider + Context** model, migrating to this standardized architecture will improve **maintainability, reusability, and performance**. This document provides a structured approach to refactoring existing implementations to align with the new component model.
+
+## Migration Steps
+
+### 1. Adopt the Standardized Props Structure
+
+Instead of passing ad-hoc props to each component, follow a consistent structure for passing **query options, handlers, configuration, and UI settings**.
+
+#### **Before (Inconsistent Props Across Components)**
+
+```tsx
+export function PayableDetails({
+  invoiceId,
+  invoice,
+  onUpdate,
+}: {
+  invoiceId: string
+  invoice: Invoice
+  onUpdate: (invoice: Invoice) => void
+}) {
+  return <PayableForm invoiceId={invoiceId} invoice={invoice} onUpdate={onUpdate} />
+}
+
+export function PayableForm({
+  invoiceId,
+  invoice,
+  onUpdate,
+}: {
+  invoiceId: string
+  invoice: Invoice
+  onUpdate: (invoice: Invoice) => void
+}) {
+  return <div>{invoice.id}</div>
+}
+```
+
+#### **After (Using Standardized Props Structure)**
+
+```tsx
+export interface PayableDetailsProps {
+  queryOptions?: PayableDetailsQueryOptions // query params for data
+  renderCustom?: PayableDetailsRenderCustom // custom UI overrides
+  displayOptions?: PayableDetailsDisplayOptions // controls display behavior
+  handlers?: PayableDetailsHandlers // event callbacks
+  config?: PayableDetailsConfig // controls functional behavior
+}
+
+export function Payables(props: PayableDetailsProps) {
+  return <PayableDetails {...props} />
+}
+```
+
+### 2. Move Child Component Props to Context Hook
+
+Instead of passing props individually to each child component, allow them to retrieve necessary data from the context.
+
+#### **Before (Each Component Receives Individual Props)**
+
+```tsx
+export function PayableDetails({ invoice, onUpdate }: { invoice: Invoice; onUpdate: (invoice: Invoice) => void }) {
+  return (
+    <>
+      <PayableForm invoice={invoice} onUpdate={onUpdate} />
+      <PayableSummary invoice={invoice} />
+      <PayableActions invoice={invoice} onUpdate={onUpdate} />
+    </>
+  )
+}
+```
+
+#### **After (All Props Passed at the Parent Level, Children Use Hook)**
+
+```tsx
+export function Payables(props: PayablesV2Props) {
+  return <PayableDetails {...props} />
+}
+
+export function PayableDetails() {
+  return (
+    <>
+      <PayableForm />
+      <PayableSummary />
+      <PayableActions />
+    </>
+  )
+}
+
+export function PayableForm() {
+  const { invoice, onUpdate } = usePayableDetails()
+  return <div>{invoice.id}</div>
+}
+
+export function PayableSummary() {
+  const { invoice } = usePayableDetails()
+  return <div>Summary: {invoice.id}</div>
+}
+
+export function PayableActions() {
+  const { invoice, onUpdate } = usePayableDetails()
+  return <button onClick={() => onUpdate(invoice)}>Update</button>
+}
+```
+
+This approach ensures that all child components retrieve their necessary props from the context instead of being manually passed down from the parent, while the parent component (`Payables`) manages all props centrally.

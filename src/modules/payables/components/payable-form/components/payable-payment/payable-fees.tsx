@@ -1,9 +1,7 @@
 import accounting from 'accounting'
-import { currencyCodeToSymbol } from '../../../../../../../src/lib/currency'
-import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
-import { useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { currencyCodeToSymbol } from '../../../../../../../src/lib/currency'
+import { useMercoaSession, usePayableDetails } from '../../../../../../components'
 
 export function PayableFees({
   children,
@@ -12,9 +10,12 @@ export function PayableFees({
 }) {
   const mercoaSession = useMercoaSession()
 
-  const { fees, vendorCreditUsage } = usePayableDetailsContext()
+  const { formContextValue } = usePayableDetails()
+  const { formMethods, feesContextValue, vendorCreditContextValue } = formContextValue
+  const { fees } = feesContextValue
+  const { vendorCreditUsage } = vendorCreditContextValue
 
-  const { watch, setError, clearErrors } = useFormContext()
+  const { watch, setError, clearErrors } = formMethods
 
   const invoiceId = watch('id')
   const status = watch('status')

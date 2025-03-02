@@ -1,0 +1,153 @@
+---
+title: usePayables Hook
+description: The `usePayables` hook provides access to payables data, filtering, pagination, selection, and actions within the `Payables` component.
+---
+
+# usePayables
+
+The `usePayables` hook is used inside children of the `<Payables>` component. It provides access to payables data, filtering capabilities, pagination controls, row selection, and action handlers.
+
+## Props
+
+The props for `usePayables` are the same as [`Payables`](./Payables), as it is meant to be used within its context.
+
+## Return Type
+
+| Name                     | Type                                                        | Description                                        |
+| :----------------------- | :---------------------------------------------------------- | :------------------------------------------------- |
+| `dataContextValue`       | [`PayablesDataContext`](#payables-data-context)             | Provides payables data and loading states          |
+| `filtersContextValue`    | [`PayablesFilterContext`](#payables-filter-context)         | Manages filtering options                          |
+| `paginationContextValue` | [`PayablesPaginationContext`](#payables-pagination-context) | Controls pagination and sorting                    |
+| `selectionContextValue`  | [`PayablesSelectionContext`](#payables-selection-context)   | Handles row selection and column visibility        |
+| `actionsContextValue`    | [`PayablesActionContext`](#payables-action-context)         | Manages payable actions like approve, delete, etc. |
+| `propsContextValue`      | `PayablesProps`                                             | Access to the original props passed to `Payables`  |
+
+---
+
+<a id="payables-data-context"></a>
+### Data Context (`dataContextValue`)
+
+| Name                    | Type                               | Description                       |
+| :---------------------- | :--------------------------------- | :-------------------------------- |
+| `infiniteData`          | `any`                              | Raw infinite query data           |
+| `tableData`             | `Array<PayableTableRow>`           | Formatted table data              |
+| `allFetchedInvoices`    | `Mercoa.InvoiceResponse[]`         | All fetched invoice data          |
+| `totalItems`            | `number`                           | Total number of items             |
+| `totalEntries`          | `number`                           | Total number of entries           |
+| `recurringPayablesData` | `Mercoa.InvoiceTemplateResponse[]` | Recurring payables data           |
+| `metricsData`           | `Mercoa.InvoiceMetricsResponse[]`  | Metrics data                      |
+| `approvalPolicies`      | `Mercoa.ApprovalPolicyResponse[]`  | Approval policies                 |
+| `statusTabsMetrics`     | `any`                              | Metrics for status tabs           |
+| `isFetching`            | `boolean`                          | Whether data is being fetched     |
+| `isLoading`             | `boolean`                          | Whether initial load is happening |
+| `isError`               | `boolean`                          | Whether an error occurred         |
+| `handleRefresh`         | `() => void`                       | Function to refresh data          |
+
+---
+
+<a id="payables-filter-context"></a>
+### Filter Context (`filtersContextValue`)
+
+| Name                 | Type                                  | Description                       |
+| :------------------- | :------------------------------------ | :-------------------------------- |
+| `currentStatuses`    | `Mercoa.InvoiceStatus[]`              | Currently selected status filters |
+| `setCurrentStatuses` | `(statuses: InvoiceStatus[]) => void` | Sets status filters               |
+| `search`             | `string`                              | Search query string               |
+| `setSearch`          | `(search: string) => void`            | Sets search query                 |
+| `startDate`          | `Date \| undefined`                   | Start date filter                 |
+| `setStartDate`       | `(date: Date \| undefined) => void`   | Sets start date filter            |
+| `endDate`            | `Date \| undefined`                   | End date filter                   |
+| `setEndDate`         | `(date: Date \| undefined) => void`   | Sets end date filter              |
+
+---
+
+<a id="payables-pagination-context"></a>
+### Pagination Context (`paginationContextValue`)
+
+| Name               | Type                         | Description                        |
+| :----------------- | :--------------------------- | :--------------------------------- |
+| `orderBy`          | `Mercoa.InvoiceOrderByField` | Current sort field                 |
+| `orderDirection`   | `Mercoa.OrderDirection`      | Current sort direction             |
+| `resultsPerPage`   | `number`                     | Number of results per page         |
+| `page`             | `number`                     | Current page number                |
+| `goToNextPage`     | `() => void`                 | Go to next page                    |
+| `goToPreviousPage` | `() => void`                 | Go to previous page                |
+| `isNextDisabled`   | `boolean`                    | Whether next page is available     |
+| `isPrevDisabled`   | `boolean`                    | Whether previous page is available |
+
+---
+
+<a id="payables-selection-context"></a>
+### Selection Context (`selectionContextValue`)
+
+| Name                   | Type                                   | Description                    |
+| :--------------------- | :------------------------------------- | :----------------------------- |
+| `selectedInvoiceIds`   | `string[]`                             | Currently selected invoice IDs |
+| `isAllSelected`        | `boolean`                              | Whether all items are selected |
+| `handleSelectAll`      | `() => void`                           | Selects/deselects all items    |
+| `handleSelectRow`      | `(invoiceId: string) => void`          | Selects/deselects a single row |
+| `selectedColumns`      | `InvoiceTableColumn[]`                 | Visible columns                |
+| `toggleSelectedColumn` | `(column: InvoiceTableColumn) => void` | Toggles column visibility      |
+
+---
+
+<a id="payables-action-context"></a>
+### Action Context (`actionsContextValue`)
+
+| Name                    | Type                    | Description                             |
+| :---------------------- | :---------------------- | :-------------------------------------- |
+| `deletePayable`         | `UseMutateFunction`     | Delete single payable                   |
+| `bulkDeletePayables`    | `UseMutateFunction`     | Delete multiple payables                |
+| `schedulePayment`       | `UseMutateFunction`     | Schedule payment for single payable     |
+| `bulkSchedulePayment`   | `UseMutateFunction`     | Schedule payments for multiple payables |
+| `approvePayable`        | `UseMutateFunction`     | Approve single payable                  |
+| `bulkApprovePayables`   | `UseMutateFunction`     | Approve multiple payables               |
+| `downloadInvoicesAsCSV` | `() => void`            | Download invoices as CSV                |
+| `activeInvoiceAction`   | `PayableAction \| null` | Currently active invoice action         |
+
+## Example Usage
+
+```tsx
+import { PayablesTable, usePayables } from '@mercoa/react'
+
+// Custom table component using the usePayables hook
+const CustomPayablesTableContent = () => {
+  const {
+    dataContextValue: { tableData, isLoading },
+    selectionContextValue: { selectedInvoiceIds, handleSelectRow },
+    paginationContextValue: { goToNextPage, isNextDisabled },
+  } = usePayables()
+
+  if (isLoading) return <div>Loading...</div>
+
+  return (
+    <div>
+      <table>
+        <tbody>
+          {tableData.map((row) => (
+            <tr
+              key={row.id}
+              onClick={() => handleSelectRow(row.id)}
+              className={selectedInvoiceIds.includes(row.id) ? 'selected' : ''}
+            >
+              <td>{row.invoiceNumber}</td>
+              <td>{row.amount}</td>
+              <td>{row.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <button onClick={goToNextPage} disabled={isNextDisabled}>
+        Next Page
+      </button>
+    </div>
+  )
+}
+
+// Wrapper component that provides the PayablesTable context
+const CustomPayablesTable = () => {
+  return <PayablesTable>{() => <CustomPayablesTableContent />}</PayablesTable>
+}
+```
+
+This example demonstrates how to use the `usePayables` hook to create a custom table component with selection and pagination.

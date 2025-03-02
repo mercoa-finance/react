@@ -1,6 +1,6 @@
 import { Mercoa } from '@mercoa/javascript'
 import { BankAccount, Card, Check, MercoaCombobox, NoSession, useMercoaSession } from '../../../../../components'
-import { useReceivableDetailsContext } from '../../../providers/receivable-detail-provider'
+import { useReceivableDetails } from '../../../hooks/use-receivable-details'
 
 export function ReceivableSelectPaymentMethod({
   isSource,
@@ -12,8 +12,9 @@ export function ReceivableSelectPaymentMethod({
   readOnly?: boolean
 }) {
   const mercoaSession = useMercoaSession()
+  const { formContextValue } = useReceivableDetails()
+  const { formMethods, paymentMethodContextValue } = formContextValue
   const {
-    formMethods,
     availableSourceTypes,
     availableDestinationTypes,
     selectedSourceType,
@@ -23,7 +24,7 @@ export function ReceivableSelectPaymentMethod({
     setMethodOnTypeChange,
     sourcePaymentMethods,
     destinationPaymentMethods,
-  } = useReceivableDetailsContext()
+  } = paymentMethodContextValue
 
   const paymentMethods = isSource ? sourcePaymentMethods : destinationPaymentMethods
   const availableTypes = isSource ? availableSourceTypes : availableDestinationTypes

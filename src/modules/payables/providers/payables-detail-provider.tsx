@@ -1,15 +1,49 @@
-import { createContext, Dispatch, ReactNode, SetStateAction, useContext } from 'react'
+import { createContext, Dispatch, ReactNode, SetStateAction } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
-import { PayableAction } from '../components/payable-form/constants'
+import { PayableFormAction } from '../components/payable-form/constants'
 import { PayableFormData } from '../components/payable-form/types'
-import { usePayableDetails, UsePayableDetailsProps } from '../hooks/use-payable-details'
+import { PayableDetailsProps, usePayableDetailsInternal } from '../hooks/use-payable-details-internal'
 
 export type PayableDetailsContextValue = {
+  dataContextValue: PayableDataContext
+  displayContextValue: PayableDisplayContext
+  propsContextValue: PayableDetailsProps
+  formContextValue: PayableFormContext
+  documentContextValue: PayableDocumentContext
+}
+
+export type PayableDataContext = {
   invoice: Mercoa.InvoiceResponse | undefined
   invoiceType: 'invoice' | 'invoiceTemplate'
   invoiceLoading: boolean
-  formSchema: any
+  refreshInvoice: (invoiceId: string) => void
+}
+
+export type PayableDisplayContext = {
+  heightOffset: number
+  height: number
+}
+
+export type PayableFormContext = {
+  formMethods: UseFormReturn<any>
+  handleFormAction: (formData: PayableFormData, action: PayableFormAction) => void
+  formActionLoading: boolean
+  vendorContextValue: PayableVendorContext
+  overviewContextValue: PayableOverviewContext
+  lineItemsContextValue: PayableLineItemsContext
+  commentsContextValue: PayableCommentsContext
+  metadataContextValue: PayableMetadataContext
+  paymentMethodContextValue: PaymentMethodContext
+  approversContextValue: PayableApproversContext
+  taxAndShippingContextValue: PayableTaxAndShippingContext
+  feesContextValue: PayableFeesContext
+  vendorCreditContextValue: PayableVendorCreditContext
+  paymentTimingContextValue: PayablePaymentTimingContext
+  recurringScheduleContextValue: RecurringScheduleContext
+}
+
+export type PayableDocumentContext = {
   documents:
     | {
         fileReaderObj: string
@@ -17,34 +51,11 @@ export type PayableDetailsContextValue = {
       }[]
     | undefined
   documentsLoading: boolean
-  sourceEmails: Mercoa.EmailLog[] | undefined
-  sourceEmailsLoading: boolean
   handleFileUpload: (fileReaderObj: string, mimeType: string) => void
   ocrProcessing: boolean
-  height: number
-  documentPosition: 'right' | 'left' | 'none'
-  formMethods: UseFormReturn<any>
-  handleFormAction: (formData: PayableFormData, action: PayableAction) => void
-  formActionLoading: boolean
-  selectedVendor: Mercoa.CounterpartyResponse | undefined
-  setSelectedVendor: Dispatch<SetStateAction<Mercoa.CounterpartyResponse | undefined>>
-  refreshInvoice: (invoiceId: string) => void
-  vendors: Mercoa.CounterpartyResponse[] | undefined
-  vendorsLoading: boolean
-  vendorSearch: string
-  setVendorSearch: (search: string) => void
-} & PayableOverviewContext &
-  PayableLineItemsContext &
-  PayableCommentsContext &
-  PayableMetadataContext &
-  PaymentMethodContext &
-  PayableApproversContext &
-  PayableTaxAndShippingContext &
-  PayableFeesContext &
-  PayableVendorCreditContext &
-  PayablePaymentTimingContext &
-  RecurringScheduleContext &
-  PayableApproversContext
+  sourceEmails: Mercoa.EmailLog[] | undefined
+  sourceEmailsLoading: boolean
+}
 
 export type PayableOverviewContext = {
   currency: Mercoa.CurrencyCode
@@ -96,7 +107,7 @@ export type PayablePaymentTimingContext = {
   paymentTimingLoading: boolean
 }
 
-export type PayableVendorsContext = {
+export type PayableVendorContext = {
   selectedVendor: Mercoa.CounterpartyResponse | undefined
   setSelectedVendor: Dispatch<SetStateAction<Mercoa.CounterpartyResponse | undefined>>
   vendors: Mercoa.CounterpartyResponse[] | undefined
@@ -159,24 +170,16 @@ export type PayableApproversContext = {
   selectedApproverBySlot: (approvalSlotId: string) => any
 }
 
-const PayableDetailsContext = createContext<PayableDetailsContextValue | undefined>(undefined)
+export const PayableDetailsContext = createContext<PayableDetailsContextValue | undefined>(undefined)
 
 export const PayableDetailsProvider = ({
   children,
   payableDetailsProps,
 }: {
   children: ReactNode
-  payableDetailsProps: UsePayableDetailsProps
+  payableDetailsProps: PayableDetailsProps
 }) => {
-  const details = usePayableDetails(payableDetailsProps)
+  const details = usePayableDetailsInternal(payableDetailsProps)
 
   return <PayableDetailsContext.Provider value={details}>{children}</PayableDetailsContext.Provider>
-}
-
-export const usePayableDetailsContext = () => {
-  const context = useContext(PayableDetailsContext)
-  if (!context) {
-    throw new Error('usePayableDetailsContext must be used within a PayableDetailsProvider')
-  }
-  return context
 }
