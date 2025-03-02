@@ -114,7 +114,11 @@ const CustomReceivableForm = () => {
 }
 
 const ReceivableDetailsExample = () => {
-  return <ReceivableDetails>{() => <CustomReceivableForm />}</ReceivableDetails>
+  return (
+    <ReceivableDetails>
+      <CustomReceivableForm />
+    </ReceivableDetails>
+  )
 }
 ```
 

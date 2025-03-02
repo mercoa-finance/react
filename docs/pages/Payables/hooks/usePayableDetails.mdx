@@ -266,19 +266,15 @@ const CustomLineItems = () => {
 const PayableDetailsExample = () => {
   return (
     <PayableDetails>
-      {() => [
-        <PayableDocument key="document" />,
-        <PayableForm key="form">
-          <PayableFormHeader />
-          <PayableOverview />
-          <PayableMetadata />
-          <CustomLineItems />
-          <PayablePaymentSource />
-          <PayablePaymentDestination />
-          <PaymentDestinationProcessingTime />
-          <PayableActions />
-        </PayableForm>,
-      ]}
+      <PayableDocument key="document" />,
+      <PayableFormHeader />
+      <PayableOverview />
+      <PayableMetadata />
+      <CustomLineItems />
+      <PayablePaymentSource />
+      <PayablePaymentDestination />
+      <PaymentDestinationProcessingTime />
+      <PayableActions />
     </PayableDetails>
   )
 }
