@@ -92,13 +92,22 @@ export function DisbursementMethods({
             {type === 'disbursement' ? 'How would you like to get paid?' : 'Add Payment Method'}
           </p>
           <div className={`m-auto mercoa-grid  mercoa-grid-cols-1 mercoa-gap-4`}>
-            {type === 'disbursement'
-              ? mercoaSession.organization?.paymentMethods?.vendorDisbursements
-                  .filter((e) => e.active)
-                  .map((method) => <DisbursementMethod method={method} key={method.name} />)
-              : mercoaSession.organization?.paymentMethods?.payerPayments
-                  .filter((e) => e.active)
-                  .map((method) => <DisbursementMethod method={method} key={method.name} />)}
+            {(type === 'disbursement'
+              ? mercoaSession.organization?.paymentMethods?.vendorDisbursements.filter((e) => e.active)
+              : mercoaSession.organization?.paymentMethods?.payerPayments.filter((e) => e.active)
+            )
+              ?.filter((e) => {
+                const country =
+                  entity.profile.business?.address?.country ?? entity.profile.individual?.address?.country ?? 'US'
+                if (
+                  country !== 'US' &&
+                  (e.type === Mercoa.PaymentMethodType.BankAccount || e.type === Mercoa.PaymentMethodType.Check)
+                ) {
+                  return false
+                }
+                return true
+              })
+              .map((method) => <DisbursementMethod method={method} key={method.name} />)}
           </div>
           {goToPreviousStep && (
             <div className="mercoa-mt-5 mercoa-flex sm:mercoa-mt-6">

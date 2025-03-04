@@ -100,7 +100,7 @@ export function createCounterpartyRequest({
           city: data.city,
           stateOrProvince: data.stateOrProvince,
           postalCode: data.postalCode,
-          country: 'US',
+          country: data.country,
         },
       }),
     }

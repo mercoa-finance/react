@@ -254,43 +254,7 @@ export function BankAccount({
                 )}
 
               {/* Verification Status Indicator */}
-              {!hideVerificationStatus && (
-                <div>
-                  {account?.status === Mercoa.BankStatus.New && (
-                    /* @ts-ignore:next-line */
-                    <Tooltip title="Can only receive funds">
-                      <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-indigo-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-indigo-800">
-                        New
-                      </span>
-                    </Tooltip>
-                  )}
-                  {account?.status === Mercoa.BankStatus.Verified && (
-                    /* @ts-ignore:next-line */
-                    <Tooltip title="Can send and receive funds">
-                      <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-green-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-green-800">
-                        Verified
-                      </span>
-                    </Tooltip>
-                  )}
-                  {account?.status === Mercoa.BankStatus.Pending && (
-                    /* @ts-ignore:next-line */
-                    <Tooltip title="Can only receive funds">
-                      <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-yellow-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-yellow-800">
-                        Pending
-                      </span>
-                    </Tooltip>
-                  )}
-                  {(account?.status === Mercoa.BankStatus.VerificationFailed ||
-                    account?.status === Mercoa.BankStatus.Errored) && (
-                    /* @ts-ignore:next-line */
-                    <Tooltip title="Can only receive funds">
-                      <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-red-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-red-800">
-                        VERIFICATION FAILED
-                      </span>
-                    </Tooltip>
-                  )}
-                </div>
-              )}
+              {!hideVerificationStatus && <BankAccountStatus status={account?.status} />}
 
               {/* Check Send Status Indicator */}
               {showEdit && !hideCheckSendStatus && (
@@ -485,6 +449,45 @@ export function BankAccount({
       />
     )
   }
+}
+
+export function BankAccountStatus({ status }: { status: Mercoa.BankStatus }) {
+  return (
+    <div>
+      {status === Mercoa.BankStatus.New && (
+        /* @ts-ignore:next-line */
+        <Tooltip title="Can only receive funds">
+          <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-indigo-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-indigo-800">
+            New
+          </span>
+        </Tooltip>
+      )}
+      {status === Mercoa.BankStatus.Verified && (
+        /* @ts-ignore:next-line */
+        <Tooltip title="Can send and receive funds">
+          <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-green-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-green-800">
+            Verified
+          </span>
+        </Tooltip>
+      )}
+      {status === Mercoa.BankStatus.Pending && (
+        /* @ts-ignore:next-line */
+        <Tooltip title="Can only receive funds">
+          <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-yellow-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-yellow-800">
+            Pending
+          </span>
+        </Tooltip>
+      )}
+      {(status === Mercoa.BankStatus.VerificationFailed || status === Mercoa.BankStatus.Errored) && (
+        /* @ts-ignore:next-line */
+        <Tooltip title="Can only receive funds">
+          <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-red-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-red-800">
+            VERIFICATION FAILED
+          </span>
+        </Tooltip>
+      )}
+    </div>
+  )
 }
 
 export function AddBankAccountButton({

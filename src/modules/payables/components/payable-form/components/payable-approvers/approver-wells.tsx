@@ -1,23 +1,79 @@
-import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import { CheckCircleIcon, InformationCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { useMercoaSession } from '../../../../../../components'
+import { Tooltip } from '../../../../../../components/generics'
 import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
 import { filterApproverOptions } from './utils'
 
 export function ApproverWells() {
   const mercoaSession = useMercoaSession()
   const seenUsers: string[] = []
-  const { approvers } = usePayableDetailsContext()
+  const { approvers, approvalPolicy: approvalPolicies } = usePayableDetailsContext()
+
+  const getTriggerDescription = (slot: Mercoa.ApprovalSlot) => {
+    const policy = approvalPolicies?.find((p) => p.id === slot.approvalPolicyId)
+    if (!policy?.trigger || policy.trigger.length === 0) {
+      return 'Rule applies to all invoices'
+    }
+
+    return policy.trigger
+      .map((trigger) => {
+        if (trigger.type === 'amount') {
+          return `Amount >= ${trigger.amount} ${trigger.currency}`
+        } else if (trigger.type === 'vendor') {
+          return `Specific vendors`
+        } else if (trigger.type === 'metadata') {
+          return `${trigger.key} = ${trigger.value}`
+        }
+        return ''
+      })
+      .join(' AND ')
+  }
+
+  const getEligibleDescription = (slot: Mercoa.ApprovalSlot) => {
+    const policy = approvalPolicies?.find((p) => p.id === slot.approvalPolicyId)
+    if (!policy?.rule) return ''
+
+    if (policy.rule.type === 'approver') {
+      if (policy.rule.identifierList.type === 'rolesList') {
+        return `Eligible roles: ${policy.rule.identifierList.value.join(', ')}`
+      } else {
+        const eligibleUsers = policy.rule.identifierList.value
+          .map((id) => mercoaSession.users.find((u) => u.id === id)?.name)
+          .filter(Boolean)
+        return `Eligible users: ${eligibleUsers.join(', ')}`
+      }
+    }
+    return ''
+  }
+
   return (
     <>
       {approvers.map((slot, index) => {
         const user = mercoaSession.users.find((user) => user.id === slot.assignedUserId)
         if (!slot.assignedUserId || slot.assignedUserId === 'ANY') {
-          return <ApproverWell key={slot.approvalSlotId} approverSlot={slot} index={index} />
+          return (
+            <ApproverWell
+              key={slot.approvalSlotId}
+              approverSlot={slot}
+              index={index}
+              triggerDescription={getTriggerDescription(slot)}
+              eligibleDescription={getEligibleDescription(slot)}
+            />
+          )
         } else if (user && !seenUsers.includes(user.id)) {
           seenUsers.push(user.id)
-          return <ApproverWell key={user.id} approverSlot={slot} approver={user} index={index} />
+          return (
+            <ApproverWell
+              key={user.id}
+              approverSlot={slot}
+              approver={user}
+              index={index}
+              triggerDescription={getTriggerDescription(slot)}
+              eligibleDescription={getEligibleDescription(slot)}
+            />
+          )
         }
       })}
     </>
@@ -28,10 +84,14 @@ function ApproverWell({
   approverSlot,
   approver,
   index,
+  triggerDescription,
+  eligibleDescription,
 }: {
   approverSlot: Mercoa.ApprovalSlot
   approver?: Mercoa.EntityUserResponse
   index: number
+  triggerDescription: string
+  eligibleDescription: string
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -99,6 +159,21 @@ function ApproverWell({
             </div>
             <div className="mercoa-mx-4 mercoa-flex-shrink-0 mercoa-p-1 mercoa-text-mercoa-primary-text hover:mercoa-opacity-75">
               {icon}
+            </div>
+            <div className="mercoa-mr-2">
+              <Tooltip
+                position="left"
+                title={
+                  <div className="mercoa-text-xs">
+                    <div className="mercoa-font-medium">Trigger:</div>
+                    <div>{triggerDescription}</div>
+                    <div className="mercoa-font-medium mercoa-mt-2">Eligible Approvers:</div>
+                    <div>{eligibleDescription}</div>
+                  </div>
+                }
+              >
+                <InformationCircleIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-400" />
+              </Tooltip>
             </div>
           </div>
         </div>

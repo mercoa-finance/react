@@ -33,7 +33,7 @@ import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { classNames, getEndpoint } from '../lib/lib'
-import { usaStates } from '../lib/locations'
+import { canadaStates, countries, usaStates } from '../lib/locations'
 import { MercoaSession, TokenOptions, useMercoaSession } from './index'
 
 import React from 'react'
@@ -1706,8 +1706,17 @@ export function addToPaymentBatch({
       throw new Error('Cannot batch invoices with non-bankAccount or non-check paymentDestinationOptions.type')
     }
 
-    if (previousPaymentDestinationOptions.type !== newInvoice.paymentDestinationOptions?.type) {
+    if (previousPaymentDestinationOptions.type !== newPaymentDestinationOptions?.type) {
       throw new Error('Cannot add invoice to batch with different paymentDestinationOptions.type')
+    }
+
+    // make sure print description is the same
+    if (
+      previousPaymentDestinationOptions.type === 'check' &&
+      newPaymentDestinationOptions.type === 'check' &&
+      previousPaymentDestinationOptions.printDescription !== newPaymentDestinationOptions.printDescription
+    ) {
+      throw new Error('Cannot add invoice to batch with different printDescription')
     }
 
     if (!('delivery' in previousPaymentDestinationOptions && 'delivery' in newPaymentDestinationOptions)) {
@@ -1725,16 +1734,26 @@ export function addToPaymentBatch({
   return [...existingBatch, newInvoice]
 }
 
-export function StateDropdown({ value, setValue }: { value: string | null; setValue: (value: string) => void }) {
+export function StateDropdown({
+  value,
+  setValue,
+  country,
+}: {
+  value: string | null
+  setValue: (value: string) => void
+  country?: 'US' | 'CA'
+}) {
   const [random] = useState(() => Math.floor(Math.random() * 1000).toString())
 
   const randomInput = 'select-state-input' + random
+
+  const states = country === 'CA' ? canadaStates : usaStates
 
   useEffect(() => {
     const input = document.querySelector('.' + randomInput) as HTMLInputElement
     return input.addEventListener('change', (e: any) => {
       // search for the state in the list of states
-      const state = usaStates.find(
+      const state = states.find(
         (state) =>
           state.abbreviation.toLowerCase() === e.target.value.toLowerCase() ||
           state.name.toLowerCase() === e.target.value.toLowerCase(),
@@ -1748,21 +1767,45 @@ export function StateDropdown({ value, setValue }: { value: string | null; setVa
 
   return (
     <MercoaCombobox
-      value={usaStates.find((state) => state.abbreviation === value)}
+      value={states.find((state) => state.abbreviation === value)}
       onChange={(e) => {
         setValue(e.abbreviation)
       }}
       displayIndex="name"
-      options={usaStates.map((state) => ({
+      options={states.map((state) => ({
         value: {
           name: state.name,
           abbreviation: state.abbreviation,
         },
         disabled: false,
       }))}
-      placeholder="State"
-      label="State"
+      placeholder={country === 'CA' ? 'Province' : 'State'}
+      label={country === 'CA' ? 'Province' : 'State'}
       inputClassName={inputClassName({ align: 'left' }) + ' ' + randomInput}
+      labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 -mercoa-mb-1"
+      showAllOptions
+    />
+  )
+}
+
+export function CountryDropdown({ value, setValue }: { value: string | null; setValue: (value: string) => void }) {
+  return (
+    <MercoaCombobox
+      value={countries.find((country) => country.code === value)}
+      onChange={(e) => {
+        setValue(e.abbreviation)
+      }}
+      displayIndex="name"
+      options={countries.map((country) => ({
+        value: {
+          name: country.name,
+          abbreviation: country.code,
+        },
+        disabled: false,
+      }))}
+      placeholder="Country"
+      label="Country"
+      inputClassName={inputClassName({ align: 'left' })}
       labelClassName="mercoa-block mercoa-text-left mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 -mercoa-mb-1"
       showAllOptions
     />

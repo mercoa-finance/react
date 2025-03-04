@@ -29,6 +29,7 @@ import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize, constructFullName } from '../lib/lib'
 import { PayableAction } from '../modules/payables/components/payable-form/constants'
 import {
+  CountryDropdown,
   DebouncedSearch,
   EntityOnboardingForm,
   LoadingSpinnerIcon,
@@ -95,7 +96,7 @@ export function createCounterpartyRequest({
           city: data.city,
           stateOrProvince: data.stateOrProvince,
           postalCode: data.postalCode,
-          country: 'US',
+          country: data.country,
         },
       }),
     }
@@ -879,7 +880,7 @@ function CounterpartyAddOrEditForm({
     setValue('vendor.city', address?.city)
     setValue('vendor.stateOrProvince', address?.stateOrProvince)
     setValue('vendor.postalCode', address?.postalCode)
-    setValue('vendor.country', address?.country)
+    setValue('vendor.country', address?.country ?? 'US')
   }, [counterparty])
 
   const accountType = watch('vendor.accountType')
@@ -1021,6 +1022,15 @@ function CounterpartyAddOrEditForm({
         </div>
       )}
 
+      <div className="mercoa-mt-2">
+        <CountryDropdown
+          value={watch('vendor.country')}
+          setValue={(value) => {
+            setValue(`vendor.country`, value, { shouldDirty: true })
+          }}
+        />
+      </div>
+
       {addMore ? (
         <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-3 mercoa-mb-5">
           <MercoaInput
@@ -1033,19 +1043,18 @@ function CounterpartyAddOrEditForm({
           <MercoaInput
             label="Apartment, suite, etc."
             register={register}
-            name="addressLine2"
+            name="vendor.addressLine2"
             className="mercoa-mt-1"
             errors={errors}
           />
-
           <MercoaInput label="City" register={register} name="vendor.city" className="mercoa-mt-1" errors={errors} />
-
           <div className="mercoa-mt-1">
             <StateDropdown
               value={stateOrProvince}
               setValue={(value) => {
                 setValue(`vendor.stateOrProvince`, value, { shouldDirty: true })
               }}
+              country={watch('vendor.country')}
             />
           </div>
           <MercoaInput
@@ -1514,6 +1523,8 @@ export function CounterpartyDetails({
   const [vendorCredits, setVendorCredits] = useState<Mercoa.VendorCreditResponse[] | undefined>(undefined)
   const [counterpartyLocal, setCounterparty] = useState<Mercoa.CounterpartyResponse | undefined>(counterparty)
   const [documents, setDocuments] = useState<Mercoa.DocumentResponse[] | undefined>(undefined)
+  const [editingPaymentMethod, setEditingPaymentMethod] = useState<Mercoa.PaymentMethodResponse | null>(null)
+  const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] = useState<boolean>(false)
 
   // get documents
   useEffect(() => {
@@ -1953,11 +1964,28 @@ export function CounterpartyDetails({
               </thead>
               <tbody className="mercoa-bg-white">
                 {paymentMethods.map((method, index) => (
-                  <tr key={method.id} className={`${index % 2 === 0 ? '' : 'mercoa-bg-gray-50'}`}>
-                    <td className="mercoa-whitespace-nowrap mercoa-py-4 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-6">
+                  <tr
+                    key={method.id}
+                    className={`${
+                      index % 2 === 0 ? '' : 'mercoa-bg-gray-50'
+                    } hover:mercoa-bg-gray-100 hover:mercoa-cursor-pointer hover:mercoa-underline`}
+                  >
+                    <td
+                      className="mercoa-whitespace-nowrap mercoa-py-4 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-6"
+                      onClick={() => {
+                        setEditingPaymentMethod(method)
+                        setIsPaymentMethodModalOpen(true)
+                      }}
+                    >
                       {formatPaymentMethodName(method)}
                     </td>
-                    <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                    <td
+                      className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900"
+                      onClick={() => {
+                        setEditingPaymentMethod(method)
+                        setIsPaymentMethodModalOpen(true)
+                      }}
+                    >
                       {formatPaymentMethodType(method, mercoaSession.customPaymentMethodSchemas)}
                     </td>
                     <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
@@ -1980,7 +2008,7 @@ export function CounterpartyDetails({
                       )}
                     </td>
                     {admin && (
-                      <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                      <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-xs mercoa-text-gray-900">
                         {method.id}
                       </td>
                     )}
@@ -1990,6 +2018,16 @@ export function CounterpartyDetails({
             </table>
           </>
         )}
+
+        {/* Payment Method Edit Modal */}
+        <CounterpartyPaymentMethodViewModal
+          isOpen={isPaymentMethodModalOpen}
+          setIsOpen={setIsPaymentMethodModalOpen}
+          paymentMethod={editingPaymentMethod}
+          onSuccess={() => {
+            setEditingPaymentMethod(null)
+          }}
+        />
 
         {/* Invoices */}
         {!hideCounterpartyInvoices && (
@@ -2414,4 +2452,169 @@ export function CounterpartyAccount({
       />
     )
   }
+}
+
+interface PaymentMethodViewModalProps {
+  isOpen: boolean
+  setIsOpen: (isOpen: boolean) => void
+  paymentMethod?: Mercoa.PaymentMethodResponse | null
+  onSuccess?: () => void
+}
+
+export function CounterpartyPaymentMethodViewModal({
+  isOpen,
+  setIsOpen,
+  paymentMethod,
+  onSuccess,
+}: PaymentMethodViewModalProps) {
+  const mercoaSession = useMercoaSession()
+
+  const handleSuccess = () => {
+    setIsOpen(false)
+    mercoaSession.refresh()
+    if (onSuccess) onSuccess()
+  }
+
+  return (
+    <Transition.Root show={isOpen} as={Fragment}>
+      <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={setIsOpen}>
+        <Transition.Child
+          as={Fragment}
+          enter="mercoa-ease-out mercoa-duration-300"
+          enterFrom="mercoa-opacity-0"
+          enterTo="mercoa-opacity-100"
+          leave="mercoa-ease-in mercoa-duration-200"
+          leaveFrom="mercoa-opacity-100"
+          leaveTo="mercoa-opacity-0"
+        >
+          <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75 mercoa-transition-opacity" />
+        </Transition.Child>
+
+        <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
+          <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="mercoa-ease-out mercoa-duration-300"
+              enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+              enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+              leave="mercoa-ease-in mercoa-duration-200"
+              leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+              leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+            >
+              <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-lg mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-2xl sm:mercoa-p-6">
+                <div className="mercoa-absolute mercoa-top-0 mercoa-right-0 mercoa-pt-5 mercoa-pr-5">
+                  <button
+                    type="button"
+                    className="mercoa-rounded-md mercoa-bg-white mercoa-text-gray-400 hover:mercoa-text-gray-500 focus:mercoa-outline-none focus:mercoa-ring-2 focus:mercoa-ring-indigo-500 focus:mercoa-ring-offset-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <span className="mercoa-sr-only">Close</span>
+                    <XMarkIcon className="mercoa-h-6 mercoa-w-6" aria-hidden="true" />
+                  </button>
+                </div>
+                <div>
+                  <div className="mercoa-mt-3 mercoa-text-center sm:mercoa-mt-0 sm:mercoa-text-left">
+                    <Dialog.Title
+                      as="h3"
+                      className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-900"
+                    >
+                      View Details
+                    </Dialog.Title>
+                    <div className="mercoa-mt-4">
+                      {paymentMethod?.type === Mercoa.PaymentMethodType.Custom && (
+                        <div className="mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-p-4">
+                          {/* look for fields and display them */}
+                          {paymentMethod.data.accountNumber && (
+                            <div className="mercoa-flex mercoa-py-1">
+                              <span className="mercoa-w-1/3 mercoa-font-medium mercoa-text-gray-700">
+                                Account Number:
+                              </span>
+                              <span className="mercoa-w-2/3 mercoa-text-gray-900">
+                                {paymentMethod.data.accountNumber}
+                              </span>
+                            </div>
+                          )}
+                          {paymentMethod.data.routingNumber && (
+                            <div className="mercoa-flex mercoa-py-1">
+                              <span className="mercoa-w-1/3 mercoa-font-medium mercoa-text-gray-700">
+                                Routing Number:
+                              </span>
+                              <span className="mercoa-w-2/3 mercoa-text-gray-900">
+                                {paymentMethod.data.routingNumber}
+                              </span>
+                            </div>
+                          )}
+                          {paymentMethod.data.address && (
+                            <div className="mercoa-flex mercoa-py-1">
+                              <span className="mercoa-w-1/3 mercoa-font-medium mercoa-text-gray-700">Address:</span>
+                              <span className="mercoa-w-2/3 mercoa-text-gray-900">{paymentMethod.data.address}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {paymentMethod?.type === Mercoa.PaymentMethodType.BankAccount && (
+                        <div className="mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-p-4">
+                          <div className="mercoa-flex mercoa-py-1">
+                            <span className="mercoa-w-1/3 mercoa-font-medium mercoa-text-gray-700">
+                              Account Number:
+                            </span>
+                            <span className="mercoa-w-2/3 mercoa-text-gray-900">{paymentMethod.accountNumber}</span>
+                          </div>
+                          <div className="mercoa-flex mercoa-py-1">
+                            <span className="mercoa-w-1/3 mercoa-font-medium mercoa-text-gray-700">
+                              Routing Number:
+                            </span>
+                            <span className="mercoa-w-2/3 mercoa-text-gray-900">{paymentMethod.routingNumber}</span>
+                          </div>
+                        </div>
+                      )}
+                      {paymentMethod?.type === Mercoa.PaymentMethodType.Card && (
+                        <div className="mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-p-4 mercoa-text-sm mercoa-text-gray-500 mercoa-text-center mercoa-italic">
+                          Card details cannot be viewed directly.
+                        </div>
+                      )}
+                      {paymentMethod?.type === Mercoa.PaymentMethodType.Check && (
+                        <div className="mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-p-4">
+                          <div className="mercoa-flex mercoa-py-1">
+                            <span className="mercoa-w-1/3 mercoa-font-medium mercoa-text-gray-700">
+                              Pay To The Order Of:
+                            </span>
+                            <span className="mercoa-w-2/3 mercoa-text-gray-900">{paymentMethod.payToTheOrderOf}</span>
+                          </div>
+                          <div className="mercoa-flex mercoa-py-1">
+                            <span className="mercoa-w-1/3 mercoa-font-medium mercoa-text-gray-700">
+                              Address Line 1:
+                            </span>
+                            <span className="mercoa-w-2/3 mercoa-text-gray-900">{paymentMethod.addressLine1}</span>
+                          </div>
+                          <div className="mercoa-flex mercoa-py-1">
+                            <span className="mercoa-w-1/3 mercoa-font-medium mercoa-text-gray-700">
+                              Address Line 2:
+                            </span>
+                            <span className="mercoa-w-2/3 mercoa-text-gray-900">{paymentMethod.addressLine2}</span>
+                          </div>
+                          <div className="mercoa-flex mercoa-py-1">
+                            <span className="mercoa-w-1/3 mercoa-font-medium mercoa-text-gray-700">City:</span>
+                            <span className="mercoa-w-2/3 mercoa-text-gray-900">{paymentMethod.city}</span>
+                          </div>
+                          <div className="mercoa-flex mercoa-py-1">
+                            <span className="mercoa-w-1/3 mercoa-font-medium mercoa-text-gray-700">State:</span>
+                            <span className="mercoa-w-2/3 mercoa-text-gray-900">{paymentMethod.stateOrProvince}</span>
+                          </div>
+                          <div className="mercoa-flex mercoa-py-1">
+                            <span className="mercoa-w-1/3 mercoa-font-medium mercoa-text-gray-700">Postal Code:</span>
+                            <span className="mercoa-w-2/3 mercoa-text-gray-900">{paymentMethod.postalCode}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition.Root>
+  )
 }

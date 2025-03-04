@@ -33,6 +33,7 @@ import { mccCodes } from '../lib/mccCodes'
 import { onboardingOptionsToResponse } from '../lib/onboardingOptions'
 import {
   AddDialog,
+  CountryDropdown,
   DisbursementMethods,
   LoadingSpinner,
   LoadingSpinnerIcon,
@@ -65,6 +66,7 @@ export type OnboardingFormData = {
   city?: string
   stateOrProvince?: string
   postalCode?: string
+  country?: string
   legalBusinessName: string
   doingBusinessAs?: string
   website?: string
@@ -263,12 +265,13 @@ export function AddressBlock({
       )?.short_name
       const postalCode = place.address_components.find((e: any) => e.types.includes('postal_code'))?.long_name
       const addressLine1 = (streetNumber ? `${streetNumber} ` : '') + streetName
+      const country = place.address_components.find((e: any) => e.types.includes('country'))?.short_name
       setShowAddress(true)
       setValue(`${prefix}addressLine1`, addressLine1, { shouldDirty: true })
       setValue(`${prefix}city`, city ?? '', { shouldDirty: true })
       setValue(`${prefix}stateOrProvince`, state ?? '', { shouldDirty: true })
       setValue(`${prefix}postalCode`, postalCode ?? '', { shouldDirty: true })
-      setValue(`${prefix}country`, 'US', { shouldDirty: true })
+      setValue(`${prefix}country`, country ?? '', { shouldDirty: true })
       if (prefix) {
         setValue(`${prefix}.full`, `${addressLine1}, ${city}, ${state} ${postalCode}`, {
           shouldDirty: true,
@@ -282,11 +285,8 @@ export function AddressBlock({
     },
   })
 
-  useEffect(() => {
-    setValue('country', 'US', { shouldDirty: true })
-  }, [])
-
   const stateOrProvince = watch(`${prefix}stateOrProvince`)
+  const country = watch(`${prefix}country`)
   const [showAddress, setShowAddress] = useState(!!readOnly || stateOrProvince)
 
   return (
@@ -333,6 +333,7 @@ export function AddressBlock({
               setValue={(value) => {
                 setValue(`${prefix}stateOrProvince`, value, { shouldDirty: true })
               }}
+              country={watch(`${prefix}country`)}
             />
             {errors.stateOrProvince?.message && (
               <p className="mercoa-text-sm mercoa-text-red-500 mercoa-text-left">{errors.stateOrProvince?.message}</p>
@@ -348,6 +349,15 @@ export function AddressBlock({
             readOnly={readOnly}
             required={required}
           />
+
+          <div className="mercoa-mt-1 mercoa-col-span-full">
+            <CountryDropdown
+              value={country}
+              setValue={(value) => {
+                setValue(`${prefix}country`, value, { shouldDirty: true })
+              }}
+            />
+          </div>
         </>
       )}
     </div>
@@ -769,10 +779,15 @@ export function DoingBusinessAsBlock({
 }
 
 export const einSchema = {
-  taxID: yup
-    .string()
-    .matches(/^(0[1-9]|[1-9]\d)-\d{7}|[*]{2}-[*]{7}$/, 'Invalid EIN')
-    .required('EIN is required'),
+  taxID: yup.string().test('should-test-ein', 'Invalid EIN', function (code) {
+    const { country } = this.parent
+    if (country === 'US') {
+      if (!code) return false
+      const einRegex = /^(0[1-9]|[1-9]\d)-\d{7}|[*]{2}-[*]{7}$/
+      return einRegex.test(code)
+    }
+    return true
+  }),
 }
 
 export function EINBlock({
@@ -1161,7 +1176,7 @@ export async function createOrUpdateEntity({
             postalCode: data.postalCode,
             stateOrProvince: data.stateOrProvince,
             city: data.city,
-            country: 'US',
+            country: data.country,
           },
         }),
     }
@@ -1203,7 +1218,7 @@ export async function createOrUpdateEntity({
             postalCode: data.postalCode,
             stateOrProvince: data.stateOrProvince,
             city: data.city,
-            country: 'US',
+            country: data.country,
           },
         }),
     }
@@ -2538,7 +2553,7 @@ export function EntityOnboardingForm({
                 required={finalOnboardingOptions.business.type.required}
               />
             )}
-            {finalOnboardingOptions?.business.ein.show && (
+            {finalOnboardingOptions?.business.ein.show && watch('country') === 'US' && (
               <EINBlock
                 control={control}
                 errors={errors}

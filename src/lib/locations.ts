@@ -1,4 +1,4 @@
-export const postalCodeRegex = /(^\d{5}$)|(^\d{5}-\d{4}$)/
+export const postalCodeRegex = /(^\d{5}$)|(^\d{5}-\d{4}$)|(^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$)/
 
 export const usaStates = [
   { name: 'Alabama', abbreviation: 'AL' },
@@ -60,4 +60,22 @@ export const usaStates = [
   { name: 'West Virginia', abbreviation: 'WV' },
   { name: 'Wisconsin', abbreviation: 'WI' },
   { name: 'Wyoming', abbreviation: 'WY' },
+]
+
+export const canadaStates = [
+  { name: 'Alberta', abbreviation: 'AB' },
+  { name: 'British Columbia', abbreviation: 'BC' },
+  { name: 'Manitoba', abbreviation: 'MB' },
+  { name: 'New Brunswick', abbreviation: 'NB' },
+  { name: 'Newfoundland and Labrador', abbreviation: 'NL' },
+  { name: 'Nova Scotia', abbreviation: 'NS' },
+  { name: 'Ontario', abbreviation: 'ON' },
+  { name: 'Prince Edward Island', abbreviation: 'PE' },
+  { name: 'Quebec', abbreviation: 'QC' },
+  { name: 'Saskatchewan', abbreviation: 'SK' },
+]
+
+export const countries = [
+  { name: 'United States', code: 'US' },
+  { name: 'Canada', code: 'CA' },
 ]

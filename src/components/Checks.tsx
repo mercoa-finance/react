@@ -307,6 +307,7 @@ export function AddCheckForm({ prefix }: { prefix?: string }) {
           setValue={(value) => {
             setValue(`${prefix}stateOrProvince`, value, { shouldDirty: true })
           }}
+          country="US"
         />
         <MercoaInput register={register} name={prefix + 'postalCode'} label="Postal Code" errors={errors} />
       </div>
