@@ -718,7 +718,8 @@ export function AddBankAccount({
       exclusive: true,
       message: message || 'Invalid Account Number', // expect an i18n message to be passed in,
       test: (value) => {
-        return !!value && Number(value) > 0
+        // check if the value is a number and greater than 0, and if its length is between 8 and 17 characters
+        return !!value && Number(value) > 0 && value.length >= 8 && value.length <= 17
       },
     })
   })

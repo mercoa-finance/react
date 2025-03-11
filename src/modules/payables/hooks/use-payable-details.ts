@@ -1147,7 +1147,6 @@ export const usePayableDetails = ({
       refreshInvoice(data?.id ?? '')
       return
     } else if (action === PayableAction.CREATE_UPDATE_COUNTERPARTY) {
-      console.log('create update counterparty', data)
       let profile = createCounterpartyRequest({ data: data.vendor, setError, type: 'payee' })
       if (onCounterpartyPreSubmit) {
         profile = await onCounterpartyPreSubmit(profile, data.vendor.id)

@@ -28,6 +28,7 @@ import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize, constructFullName } from '../lib/lib'
 import { PayableAction } from '../modules/payables/components/payable-form/constants'
+import { findExistingCounterparty } from '../modules/payables/components/payable-form/utils'
 import {
   CountryDropdown,
   DebouncedSearch,
@@ -107,17 +108,6 @@ export function createCounterpartyRequest({
       })
       return
     }
-    if (!profile.business?.website && !profile.business?.description) {
-      setError('vendor.website', {
-        type: 'manual',
-        message: 'Website or description is required',
-      })
-      setError('vendor.description', {
-        type: 'manual',
-        message: 'Website or description is required',
-      })
-      return
-    }
   }
   if (data?.id && data.id !== 'new') {
     return {
@@ -155,7 +145,15 @@ export async function onSubmitCounterparty({
   if (data?.id && data.id !== 'new') {
     counterparty = await mercoaSession.client?.entity.update(data.id, profile)
   } else {
-    counterparty = await mercoaSession.client?.entity.create(profile as Mercoa.EntityRequest)
+    counterparty = await findExistingCounterparty({
+      entityId: mercoaSession.entity.id,
+      mercoaSession,
+      type,
+      entityRequest: profile,
+    })
+    if (!counterparty) {
+      counterparty = await mercoaSession.client?.entity.create(profile as Mercoa.EntityRequest)
+    }
   }
 
   if (!counterparty?.id) return
@@ -553,6 +551,7 @@ export function CounterpartySearchBase({
   const [input, setInput] = useState<string>('')
   const [search, setSearch] = useState<string>()
   const [counterparties, setCounterparties] = useState<Array<Mercoa.CounterpartyResponse>>()
+  const [hasMore, setHasMore] = useState<boolean>(false)
   const [selectedCounterparty, setSelectedCounterparty] = useState<Mercoa.CounterpartyResponse | undefined>()
 
   const [searchTerm, setSearchTerm] = useState<string>()
@@ -591,12 +590,14 @@ export function CounterpartySearchBase({
         })
         .then((resp) => {
           setCounterparties(resp.data)
+          setHasMore(resp.hasMore)
         })
     } else {
       mercoaSession.client?.entity.counterparty
         .findPayors(mercoaSession.entity?.id, { paymentMethods: true, networkType, search })
         .then((resp) => {
           setCounterparties(resp.data)
+          setHasMore(resp.hasMore)
         })
     }
   }, [mercoaSession.entity?.id, mercoaSession.token, mercoaSession.refreshId, search])
@@ -788,6 +789,19 @@ export function CounterpartySearchBase({
                     <span>{cp.name}</span>
                   </Combobox.Option>
                 ))}
+                {hasMore && (
+                  <Combobox.Option
+                    className="mercoa-relative mercoa-cursor-default mercoa-select-none mercoa-py-2 mercoa-pl-3 mercoa-pr-9 mercoa-bg-gray-200 mercoa-text-gray-600"
+                    disabled
+                    value=""
+                  >
+                    <div className="mercoa-flex mercoa-justify-center mercoa-py-2">
+                      <span className="mercoa-text-gray-500">
+                        Showing first 10 results. Type to search all {type === 'payor' ? 'customers' : 'vendors'}.
+                      </span>
+                    </div>
+                  </Combobox.Option>
+                )}
                 {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !disableCreation && (
                   <Combobox.Option value={{ id: 'new' }}>
                     {({ active }) => (

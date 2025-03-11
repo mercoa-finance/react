@@ -3,7 +3,6 @@ import {
   BuildingLibraryIcon,
   CheckCircleIcon,
   ClockIcon,
-  DocumentIcon,
   ExclamationCircleIcon,
   EyeIcon,
   InformationCircleIcon,
@@ -19,10 +18,11 @@ import {
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import dayjs from 'dayjs'
+import get from 'lodash/get'
 import { Fragment, useEffect, useMemo, useState } from 'react'
 import Dropzone from 'react-dropzone'
 import { usePlacesWidget } from 'react-google-autocomplete'
-import { Control, Controller, UseFormRegister, useForm } from 'react-hook-form'
+import { Control, Controller, FieldErrors, UseFormRegister, useForm } from 'react-hook-form'
 import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
@@ -79,129 +79,208 @@ export type OnboardingFormData = {
 
 // Onboarding Blocks //////////////////////////////////////////////////////////
 
+const uploadTypeToDocumentType = {
+  W9: Mercoa.DocumentType.W9,
+  '1099': Mercoa.DocumentType.TenNinetyNine,
+  'Bank Statement': Mercoa.DocumentType.BankStatement,
+  Logo: '',
+}
+
+const uploadTypeToFormType = {
+  W9: 'w9',
+  '1099': 'tenNinetyNine',
+  'Bank Statement': 'bankStatement',
+  Logo: 'logo',
+}
+
 export function UploadBlock({
   type,
   entity,
+  edit,
+  errors,
 }: {
   type: 'W9' | '1099' | 'Logo' | 'Bank Statement'
   entity: Mercoa.EntityResponse
+  edit: boolean
+  errors?: FieldErrors<any>
 }) {
   const mercoaSession = useMercoaSession()
+
+  const [existingDocument, setExistingDocument] = useState<string | null | undefined>()
+  const [isEditing, setIsEditing] = useState(true)
+
+  useEffect(() => {
+    if (entity) {
+      if (type === 'Logo') {
+        setExistingDocument(entity.logo)
+      } else {
+        mercoaSession.client?.entity.document
+          .getAll(entity.id, {
+            type: uploadTypeToDocumentType[type],
+          })
+          .then((resp) => setExistingDocument(resp.find((d) => d.type === uploadTypeToDocumentType[type])?.uri))
+      }
+    }
+  }, [entity])
+
+  useEffect(() => {
+    if (existingDocument) {
+      setIsEditing(false)
+    }
+  }, [existingDocument])
 
   let defaultIcon = (
     <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
   )
-  if (type === 'W9') {
-    defaultIcon = (
-      <DocumentIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
-    )
-  } else if (type === '1099') {
-    defaultIcon = (
-      <DocumentIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
-    )
-  } else if (type === 'Logo') {
+  if (type === 'Logo') {
     if (entity?.logo) {
       defaultIcon = <img className="mercoa-mx-auto mercoa-h-12" src={entity?.logo} alt="Logo" />
     }
   }
 
+  const embeddedDocument = useMemo(() => {
+    if (existingDocument) {
+      return (
+        <div className="mercoa-col-span-full mercoa-border mercoa-border-gray-200 mercoa-rounded-lg mercoa-p-4">
+          <h3 className="mercoa-text-lg mercoa-font-medium mercoa-mb-2 mercoa-text-gray-700 mercoa-text-left">
+            {type}
+          </h3>
+          {type === 'Logo' ? (
+            <img className="mercoa-mx-auto mercoa-h-12" src={existingDocument} alt="Logo" />
+          ) : (
+            <embed className="mercoa-w-full mercoa-h-64" src={existingDocument} />
+          )}
+        </div>
+      )
+    }
+    return null
+  }, [existingDocument])
+
+  if (!edit) {
+    if (!existingDocument) {
+      return <div className="mercoa-col-span-full mercoa-text-gray-500 mercoa-text-left">No {type} uploaded</div>
+    } else {
+      return embeddedDocument
+    }
+  }
   return (
     <div className="mercoa-col-span-full">
-      <Dropzone
-        onDropAccepted={(acceptedFiles) => {
-          blobToDataUrl(acceptedFiles[0]).then((fileReaderObj) => {
-            mercoaSession.debug(fileReaderObj)
-            if (entity) {
-              if (type === 'Logo') {
-                mercoaSession.client?.entity
-                  .update(entity.id, {
-                    logo: fileReaderObj,
-                  })
-                  .then(() => {
-                    mercoaSession.refresh()
-                    toast.success('Logo Updated')
-                  })
-              } else if (type === 'W9') {
-                mercoaSession.client?.entity.document
-                  .upload(entity.id, {
-                    document: fileReaderObj,
-                    type: 'W9',
-                  })
-                  .then(() => {
-                    mercoaSession.refresh()
-                    toast.success('W9 Updated')
-                  })
-              } else if (type === '1099') {
-                mercoaSession.client?.entity.document
-                  .upload(entity.id, {
-                    document: fileReaderObj,
-                    type: 'TEN_NINETY_NINE',
-                  })
-                  .then(() => {
-                    mercoaSession.refresh()
-                    toast.success('1099 Updated')
-                  })
-              } else if (type === 'Bank Statement') {
-                mercoaSession.client?.entity.document
-                  .upload(entity.id, {
-                    document: fileReaderObj,
-                    type: 'BANK_STATEMENT',
-                  })
-                  .then(() => {
-                    mercoaSession.refresh()
-                    toast.success('Bank Statement Updated')
-                  })
+      {isEditing ? (
+        <Dropzone
+          onDropAccepted={(acceptedFiles) => {
+            blobToDataUrl(acceptedFiles[0]).then((fileReaderObj) => {
+              mercoaSession.debug(fileReaderObj)
+              if (entity) {
+                if (type === 'Logo') {
+                  mercoaSession.client?.entity
+                    .update(entity.id, {
+                      logo: fileReaderObj,
+                    })
+                    .then(() => {
+                      mercoaSession.refresh()
+                      toast.success('Logo Updated')
+                    })
+                } else if (type === 'W9') {
+                  mercoaSession.client?.entity.document
+                    .upload(entity.id, {
+                      document: fileReaderObj,
+                      type: 'W9',
+                    })
+                    .then(() => {
+                      mercoaSession.refresh()
+                      toast.success('W9 Updated')
+                    })
+                } else if (type === '1099') {
+                  mercoaSession.client?.entity.document
+                    .upload(entity.id, {
+                      document: fileReaderObj,
+                      type: 'TEN_NINETY_NINE',
+                    })
+                    .then(() => {
+                      mercoaSession.refresh()
+                      toast.success('1099 Updated')
+                    })
+                } else if (type === 'Bank Statement') {
+                  mercoaSession.client?.entity.document
+                    .upload(entity.id, {
+                      document: fileReaderObj,
+                      type: 'BANK_STATEMENT',
+                    })
+                    .then(() => {
+                      mercoaSession.refresh()
+                      toast.success('Bank Statement Updated')
+                    })
+                }
               }
-            }
-          })
-        }}
-        onDropRejected={(_, event) => {
-          toast.error('Invalid file type or file is too large')
-        }}
-        minSize={0}
-        maxSize={100_000_000}
-        accept={
-          type === 'Logo'
-            ? {
-                'image/png': ['.png'],
-              }
-            : {
-                'application/pdf': ['.pdf'],
-              }
-        }
-      >
-        {({ getRootProps, getInputProps, isDragActive }) => (
-          <div
-            className={`mercoa-mt-2 mercoa-flex mercoa-justify-center mercoa-rounded-lg mercoa-border mercoa-border-dashed mercoa-border-gray-900/25 ${
-              isDragActive ? 'mercoa-border-primary' : 'mercoa-border-gray-300'
-            } mercoa-px-6 mercoa-py-10`}
-            {...getRootProps()}
-          >
-            <div className="mercoa-text-center">
-              {defaultIcon}
-              <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm mercoa-text-gray-600">
-                <label
-                  htmlFor="file-upload"
-                  className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-bg-white mercoa-font-semibold mercoa-primary-text focus-within:mercoa-outline-none focus-within:mercoa-ring-2 focus-within:mercoa-ring-primary focus-within:mercoa-ring-offset-2 hover:mercoa-text-mercoa-primary-dark"
-                >
-                  <span>Upload {type}</span>
-                  <input
-                    {...getInputProps()}
-                    id="file-upload"
-                    name="file-upload"
-                    type="file"
-                    className="mercoa-sr-only"
-                  />
-                </label>
-                <p className="mercoa-pl-1">or drag and drop</p>
+            })
+          }}
+          onDropRejected={(_, event) => {
+            toast.error('Invalid file type or file is too large')
+          }}
+          minSize={0}
+          maxSize={100_000_000}
+          accept={
+            type === 'Logo'
+              ? {
+                  'image/png': ['.png'],
+                  'image/jpeg': ['.jpg', '.jpeg'],
+                  'image/svg+xml': ['.svg'],
+                  'image/gif': ['.gif'],
+                }
+              : {
+                  'application/pdf': ['.pdf'],
+                }
+          }
+        >
+          {({ getRootProps, getInputProps, isDragActive }) => (
+            <div
+              className={`mercoa-mt-2 mercoa-flex mercoa-justify-center mercoa-rounded-lg mercoa-border mercoa-border-dashed mercoa-border-gray-900/25 ${
+                isDragActive ? 'mercoa-border-primary' : 'mercoa-border-gray-300'
+              } mercoa-px-6 mercoa-py-10`}
+              {...getRootProps()}
+            >
+              <div className="mercoa-text-center">
+                {defaultIcon}
+                <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm mercoa-text-gray-600">
+                  <label
+                    htmlFor="file-upload"
+                    className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-bg-white mercoa-font-semibold mercoa-primary-text focus-within:mercoa-outline-none focus-within:mercoa-ring-2 focus-within:mercoa-ring-primary focus-within:mercoa-ring-offset-2 hover:mercoa-text-mercoa-primary-dark"
+                  >
+                    <span>Upload {type}</span>
+                    <input
+                      {...getInputProps()}
+                      id="file-upload"
+                      name="file-upload"
+                      type="file"
+                      className="mercoa-sr-only"
+                    />
+                  </label>
+                  <p className="mercoa-pl-1">or drag and drop</p>
+                </div>
+                <p className="mercoa-text-xs mercoa-leading-5 mercoa-text-gray-600">
+                  {type === 'Logo' ? 'PNG, JPG, GIF, or SVG' : 'PDF'} up to 1MB
+                </p>
               </div>
-              <p className="mercoa-text-xs mercoa-leading-5 mercoa-text-gray-600">
-                {type === 'Logo' ? 'PNG' : 'PDF'} up to 1MB
-              </p>
             </div>
-          </div>
-        )}
-      </Dropzone>
+          )}
+        </Dropzone>
+      ) : (
+        <div className="mercoa-relative">
+          {embeddedDocument}
+          <button
+            type="button"
+            onClick={() => setIsEditing(true)}
+            className="mercoa-absolute mercoa-top-2 mercoa-right-2 mercoa-rounded-full mercoa-bg-white mercoa-p-1 mercoa-shadow-sm mercoa-border mercoa-border-gray-300 hover:mercoa-bg-gray-50"
+          >
+            <PencilIcon className="mercoa-h-5 mercoa-w-5 mercoa-text-gray-500" />
+          </button>
+        </div>
+      )}
+      {uploadTypeToFormType[type] && get(errors, uploadTypeToFormType[type])?.message && (
+        <p className="mercoa-text-sm mercoa-text-red-500 mercoa-text-left">
+          {get(errors, uploadTypeToFormType[type])?.message?.toString()}
+        </p>
+      )}
     </div>
   )
 }
@@ -1554,7 +1633,7 @@ export function RepresentativeOnboardingForm({
           ssn: data.taxID,
         },
         responsibilities: {
-          isController: data.isController,
+          isController: !!data.isController,
           isOwner: data.ownershipPercentage >= 25,
           ownershipPercentage: Number(data.ownershipPercentage),
           jobTitle: data.jobTitle,
@@ -2229,6 +2308,7 @@ export function EntityOnboardingForm({
     type === 'payee'
       ? mercoaSession.organization?.payeeOnboardingOptions
       : mercoaSession.organization?.payorOnboardingOptions
+
   const finalOnboardingOptions = onboardingOptions
     ? onboardingOptionsToResponse(onboardingOptions)
     : organizationOnboardingOptions
@@ -2240,6 +2320,7 @@ export function EntityOnboardingForm({
     trigger,
     control,
     watch,
+    setError,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -2286,6 +2367,11 @@ export function EntityOnboardingForm({
       maxTransactionSize: entity.profile?.business?.maxTransactionSize,
       averageMonthlyTransactionVolume: entity.profile?.business?.averageMonthlyTransactionVolume,
       averageTransactionSize: entity.profile?.business?.averageTransactionSize,
+
+      logo: entity.logo,
+      w9: '',
+      tenNinetyNine: '',
+      bankStatement: '',
     },
     resolver: async (data, context, options) => {
       if (data.accountType === Mercoa.AccountType.Individual) {
@@ -2357,6 +2443,44 @@ export function EntityOnboardingForm({
         if (!entity) return
         if (!entityData) return
         if (!mercoaSession.client) return
+
+        // check if documents are uploaded
+        if (finalOnboardingOptions?.business?.w9?.required) {
+          // get w9 from entity
+          const w9 = await mercoaSession.client.entity.document.getAll(entity.id, {
+            type: Mercoa.DocumentType.W9,
+          })
+          if (w9.length === 0) {
+            setError('w9', {
+              message: 'W9 is required',
+            })
+            return
+          }
+        }
+        if (finalOnboardingOptions?.business?.tenNinetyNine?.required) {
+          // get tenNinetyNine from entity
+          const tenNinetyNine = await mercoaSession.client.entity.document.getAll(entity.id, {
+            type: Mercoa.DocumentType.TenNinetyNine,
+          })
+          if (tenNinetyNine.length === 0) {
+            setError('tenNinetyNine', {
+              message: '1099 is required',
+            })
+            return
+          }
+        }
+        if (finalOnboardingOptions?.business?.bankStatement?.required) {
+          // get bankStatement from entity
+          const bankStatement = await mercoaSession.client.entity.document.getAll(entity.id, {
+            type: Mercoa.DocumentType.BankStatement,
+          })
+          if (bankStatement.length === 0) {
+            setError('bankStatement', {
+              message: 'Bank Statement is required',
+            })
+            return
+          }
+        }
 
         setIsSubmitting(true)
         try {
@@ -2471,10 +2595,24 @@ export function EntityOnboardingForm({
                 required={finalOnboardingOptions.individual.ssn.required}
               />
             )}
-            {finalOnboardingOptions?.individual.w9.edit && <UploadBlock type="W9" entity={entity} />}
-            {finalOnboardingOptions?.individual.tenNinetyNine.edit && <UploadBlock type="1099" entity={entity} />}
-            {finalOnboardingOptions?.individual.bankStatement.edit && (
-              <UploadBlock type="Bank Statement" entity={entity} />
+            {finalOnboardingOptions?.individual.w9.show && (
+              <UploadBlock type="W9" entity={entity} edit={finalOnboardingOptions.individual.w9.edit} errors={errors} />
+            )}
+            {finalOnboardingOptions?.individual.tenNinetyNine.show && (
+              <UploadBlock
+                type="1099"
+                entity={entity}
+                edit={finalOnboardingOptions.individual.tenNinetyNine.edit}
+                errors={errors}
+              />
+            )}
+            {finalOnboardingOptions?.individual.bankStatement.show && (
+              <UploadBlock
+                type="Bank Statement"
+                entity={entity}
+                edit={finalOnboardingOptions.individual.bankStatement.edit}
+                errors={errors}
+              />
             )}
             {finalOnboardingOptions?.individual.termsOfService.show && (
               <div className="mercoa-col-span-2">
@@ -2490,7 +2628,9 @@ export function EntityOnboardingForm({
         )}
         {accountType === 'business' && (
           <>
-            {finalOnboardingOptions?.business.logo.edit && <UploadBlock type="Logo" entity={entity} />}
+            {finalOnboardingOptions?.business.logo.show && (
+              <UploadBlock type="Logo" entity={entity} edit={finalOnboardingOptions.business.logo.edit} />
+            )}
             {finalOnboardingOptions?.business.name.show && (
               <LegalBusinessNameBlock
                 register={register}
@@ -2606,12 +2746,26 @@ export function EntityOnboardingForm({
                 />
               </div>
             )}
-            {finalOnboardingOptions?.business.w9.edit && <UploadBlock type="W9" entity={entity} />}
-            {finalOnboardingOptions?.business.tenNinetyNine.edit && <UploadBlock type="1099" entity={entity} />}
-            {finalOnboardingOptions?.business.bankStatement.edit && (
-              <UploadBlock type="Bank Statement" entity={entity} />
+            {finalOnboardingOptions?.business.w9.show && (
+              <UploadBlock type="W9" entity={entity} edit={finalOnboardingOptions.business.w9.edit} errors={errors} />
             )}
-            {finalOnboardingOptions?.business.termsOfService.edit && (
+            {finalOnboardingOptions?.business.tenNinetyNine.show && (
+              <UploadBlock
+                type="1099"
+                entity={entity}
+                edit={finalOnboardingOptions.business.tenNinetyNine.edit}
+                errors={errors}
+              />
+            )}
+            {finalOnboardingOptions?.business.bankStatement.show && (
+              <UploadBlock
+                type="Bank Statement"
+                entity={entity}
+                edit={finalOnboardingOptions.business.bankStatement.edit}
+                errors={errors}
+              />
+            )}
+            {finalOnboardingOptions?.business.termsOfService.show && (
               <div className="mercoa-col-span-2">
                 <TosBlock
                   register={register}

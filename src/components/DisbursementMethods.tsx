@@ -97,8 +97,9 @@ export function DisbursementMethods({
               : mercoaSession.organization?.paymentMethods?.payerPayments.filter((e) => e.active)
             )
               ?.filter((e) => {
-                const country =
-                  entity.profile.business?.address?.country ?? entity.profile.individual?.address?.country ?? 'US'
+                let country =
+                  entity.profile.business?.address?.country || entity.profile.individual?.address?.country || 'US'
+                if (!country) country = 'US'
                 if (
                   country !== 'US' &&
                   (e.type === Mercoa.PaymentMethodType.BankAccount || e.type === Mercoa.PaymentMethodType.Check)

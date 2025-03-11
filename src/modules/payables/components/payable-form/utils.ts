@@ -14,6 +14,93 @@ import {
 } from './constants'
 import { PayableFormConfig, PayableFormData } from './types'
 
+export async function findExistingCounterparty({
+  entityId,
+  mercoaSession,
+  type,
+  entityRequest,
+}: {
+  entityId: Mercoa.EntityId
+  mercoaSession: MercoaContext
+  type: 'payee' | 'payor'
+  entityRequest: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest
+}) {
+  // check if there is an existing counterparty with the same email / name
+  let name = ''
+  let email = ''
+  let existingCounterparty: Mercoa.CounterpartyResponse | undefined = undefined
+  let foundString = ''
+  let foundType = ''
+  if ('profile' in entityRequest && entityRequest.profile?.business) {
+    const business = entityRequest.profile?.business as Mercoa.BusinessProfileRequest
+    name = business.legalBusinessName
+    email = business.email ?? ''
+  } else if ('profile' in entityRequest && entityRequest.profile?.individual) {
+    const individual = entityRequest.profile?.individual as Mercoa.IndividualProfileRequest
+    name = `${individual.name.firstName}${individual.name.middleName ? ` ${individual.name.middleName} ` : ' '}${
+      individual.name.lastName
+    }`
+    email = individual.email ?? ''
+  }
+
+  if (type === 'payee') {
+    if (email) {
+      const existingCounterpartyEmail = await mercoaSession.client?.entity.counterparty.findPayees(entityId, {
+        search: email,
+      })
+      if (existingCounterpartyEmail) {
+        existingCounterparty = existingCounterpartyEmail.data[0]
+        foundString = email
+        foundType = 'email'
+      }
+    }
+    if (!existingCounterparty && name) {
+      const existingCounterpartyName = await mercoaSession.client?.entity.counterparty.findPayees(entityId, {
+        search: name,
+      })
+      if (existingCounterpartyName) {
+        existingCounterparty = existingCounterpartyName.data[0]
+        foundString = name
+        foundType = 'name'
+      }
+    }
+  } else {
+    if (email) {
+      const existingCounterpartyEmail = await mercoaSession.client?.entity.counterparty.findPayors(entityId, {
+        search: email,
+      })
+      if (existingCounterpartyEmail) {
+        existingCounterparty = existingCounterpartyEmail.data[0]
+        foundString = email
+        foundType = 'email'
+      }
+    }
+    if (!existingCounterparty && name) {
+      const existingCounterpartyName = await mercoaSession.client?.entity.counterparty.findPayors(entityId, {
+        search: name,
+      })
+      if (existingCounterpartyName) {
+        existingCounterparty = existingCounterpartyName.data[0]
+        foundString = name
+        foundType = 'name'
+      }
+    }
+  }
+
+  if (existingCounterparty) {
+    const confirm = window.confirm(
+      `A ${
+        type === 'payee' ? 'vendor' : 'customer'
+      } with the same ${foundType}, ${foundString}, already exists. Would you like to use the existing ${
+        type === 'payee' ? 'vendor' : 'customer'
+      }?`,
+    )
+    if (confirm) {
+      return existingCounterparty
+    }
+  }
+}
+
 export async function onSubmitCounterparty({
   data,
   profile,
@@ -34,7 +121,16 @@ export async function onSubmitCounterparty({
   if (data?.id && data.id !== 'new') {
     counterparty = await mercoaSession.client?.entity.update(data.id, profile)
   } else {
-    counterparty = await mercoaSession.client?.entity.create(profile as Mercoa.EntityRequest)
+    counterparty = await findExistingCounterparty({
+      entityId: mercoaSession.entity.id,
+      mercoaSession,
+      type,
+      entityRequest: profile,
+    })
+
+    if (!counterparty) {
+      counterparty = await mercoaSession.client?.entity.create(profile as Mercoa.EntityRequest)
+    }
   }
 
   if (!counterparty?.id) return
@@ -108,17 +204,6 @@ export function createCounterpartyRequest({
       setError('vendor.name', {
         type: 'manual',
         message: 'Name is required',
-      })
-      return
-    }
-    if (!profile.business?.website && !profile.business?.description) {
-      setError('vendor.website', {
-        type: 'manual',
-        message: 'Website or description is required',
-      })
-      setError('vendor.description', {
-        type: 'manual',
-        message: 'Website or description is required',
       })
       return
     }
