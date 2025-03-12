@@ -716,10 +716,10 @@ export function AddBankAccount({
     return this.test({
       name: 'accountNumber',
       exclusive: true,
-      message: message || 'Invalid Account Number', // expect an i18n message to be passed in,
+      message: message || 'Invalid Account Number, must be between 4 and 17 digits', // expect an i18n message to be passed in,
       test: (value) => {
-        // check if the value is a number and greater than 0, and if its length is between 8 and 17 characters
-        return !!value && Number(value) > 0 && value.length >= 8 && value.length <= 17
+        // check if the value is a number and greater than 0, and if its length is between 4 and 17 characters
+        return !!value && Number(value) > 0 && value.length >= 4 && value.length <= 17
       },
     })
   })
@@ -728,7 +728,7 @@ export function AddBankAccount({
     return this.test({
       name: 'routingNumber',
       exclusive: true,
-      message: message || 'Invalid Routing Number', // expect an i18n message to be passed in,
+      message: message || 'Invalid Routing Number, must be 9 digits', // expect an i18n message to be passed in,
       test: (value) => {
         return !!value && value.length == 9 && Number(value) > 0
       },

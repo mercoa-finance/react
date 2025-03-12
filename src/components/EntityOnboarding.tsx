@@ -75,6 +75,9 @@ export type OnboardingFormData = {
   disableKYB?: 'yes' | 'no'
   emailTo?: string
   foreignId?: string
+  maxTransactionSize?: number
+  averageMonthlyTransactionVolume?: number
+  averageTransactionSize?: number
 }
 
 // Onboarding Blocks //////////////////////////////////////////////////////////
@@ -1300,6 +1303,9 @@ export async function createOrUpdateEntity({
             country: data.country,
           },
         }),
+      maxTransactionSize: data.maxTransactionSize,
+      averageMonthlyTransactionVolume: data.averageMonthlyTransactionVolume,
+      averageTransactionSize: data.averageTransactionSize,
     }
   }
 
