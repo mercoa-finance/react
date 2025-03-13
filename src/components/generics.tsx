@@ -9,6 +9,7 @@ import {
   TrashIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import dayjs from 'dayjs'
 import { jwtDecode } from 'jwt-decode'
@@ -31,7 +32,6 @@ import DatePicker from 'react-datepicker'
 import { Control, Controller, FieldErrors, UseFormRegister, useFormContext } from 'react-hook-form'
 import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { classNames, getEndpoint } from '../lib/lib'
 import { canadaStates, countries, usaStates } from '../lib/locations'
 import { MercoaSession, TokenOptions, useMercoaSession } from './index'
@@ -1658,36 +1658,35 @@ export function PaymentMethodButton({
     </div>
   )
 }
-
-export function addToPaymentBatch({
+export function canAddToPaymentBatch({
   existingBatch,
   newInvoice,
 }: {
   existingBatch: Mercoa.InvoiceResponse[]
   newInvoice: Mercoa.InvoiceResponse
-}): Mercoa.InvoiceResponse[] {
-  if (existingBatch.length === 0) return [newInvoice]
+}): { canAdd: boolean; reason?: string } {
+  if (existingBatch.length === 0) return { canAdd: true }
 
   const previousInvoice = existingBatch[existingBatch.length - 1]
 
   // check payerId
   if (previousInvoice.payerId !== newInvoice.payerId) {
-    throw new Error('Cannot add invoice to batch with different payerId')
+    return { canAdd: false, reason: 'Cannot add invoice to batch with different payerId' }
   }
 
   // check vendorId
   if (previousInvoice.vendorId !== newInvoice.vendorId) {
-    throw new Error('Cannot add invoice to batch with different vendorId')
+    return { canAdd: false, reason: 'Cannot add invoice to batch with different vendorId' }
   }
 
   // check paymentSourceId
   if (previousInvoice.paymentSourceId !== newInvoice.paymentSourceId) {
-    throw new Error('Cannot add invoice to batch with different paymentSourceId')
+    return { canAdd: false, reason: 'Cannot add invoice to batch with different paymentSourceId' }
   }
 
   // check paymentDestinationId
   if (previousInvoice.paymentDestinationId !== newInvoice.paymentDestinationId) {
-    throw new Error('Cannot add invoice to batch with different paymentDestinationId')
+    return { canAdd: false, reason: 'Cannot add invoice to batch with different paymentDestinationId' }
   }
 
   // check paymentDestinationOptions
@@ -1703,11 +1702,14 @@ export function addToPaymentBatch({
     }
 
     if (newPaymentDestinationOptions.type !== 'bankAccount' && newPaymentDestinationOptions.type !== 'check') {
-      throw new Error('Cannot batch invoices with non-bankAccount or non-check paymentDestinationOptions.type')
+      return {
+        canAdd: false,
+        reason: 'Cannot batch invoices with non-bankAccount or non-check paymentDestinationOptions.type',
+      }
     }
 
     if (previousPaymentDestinationOptions.type !== newPaymentDestinationOptions?.type) {
-      throw new Error('Cannot add invoice to batch with different paymentDestinationOptions.type')
+      return { canAdd: false, reason: 'Cannot add invoice to batch with different paymentDestinationOptions.type' }
     }
 
     // make sure print description is the same
@@ -1716,19 +1718,35 @@ export function addToPaymentBatch({
       newPaymentDestinationOptions.type === 'check' &&
       previousPaymentDestinationOptions.printDescription !== newPaymentDestinationOptions.printDescription
     ) {
-      throw new Error('Cannot add invoice to batch with different printDescription')
+      return { canAdd: false, reason: 'Cannot add invoice to batch with different printDescription' }
     }
 
     if (!('delivery' in previousPaymentDestinationOptions && 'delivery' in newPaymentDestinationOptions)) {
-      throw new Error('Cannot add invoice to batch with missing paymentDestinationOptions.delivery')
+      return { canAdd: false, reason: 'Cannot add invoice to batch with missing paymentDestinationOptions.delivery' }
     } else if (previousPaymentDestinationOptions.delivery !== newPaymentDestinationOptions?.delivery) {
-      throw new Error('Cannot add invoice to batch with different paymentDestinationOptions.delivery')
+      return { canAdd: false, reason: 'Cannot add invoice to batch with different paymentDestinationOptions.delivery' }
     }
   }
 
   // check deductionDate
   if (!dayjs(previousInvoice.deductionDate).startOf('day').isSame(dayjs(newInvoice.deductionDate).startOf('day'))) {
-    throw new Error('Cannot add invoice to batch with different deductionDate')
+    return { canAdd: false, reason: 'Cannot add invoice to batch with different deductionDate' }
+  }
+
+  return { canAdd: true }
+}
+
+export function addToPaymentBatch({
+  existingBatch,
+  newInvoice,
+}: {
+  existingBatch: Mercoa.InvoiceResponse[]
+  newInvoice: Mercoa.InvoiceResponse
+}): Mercoa.InvoiceResponse[] {
+  const result = canAddToPaymentBatch({ existingBatch, newInvoice })
+
+  if (!result.canAdd) {
+    throw new Error(result.reason)
   }
 
   return [...existingBatch, newInvoice]
