@@ -20,13 +20,13 @@
   --mercoa-primary: #4f46e5;
   --mercoa-primary-light: #6366f1;
   --mercoa-primary-dark: #2b8a9a;
-  --primary-text: #4f46e5;
-  --primary-text-invert: #ffffff;
+  --mercoa-primary-text: #4f46e5;
+  --mercoa-primary-text-invert: #ffffff;
   --mercoa-secondary: #ef4444;
   --mercoa-secondary-light: #fed7d7;
   --mercoa-secondary-dark: #c25252;
-  --secondary-text: #ef4444;
-  --secondary-text-invert: #ffffff;
+  --mercoa-secondary-text: #ef4444;
+  --mercoa-secondary-text-invert: #ffffff;
   --mercoa-logo-background: transparent;
   --mercoa-border-radius: 6px;
 }
@@ -78,7 +78,7 @@
   z-index: 2;
 }
 
-.mercoa-sticky-left::before{
+.mercoa-sticky-left::before {
   content: '';
   position: absolute;
   left: 0;
@@ -89,7 +89,7 @@
   z-index: 2;
 }
 
-.mercoa-sticky-right::after{
+.mercoa-sticky-right::after {
   content: '';
   position: absolute;
   right: 0;
