@@ -357,7 +357,7 @@ export const PayablesTable: FC = memo(() => {
         accessorKey: 'approvers',
         header: 'Approvers',
         cell: ({ row }) => {
-          if (row.original.approvers.length === 0) {
+          if (row.original.approvers?.length === 0) {
             return null
           }
           return (
@@ -464,7 +464,7 @@ export const PayablesTable: FC = memo(() => {
         },
         enableResizing: true,
       },
-      ...(readOnly || selectedInvoices.length > 0
+      ...(readOnly
         ? []
         : [
             {
@@ -476,6 +476,7 @@ export const PayablesTable: FC = memo(() => {
               cell: ({ row }: { row: any }) => {
                 return (
                   <TableActionDropdown
+                    isDisabled={selectedInvoices.length > 0}
                     validActions={getAvailableActions({
                       rolePermissions: mercoaSession.userPermissionConfig,
                       selectedInvoices: [row.original.invoice],
@@ -578,15 +579,18 @@ export const PayablesTable: FC = memo(() => {
           cell: ({ row }) => {
             let toDisplay: any = ''
             if (ele.field.startsWith('metadata.')) {
-              toDisplay = JSON.stringify(row.original.invoice.metadata?.[ele.field.split('.')[1]])
+              toDisplay = JSON.stringify(row.original.invoice?.metadata?.[ele.field.split('.')[1]])
             } else {
               toDisplay = row.original.invoice?.[ele.field as keyof Mercoa.InvoiceResponse]
             }
-            if (ele.format) {
+            if (ele.format && row.original.invoice) {
               toDisplay = ele.format(toDisplay, row.original.invoice)
             } else {
               if (ele.field === 'amount') {
-                toDisplay = accounting.formatMoney(toDisplay ?? '', currencyCodeToSymbol(row.original.invoice.currency))
+                toDisplay = accounting.formatMoney(
+                  toDisplay ?? '',
+                  currencyCodeToSymbol(row.original.invoice?.currency ?? ''),
+                )
               } else if (toDisplay instanceof Date) {
                 toDisplay = dayjs(toDisplay).format('MMM DD, YYYY')
               } else if (typeof toDisplay === 'object') {
@@ -909,7 +913,7 @@ export const PayablesTable: FC = memo(() => {
               <tbody className={cn('', classNames?.table?.tbody)}>
                 {table.getRowModel().rows.map((row) => (
                   <tr
-                    onClick={() => handlers?.onSelectInvoice?.(row.original.invoice)}
+                    onClick={() => row.original.invoice && handlers?.onSelectInvoice?.(row.original.invoice)}
                     key={row.id}
                     className={cn(
                       'mercoa-group mercoa-cursor-pointer mercoa-border-b mercoa-border-gray-200',
@@ -922,7 +926,7 @@ export const PayablesTable: FC = memo(() => {
                       <td
                         onClick={(e: React.MouseEvent) => {
                           if (cell.column.id === 'select') {
-                            handleSelectRow(row.original.invoice)
+                            row.original.invoice && handlers?.onSelectInvoice?.(row.original.invoice)
                             e.stopPropagation()
                           }
                           if (cell.column.id === 'action') {

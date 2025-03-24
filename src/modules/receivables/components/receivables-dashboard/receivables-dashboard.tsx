@@ -43,8 +43,8 @@ export const ReceivablesDashboard = () => {
   const { statusTabsOptions, showInvoiceMetrics = true, classNames } = displayOptions ?? {}
   const {
     onCreateInvoice,
-    onCreateInvoiceTemplate: onCreateRecurringInvoice,
-    onSelectInvoiceTemplate: onSelectRecurringInvoice,
+    onCreateInvoiceTemplate,
+    onSelectInvoiceTemplate,
   } = handlers ?? {}
 
   // const [showCumulativeFilter, setShowCumulativeFilter] = useState(true)
@@ -204,7 +204,7 @@ export const ReceivablesDashboard = () => {
                 <RecurringReceivablesList
                   recurringReceivablesData={recurringReceivablesData}
                   isRecurringReceivablesLoading={isRecurringReceivablesLoading}
-                  onSelectInvoice={onSelectRecurringInvoice}
+                  onSelectInvoice={onSelectInvoiceTemplate}
                 />
               </div>
 
@@ -214,7 +214,7 @@ export const ReceivablesDashboard = () => {
                 <MercoaButton
                   isEmphasized={true}
                   className={'mercoa-inline-flex mercoa-text-sm'}
-                  onClick={onCreateRecurringInvoice}
+                  onClick={onCreateInvoiceTemplate}
                   type="button"
                 >
                   <PlusIcon className="-mercoa-ml-1 mercoa-size-5 md:mercoa-mr-2" aria-hidden="true" />

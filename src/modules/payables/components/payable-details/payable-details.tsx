@@ -19,6 +19,9 @@ export function PayableDetails({
       error: (message: string) => {
         toast.error(message)
       },
+      info: (message: string) => {
+        toast.info(message)
+      },
     },
   },
   children,

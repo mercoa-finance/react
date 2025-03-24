@@ -226,7 +226,9 @@ export function usePayablesInternal(payableProps: PayablesProps) {
       invoiceDate: invoice.invoiceDate,
       deductionDate: invoice.deductionDate,
       paymentDestination: invoice.paymentDestination,
-      invoiceType: invoice.paymentSchedule?.type === Mercoa.PaymentType.OneTime ? 'One Time' : 'Recurring',
+      invoiceType: (invoice.paymentSchedule?.type === Mercoa.PaymentType.OneTime ? 'invoice' : 'invoiceTemplate') as
+        | 'invoice'
+        | 'invoiceTemplate',
       failureType: invoice.failureType,
       vendorId: invoice.vendorId,
       payerId: invoice.payerId,

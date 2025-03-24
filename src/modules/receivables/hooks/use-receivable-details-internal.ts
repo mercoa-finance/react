@@ -18,15 +18,15 @@ import { receivableFormUtils } from '../components/receivable-form/utils'
 import { ReceivableDetailsProps, ReceivablePaymentMethodContext, RecurringScheduleContext } from '../types'
 
 export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
-  const { queryOptions: queryParams, handlers, config, renderCustom } = props
+  const { queryOptions, handlers, config, renderCustom } = props
   const { toast } = renderCustom ?? {}
   const mercoaSession = useMercoaSession()
-  const { onInvoiceUpdate: onUpdate } = handlers ?? {}
-  const { supportedCurrencies, disableCustomerCreation } = config ?? {}
+  const { onInvoiceUpdate } = handlers ?? {}
+  const { supportedCurrencies } = config ?? {}
 
   const [formLoading, setFormLoading] = useState(false)
 
-  const { invoiceId, invoiceType } = queryParams
+  const { invoiceId, invoiceType } = queryOptions
   const { data: receivableData, isLoading: receivableDataLoading } = useReceivableDetailQuery(invoiceId, invoiceType)
   const { data: supportedCurrenciesFromQuery } = useSupportedCurrenciesQuery()
   const { data: paymentLink } = usePaymentLinkQuery(invoiceId, invoiceType)
@@ -262,8 +262,8 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
       supportedCurrencies: supportedCurrencies ?? supportedCurrenciesFromQuery,
     })
     reset(updatedPrefillReceivableData as any)
-    if (onUpdate) {
-      onUpdate(updatedInvoice)
+    if (onInvoiceUpdate) {
+      onInvoiceUpdate(updatedInvoice)
     }
   }
 
@@ -340,7 +340,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
           if (confirm('Are you sure you want to delete this invoice? This cannot be undone.')) {
             await invoiceClient.delete(receivableData.id)
             toast?.success('Invoice deleted')
-            if (onUpdate) onUpdate(undefined)
+            if (onInvoiceUpdate) onInvoiceUpdate(undefined)
             setValue('formAction', '')
           }
           break

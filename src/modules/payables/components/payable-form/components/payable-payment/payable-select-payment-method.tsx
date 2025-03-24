@@ -88,7 +88,7 @@ export function PayableSelectPaymentMethod({
       )}
       {selectedType === Mercoa.PaymentMethodType.BankAccount && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
+          <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)
               .filter((e) => (readOnly ? e.id === paymentId : true))
@@ -181,7 +181,7 @@ export function PayableSelectPaymentMethod({
       )}
       {selectedType === Mercoa.PaymentMethodType.Check && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
+          <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)
               .filter((e) => (readOnly ? e.id === paymentId : true))
@@ -256,7 +256,7 @@ export function PayableSelectPaymentMethod({
       )}
       {selectedType === Mercoa.PaymentMethodType.Card && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
+          <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
               .filter((e) => (readOnly ? e.id === paymentId : true))
@@ -279,7 +279,7 @@ export function PayableSelectPaymentMethod({
         <>
           {readOnly && (
             <>
-              <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
+              <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
                 <div
                   className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300
   mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2`}
@@ -328,7 +328,7 @@ export function PayableSelectPaymentMethod({
       )}
       {selectedType.startsWith('cpms_') && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
+          <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
             {paymentMethods
               ?.filter(
                 (paymentMethod) => (paymentMethod as Mercoa.PaymentMethodResponse.Custom).schemaId === selectedType,
@@ -380,7 +380,7 @@ export function PayableSelectPaymentMethod({
       {selectedType === Mercoa.PaymentMethodType.OffPlatform && (
         <>
           {readOnly && (
-            <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
+            <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
               <div
                 className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300
   mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2`}

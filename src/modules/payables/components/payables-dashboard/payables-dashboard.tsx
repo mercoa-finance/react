@@ -58,11 +58,7 @@ export const PayablesDashboard: FC = memo(() => {
     showInvoiceMetrics = true,
     classNames,
   } = displayOptions ?? {}
-  const {
-    onCreateInvoice,
-    onCreateInvoiceTemplate: onCreateRecurringInvoice,
-    onSelectInvoiceTemplate: onSelectRecurringInvoice,
-  } = handlers ?? {}
+  const { onCreateInvoice, onCreateInvoiceTemplate, onSelectInvoiceTemplate } = handlers ?? {}
 
   const mercoaSession = useMercoaSession()
   const { userPermissionConfig } = mercoaSession
@@ -246,7 +242,7 @@ export const PayablesDashboard: FC = memo(() => {
                 <RecurringPayablesList
                   recurringPayablesData={recurringPayablesData}
                   isRecurringPayablesLoading={isRecurringPayablesLoading}
-                  onSelectInvoice={onSelectRecurringInvoice}
+                  onSelectInvoice={onSelectInvoiceTemplate}
                 />
               </div>
 
@@ -256,7 +252,7 @@ export const PayablesDashboard: FC = memo(() => {
                 <MercoaButton
                   isEmphasized={true}
                   className={'mercoa-inline-flex mercoa-text-sm'}
-                  onClick={onCreateRecurringInvoice}
+                  onClick={onCreateInvoiceTemplate}
                   type="button"
                 >
                   <PlusIcon className="-mercoa-ml-1 mercoa-size-5 md:mercoa-mr-2" aria-hidden="true" />

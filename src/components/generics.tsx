@@ -599,7 +599,7 @@ export function PaymentMethodDetailsDialog({
     if (mercoaSession.token && mercoaSession.entity?.id && account.id) {
       try {
         await mercoaSession.client?.entity.paymentMethod.update(mercoaSession.entity?.id, account.id, {
-          //@ts-ignore
+          // @ts-ignore
           confirmedByEntity: true,
           type: account.type,
         })

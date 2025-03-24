@@ -1,5 +1,5 @@
 import { UseMutateFunction } from '@tanstack/react-query'
-import { Dispatch, ReactElement, SetStateAction } from 'react'
+import { Dispatch, ReactElement, ReactNode, SetStateAction } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import { ErrorResponse } from '../../lib/react-query/types'
@@ -16,24 +16,24 @@ export type PayableDetailsProps = {
   config?: PayableDetailsConfig
   displayOptions?: PayableDetailsDisplayOptions
   renderCustom?: PayableDetailsRenderCustom
-  children?: JSX.Element | JSX.Element[]
+  children?: ReactNode
 }
 
 export type PayableDetailsHandlers = {
   onInvoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
   onCounterpartyPreSubmit?: (
-    counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
+    counterparty?: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest,
     counterpartyId?: string,
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
-  onInvoiceUpdate?: (invoice: Mercoa.InvoiceResponse | undefined) => void
+  onInvoiceUpdate?: (invoice?: Mercoa.InvoiceResponse) => void
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   onOcrComplete?: (ocr: Mercoa.OcrResponse) => void
 }
 
 export type PayableDetailsQueryOptions = {
-  invoiceId: string
+  invoiceId?: string
   invoice?: Mercoa.InvoiceResponse
-  invoiceType: 'invoice' | 'invoiceTemplate'
+  invoiceType?: 'invoice' | 'invoiceTemplate'
 }
 
 export type PayableDetailsConfig = {
@@ -49,6 +49,7 @@ export type PayableDetailsRenderCustom = {
   toast?: {
     success: (message: string) => void
     error: (message: string) => void
+    info: (message: string) => void
   }
 }
 
@@ -62,8 +63,8 @@ export type PayableDetailsContextValue = {
 }
 
 export type PayableDataContext = {
-  invoice: Mercoa.InvoiceResponse | undefined
-  invoiceType: 'invoice' | 'invoiceTemplate'
+  invoice?: Mercoa.InvoiceResponse
+  invoiceType?: 'invoice' | 'invoiceTemplate'
   invoiceLoading: boolean
   refreshInvoice: (invoiceId: string) => void
 }
@@ -101,23 +102,23 @@ export type PayableDocumentContext = {
   documentsLoading: boolean
   handleFileUpload: (fileReaderObj: string, mimeType: string) => void
   ocrProcessing: boolean
-  sourceEmails: Mercoa.EmailLog[] | undefined
+  sourceEmails?: Mercoa.EmailLog[]
   sourceEmailsLoading: boolean
 }
 
 export type PayableOverviewContext = {
   currency: Mercoa.CurrencyCode
   setCurrency: (currency: Mercoa.CurrencyCode) => void
-  amount: number | undefined
+  amount?: number
   setAmount: (amount: number) => void
   description: string
   setDescription: (description: string) => void
   setDueDate: (dueDate: Date) => void
-  invoiceNumber: string | undefined
+  invoiceNumber?: string
   setInvoiceNumber: (invoiceNumber: string) => void
-  scheduledPaymentDate: Date | undefined
+  scheduledPaymentDate?: Date
   setScheduledPaymentDate: (deductionDate: Date) => void
-  invoiceDate: Date | undefined
+  invoiceDate?: Date
   setInvoiceDate: (invoiceDate: Date) => void
   supportedCurrencies: Mercoa.CurrencyCode[]
   printDescriptionOnCheckRemittance: boolean
@@ -134,31 +135,31 @@ export type PayableLineItemsContext = {
 }
 
 export type PayableTaxAndShippingContext = {
-  taxAmount: number | undefined
+  taxAmount?: number
   setTaxAmount: (taxAmount: number) => void
-  shippingAmount: number | undefined
+  shippingAmount?: number
   setShippingAmount: (shippingAmount: number) => void
 }
 
 export type PayableFeesContext = {
-  fees: Mercoa.InvoiceFeesResponse | undefined
+  fees?: Mercoa.InvoiceFeesResponse
   feesLoading: boolean
 }
 
 export type PayableVendorCreditContext = {
-  vendorCreditUsage: Mercoa.CalculateVendorCreditUsageResponse | undefined
+  vendorCreditUsage?: Mercoa.CalculateVendorCreditUsageResponse
   vendorCreditUsageLoading: boolean
 }
 
 export type PayablePaymentTimingContext = {
-  paymentTiming: Mercoa.CalculatePaymentTimingResponse | undefined
+  paymentTiming?: Mercoa.CalculatePaymentTimingResponse
   paymentTimingLoading: boolean
 }
 
 export type PayableVendorContext = {
-  selectedVendor: Mercoa.CounterpartyResponse | undefined
+  selectedVendor?: Mercoa.CounterpartyResponse
   setSelectedVendor: Dispatch<SetStateAction<Mercoa.CounterpartyResponse | undefined>>
-  vendors: Mercoa.CounterpartyResponse[] | undefined
+  vendors?: Mercoa.CounterpartyResponse[]
   vendorsLoading: boolean
   vendorSearch: string
   setVendorSearch: (search: string) => void
@@ -180,34 +181,34 @@ export type PayableMetadataContext = {
 }
 
 export type PaymentMethodContext = {
-  sourcePaymentMethods: Mercoa.PaymentMethodResponse[] | undefined
-  destinationPaymentMethods: Mercoa.PaymentMethodResponse[] | undefined
-  selectedSourcePaymentMethodId: string | undefined
-  selectedDestinationPaymentMethodId: string | undefined
+  sourcePaymentMethods?: Mercoa.PaymentMethodResponse[]
+  destinationPaymentMethods?: Mercoa.PaymentMethodResponse[]
+  selectedSourcePaymentMethodId?: string
+  selectedDestinationPaymentMethodId?: string
   setSelectedSourcePaymentMethodId: (paymentMethodId: string) => void
   setSelectedDestinationPaymentMethodId: (paymentMethodId: string) => void
   availableSourceTypes: Array<{ key: string; value: string }>
-  selectedSourceType: Mercoa.PaymentMethodType | undefined
+  selectedSourceType?: Mercoa.PaymentMethodType
   setSelectedSourceType: (type: Mercoa.PaymentMethodType) => void
   availableDestinationTypes: Array<{ key: string; value: string }>
-  selectedDestinationType: Mercoa.PaymentMethodType | undefined
+  selectedDestinationType?: Mercoa.PaymentMethodType
   setSelectedDestinationType: (type: Mercoa.PaymentMethodType) => void
   getVendorPaymentLink: (invoiceId: string) => Promise<string | undefined>
 }
 
 export type RecurringScheduleContext = {
   type: 'weekly' | 'monthly' | 'yearly' | 'daily' | 'oneTime'
-  repeatEvery: number | undefined
-  repeatOn: Array<Mercoa.DayOfWeek> | undefined
-  repeatOnDay: number | undefined
-  repeatOnMonth: number | undefined
-  ends: Date | undefined
+  repeatEvery?: number
+  repeatOn?: Array<Mercoa.DayOfWeek>
+  repeatOnDay?: number
+  repeatOnMonth?: number
+  ends?: Date
   setType: (type: 'weekly' | 'monthly' | 'yearly' | 'daily' | 'oneTime') => void
   setRepeatEvery: (repeatEvery: number) => void
   setRepeatOn: (repeatOn: Array<Mercoa.DayOfWeek>) => void
   setRepeatOnDay: (repeatOnDay: number) => void
   setRepeatOnMonth: (repeatOnMonth: number) => void
-  setEnds: (ends: Date | undefined) => void
+  setEnds: (ends?: Date) => void
 }
 
 export type PayableApproversContext = {
@@ -220,7 +221,7 @@ export type PayableApproversContext = {
 
 //Payables Props
 
-export interface PayablesProps {
+export type PayablesProps = {
   queryOptions?: PayablesQueryOptions
   renderCustom?: PayablesRenderCustom
   displayOptions?: PayablesDisplayOptions
@@ -228,7 +229,7 @@ export interface PayablesProps {
   config?: PayablesConfig
 }
 
-type InvoiceTableColumn = {
+export type InvoiceTableColumn = {
   title: string
   field: keyof Mercoa.InvoiceResponse | `${'metadata.'}${string}`
   orderBy?: Mercoa.InvoiceOrderByField
@@ -305,25 +306,25 @@ export type PayablesDataContext = {
   tableData: Array<{
     select: string
     id: string
-    invoice: Mercoa.InvoiceResponse
-    invoiceNumber: string | undefined
-    currencyCode: string | undefined
+    invoice?: Mercoa.InvoiceResponse
+    invoiceNumber?: string
+    currencyCode?: string
     vendorName?: string
     vendorEmail?: string
-    amount: number | undefined
+    amount?: number
     status: Mercoa.InvoiceStatus
     invoiceId: string
-    dueDate: Date | undefined
-    invoiceDate: Date | undefined
-    deductionDate: Date | undefined
-    paymentDestination: Mercoa.PaymentMethodResponse | undefined
-    invoiceType: string
+    dueDate?: Date
+    invoiceDate?: Date
+    deductionDate?: Date
+    paymentDestination?: Mercoa.PaymentMethodResponse
+    invoiceType?: 'invoice' | 'invoiceTemplate'
     failureType?: Mercoa.InvoiceFailureType
-    vendorId: string | undefined
-    payerId: string | undefined
-    paymentDestinationId?: string | undefined
-    paymentSourceId?: string | undefined
-    approvers: Mercoa.ApprovalSlot[]
+    vendorId?: string
+    payerId?: string
+    paymentDestinationId?: string
+    paymentSourceId?: string
+    approvers?: Mercoa.ApprovalSlot[]
   }>
   infiniteData: any
   allFetchedInvoices: Mercoa.InvoiceResponse[]
@@ -335,11 +336,11 @@ export type PayablesDataContext = {
   isError: boolean
   isRefreshLoading: boolean
   handleRefresh: () => void
-  recurringPayablesData: Mercoa.InvoiceTemplateResponse[] | undefined
+  recurringPayablesData?: Mercoa.InvoiceTemplateResponse[]
   isRecurringPayablesLoading: boolean
-  approvalPolicies: Mercoa.ApprovalPolicyResponse[] | undefined
+  approvalPolicies?: Mercoa.ApprovalPolicyResponse[]
   isApprovalPoliciesLoading: boolean
-  metricsData: Mercoa.InvoiceMetricsResponse[] | undefined
+  metricsData?: Mercoa.InvoiceMetricsResponse[]
   isMetricsLoading: boolean
   statusTabsMetrics: any
   isStatusTabsMetricsLoading: boolean
@@ -351,10 +352,10 @@ export type PayablesFiltersContext = {
   setCurrentStatuses: (statuses: Mercoa.InvoiceStatus[]) => void
   search: string
   setSearch: (search: string) => void
-  startDate: Date | undefined
-  setStartDate: (date: Date | undefined) => void
-  endDate: Date | undefined
-  setEndDate: (date: Date | undefined) => void
+  startDate?: Date
+  setStartDate: (date?: Date) => void
+  endDate?: Date
+  setEndDate: (date?: Date) => void
   selectedStatusFilters: {
     toggleSelectedStatus: (status: Mercoa.InvoiceStatus) => void
   }
@@ -597,5 +598,3 @@ export type PayablesActionsContext = {
   ) => void
   downloadInvoicesAsCSV: () => void
 }
-
-// Main Payables Context Value Type

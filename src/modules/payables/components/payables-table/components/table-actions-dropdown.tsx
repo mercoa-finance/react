@@ -1,5 +1,6 @@
 import { FC, ReactElement, useState } from 'react'
 import { Popover } from '../../../../../lib/components'
+import { cn } from '../../../../../lib/style'
 import { ThreeDotIcon } from '../../../../common/assets/icons'
 import { PayablesTableAction } from '../constants'
 
@@ -7,9 +8,10 @@ interface TableActionDropdownProps {
   validActions: PayablesTableAction[]
   onAction: (actionKey: PayablesTableAction) => void
   trigger?: ReactElement
+  isDisabled?: boolean
 }
 
-export const TableActionDropdown: FC<TableActionDropdownProps> = ({ validActions, onAction, trigger }) => {
+export const TableActionDropdown: FC<TableActionDropdownProps> = ({ validActions, onAction, trigger, isDisabled }) => {
   const [open, setOpen] = useState(false)
 
   const tableActions = [
@@ -85,7 +87,10 @@ export const TableActionDropdown: FC<TableActionDropdownProps> = ({ validActions
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation()
             }}
-            className="mercoa-flex mercoa-justify-center mercoa-items-center mercoa-w-[32px] mercoa-h-[32px] mercoa-rounded-full hover:mercoa-bg-[#E9E5E2]"
+            className={cn(
+              'mercoa-flex mercoa-justify-center mercoa-items-center mercoa-w-[32px] mercoa-h-[32px] mercoa-rounded-full hover:mercoa-bg-[#E9E5E2]',
+              isDisabled && 'mercoa-opacity-50 mercoa-pointer-events-none',
+            )}
           >
             <ThreeDotIcon />
           </div>
