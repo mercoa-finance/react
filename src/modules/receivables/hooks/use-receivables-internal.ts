@@ -68,8 +68,8 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   } = useReceivablesQuery({
     currentStatuses: currentQueryOptions?.currentStatuses ? currentQueryOptions.currentStatuses : memoizedStatusFilters,
     search: currentQueryOptions?.search ? currentQueryOptions.search : debouncedSearch,
-    startDate: currentQueryOptions?.startDate ? currentQueryOptions.startDate : dateRange.startDate ?? undefined,
-    endDate: currentQueryOptions?.endDate ? currentQueryOptions.endDate : dateRange.endDate ?? undefined,
+    startDate: currentQueryOptions?.startDate ? currentQueryOptions.startDate : (dateRange.startDate ?? undefined),
+    endDate: currentQueryOptions?.endDate ? currentQueryOptions.endDate : (dateRange.endDate ?? undefined),
     dateType: currentQueryOptions?.dateType ? currentQueryOptions.dateType : dateType,
     orderBy: currentQueryOptions?.orderBy ? currentQueryOptions.orderBy : orderBy,
     orderDirection: currentQueryOptions?.orderDirection ? currentQueryOptions.orderDirection : orderDirection,
@@ -83,8 +83,8 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   const { data: metricsData, isLoading: isMetricsLoading } = useReceivableMetricsByStatusQuery({
     search: currentQueryOptions?.search ? currentQueryOptions.search : debouncedSearch,
     statuses: currentQueryOptions?.currentStatuses ? currentQueryOptions.currentStatuses : memoizedStatusFilters,
-    startDate: currentQueryOptions?.startDate ? currentQueryOptions.startDate : dateRange.startDate ?? undefined,
-    endDate: currentQueryOptions?.endDate ? currentQueryOptions.endDate : dateRange.endDate ?? undefined,
+    startDate: currentQueryOptions?.startDate ? currentQueryOptions.startDate : (dateRange.startDate ?? undefined),
+    endDate: currentQueryOptions?.endDate ? currentQueryOptions.endDate : (dateRange.endDate ?? undefined),
     dateType: currentQueryOptions?.dateType ? currentQueryOptions.dateType : dateType,
     returnByDate: Mercoa.InvoiceMetricsPerDateGroupBy.CreationDate,
     excludePayables: true,
@@ -93,8 +93,8 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   const { data: statusTabsMetrics, isLoading: isStatusTabsMetricsLoading } = useReceivableStatusTabsMetricsQuery({
     search: currentQueryOptions?.search ? currentQueryOptions.search : debouncedSearch,
     statuses: currentQueryOptions?.currentStatuses ? currentQueryOptions.currentStatuses : memoizedStatusFilters,
-    startDate: currentQueryOptions?.startDate ? currentQueryOptions.startDate : dateRange.startDate ?? undefined,
-    endDate: currentQueryOptions?.endDate ? currentQueryOptions.endDate : dateRange.endDate ?? undefined,
+    startDate: currentQueryOptions?.startDate ? currentQueryOptions.startDate : (dateRange.startDate ?? undefined),
+    endDate: currentQueryOptions?.endDate ? currentQueryOptions.endDate : (dateRange.endDate ?? undefined),
     dateType: currentQueryOptions?.dateType ? currentQueryOptions.dateType : dateType,
     excludePayables: true,
   })
@@ -172,7 +172,9 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
       dueDate: invoice.dueDate,
       invoiceDate: invoice.invoiceDate,
       paymentDestination: invoice.paymentDestination,
-      invoiceType: invoice.paymentSchedule?.type === Mercoa.PaymentType.OneTime ? 'One Time' : 'Recurring',
+      invoiceType: (invoice.paymentSchedule?.type === Mercoa.PaymentType.OneTime ? 'invoice' : 'invoiceTemplate') as
+        | 'invoice'
+        | 'invoiceTemplate',
       failureType: invoice.failureType,
       vendorId: invoice.vendorId,
       payerId: invoice.payerId,

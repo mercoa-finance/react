@@ -200,7 +200,7 @@ type ReceivablesTableRow = {
   dueDate?: Date
   invoiceDate?: Date
   paymentDestination?: Mercoa.PaymentMethodResponse
-  invoiceType?: string
+  invoiceType?: 'invoice' | 'invoiceTemplate'
   failureType?: string
   vendorId?: string
   payerId?: string
