@@ -1305,9 +1305,12 @@ export async function createOrUpdateEntity({
             country: data.country,
           },
         }),
-      maxTransactionSize: data.maxTransactionSize,
-      averageMonthlyTransactionVolume: data.averageMonthlyTransactionVolume,
-      averageTransactionSize: data.averageTransactionSize,
+      // NOTE: This is necessary because the `OnboardingFormData` type is wrong, these can currently be strings
+      maxTransactionSize: data.maxTransactionSize ? Number(data.maxTransactionSize) : undefined,
+      averageMonthlyTransactionVolume: data.averageMonthlyTransactionVolume
+        ? Number(data.averageMonthlyTransactionVolume)
+        : undefined,
+      averageTransactionSize: data.averageTransactionSize ? Number(data.averageTransactionSize) : undefined,
     }
   }
 

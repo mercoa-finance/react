@@ -10,7 +10,6 @@ import {
   TrashIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
-import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import dayjs from 'dayjs'
 import { jwtDecode } from 'jwt-decode'
@@ -33,6 +32,7 @@ import DatePicker from 'react-datepicker'
 import { Control, Controller, FieldErrors, UseFormRegister, useFormContext } from 'react-hook-form'
 import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
+import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { classNames, getEndpoint } from '../lib/lib'
 import { canadaStates, countries, usaStates } from '../lib/locations'
 import { MercoaSession, TokenOptions, useMercoaSession } from './index'
@@ -599,7 +599,7 @@ export function PaymentMethodDetailsDialog({
     if (mercoaSession.token && mercoaSession.entity?.id && account.id) {
       try {
         await mercoaSession.client?.entity.paymentMethod.update(mercoaSession.entity?.id, account.id, {
-          // @ts-ignore
+          //@ts-ignore
           confirmedByEntity: true,
           type: account.type,
         })
@@ -1849,6 +1849,7 @@ export function PaymentMethodButton({
     </div>
   )
 }
+
 export function canAddToPaymentBatch({
   existingBatch,
   newInvoice,

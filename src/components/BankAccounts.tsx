@@ -465,7 +465,7 @@ export function BankAccountStatus({ status }: { status: Mercoa.BankStatus }) {
         /* @ts-ignore:next-line */
         <Tooltip title="Can only receive funds">
           <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-indigo-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-indigo-800">
-            New
+            Unverified
           </span>
         </Tooltip>
       )}

@@ -1,17 +1,16 @@
 import { CheckCircleIcon, InformationCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { Tooltip } from '../../../../../../components/generics'
-import { useMercoaSession, usePayableDetails } from '../../../../../../components'
+import { Tooltip, useMercoaSession, usePayableDetails } from '../../../../../../components'
 import { filterApproverOptions } from './utils'
 
 export function ApproverWells() {
   const mercoaSession = useMercoaSession()
+  const seenUsers: string[] = []
 
   const { formContextValue } = usePayableDetails()
   const { approversContextValue } = formContextValue
   const { approvers, approvalPolicy: approvalPolicies } = approversContextValue
-  const seenUsers: string[] = []
 
   const getTriggerDescription = (slot: Mercoa.ApprovalSlot) => {
     const policy = approvalPolicies?.find((p) => p.id === slot.approvalPolicyId)

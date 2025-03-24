@@ -5,7 +5,6 @@ import { MercoaCombobox, Tooltip, useMercoaSession, usePayableDetails } from '..
 import { isUpstreamPolicyAssigned } from './utils'
 
 export function ApproversSelection() {
-  const mercoaSession = useMercoaSession()
   const { formContextValue } = usePayableDetails()
   const { approversContextValue } = formContextValue
   const {
