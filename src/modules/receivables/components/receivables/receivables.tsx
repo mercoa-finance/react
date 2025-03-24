@@ -1,8 +1,8 @@
-import { ReceivablesTable } from '../receivables-table'
 import { FC, PropsWithChildren } from 'react'
 import { ReceivablesProvider } from '../../providers/receivables-provider'
+import { ReceivablesProps } from '../../types'
 import { ReceivablesDashboard } from '../receivables-dashboard'
-import { ReceivablesProps } from './types'
+import { ReceivablesTable } from '../receivables-table'
 
 export const Receivables: FC<PropsWithChildren<ReceivablesProps>> = ({ children, ...props }) => {
   const { displayOptions } = props

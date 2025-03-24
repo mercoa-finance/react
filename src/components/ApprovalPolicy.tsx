@@ -8,6 +8,7 @@ import {
   XCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
+import accounting from 'accounting'
 import debounce from 'lodash/debounce'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
@@ -257,6 +258,7 @@ function Level({
   users,
   roles,
   formPolicies,
+  isFullyCollapsed,
 }: {
   level: number
   upstreamPolicyId: string
@@ -269,8 +271,88 @@ function Level({
   users: Mercoa.EntityUserResponse[]
   roles: string[]
   formPolicies: Mercoa.ApprovalPolicyResponse[]
+  isFullyCollapsed?: boolean
 }) {
+  const [collapsedPolicyIds, setCollapsedPolicyIds] = useState<string[]>([])
   const policies = formPolicies.filter((e) => e.upstreamPolicyId === upstreamPolicyId)
+
+  function CollapsedPolicy({ policy }: { policy: Mercoa.ApprovalPolicyResponse }) {
+    return (
+      <div
+        className={`mercoa-grid mercoa-grid-cols-1 mercoa-gap-2 mercoa-p-2 mercoa-border mercoa-border-gray-200 mercoa-rounded-lg shadow-md ${
+          nestedBg[!isFullyCollapsed ? 0 : level + 1]
+        }`}
+      >
+        <p className="mercoa-text-sm mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600">
+          {policy.trigger.length > 0 ? 'If' : 'Always require'}
+          {policy.trigger.map((t, index) => {
+            let displayText = <></>
+
+            if (t.type === 'amount') {
+              displayText = <>{`Amount ≥ ${accounting.formatMoney(t.amount, currencyCodeToSymbol(t.currency))}`}</>
+            } else if (t.type === 'vendor') {
+              displayText = (
+                <>
+                  Vendor is <CounterpartyNames vendorIds={t.vendorIds} />
+                </>
+              )
+            } else if (t.type === 'metadata') {
+              displayText = <>{`${t.key} is ${t.value}`}</>
+            }
+
+            return (
+              <span key={index} className="mercoa-ml-1">
+                <span className="mercoa-text-gray-800 mercoa-underline">{displayText}</span>
+                {index === policy.trigger.length - 1 ? (
+                  <span className="mercoa-ml-1 mercoa-text-gray-600">then require</span>
+                ) : (
+                  <span className="mercoa-ml-1 mercoa-text-gray-600">and</span>
+                )}
+              </span>
+            )
+          })}
+          {policy.rule.type === 'approver' && (
+            <>
+              <span className="mercoa-ml-1">
+                {policy.rule.numApprovers} approval{policy.rule.numApprovers === 1 ? '' : 's'} from
+              </span>
+              <span className="mercoa-ml-1 mercoa-text-gray-800 mercoa-underline">
+                {policy.rule.identifierList.type === 'rolesList'
+                  ? policy.rule.identifierList.value.join(', ')
+                  : policy.rule.identifierList.type === 'userList' &&
+                    policy.rule.identifierList.value.map((e) => users.find((u) => u.id === e)?.name).join(', ')}
+              </span>
+            </>
+          )}
+        </p>
+        <Level
+          level={level + 1}
+          remove={remove}
+          append={append}
+          control={control}
+          watch={watch}
+          register={register}
+          setValue={setValue}
+          users={users}
+          roles={roles}
+          formPolicies={formPolicies}
+          upstreamPolicyId={policy.id}
+          isFullyCollapsed={isFullyCollapsed || collapsedPolicyIds.includes(policy.id)}
+        />
+      </div>
+    )
+  }
+
+  if (isFullyCollapsed) {
+    return (
+      <>
+        {policies.map((policy) => (
+          <CollapsedPolicy policy={policy} key={policy.id} />
+        ))}
+      </>
+    )
+  }
+
   return (
     <ul role="list" className={`mercoa-space-y-6 mercoa-max-w-[800px] ${nestedBg[level]}`}>
       <li className={`mercoa-relative mercoa-flex mercoa-gap-x-4 ${upstreamPolicyId === 'root' ? '' : 'mercoa-mt-1'}`}>
@@ -310,74 +392,109 @@ function Level({
                   nestedBg[level + 1]
                 }`}
               >
-                <button
-                  className="mercoa-absolute mercoa-top-2 mercoa-right-2 mercoa-text-gray-400 hover:mercoa-text-gray-500"
-                  type="button"
-                  onClick={() => remove(formPolicies.findIndex((e) => e.id == policy.id))}
-                >
-                  <span className="mercoa-sr-only">Remove</span>
-                  <XMarkIcon className="mercoa-size-5" />
-                </button>
-
-                <div className="mercoa-grid mercoa-grid-cols-4 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-mercoa mercoa-bg-white">
-                  <Trigger
-                    control={control}
-                    watch={watch}
-                    register={register}
-                    setValue={setValue}
-                    index={formPolicies.findIndex((e) => e.id == policy.id)}
-                  />
+                <div className="mercoa-absolute mercoa-top-2 mercoa-right-2 mercoa-flex mercoa-gap-2">
+                  {!collapsedPolicyIds.includes(policy.id) ? (
+                    <MercoaButton
+                      size="sm"
+                      type="button"
+                      hideOutline
+                      color="gray"
+                      onClick={() => setCollapsedPolicyIds([...collapsedPolicyIds, policy.id])}
+                    >
+                      Collapse Policy
+                    </MercoaButton>
+                  ) : (
+                    <MercoaButton
+                      size="sm"
+                      type="button"
+                      hideOutline
+                      color="gray"
+                      onClick={() => setCollapsedPolicyIds(collapsedPolicyIds.filter((e) => e !== policy.id))}
+                    >
+                      Edit Policy
+                    </MercoaButton>
+                  )}
+                  <button
+                    className="mercoa-text-gray-400 hover:mercoa-text-gray-500"
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to remove this policy?')) {
+                        remove(formPolicies.findIndex((e) => e.id == policy.id))
+                      }
+                    }}
+                  >
+                    <span className="mercoa-sr-only">Remove</span>
+                    <XMarkIcon className="mercoa-size-5" />
+                  </button>
                 </div>
-                <Rule
-                  watch={watch}
-                  register={register}
-                  setValue={setValue}
-                  users={users}
-                  roles={roles}
-                  index={formPolicies.findIndex((e) => e.id == policy.id)}
-                  noTrigger={policy.trigger.length === 0}
-                />
-                <div className="mercoa-ml-10">
-                  <Level
-                    level={level + 1}
-                    remove={remove}
-                    append={append}
-                    control={control}
-                    watch={watch}
-                    register={register}
-                    setValue={setValue}
-                    users={users}
-                    roles={roles}
-                    formPolicies={formPolicies}
-                    upstreamPolicyId={policy.id}
-                  />
-                </div>
+                {collapsedPolicyIds.includes(policy.id) || isFullyCollapsed ? (
+                  <CollapsedPolicy policy={policy} />
+                ) : (
+                  <>
+                    <div className="mercoa-grid mercoa-grid-cols-4 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-mercoa mercoa-bg-white">
+                      <Trigger
+                        control={control}
+                        watch={watch}
+                        register={register}
+                        setValue={setValue}
+                        index={formPolicies.findIndex((e) => e.id == policy.id)}
+                      />
+                    </div>
+                    <Rule
+                      watch={watch}
+                      register={register}
+                      setValue={setValue}
+                      users={users}
+                      roles={roles}
+                      index={formPolicies.findIndex((e) => e.id == policy.id)}
+                      noTrigger={policy.trigger.length === 0}
+                    />
+                    <div className="mercoa-ml-10">
+                      <Level
+                        level={level + 1}
+                        remove={remove}
+                        append={append}
+                        control={control}
+                        watch={watch}
+                        register={register}
+                        setValue={setValue}
+                        users={users}
+                        roles={roles}
+                        formPolicies={formPolicies}
+                        upstreamPolicyId={policy.id}
+                        isFullyCollapsed={isFullyCollapsed || collapsedPolicyIds.includes(policy.id)}
+                      />
+                    </div>
+                  </>
+                )}
               </div>
             </p>
           </li>
         )
       })}
 
-      <li className="mercoa-relative mercoa-flex mercoa-gap-x-4">
-        {upstreamPolicyId === 'root' && (
-          <div className="-mercoa-bottom-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center">
-            <div className="mercoa-w-px mercoa-bg-gray-200" />
+      {!collapsedPolicyIds.includes(upstreamPolicyId) && (
+        <li className="mercoa-relative mercoa-flex mercoa-gap-x-4">
+          {upstreamPolicyId === 'root' && (
+            <div className="-mercoa-bottom-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center">
+              <div className="mercoa-w-px mercoa-bg-gray-200" />
+            </div>
+          )}
+          <div
+            className={`mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center ${nestedBg[level]}`}
+          >
+            <div className="mercoa-h-1.5 mercoa-w-1.5 mercoa-rounded-full mercoa-bg-gray-100 mercoa-ring-1 mercoa-ring-gray-300" />
           </div>
-        )}
-        <div
-          className={`mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center ${nestedBg[level]}`}
-        >
-          <div className="mercoa-h-1.5 mercoa-w-1.5 mercoa-rounded-full mercoa-bg-gray-100 mercoa-ring-1 mercoa-ring-gray-300" />
-        </div>
-        <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
-          <AddRule
-            id={upstreamPolicyId + '~' + policies.length}
-            upstreamPolicyId={upstreamPolicyId}
-            append={append}
-            trigger={[]}
-          />
-        </p>
-      </li>
+          <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
+            <AddRule
+              id={upstreamPolicyId + '~' + policies.length}
+              upstreamPolicyId={upstreamPolicyId}
+              append={append}
+              trigger={[]}
+            />
+          </p>
+        </li>
+      )}
 
       {upstreamPolicyId === 'root' && (
         <li className="mercoa-relative mercoa-flex mercoa-gap-x-4">
@@ -430,6 +547,29 @@ function Trigger({
       )}
       {fields.map((field, triggerIndex) => {
         const previousTriggers: string[] = triggerWatch?.slice(0, triggerIndex).map((t) => t?.type ?? '') ?? []
+        const triggerOptions = [
+          ...(previousTriggers.every((e) => e !== 'amount')
+            ? [
+                {
+                  displayName: 'Amount',
+                  key: '~mercoa~amount',
+                },
+              ]
+            : []),
+          ...(previousTriggers.every((e) => e !== 'vendor')
+            ? [
+                {
+                  displayName: 'Vendor',
+                  key: '~mercoa~vendor',
+                },
+              ]
+            : []),
+          ...(mercoaSession.organization?.metadataSchema?.filter((e) => !e.lineItem) ?? []),
+        ]?.map((e) => ({
+          disabled: false,
+          value: e,
+        }))
+
         return (
           <div
             key={triggerIndex}
@@ -439,28 +579,7 @@ function Trigger({
               {triggerIndex > 0 ? 'And' : 'If'}
             </span>
             <MercoaCombobox
-              options={[
-                ...(previousTriggers.every((e) => e != 'amount')
-                  ? [
-                      {
-                        displayName: 'Amount',
-                        key: '~mercoa~amount',
-                      },
-                    ]
-                  : []),
-                ...(previousTriggers.every((e) => e != 'vendor')
-                  ? [
-                      {
-                        displayName: 'Vendor',
-                        key: '~mercoa~vendor',
-                      },
-                    ]
-                  : []),
-                ...(mercoaSession.organization?.metadataSchema ?? []),
-              ]?.map((e) => ({
-                disabled: false,
-                value: e,
-              }))}
+              options={triggerOptions}
               onChange={(e: Mercoa.MetadataSchema) => {
                 setValue(`policies.${index}.trigger.${triggerIndex}`, undefined, {
                   shouldDirty: true,
@@ -577,7 +696,11 @@ function Trigger({
             )}
             <button
               type="button"
-              onClick={() => remove(triggerIndex)}
+              onClick={() => {
+                if (window.confirm('Are you sure you want to remove this condition?')) {
+                  remove(triggerIndex)
+                }
+              }}
               className="mercoa-ml-2 mercoa-text-gray-400 hover:mercoa-text-gray-500"
             >
               <span className="mercoa-sr-only">Remove</span>
@@ -791,6 +914,39 @@ function AddRule({
     >
       <PlusIcon className="mercoa-size-4 mercoa-mr-1" /> Add Rule
     </MercoaButton>
+  )
+}
+
+function CounterpartyNames({ vendorIds }: { vendorIds: string[] }) {
+  const mercoaSession = useMercoaSession()
+
+  const [counterparties, setCounterparties] = useState<Mercoa.CounterpartyResponse[]>([])
+
+  useEffect(() => {
+    if (!mercoaSession.entity?.id) return
+    mercoaSession.client?.entity.counterparty
+      .findPayees(mercoaSession.entity?.id, {
+        limit: 100,
+        counterpartyId: vendorIds,
+      })
+      .then((resp) => {
+        setCounterparties(resp.data)
+      })
+  }, [vendorIds, mercoaSession.entity?.id, mercoaSession.token])
+
+  return (
+    <>
+      {counterparties.map((cp, index) => (
+        <span key={cp.id} className="mercoa-ml-1">
+          {cp.name}
+          {index === counterparties.length - 2 ? (
+            <span className="mercoa-text-gray-600"> or</span>
+          ) : (
+            <span className="mercoa-text-gray-600">,</span>
+          )}
+        </span>
+      ))}
+    </>
   )
 }
 

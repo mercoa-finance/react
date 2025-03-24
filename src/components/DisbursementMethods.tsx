@@ -226,7 +226,7 @@ export function DisbursementMethods({
                 {method.type === Mercoa.PaymentMethodType.Custom && method.schemaId === selectedMethod?.name && (
                   <CustomPaymentMethod
                     account={method}
-                    onSelect={(e: Mercoa.PaymentMethodResponse) => {
+                    onSelect={(e) => {
                       setSelectedExisting(e)
                     }}
                     selected={method.id === (selectedExisting as Mercoa.PaymentMethodResponse)?.id}

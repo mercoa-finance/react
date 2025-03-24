@@ -1,7 +1,8 @@
 import { XMarkIcon } from '@heroicons/react/24/outline'
-import { useEffect, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { MercoaButton } from '../../../../../../components'
+import { PayableFormAction } from '../../constants'
 
 export function PayablesInlineForm({
   name,
@@ -11,8 +12,8 @@ export function PayablesInlineForm({
 }: {
   name: string
   formAction: string
-  addNewButton: JSX.Element
-  form: JSX.Element
+  addNewButton: ReactNode
+  form: ReactNode
 }) {
   const [open, setOpen] = useState(false)
 
@@ -21,7 +22,7 @@ export function PayablesInlineForm({
   const status = watch('formAction')
 
   useEffect(() => {
-    if (status === 'CLOSE_INLINE_FORM') {
+    if (status === PayableFormAction.CLOSE_INLINE_FORM) {
       setOpen(false)
     }
   }, [status])

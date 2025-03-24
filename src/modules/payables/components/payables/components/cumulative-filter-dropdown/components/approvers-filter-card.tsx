@@ -19,15 +19,15 @@ export const ApproversFilterCardDropdown: FC<ApproversFilterCardDropdownProps> =
     const { selectedApprovers } = getFilters(tableId)
 
     const toggleSelection = () => {
-      const newFilters = selectedApprovers.includes('current')
-        ? selectedApprovers.filter((item) => item !== 'current')
-        : [...selectedApprovers, 'current']
+      const newFilters = !!selectedApprovers.find((e) => e.id === mercoaSession?.user?.id)
+        ? selectedApprovers.filter((item) => item.id !== mercoaSession?.user?.id)
+        : [...selectedApprovers, mercoaSession?.user]
 
       setFilters(tableId, { selectedApprovers: newFilters as any })
     }
 
     const renderTriggerContent = () => {
-      if (!selectedApprovers.includes('current')) return null
+      if (!selectedApprovers.find((e) => e.id === mercoaSession?.user?.id)) return null
       return (
         <span className="mercoa-bg-white mercoa-text-[13px] mercoa-px-2 mercoa-flex mercoa-items-center mercoa-justify-center mercoa-rounded-full mercoa-h-[24px]">
           Current User
@@ -43,7 +43,7 @@ export const ApproversFilterCardDropdown: FC<ApproversFilterCardDropdownProps> =
 
     return (
       <>
-        {open || selectedApprovers.includes('current') ? (
+        {open || !!selectedApprovers.find((e) => e.id === mercoaSession?.user?.id) ? (
           <Popover
             onOpenAutoFocus={(e) => {
               e.preventDefault()
@@ -82,7 +82,7 @@ export const ApproversFilterCardDropdown: FC<ApproversFilterCardDropdownProps> =
                 <input
                   type="checkbox"
                   className="mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-none"
-                  checked={selectedApprovers.includes('current')}
+                  checked={!!selectedApprovers.find((e) => e.id === mercoaSession?.user?.id)}
                   readOnly
                 />
                 <span className="mercoa-text-[14px] mercoa-color-[#1A1919]">Current User</span>

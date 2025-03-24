@@ -3,6 +3,7 @@ import { Mercoa } from '@mercoa/javascript'
 import { useMercoaSession } from '../../../components'
 import { useInfiniteQuery } from '../../../lib/react-query/use-infinite-query'
 import { useQuery } from '../../../lib/react-query/use-query'
+import { getInvoiceClient } from '../../common/utils'
 
 export interface ReceivablesResponse {
   count: number
@@ -24,7 +25,7 @@ export interface UseReceivablesRequestOptions {
   dateType?: Mercoa.InvoiceDateFilter
 }
 
-export function useReceivables({
+export function useReceivablesQuery({
   currentStatuses,
   search,
   startDate,
@@ -97,7 +98,67 @@ export function useReceivables({
   })
 }
 
-export const useReceivableMetricsByStatus = ({
+export function useRecurringReceivablesQuery({
+  currentStatuses,
+  search,
+  startDate,
+  endDate,
+  orderBy = Mercoa.InvoiceOrderByField.CreatedAt,
+  orderDirection = Mercoa.OrderDirection.Desc,
+  resultsPerPage,
+  paymentType,
+  metadata,
+  dateType = Mercoa.InvoiceDateFilter.CreatedAt,
+}: UseReceivablesRequestOptions) {
+  const mercoaSession = useMercoaSession()
+
+  return useQuery<Mercoa.InvoiceTemplateResponse[] | undefined>({
+    queryKey: [
+      'recurringReceivables',
+      mercoaSession?.entity?.id,
+      currentStatuses,
+      search,
+      startDate,
+      endDate,
+      orderBy,
+      orderDirection,
+      resultsPerPage,
+      paymentType,
+      dateType,
+    ],
+    queryFn: async () => {
+      if (!mercoaSession || !mercoaSession.client || !mercoaSession.entity?.id) {
+        return undefined
+      }
+
+      // TODO: Replace with the entity-level invoice template endpoint once it exists to use excludePayables
+      // Entity > Invoice > Get All and Get Metrics currently exist
+      // Entity > Invoice Template > Get All and Get Metrics should be added
+      const filter: Mercoa.invoiceTemplate.GetAllInvoiceTemplatesRequest = {
+        vendorId: mercoaSession.entity.id, // Functionally the same as entityId + excludePayables
+        status: currentStatuses,
+        search,
+        startDate,
+        endDate,
+        orderBy,
+        orderDirection,
+        limit: resultsPerPage,
+        metadata: metadata,
+        paymentType: paymentType,
+        dateType: dateType,
+      }
+
+      const response = await mercoaSession.client.invoiceTemplate.find(filter)
+
+      return response.data
+    },
+    options: {
+      enabled: !!mercoaSession?.client && !!mercoaSession?.entity?.id,
+    },
+  })
+}
+
+export const useReceivableMetricsByStatusQuery = ({
   startDate,
   endDate,
   dateType,
@@ -240,19 +301,22 @@ export const useReceivableStatusTabsMetricsQuery = ({
   })
 }
 
-export const useReceivableDetailQuery = (invoiceId?: string) => {
+export const useReceivableDetailQuery = (
+  invoiceId?: string,
+  invoiceType: 'invoice' | 'invoiceTemplate' = 'invoice',
+) => {
   const mercoaSession = useMercoaSession()
 
   return useQuery<Mercoa.InvoiceResponse | undefined>({
-    queryKey: ['receivableDetail', invoiceId],
+    queryKey: ['receivableDetail', invoiceId, invoiceType],
     queryFn: async () => {
       if (!mercoaSession || !mercoaSession.client || !invoiceId) {
-        throw new Error('Mercoa session or invoiceId is missing')
+        throw new Error('MercoaSession or invoiceId is missing')
       }
 
-      let response
+      let response: Mercoa.InvoiceResponse | Mercoa.InvoiceTemplateResponse | undefined = undefined
       try {
-        response = await mercoaSession.client.invoice.get(invoiceId)
+        response = await getInvoiceClient(mercoaSession, invoiceType)?.get(invoiceId)
       } catch (error) {
         console.error('Error fetching invoice:', error)
         throw error
@@ -266,7 +330,7 @@ export const useReceivableDetailQuery = (invoiceId?: string) => {
   })
 }
 
-export const usePaymentMethods = ({ entityId, type }: { entityId?: string; type?: Mercoa.PaymentMethodType }) => {
+export const usePaymentMethodsQuery = ({ entityId, type }: { entityId?: string; type?: Mercoa.PaymentMethodType }) => {
   const mercoaSession = useMercoaSession()
 
   return useQuery<Array<Mercoa.PaymentMethodResponse>>({
@@ -283,13 +347,17 @@ export const usePaymentMethods = ({ entityId, type }: { entityId?: string; type?
   })
 }
 
-export const usePaymentLink = (invoiceId?: Mercoa.InvoiceId) => {
+// NOTE: Confirm that we should not return a payment link for invoice templates
+export const usePaymentLinkQuery = (
+  invoiceId?: Mercoa.InvoiceId,
+  invoiceType: 'invoice' | 'invoiceTemplate' = 'invoice',
+) => {
   const mercoaSession = useMercoaSession()
 
   return useQuery<string | undefined>({
     queryKey: ['paymentLink', invoiceId],
     queryFn: async () => {
-      if (!mercoaSession?.client || !invoiceId) {
+      if (!mercoaSession?.client || !invoiceId || invoiceType === 'invoiceTemplate') {
         return undefined
       }
       return await mercoaSession.client.invoice.paymentLinks.getPayerLink(invoiceId)
@@ -300,7 +368,7 @@ export const usePaymentLink = (invoiceId?: Mercoa.InvoiceId) => {
   })
 }
 
-export const useSupportedCurrencies = () => {
+export const useSupportedCurrenciesQuery = () => {
   const mercoaSession = useMercoaSession()
 
   return useQuery<Mercoa.CurrencyCode[]>({

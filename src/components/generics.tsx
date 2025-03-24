@@ -1,5 +1,6 @@
 import { Combobox, Dialog, Listbox, Transition } from '@headlessui/react'
 import {
+  CheckCircleIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronUpDownIcon,
@@ -569,19 +570,168 @@ export function DefaultPaymentMethodIndicator({
   )
 }
 
+export function PaymentMethodDetailsDialog({
+  show,
+  onClose,
+  account,
+}: {
+  show: boolean
+  onClose: () => void
+  account: Mercoa.PaymentMethodResponse
+}) {
+  const mercoaSession = useMercoaSession()
+  const [schema, setSchema] = useState<Mercoa.CustomPaymentMethodSchemaResponse | null>(null)
+
+  useEffect(() => {
+    if (
+      mercoaSession.token &&
+      mercoaSession.entity?.id &&
+      account.id &&
+      account.type === Mercoa.PaymentMethodType.Custom
+    ) {
+      mercoaSession.client?.customPaymentMethodSchema.get(account.schemaId).then((resp) => {
+        setSchema(resp)
+      })
+    }
+  }, [mercoaSession.token, mercoaSession.entity?.id, account.id, account.type])
+
+  const handleVerify = async () => {
+    if (mercoaSession.token && mercoaSession.entity?.id && account.id) {
+      try {
+        await mercoaSession.client?.entity.paymentMethod.update(mercoaSession.entity?.id, account.id, {
+          // @ts-ignore
+          confirmedByEntity: true,
+          type: account.type,
+        })
+        toast.success('Account verified')
+        await mercoaSession.refresh()
+        onClose()
+      } catch (e: any) {
+        toast.error('Error verifying account')
+        console.error(e.body)
+      }
+    }
+  }
+
+  return (
+    <AddDialog
+      show={show}
+      onClose={onClose}
+      component={
+        <div className="mercoa-space-y-4">
+          <h3 className="mercoa-text-lg mercoa-font-medium mercoa-text-gray-900">Payment Method Details</h3>
+          {account.type === Mercoa.PaymentMethodType.BankAccount && (
+            <div className="mercoa-space-y-2 mercoa-bg-gray-50 mercoa-p-4 mercoa-rounded-lg mercoa-border mercoa-border-gray-200">
+              <div className="mercoa-grid mercoa-grid-cols-2">
+                <div className="mercoa-col-span-2 mercoa-mb-2">
+                  <span className="mercoa-font-semibold mercoa-text-gray-700">Bank Information</span>
+                </div>
+                <div>
+                  <span className="mercoa-font-medium mercoa-text-gray-600">Bank Name:</span>
+                </div>
+                <div>{account.bankName}</div>
+                <div>
+                  <span className="mercoa-font-medium mercoa-text-gray-600">Account Type:</span>
+                </div>
+                <div>{account.accountType}</div>
+                <div>
+                  <span className="mercoa-font-medium mercoa-text-gray-600">Account Number:</span>
+                </div>
+                <div>{account.accountNumber}</div>
+                <div>
+                  <span className="mercoa-font-medium mercoa-text-gray-600">Routing Number:</span>
+                </div>
+                <div>{account.routingNumber}</div>
+                {account.accountName && (
+                  <>
+                    <div>
+                      <span className="mercoa-font-medium mercoa-text-gray-600">Account Name:</span>
+                    </div>
+                    <div>{account.accountName}</div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+          {account.type === Mercoa.PaymentMethodType.Check && (
+            <div className="mercoa-space-y-2 mercoa-bg-gray-50 mercoa-p-4 mercoa-rounded-lg mercoa-border mercoa-border-gray-200">
+              <div className="mercoa-grid mercoa-grid-cols-2">
+                <div className="mercoa-col-span-2 mercoa-mb-2">
+                  <span className="mercoa-font-semibold mercoa-text-gray-700">Check Information</span>
+                </div>
+                <div>
+                  <span className="mercoa-font-medium mercoa-text-gray-600">Pay To The Order Of:</span>
+                </div>
+                <div>{account.payToTheOrderOf}</div>
+                <div className="mercoa-col-span-2 mercoa-mt-2">
+                  <span className="mercoa-font-medium mercoa-text-gray-600">Mailing Address:</span>
+                </div>
+                <div className="mercoa-col-span-2 mercoa-pl-2">
+                  <div>{account.addressLine1}</div>
+                  {account.addressLine2 && <div>{account.addressLine2}</div>}
+                  <div>
+                    {account.city && <span>{account.city}</span>}
+                    {account.stateOrProvince && <span>, {account.stateOrProvince}</span>}
+                    {account.postalCode && <span> {account.postalCode}</span>}
+                  </div>
+                  {account.country && <div>{account.country}</div>}
+                </div>
+              </div>
+            </div>
+          )}
+          {account.type === Mercoa.PaymentMethodType.Custom && (
+            <div className="mercoa-space-y-2 mercoa-bg-gray-50 mercoa-p-4 mercoa-rounded-lg mercoa-border mercoa-border-gray-200">
+              <div className="mercoa-grid mercoa-grid-cols-2">
+                <div className="mercoa-col-span-2 mercoa-mb-2">
+                  <span className="mercoa-font-semibold mercoa-text-gray-700">{schema?.name}</span>
+                </div>
+                <div>
+                  <span className="mercoa-font-medium mercoa-text-gray-600">Account Name:</span>
+                </div>
+                <div>{account.accountName}</div>
+                {account.accountNumber && (
+                  <>
+                    <div>
+                      <span className="mercoa-font-medium mercoa-text-gray-600">Account Number:</span>
+                    </div>
+                    <div>••••{account.accountNumber.slice(-4)}</div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+          <div className="mercoa-mt-6 mercoa-flex mercoa-justify-end mercoa-gap-x-3">
+            <MercoaButton isEmphasized={false} onClick={onClose} size="sm" color="gray" hideOutline>
+              Cancel
+            </MercoaButton>
+            <MercoaButton isEmphasized onClick={handleVerify} size="sm">
+              Confirm Details
+            </MercoaButton>
+          </div>
+        </div>
+      }
+    />
+  )
+}
+
 export function PaymentMethodList({
   accounts,
   showDelete,
   addAccount,
   formatAccount,
+  showEntityConfirmation,
 }: {
   accounts?: Mercoa.PaymentMethodResponse[]
   showDelete?: boolean
   addAccount?: JSX.Element
   formatAccount: (account: any) => JSX.Element | JSX.Element[] | null
+  showEntityConfirmation?: boolean
 }) {
   const mercoaSession = useMercoaSession()
   const hasAccounts = accounts && accounts.length > 0
+  const [showDetailsDialog, setShowDetailsDialog] = useState(false)
+  const [selectedAccount, setSelectedAccount] = useState<Mercoa.PaymentMethodResponse | null>(null)
+
   return (
     <>
       {/* List of payment methods if provided */}
@@ -589,6 +739,32 @@ export function PaymentMethodList({
         accounts.map((account) => (
           <div className="mercoa-mt-2 mercoa-flex" key={account.id}>
             <div className="mercoa-flex-grow">{formatAccount(account)}</div>
+            {showEntityConfirmation && (
+              <>
+                {/* @ts-ignore */}
+                {account.confirmedByEntity ? (
+                  <button className="mercoa-ml-2 mercoa-cursor-default">
+                    <Tooltip title="Details Confirmed" position="left">
+                      <CheckCircleIcon className="mercoa-size-5 mercoa-text-mercoa-primary" />
+                    </Tooltip>
+                  </button>
+                ) : (
+                  <div className="mercoa-flex mercoa-items-center mercoa-justify-center">
+                    <MercoaButton
+                      isEmphasized={false}
+                      size="sm"
+                      onClick={() => {
+                        setSelectedAccount(account)
+                        setShowDetailsDialog(true)
+                      }}
+                      className="mercoa-ml-2"
+                    >
+                      Confirm Details
+                    </MercoaButton>
+                  </div>
+                )}
+              </>
+            )}
             {showDelete && (
               <button
                 onClick={async () => {
@@ -630,6 +806,16 @@ export function PaymentMethodList({
             />
           </div>
         </div>
+      )}
+      {selectedAccount && (
+        <PaymentMethodDetailsDialog
+          show={showDetailsDialog}
+          onClose={() => {
+            setShowDetailsDialog(false)
+            setSelectedAccount(null)
+          }}
+          account={selectedAccount}
+        />
       )}
     </>
   )
@@ -783,6 +969,10 @@ export function MercoaCombobox({
   readOnly?: boolean
   direction?: 'down' | 'up'
 }) {
+  if (!options) {
+    options = []
+  }
+
   function displayInputValue(value: any) {
     if (multiple && Array.isArray(value)) {
       return value?.length > 0
@@ -1197,7 +1387,7 @@ export function AddDialog({ show, onClose, component }: { show: boolean; onClose
           leaveFrom="mercoa-opacity-100"
           leaveTo="mercoa-opacity-0"
         >
-          <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
+          <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75 mercoa-transition-opacity" />
         </Transition.Child>
 
         <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
@@ -1368,6 +1558,7 @@ export function MercoaInput({
     step,
   }
 
+  // TODO: This erroneously sets `type='number'` fields to string types, must be fixed
   if (register && name) {
     props = {
       ...props,

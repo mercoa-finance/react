@@ -2,13 +2,13 @@ import { Bar, Container, Section } from '@column-resizer/react'
 import { FC, PropsWithChildren } from 'react'
 import { toast } from 'react-toastify'
 import { NoSession, useMercoaSession } from '../../../../components'
-import { ReceivableDetailsProps } from '../../hooks/use-receivable-details-internal'
 import { ReceivableDetailsProvider } from '../../providers/receivable-detail-provider'
+import { ReceivableDetailsProps } from '../../types'
 import { ReceivableForm } from '../receivable-form/receivable-form'
 import InvoicePreview from '../receivable-preview/receivable-preview'
 
 export const ReceivableDetails: FC<PropsWithChildren<ReceivableDetailsProps>> = ({
-  queryParams,
+  queryOptions,
   config,
   handlers,
   displayOptions = {
@@ -52,7 +52,7 @@ export const ReceivableDetails: FC<PropsWithChildren<ReceivableDetailsProps>> = 
   return (
     <ReceivableDetailsProvider
       receivableDetailsProps={{
-        queryParams,
+        queryOptions,
         config,
         handlers,
         renderCustom,

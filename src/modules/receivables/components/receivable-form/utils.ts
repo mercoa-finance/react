@@ -1,8 +1,8 @@
 import dayjs from 'dayjs'
 import { Mercoa } from '@mercoa/javascript'
-import { MercoaContext } from '../../components'
+import { MercoaContext } from '../../../../components'
 
-export const getPrefillReceivableData = ({
+const getPrefillReceivableData = ({
   destinationPaymentMethods,
   receivableData,
   supportedCurrencies,
@@ -67,6 +67,7 @@ export const getPrefillReceivableData = ({
     paymentSourceCheckEnabled: receivableData
       ? (receivableData?.paymentSource as Mercoa.BankAccountResponse)?.checkOptions?.enabled ?? false
       : undefined,
+    paymentSchedule: receivableData?.paymentSchedule,
     description: receivableData?.noteToSelf ?? '',
     metadata: receivableData?.metadata ?? {},
     creatorUser: receivableData?.creatorUser,
@@ -75,7 +76,7 @@ export const getPrefillReceivableData = ({
   return prefillReceivableData
 }
 
-export const getDefaultSourceType = (sourcePaymentMethods: Mercoa.PaymentMethodResponse[]) => {
+const getDefaultSourceType = (sourcePaymentMethods: Mercoa.PaymentMethodResponse[]) => {
   const defaultPm = sourcePaymentMethods.find((e) => e.isDefaultSource)
   if (defaultPm) {
     return defaultPm.type === 'custom' ? defaultPm.schemaId : defaultPm.type
@@ -95,7 +96,7 @@ export const getDefaultSourceType = (sourcePaymentMethods: Mercoa.PaymentMethodR
   }
 }
 
-export const getDefaultDestinationType = (destinationPaymentMethods: Mercoa.PaymentMethodResponse[]) => {
+const getDefaultDestinationType = (destinationPaymentMethods: Mercoa.PaymentMethodResponse[]) => {
   const defaultPm = destinationPaymentMethods.find((e) => e.isDefaultDestination)
   if (defaultPm) {
     return defaultPm.type === 'custom' ? defaultPm.schemaId : defaultPm.type
@@ -114,7 +115,7 @@ export const getDefaultDestinationType = (destinationPaymentMethods: Mercoa.Paym
   return undefined
 }
 
-export const getDefaultSourcePaymentMethod = (sourcePaymentMethods: Mercoa.PaymentMethodResponse[]) => {
+const getDefaultSourcePaymentMethod = (sourcePaymentMethods: Mercoa.PaymentMethodResponse[]) => {
   const defaultPm = sourcePaymentMethods.find((e) => e.isDefaultSource)
   if (defaultPm) {
     return getSourcePaymentMethodByType(
@@ -126,7 +127,7 @@ export const getDefaultSourcePaymentMethod = (sourcePaymentMethods: Mercoa.Payme
   return getSourcePaymentMethodByType(type, sourcePaymentMethods)
 }
 
-export const getDefaultDestinationPaymentMethod = (destinationPaymentMethods: Mercoa.PaymentMethodResponse[]) => {
+const getDefaultDestinationPaymentMethod = (destinationPaymentMethods: Mercoa.PaymentMethodResponse[]) => {
   const defaultPm = destinationPaymentMethods.find((e) => e.isDefaultDestination)
   if (defaultPm) {
     return getDestinationPaymentMethodByType(
@@ -142,7 +143,7 @@ export const getDefaultDestinationPaymentMethod = (destinationPaymentMethods: Me
   return undefined
 }
 
-export const getSourcePaymentMethodByType = (
+const getSourcePaymentMethodByType = (
   type: Mercoa.PaymentMethodType | string,
   sourcePaymentMethods: Mercoa.PaymentMethodResponse[],
 ) => {
@@ -190,7 +191,7 @@ export const getSourcePaymentMethodByType = (
   return sourcePaymentMethodPayload
 }
 
-export const getDestinationPaymentMethodByType = (
+const getDestinationPaymentMethodByType = (
   type: Mercoa.PaymentMethodType | string,
   destinationPaymentMethods: Mercoa.PaymentMethodResponse[],
 ) => {
@@ -290,11 +291,138 @@ const getAvailablePaymentMethodTypes = (
   return availableTypes
 }
 
-export const receivableUtils = {
+const validateAndFormatPaymentSchedule = (data: any, toast: any) => {
+  if (data.paymentSchedule?.type) {
+    if (
+      isNaN(data.paymentSchedule.repeatEvery) ||
+      data.paymentSchedule.repeatEvery < 1 ||
+      !data.paymentSchedule.repeatEvery
+    ) {
+      data.paymentSchedule.repeatEvery = 1
+    }
+    if (!data.paymentSchedule) {
+      toast.error('Please select a payment schedule')
+      return false
+    }
+    if (data.paymentSchedule.type === 'weekly') {
+      if (data.paymentSchedule.repeatOn === undefined || data.paymentSchedule.repeatOn.length === 0) {
+        toast.error('Please select a day of the week')
+        return false
+      }
+      const out: Mercoa.PaymentSchedule = {
+        type: 'weekly',
+        repeatOn: data.paymentSchedule.repeatOn,
+        repeatEvery: Number(data.paymentSchedule.repeatEvery),
+        ends: data.paymentSchedule.ends,
+      }
+      data.paymentSchedule = out
+    } else if (data.paymentSchedule.type === 'monthly') {
+      if (isNaN(data.paymentSchedule.repeatOnDay) || !data.paymentSchedule.repeatOnDay) {
+        data.paymentSchedule.repeatOnDay = 1
+      }
+      const out: Mercoa.PaymentSchedule = {
+        type: 'monthly',
+        repeatOnDay: Number(data.paymentSchedule.repeatOnDay),
+        repeatEvery: Number(data.paymentSchedule.repeatEvery),
+        ends: data.paymentSchedule.ends,
+      }
+      data.paymentSchedule = out
+    } else if (data.paymentSchedule.type === 'yearly') {
+      if (isNaN(data.paymentSchedule.repeatOnDay) || !data.paymentSchedule.repeatOnDay) {
+        data.paymentSchedule.repeatOnDay = 1
+      }
+      if (
+        isNaN(data.paymentSchedule.repeatOnMonth) ||
+        data.paymentSchedule.repeatOnMonth < 1 ||
+        !data.paymentSchedule.repeatOnMonth
+      ) {
+        data.paymentSchedule.repeatOnMonth = 1
+      }
+      const out: Mercoa.PaymentSchedule = {
+        type: 'yearly',
+        repeatOnDay: Number(data.paymentSchedule.repeatOnDay),
+        repeatOnMonth: Number(data.paymentSchedule.repeatOnMonth),
+        repeatEvery: Number(data.paymentSchedule.repeatEvery),
+        ends: data.paymentSchedule.ends,
+      }
+      data.paymentSchedule = out
+    } else if (data.paymentSchedule.type === 'daily') {
+      const out: Mercoa.PaymentSchedule = {
+        type: 'daily',
+        repeatEvery: Number(data.paymentSchedule.repeatEvery),
+        ends: data.paymentSchedule.ends,
+      }
+      data.paymentSchedule = out
+    } else {
+      const out: Mercoa.PaymentSchedule = {
+        type: 'oneTime',
+        repeatEvery: 1,
+      }
+      data.paymentSchedule = out
+    }
+  } else {
+    const out: Mercoa.PaymentSchedule = {
+      type: 'oneTime',
+      repeatEvery: 1,
+    }
+    data.paymentSchedule = out
+  }
+  return true
+}
+
+// NOTE: Based loosely on PayableFormUtils.validateAndConstructPayload, with just the minimal functionality
+//       needed to pass payment schedules to the backend correctly
+// TODO: Type formData as ReceivableFormData when we create that type
+const validateAndConstructPayload = (props: { formData: any; mercoaSession: MercoaContext; toast: any }) => {
+  const { formData, mercoaSession, toast } = props
+
+  if (!validateAndFormatPaymentSchedule(formData, toast)) {
+    return false
+  }
+
+  const createUnassignedInvoice = !!mercoaSession.entityGroupId && !mercoaSession.entityId
+  const incompleteInvoiceData: Omit<Mercoa.InvoiceCreationRequest, 'creatorEntityId' | 'creatorEntityGroupId'> = {
+    status: createUnassignedInvoice ? Mercoa.InvoiceStatus.Unassigned : Mercoa.InvoiceStatus.Draft,
+    amount: formData.amount,
+    currency: formData.currency ?? 'USD',
+    invoiceDate: dayjs(formData.invoiceDate).toDate(),
+    dueDate: dayjs(formData.dueDate).toDate(),
+    invoiceNumber: formData.invoiceNumber,
+    noteToSelf: formData.description,
+    payerId: formData.payerId,
+    paymentSourceId: formData.paymentSourceId,
+    vendorId: mercoaSession.entityId,
+    paymentSchedule: formData.paymentSchedule,
+    paymentDestinationId: formData.paymentDestinationId,
+    lineItems: formData.lineItems.map((lineItem: any) => ({
+      name: lineItem.name,
+      description: lineItem.description,
+      quantity: Number(lineItem.quantity),
+      unitPrice: Number(lineItem.unitPrice),
+      amount: Number(lineItem.amount),
+      currency: lineItem.currency ?? 'USD',
+    })),
+  }
+
+  const invoiceRequestData: Mercoa.InvoiceCreationRequest = createUnassignedInvoice
+    ? {
+        ...incompleteInvoiceData,
+        creatorEntityGroupId: mercoaSession.entityGroupId!,
+      }
+    : {
+        ...incompleteInvoiceData,
+        creatorEntityId: mercoaSession.entityId!,
+      }
+
+  return invoiceRequestData
+}
+
+export const receivableFormUtils = {
   getPrefillReceivableData,
   getDefaultSourcePaymentMethod,
   getDefaultDestinationPaymentMethod,
   getSourcePaymentMethodByType,
   getDestinationPaymentMethodByType,
   getAvailablePaymentMethodTypes,
+  validateAndConstructPayload,
 }

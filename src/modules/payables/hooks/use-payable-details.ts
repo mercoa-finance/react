@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { PayableDetailsContext } from '../providers/payables-detail-provider'
+import { PayableDetailsContext } from '../providers/payable-detail-provider'
 
 export const usePayableDetails = () => {
   const context = useContext(PayableDetailsContext)

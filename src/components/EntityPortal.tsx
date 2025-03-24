@@ -45,7 +45,7 @@ export function EntityPortal({ token }: { token: string }) {
   const { invoiceId } = params
 
   const [screen, setScreenLocal] = useState('inbox')
-  const [version, setVersion] = useState<'old' | 'new'>('old')
+  const [version, setVersion] = useState<'old' | 'new'>('new')
   const [invoiceType, setInvoiceType] = useState<'invoice' | 'invoiceTemplate'>('invoice')
 
   const [invoice, setInvoice] = useState<Mercoa.InvoiceResponse | undefined>()
@@ -192,20 +192,6 @@ export function EntityPortal({ token }: { token: string }) {
                 <span className="mercoa-hidden md:mercoa-inline-block">Back</span>
               </MercoaButton>
             )}
-
-            <div className="mercoa-flex mercoa-items-center">
-              <label className="mercoa-mr-2 mercoa-text-sm mercoa-text-gray-600">Experience:</label>
-              <select
-                value={version}
-                className="mercoa-rounded-md mercoa-w-[120px] mercoa-border mercoa-border-gray-300 mercoa-px-4 mercoa-py-1 mercoa-text-sm"
-                onChange={(e) => {
-                  setVersion(e.target.value as 'old' | 'new')
-                }}
-              >
-                <option value="old">Classic</option>
-                <option value="new">Modern</option>
-              </select>
-            </div>
           </div>
         </div>
         <div className="mercoa-my-4 mercoa-flex-none sm:mercoa-mt-0 sm:mercoa-ml-16">
@@ -328,7 +314,7 @@ export function EntityPortal({ token }: { token: string }) {
                 setInvoiceType('invoice')
                 setInvoice(undefined)
               },
-              onCreateRecurringInvoice: () => {
+              onCreateInvoiceTemplate: () => {
                 setScreen('invoice')
                 setInvoiceType('invoiceTemplate')
                 setInvoice(undefined)
@@ -421,6 +407,9 @@ export function EntityPortal({ token }: { token: string }) {
               invoiceId: invoice?.id ?? '',
               invoiceType: invoiceType,
               invoice: invoice,
+            }}
+            displayOptions={{
+              heightOffset: 100,
             }}
             handlers={{
               onInvoiceSubmit: (invoice) => {

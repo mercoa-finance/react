@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { getInvoiceClient, useMercoaSession } from '../../../components'
+import { useMercoaSession } from '../../../components'
 import { useInfiniteQuery } from '../../../lib/react-query/use-infinite-query'
 import { useQuery } from '../../../lib/react-query/use-query'
+import { getInvoiceClient } from '../../common/utils'
 
 export interface PayablesResponse {
   count: number
@@ -22,7 +23,7 @@ export interface UsePayablesRequestOptions {
   paymentType?: Mercoa.PaymentType[]
   metadata?: Mercoa.MetadataFilter | Mercoa.MetadataFilter[]
   dateType?: Mercoa.InvoiceDateFilter
-  approverId?: string
+  approverId?: string[]
   approverAction?: Mercoa.ApproverAction
 }
 
@@ -81,7 +82,8 @@ export function usePayablesQuery({
         metadata: metadata,
         paymentType: paymentType,
         dateType: dateType,
-        ...(approverId && approverAction && { approverId, approverAction }),
+        approverId: approverId,
+        approverAction: approverAction,
       }
 
       const response = await mercoaSession.client.entity.invoice.find(mercoaSession.entityId, filter)
@@ -143,6 +145,7 @@ export function useRecurringPayablesQuery({
       // Entity > Invoice Template > Get All and Get Metrics should be added
       const filter: Mercoa.invoiceTemplate.GetAllInvoiceTemplatesRequest = {
         entityId: mercoaSession.entity.id,
+        payerId: mercoaSession.entity.id, // Functionally the same as entityId + excludeReceivables
         status: currentStatuses,
         search,
         startDate,
@@ -271,6 +274,7 @@ export const usePayableStatusTabsMetricsQuery = ({
       Mercoa.InvoiceStatus.Canceled,
       Mercoa.InvoiceStatus.Refused,
       Mercoa.InvoiceStatus.Failed,
+      Mercoa.InvoiceStatus.Archived,
     ].filter((status) =>
       userPermissionConfig
         ? userPermissionConfig?.invoice.view.statuses.includes(status) ||
@@ -343,10 +347,16 @@ export const usePayableDetailQuery = (
     queryKey: ['payableDetail', invoiceId, invoiceType],
     queryFn: async () => {
       if (!mercoaSession || !mercoaSession.client || !invoiceId) {
-        throw new Error('Mercoa session or invoiceId is missing')
+        throw new Error('MercoaSession or invoiceId is missing')
       }
 
-      const response = invoice ? invoice : await getInvoiceClient(mercoaSession, invoiceType)?.get(invoiceId)
+      let response: Mercoa.InvoiceResponse | Mercoa.InvoiceTemplateResponse | undefined = undefined
+      try {
+        response = invoice ? invoice : await getInvoiceClient(mercoaSession, invoiceType)?.get(invoiceId)
+      } catch (error) {
+        console.error('Error fetching invoice:', error)
+        throw error
+      }
       return response
     },
     options: {
@@ -365,7 +375,7 @@ export const usePayableDocumentsQuery = (
     queryKey: ['payableDocuments', invoiceId, invoiceType],
     queryFn: async () => {
       if (!mercoaSession || !mercoaSession.client || !invoiceId) {
-        throw new Error('Mercoa session or invoiceId is missing')
+        throw new Error('MercoaSession or invoiceId is missing')
       }
 
       const response = await getInvoiceClient(mercoaSession, invoiceType)?.document.getAll(invoiceId, {
@@ -389,7 +399,7 @@ export const usePayableSourceEmailQuery = (
     queryKey: ['payableSourceEmail', invoiceId, invoiceType],
     queryFn: async () => {
       if (!mercoaSession || !mercoaSession.client || !invoiceId) {
-        throw new Error('Mercoa session or invoiceId is missing')
+        throw new Error('MercoaSession or invoiceId is missing')
       }
 
       const response = await getInvoiceClient(mercoaSession, invoiceType)?.document.getSourceEmail(invoiceId)
@@ -401,7 +411,7 @@ export const usePayableSourceEmailQuery = (
   })
 }
 
-export function useGetOcrJob(ocrJobId?: string, refetchInterval?: number) {
+export function useOcrJobQuery(ocrJobId?: string, refetchInterval?: number) {
   const mercoaSession = useMercoaSession()
 
   return useQuery<Mercoa.OcrJobResponse | undefined>({
@@ -437,7 +447,7 @@ export const usePayeesQuery = ({ search, networkType }: UsePayeesRequestOptions)
     queryKey: ['payees', search, networkType],
     queryFn: async () => {
       if (!mercoaSession || !mercoaSession.client || !mercoaSession.entity?.id) {
-        throw new Error('Mercoa session or entity ID is missing')
+        throw new Error('MercoaSession or entity ID is missing')
       }
 
       let network: Mercoa.CounterpartyNetworkType[] = [Mercoa.CounterpartyNetworkType.Entity]
@@ -468,11 +478,13 @@ export const usePayeesQuery = ({ search, networkType }: UsePayeesRequestOptions)
 
 export const usePayableFeeQuery = ({
   amount,
+  creatorEntityId,
   paymentSourceId,
   paymentDestinationId,
   paymentDestinationOptions,
 }: {
   amount?: number
+  creatorEntityId?: string
   paymentSourceId?: string
   paymentDestinationId?: string
   paymentDestinationOptions?: Mercoa.PaymentDestinationOptions
@@ -480,21 +492,22 @@ export const usePayableFeeQuery = ({
   const mercoaSession = useMercoaSession()
 
   return useQuery<Mercoa.InvoiceFeesResponse>({
-    queryKey: ['payableFee', amount, paymentSourceId, paymentDestinationId, paymentDestinationOptions],
+    queryKey: ['payableFee', amount, creatorEntityId, paymentSourceId, paymentDestinationId, paymentDestinationOptions],
     queryFn: async () => {
-      if (!mercoaSession?.client || !amount || !paymentSourceId || !paymentDestinationId) {
+      if (!mercoaSession?.client || !amount || !paymentSourceId || !paymentDestinationId || !creatorEntityId) {
         throw new Error('Missing required parameters')
       }
 
       return await mercoaSession.client.calculate.fee({
         amount,
+        creatorEntityId,
         paymentSourceId,
         paymentDestinationId,
         paymentDestinationOptions: paymentDestinationOptions?.type ? paymentDestinationOptions : undefined,
       })
     },
     options: {
-      enabled: !!mercoaSession?.client && !!amount && !!paymentSourceId && !!paymentDestinationId,
+      enabled: !!mercoaSession?.client && !!amount && !!paymentSourceId && !!paymentDestinationId && !!creatorEntityId,
     },
   })
 }

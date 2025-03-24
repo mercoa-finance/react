@@ -1,56 +1,10 @@
 import { Bar, Container, Section } from '@column-resizer/react'
-import { ReactNode } from 'react'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import { NoSession, useMercoaSession } from '../../../../components'
-import { PayableDetailsProvider } from '../../providers/payables-detail-provider'
+import { PayableDetailsProvider } from '../../providers/payable-detail-provider'
+import { PayableDetailsProps } from '../../types'
 import { PayableDocument } from '../payable-document'
 import { PayableForm } from '../payable-form'
-
-export type PayableDetailsHandlers = {
-  onInvoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
-  onCounterpartyPreSubmit?: (
-    counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
-    counterpartyId?: string,
-  ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
-  onInvoiceUpdate?: (invoice: Mercoa.InvoiceResponse | undefined) => void
-  onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
-  onOcrComplete?: (ocr: Mercoa.OcrResponse) => void
-}
-
-//data options
-export type PayableDetailsQueryOptions = {
-  invoiceId: string
-  invoice?: Mercoa.InvoiceResponse
-  invoiceType: 'invoice' | 'invoiceTemplate'
-}
-
-// functional options
-export type PayableDetailsConfig = {
-  supportedCurrencies?: Mercoa.CurrencyCode[]
-}
-
-// display options
-export type PayableDetailsDisplayOptions = {
-  heightOffset?: number
-  documentPosition?: 'right' | 'left' | 'none'
-}
-
-export type PayableDetailsRenderCustom = {
-  toast?: {
-    success: (message: string) => void
-    error: (message: string) => void
-  }
-}
-
-export type PayableDetailsProps = {
-  queryOptions?: PayableDetailsQueryOptions
-  handlers?: PayableDetailsHandlers
-  config?: PayableDetailsConfig
-  displayOptions?: PayableDetailsDisplayOptions
-  renderCustom?: PayableDetailsRenderCustom
-  children?: ReactNode
-}
 
 export function PayableDetails({
   queryOptions,
@@ -68,19 +22,7 @@ export function PayableDetails({
     },
   },
   children,
-}: {
-  queryOptions?: PayableDetailsQueryOptions
-  handlers?: PayableDetailsHandlers
-  config?: PayableDetailsConfig
-  displayOptions?: PayableDetailsDisplayOptions
-  renderCustom?: {
-    toast?: {
-      success: (message: string) => void
-      error: (message: string) => void
-    }
-  }
-  children?: JSX.Element | JSX.Element[]
-}) {
+}: PayableDetailsProps) {
   const mercoaSession = useMercoaSession()
   let { invoiceId, invoiceType, invoice } = queryOptions ?? {}
   const { heightOffset = 0, documentPosition = 'left' } = displayOptions ?? {}
@@ -110,7 +52,7 @@ export function PayableDetails({
       return (
         <PayableDetailsProvider
           payableDetailsProps={{
-            queryParams: { invoiceId: invoiceId ?? '', invoiceType },
+            queryOptions: { invoiceId: invoiceId ?? '', invoiceType },
             displayOptions: {
               heightOffset: heightOffset ?? mercoaSession.heightOffset,
               documentPosition: documentPosition ?? 'left',
@@ -136,7 +78,7 @@ export function PayableDetails({
   return (
     <PayableDetailsProvider
       payableDetailsProps={{
-        queryParams: { invoiceId: invoice?.id ?? invoiceId ?? '', invoiceType },
+        queryOptions: { invoiceId: invoice?.id ?? invoiceId ?? '', invoiceType },
         handlers,
         renderCustom,
         config: {

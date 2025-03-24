@@ -10,6 +10,7 @@ const allColumnsDefault: InvoiceTableColumn[] = [
   { title: 'Due Date', field: 'dueDate' },
   { title: 'Invoice Date', field: 'invoiceDate' },
   { title: 'Amount', field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount },
+  { title: 'Approvers', field: 'approvers' },
   { title: 'Status', field: 'status' },
 ]
 

@@ -1,5 +1,5 @@
-import { MercoaButton, Tooltip } from '../../../../../components/generics'
-import { ExportIcon } from '../../../../common/assets/icons'
+import { MercoaButton, Tooltip } from '../../../components/generics'
+import { ExportIcon } from '../assets/icons'
 
 export const ExportsDropdown = () => {
   return (

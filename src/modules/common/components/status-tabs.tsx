@@ -3,15 +3,7 @@ import { Mercoa } from '@mercoa/javascript'
 import { invoiceStatusToName, NoSession, useMercoaSession } from '../../../components'
 import { CountPill } from '../../../components/generics'
 
-export function StatusTabs({
-  invoiceType = 'invoice',
-  statuses,
-  onStatusChange,
-  excludePayables,
-  selectedStatuses,
-  approvalPolicies,
-  invoiceMetrics,
-}: {
+interface StatusTabsProps {
   invoiceType?: 'invoice' | 'invoiceTemplate'
   statuses?: Array<Mercoa.InvoiceStatus>
   onStatusChange?: (status: Mercoa.InvoiceStatus[]) => any
@@ -21,7 +13,17 @@ export function StatusTabs({
   invoiceMetrics?: {
     [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse
   }
-}) {
+}
+
+export const StatusTabs: React.FC<StatusTabsProps> = ({
+  invoiceType = 'invoice',
+  statuses,
+  onStatusChange,
+  excludePayables,
+  selectedStatuses,
+  approvalPolicies,
+  invoiceMetrics,
+}) => {
   const mercoaSession = useMercoaSession()
 
   const [tabs, setTabs] = useState<Array<Mercoa.InvoiceStatus>>(
@@ -35,6 +37,7 @@ export function StatusTabs({
       Mercoa.InvoiceStatus.Canceled,
       Mercoa.InvoiceStatus.Refused,
       Mercoa.InvoiceStatus.Failed,
+      Mercoa.InvoiceStatus.Archived,
     ],
   )
 

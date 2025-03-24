@@ -9,7 +9,7 @@ export interface DateRange {
 export interface PayablesFilters {
   selectedStatusFilters: Mercoa.InvoiceStatus[]
   selectedPaymentModeFilters: Mercoa.PaymentMethodType[]
-  selectedApprovers: (Mercoa.EntityUserResponse | 'current')[]
+  selectedApprovers: Mercoa.EntityUserResponse[]
   dateRange: DateRange
   dateType: Mercoa.InvoiceDateFilter
 }
@@ -20,7 +20,11 @@ export interface PayablesFilterStoreState {
 
 export interface PayablesFilterStoreActions {
   setFilters: (tableId: string, filters: Partial<PayablesFilters>) => void
-  getFilters: (tableId: string, initialStatusFilters?: Mercoa.InvoiceStatus[]) => PayablesFilters
+  getFilters: (
+    tableId: string,
+    initialStatusFilters?: Mercoa.InvoiceStatus[],
+    currentUser?: Mercoa.EntityUserResponse | null,
+  ) => PayablesFilters
 }
 
 export const usePayablesFilterStore = create<PayablesFilterStoreState & PayablesFilterStoreActions>((set, get) => ({
@@ -38,7 +42,11 @@ export const usePayablesFilterStore = create<PayablesFilterStoreState & Payables
     }))
   },
 
-  getFilters: (tableId, initialStatusFilters: Mercoa.InvoiceStatus[] = [Mercoa.InvoiceStatus.Draft]) => {
+  getFilters: (
+    tableId,
+    initialStatusFilters: Mercoa.InvoiceStatus[] = [Mercoa.InvoiceStatus.Draft],
+    currentUser: Mercoa.EntityUserResponse | null = null,
+  ) => {
     const existingState = get().state[tableId]
     if (existingState) {
       return existingState

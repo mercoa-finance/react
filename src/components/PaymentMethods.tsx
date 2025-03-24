@@ -7,14 +7,20 @@ export function PaymentMethods({
   showAdd = true,
   showEdit = true,
   showDelete = true,
+  showEntityConfirmation = false,
   hideIndicators,
+  entityId,
+  onSelect,
 }: {
   isPayor?: boolean
   isPayee?: boolean
   showAdd?: boolean
   showEdit?: boolean
   showDelete?: boolean
+  showEntityConfirmation?: boolean
   hideIndicators?: boolean
+  entityId?: string
+  onSelect?: (value?: Mercoa.PaymentMethodResponse) => void
 }) {
   const mercoaSession = useMercoaSession()
   if (!mercoaSession.client) return <NoSession componentName="PaymentMethods" />
@@ -24,7 +30,7 @@ export function PaymentMethods({
     isPayor = true
   }
 
-  const showBanksAccounts =
+  const showBankAccounts =
     (isPayor &&
       mercoaSession.organization?.paymentMethods?.payerPayments?.find(
         (e) => e.type === Mercoa.PaymentMethodType.BankAccount && e.active,
@@ -43,47 +49,63 @@ export function PaymentMethods({
     mercoaSession.organization?.paymentMethods?.vendorDisbursements?.find(
       (e) => e.type === Mercoa.PaymentMethodType.Check && e.active,
     )
-  const showCustom =
-    (isPayor &&
-      mercoaSession.organization?.paymentMethods?.payerPayments?.find(
-        (e) => e.type === Mercoa.PaymentMethodType.Custom && e.active,
-      )) ||
-    (isPayee &&
-      mercoaSession.organization?.paymentMethods?.vendorDisbursements?.find(
-        (e) => e.type === Mercoa.PaymentMethodType.Custom && e.active,
-      ))
 
   return (
-    <div>
-      {showBanksAccounts && (
-        <div className="mercoa-mt-8">
+    <div className="mercoa-flex mercoa-flex-col mercoa-gap-y-4">
+      {showBankAccounts && (
+        <div>
           <h3>Bank Accounts</h3>
-          <BankAccounts showAdd={showAdd} showEdit={showEdit} showDelete={showDelete} hideIndicators={hideIndicators} />
-        </div>
-      )}
-      {showCards && (
-        <div className="mercoa-mt-8">
-          <h3>Cards</h3>
-          <Cards showAdd={showAdd} showEdit={showEdit} showDelete={showDelete} hideIndicators={hideIndicators} />
-        </div>
-      )}
-      {showChecks && (
-        <div className="mercoa-mt-8">
-          <h3>Checks</h3>
-          <Checks showAdd={showAdd} showEdit={showEdit} showDelete={showDelete} hideIndicators={hideIndicators} />
-        </div>
-      )}
-      {showCustom && (
-        <div className="mercoa-mt-8">
-          <h3>Custom Payment Methods</h3>
-          <CustomPaymentMethods
+          <BankAccounts
             showAdd={showAdd}
             showEdit={showEdit}
             showDelete={showDelete}
+            showEntityConfirmation={showEntityConfirmation}
             hideIndicators={hideIndicators}
+            entityId={entityId}
+            onSelect={onSelect}
           />
         </div>
       )}
+      {showCards && (
+        <div>
+          <h3>Cards</h3>
+          <Cards
+            showAdd={showAdd}
+            showEdit={showEdit}
+            showDelete={showDelete}
+            showEntityConfirmation={showEntityConfirmation}
+            hideIndicators={hideIndicators}
+            entityId={entityId}
+            onSelect={onSelect}
+          />
+        </div>
+      )}
+      {showChecks && (
+        <div>
+          <h3>Checks</h3>
+          <Checks
+            showAdd={showAdd}
+            showEdit={showEdit}
+            showDelete={showDelete}
+            showEntityConfirmation={showEntityConfirmation}
+            hideIndicators={hideIndicators}
+            entityId={entityId}
+            onSelect={onSelect}
+          />
+        </div>
+      )}
+
+      <CustomPaymentMethods
+        isPayor={isPayor ?? false}
+        isPayee={isPayee ?? false}
+        showAdd={showAdd}
+        showEdit={showEdit}
+        showDelete={showDelete}
+        showEntityConfirmation={showEntityConfirmation}
+        hideIndicators={hideIndicators}
+        entityId={entityId}
+        onSelect={onSelect}
+      />
     </div>
   )
 }

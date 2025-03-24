@@ -35,7 +35,7 @@ export const DateTimeFilterDropdown: React.FC<DateTimeFilterDropdownProps> = ({ 
       endDate: null,
     },
   )
-  const [dateRangeLabel, setDateRangelLabel] = useState('')
+  const [dateRangeLabel, setDateRangeLabel] = useState('')
   const [dateType, setDateType] = useState<Mercoa.InvoiceDateFilter>(
     storeDateType ?? Mercoa.InvoiceDateFilter.CreatedAt,
   )
@@ -70,7 +70,7 @@ export const DateTimeFilterDropdown: React.FC<DateTimeFilterDropdownProps> = ({ 
               <div
                 className="mercoa-text-[14px] mercoa-flex mercoa-flex-col mercoa-items-start mercoa-justify-between mercoa-h-[60px] mercoa-gap-1 mercoa-px-[0.75rem] mercoa-py-[0.5rem] mercoa-text-left mercoa-text-[#1A1919] mercoa-cursor-pointer mercoa-no-underline hover:mercoa-bg-[#F4F2F0]"
                 onClick={() => {
-                  setDateRangelLabel('Today')
+                  setDateRangeLabel('Today')
                   handlePresetSelect({ startDate: dayjs().toDate(), endDate: dayjs().toDate() })
                   setOpen(false)
                 }}
@@ -83,7 +83,7 @@ export const DateTimeFilterDropdown: React.FC<DateTimeFilterDropdownProps> = ({ 
               <div
                 className="mercoa-text-[14px] mercoa-flex mercoa-flex-col mercoa-items-start mercoa-justify-between mercoa-h-[60px] mercoa-gap-1 mercoa-px-[0.75rem] mercoa-py-[0.5rem] mercoa-text-left mercoa-text-[#1A1919] mercoa-cursor-pointer mercoa-no-underline hover:mercoa-bg-[#F4F2F0]"
                 onClick={() => {
-                  setDateRangelLabel('Yesterday')
+                  setDateRangeLabel('Yesterday')
                   handlePresetSelect({
                     startDate: dayjs().subtract(1, 'day').toDate(),
                     endDate: dayjs().subtract(1, 'day').toDate(),
@@ -99,7 +99,7 @@ export const DateTimeFilterDropdown: React.FC<DateTimeFilterDropdownProps> = ({ 
               <div
                 className="mercoa-text-[14px] mercoa-flex mercoa-flex-col mercoa-items-start mercoa-justify-between mercoa-h-[60px] mercoa-gap-1 mercoa-px-[0.75rem] mercoa-py-[0.5rem] mercoa-text-left mercoa-text-[#1A1919] mercoa-cursor-pointer mercoa-no-underline hover:mercoa-bg-[#F4F2F0]"
                 onClick={() => {
-                  setDateRangelLabel('This Month')
+                  setDateRangeLabel('This Month')
                   handlePresetSelect({
                     startDate: dayjs().startOf('month').toDate(),
                     endDate: dayjs().endOf('month').toDate(),
@@ -115,7 +115,7 @@ export const DateTimeFilterDropdown: React.FC<DateTimeFilterDropdownProps> = ({ 
               <div
                 className="mercoa-text-[14px] mercoa-flex mercoa-flex-col mercoa-items-start mercoa-justify-between mercoa-h-[60px] mercoa-gap-1 mercoa-px-[0.75rem] mercoa-py-[0.5rem] mercoa-text-left mercoa-text-[#1A1919] mercoa-cursor-pointer mercoa-no-underline hover:mercoa-bg-[#F4F2F0]"
                 onClick={() => {
-                  setDateRangelLabel('Last Month')
+                  setDateRangeLabel('Last Month')
                   handlePresetSelect({
                     startDate: dayjs().subtract(1, 'month').startOf('month').toDate(),
                     endDate: dayjs().subtract(1, 'month').endOf('month').toDate(),
@@ -146,7 +146,7 @@ export const DateTimeFilterDropdown: React.FC<DateTimeFilterDropdownProps> = ({ 
                     startDate: null,
                     endDate: null,
                   })
-                  setDateRangelLabel('')
+                  setDateRangeLabel('')
                   handleReset()
                 }}
                 className="hover:mercoa-underline mercoa-whitespace-nowrap mercoa-text-[12px] mercoa-capitalize mercoa-color-[#1A1919]"
@@ -207,7 +207,7 @@ export const DateTimeFilterDropdown: React.FC<DateTimeFilterDropdownProps> = ({ 
                     startDate: null,
                     endDate: null,
                   })
-                  setDateRangelLabel('')
+                  setDateRangeLabel('')
                   handleReset()
                 }}
                 className="hover:mercoa-underline mercoa-whitespace-nowrap mercoa-text-[12px] mercoa-capitalize mercoa-color-[#1A1919]"
@@ -240,12 +240,12 @@ export const DateTimeFilterDropdown: React.FC<DateTimeFilterDropdownProps> = ({ 
                     endDate: dates[1] ? dayjs(dates[1]).endOf('day').toDate() : null,
                   })
                   if (dates[0] && dates[1]) {
-                    setDateRangelLabel(
+                    setDateRangeLabel(
                       `${dayjs(dates[0]).format('MMM D, YYYY')} - ${dayjs(dates[1]).format('MMM D, YYYY')}`,
                     )
                     setOpen(false)
                   } else if (dates[0]) {
-                    setDateRangelLabel(`${dayjs(dates[0]).format('MMM D, YYYY')}`)
+                    setDateRangeLabel(`${dayjs(dates[0]).format('MMM D, YYYY')}`)
                   }
                 }}
                 startDate={dateRange.startDate}
@@ -263,7 +263,7 @@ export const DateTimeFilterDropdown: React.FC<DateTimeFilterDropdownProps> = ({ 
                     startDate: null,
                     endDate: null,
                   })
-                  setDateRangelLabel('')
+                  setDateRangeLabel('')
                   handleReset()
                 }}
                 className="hover:mercoa-underline mercoa-whitespace-nowrap mercoa-text-[12px] mercoa-capitalize mercoa-color-[#1A1919]"
@@ -351,9 +351,9 @@ export const CalendarIcon = () => {
       height="12"
       viewBox="0 0 24 24"
       fill="none"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
     >
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -373,9 +373,9 @@ export const BackIcon = () => {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden="true"
     >
       <line x1="19" y1="12" x2="5" y2="12"></line>

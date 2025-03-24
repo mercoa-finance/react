@@ -6,58 +6,41 @@ import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { useMercoaSession } from '../../../components'
 import { queryClient } from '../../../lib/react-query/query-client-provider'
-import { usePaymentLink, usePaymentMethods, useReceivableDetailQuery, useSupportedCurrencies } from '../api/queries'
-import { ReceivableFormAction } from '../constants'
-import { ReceivablePaymentMethodContext } from '../providers/receivable-detail-provider'
-import { receivableUtils } from '../utils'
+import { getInvoiceClient } from '../../common/utils'
+import {
+  usePaymentLinkQuery,
+  usePaymentMethodsQuery,
+  useReceivableDetailQuery,
+  useSupportedCurrenciesQuery,
+} from '../api/queries'
+import { ReceivableFormAction } from '../components/receivable-form/constants'
+import { receivableFormUtils } from '../components/receivable-form/utils'
+import { ReceivableDetailsProps, ReceivablePaymentMethodContext, RecurringScheduleContext } from '../types'
 
-export interface ReceivableDetailsHandlers {
-  onUpdate: (invoice: Mercoa.InvoiceResponse | undefined) => void
-}
-
-export interface ReceivableDetailsQueryParams {
-  invoiceId?: string
-}
-export interface ReceivableDetailsConfig {
-  supportedCurrencies?: Mercoa.CurrencyCode[]
-  disableCustomerCreation?: boolean
-}
-
-export interface ReceivableDetailsDisplayOptions {
-  documentPosition?: 'right' | 'left' | 'none'
-  heightOffset?: number
-}
-
-export interface ReceivableDetailsRenderCustom {
-  toast?: {
-    error: (message: string) => void
-    success: (message: string) => void
-    info: (message: string) => void
-  }
-}
-
-export interface ReceivableDetailsProps {
-  queryParams: ReceivableDetailsQueryParams
-  handlers?: ReceivableDetailsHandlers
-  config?: ReceivableDetailsConfig
-  displayOptions?: ReceivableDetailsDisplayOptions
-  renderCustom?: ReceivableDetailsRenderCustom
-}
 export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
-  const { queryParams, handlers, config, renderCustom } = props
+  const { queryOptions: queryParams, handlers, config, renderCustom } = props
   const { toast } = renderCustom ?? {}
   const mercoaSession = useMercoaSession()
-  const { onUpdate } = handlers ?? {}
+  const { onInvoiceUpdate: onUpdate } = handlers ?? {}
   const { supportedCurrencies, disableCustomerCreation } = config ?? {}
 
   const [formLoading, setFormLoading] = useState(false)
 
-  const { invoiceId } = queryParams
-  const { data: receivableData, isLoading: receivableDataLoading } = useReceivableDetailQuery(invoiceId)
-  const { data: supportedCurrenciesFromQuery } = useSupportedCurrencies()
-  const { data: paymentLink } = usePaymentLink(invoiceId)
+  const { invoiceId, invoiceType } = queryParams
+  const { data: receivableData, isLoading: receivableDataLoading } = useReceivableDetailQuery(invoiceId, invoiceType)
+  const { data: supportedCurrenciesFromQuery } = useSupportedCurrenciesQuery()
+  const { data: paymentLink } = usePaymentLinkQuery(invoiceId, invoiceType)
   const usePrefillOnce = useRef(true)
   const useOnceAfterPayerChange = useRef(false)
+
+  const defaultPaymentSchedule =
+    invoiceType === 'invoiceTemplate'
+      ? {
+          type: 'daily',
+          repeatEvery: 1,
+          ends: new Date(),
+        }
+      : undefined
 
   const schema = yup
     .object({
@@ -101,6 +84,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
       paymentDestinationOptions: yup.mixed().nullable(),
       paymentSourceCheckEnabled: yup.boolean(),
       paymentSourceId: yup.string(),
+      paymentSchedule: yup.mixed().nullable(),
       formAction: yup.string().oneOf([...Object.values(ReceivableFormAction), '']),
       saveAsDraft: yup.boolean(),
       saveAsAdmin: yup.boolean(),
@@ -132,6 +116,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
       paymentSourceType: receivableData?.paymentSource?.type ?? '',
       paymentSourceCheckEnabled:
         (receivableData?.paymentSource as Mercoa.BankAccountResponse)?.checkOptions?.enabled ?? false,
+      paymentSchedule: receivableData?.paymentSchedule ?? defaultPaymentSchedule,
       description: receivableData?.noteToSelf ?? '',
       formAction: '',
       saveAsDraft: false,
@@ -156,6 +141,12 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
     selectedDestinationType,
     selectedSourcePaymentMethodId,
     selectedDestinationPaymentMethodId,
+    paymentScheduleType,
+    paymentScheduleEnds,
+    paymentScheduleRepeatEvery,
+    paymentScheduleRepeatOn,
+    paymentScheduleRepeatOnDay,
+    paymentScheduleRepeatOnMonth,
   ] = watch([
     'payerId',
     'vendorId',
@@ -163,13 +154,19 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
     'paymentDestinationType',
     'paymentSourceId',
     'paymentDestinationId',
+    'paymentSchedule.type',
+    'paymentSchedule.ends',
+    'paymentSchedule.repeatEvery',
+    'paymentSchedule.repeatOn',
+    'paymentSchedule.repeatOnDay',
+    'paymentSchedule.repeatOnMonth',
   ] as any)
 
-  const { data: sourcePaymentMethods } = usePaymentMethods({
+  const { data: sourcePaymentMethods } = usePaymentMethodsQuery({
     entityId: payerId ?? receivableData?.payerId,
   })
 
-  const { data: destinationPaymentMethods } = usePaymentMethods({
+  const { data: destinationPaymentMethods } = usePaymentMethodsQuery({
     entityId: mercoaSession.entityId,
   })
 
@@ -180,7 +177,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
       (supportedCurrencies ?? supportedCurrenciesFromQuery) &&
       usePrefillOnce.current
     ) {
-      const prefillReceivableData = receivableUtils.getPrefillReceivableData({
+      const prefillReceivableData = receivableFormUtils.getPrefillReceivableData({
         destinationPaymentMethods,
         receivableData,
         supportedCurrencies: supportedCurrencies ?? supportedCurrenciesFromQuery,
@@ -199,8 +196,8 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
   useEffect(() => {
     if (useOnceAfterPayerChange.current && !!sourcePaymentMethods) {
       const sourcePaymentMethod = watch('paymentSourceType')
-        ? receivableUtils.getSourcePaymentMethodByType(watch('paymentSourceType') ?? '', sourcePaymentMethods)
-        : receivableUtils.getDefaultSourcePaymentMethod(sourcePaymentMethods)
+        ? receivableFormUtils.getSourcePaymentMethodByType(watch('paymentSourceType') ?? '', sourcePaymentMethods)
+        : receivableFormUtils.getDefaultSourcePaymentMethod(sourcePaymentMethods)
       mercoaSession.debug('sourcePaymentMethod', sourcePaymentMethod)
       setValue('paymentSourceId', sourcePaymentMethod.paymentSourceId)
       setValue(
@@ -257,9 +254,10 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
   const refreshInvoice = (invoiceId: string, updatedInvoice?: Mercoa.InvoiceResponse) => {
     queryClient.invalidateQueries({ queryKey: ['receivableDetail', invoiceId] })
     queryClient.invalidateQueries({ queryKey: ['receivables'] })
+    queryClient.invalidateQueries({ queryKey: ['recurringReceivables'] })
     queryClient.invalidateQueries({ queryKey: ['receivableMetrics'] })
     queryClient.invalidateQueries({ queryKey: ['receivableStatusTabsMetrics'] })
-    const updatedPrefillReceivableData = receivableUtils.getPrefillReceivableData({
+    const updatedPrefillReceivableData = receivableFormUtils.getPrefillReceivableData({
       receivableData: updatedInvoice,
       supportedCurrencies: supportedCurrencies ?? supportedCurrenciesFromQuery,
     })
@@ -271,40 +269,23 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
 
   const handleFormSubmit = async (data: any) => {
     if (!mercoaSession.entityId && !mercoaSession.entityGroupId) return
-    const createUnassignedInvoice = !!mercoaSession.entityGroupId && !mercoaSession.entityId
-    const incompleteInvoiceData: Omit<Mercoa.InvoiceCreationRequest, 'creatorEntityId' | 'creatorEntityGroupId'> = {
-      status: createUnassignedInvoice ? Mercoa.InvoiceStatus.Unassigned : Mercoa.InvoiceStatus.Draft,
-      amount: data.amount,
-      currency: data.currency ?? 'USD',
-      invoiceDate: dayjs(data.invoiceDate).toDate(),
-      dueDate: dayjs(data.dueDate).toDate(),
-      invoiceNumber: data.invoiceNumber,
-      noteToSelf: data.description,
-      payerId: data.payerId,
-      paymentSourceId: data.paymentSourceId,
-      vendorId: mercoaSession.entityId,
-      paymentDestinationId: data.paymentDestinationId,
-      lineItems: data.lineItems.map((lineItem: any) => ({
-        name: lineItem.name,
-        description: lineItem.description,
-        quantity: Number(lineItem.quantity),
-        unitPrice: Number(lineItem.unitPrice),
-        amount: Number(lineItem.amount),
-        currency: lineItem.currency ?? 'USD',
-      })),
-    }
 
-    const newInvoice: Mercoa.InvoiceCreationRequest = createUnassignedInvoice
-      ? {
-          ...incompleteInvoiceData,
-          creatorEntityGroupId: mercoaSession.entityGroupId!,
-        }
-      : {
-          ...incompleteInvoiceData,
-          creatorEntityId: mercoaSession.entityId!,
-        }
+    const invoiceClient = getInvoiceClient(mercoaSession, invoiceType ?? 'invoice')
+    if (!invoiceClient) return
 
     setFormLoading(true)
+
+    const newInvoice: Mercoa.InvoiceCreationRequest | false = receivableFormUtils.validateAndConstructPayload({
+      formData: data,
+      mercoaSession,
+      toast,
+    })
+
+    if (!newInvoice) {
+      setFormLoading(false)
+      setValue('formAction', '')
+      return
+    }
 
     if (newInvoice.payerId && mercoaSession.entityId) {
       await mercoaSession.client?.entity.counterparty.addPayors(mercoaSession.entityId, {
@@ -316,7 +297,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
       receivableData &&
       [ReceivableFormAction.SEND_EMAIL, ReceivableFormAction.SAVE_DRAFT].includes(data.formAction)
     ) {
-      const response = await mercoaSession.client?.invoice.update(
+      const response = await invoiceClient.update(
         receivableData.id,
         data.formAction === ReceivableFormAction.SEND_EMAIL ? { ...newInvoice, status: 'APPROVED' } : newInvoice,
       )
@@ -333,7 +314,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
         setValue('formAction', '')
       }
     } else if (data.formAction === ReceivableFormAction.CREATE) {
-      const response = await mercoaSession.client?.invoice.create(newInvoice)
+      const response = await invoiceClient.create(newInvoice)
       mercoaSession.debug(response)
       setFormLoading(false)
       if (response?.id) {
@@ -346,16 +327,18 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
       }
     }
   }
+
   const handleActionClick = async (action: ReceivableFormAction) => {
     setValue('formAction', action)
-    if (!mercoaSession.client) return
+    const invoiceClient = getInvoiceClient(mercoaSession, invoiceType ?? 'invoice')
+    if (!mercoaSession.client || !invoiceClient) return
 
     try {
       switch (action) {
         case ReceivableFormAction.DELETE:
           if (!receivableData?.id) return
           if (confirm('Are you sure you want to delete this invoice? This cannot be undone.')) {
-            await mercoaSession.client.invoice.delete(receivableData.id)
+            await invoiceClient.delete(receivableData.id)
             toast?.success('Invoice deleted')
             if (onUpdate) onUpdate(undefined)
             setValue('formAction', '')
@@ -365,7 +348,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
         case ReceivableFormAction.CANCEL:
           if (!receivableData?.id) return
           if (confirm('Are you sure you want to cancel this invoice? This cannot be undone.')) {
-            const response = await mercoaSession.client.invoice.update(receivableData.id, {
+            const response = await invoiceClient.update(receivableData.id, {
               status: Mercoa.InvoiceStatus.Canceled,
             })
             toast?.success('Invoice canceled')
@@ -376,7 +359,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
 
         case ReceivableFormAction.PREVIEW:
           if (!receivableData?.id) return
-          const pdfLink = await mercoaSession.client.invoice.document.generateInvoicePdf(receivableData.id)
+          const pdfLink = await invoiceClient.document.generateInvoicePdf(receivableData.id)
           if (pdfLink?.uri) {
             window.open(pdfLink.uri, '_blank')
             setValue('formAction', '')
@@ -387,11 +370,16 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
           break
 
         case ReceivableFormAction.PAYMENT_LINK:
+          if (invoiceType === 'invoiceTemplate') {
+            toast?.error('Payment links are not available for invoice templates.')
+            setValue('formAction', '')
+            return
+          }
           if (!receivableData?.id || !receivableData.payer) {
             toast?.error('There is no payer associated with this invoice. Please select a payer and save draft.')
             return
           }
-          const paymentLink = await mercoaSession.client.invoice.paymentLinks.getPayerLink(receivableData.id)
+          const paymentLink = await mercoaSession.client?.invoice.paymentLinks.getPayerLink(receivableData.id)
           if (paymentLink) {
             window.open(paymentLink, '_blank')
           } else {
@@ -402,6 +390,11 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
 
         case ReceivableFormAction.SEND_EMAIL:
         case ReceivableFormAction.RESEND_EMAIL:
+          if (invoiceType === 'invoiceTemplate') {
+            toast?.error('Email sending is not available for invoice templates.')
+            setValue('formAction', '')
+            return
+          }
           if (!receivableData?.id || !receivableData.payer) {
             toast?.error('There is no payer associated with this invoice. Please select a payer and save draft.')
             return
@@ -413,7 +406,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
             setValue('formAction', '')
             return
           }
-          await mercoaSession.client.invoice.paymentLinks.sendPayerEmail(receivableData.id, { attachInvoice: true })
+          await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(receivableData.id, { attachInvoice: true })
           toast?.info('Email Sent')
           setValue('formAction', '')
           break
@@ -421,7 +414,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
         case ReceivableFormAction.MARK_AS_PAID:
           if (!receivableData?.id) return
           try {
-            const markedAsPaidInvoice = await mercoaSession.client.invoice.update(receivableData.id, {
+            const markedAsPaidInvoice = await invoiceClient.update(receivableData.id, {
               status: Mercoa.InvoiceStatus.Paid,
             })
             toast?.success('Invoice marked as paid')
@@ -432,24 +425,26 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
             setValue('formAction', '')
           }
           break
-        case ReceivableFormAction.SCHEDULE_PAYMENT:
+        case ReceivableFormAction.SCHEDULE_RECURRING_INVOICE:
           if (!receivableData?.id) return
           try {
-            const scheduledInvoice = await mercoaSession.client.invoice.update(receivableData.id, {
+            // TODO: This is intentionally incorrect, and is only here to satisfy the backend's requirement of having a deductionDate
+            const scheduledInvoice = await invoiceClient.update(receivableData.id, {
               status: Mercoa.InvoiceStatus.Scheduled,
+              deductionDate: dayjs().toDate(),
             })
-            toast?.success('Invoice scheduled')
+            toast?.success('Recurring invoice scheduled')
             refreshInvoice(receivableData.id, scheduledInvoice)
             setValue('formAction', '')
           } catch (error: any) {
-            toast?.error(`Failed to schedule invoice: ${error.message}`)
+            toast?.error(`Failed to schedule recurring invoice: ${error.message}`)
             setValue('formAction', '')
           }
           break
 
         case ReceivableFormAction.RESTORE_AS_DRAFT:
           if (!receivableData?.id) return
-          const restoredInvoice = await mercoaSession.client.invoice.update(receivableData.id, {
+          const restoredInvoice = await invoiceClient.update(receivableData.id, {
             status: Mercoa.InvoiceStatus.Draft,
           })
           toast?.success('Invoice restored as draft')
@@ -473,8 +468,8 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
 
     const paymentMethodPayload: any =
       type === 'destination'
-        ? receivableUtils.getDestinationPaymentMethodByType(paymentMethodType, destinationPaymentMethods ?? [])
-        : receivableUtils.getSourcePaymentMethodByType(paymentMethodType, sourcePaymentMethods ?? [])
+        ? receivableFormUtils.getDestinationPaymentMethodByType(paymentMethodType, destinationPaymentMethods ?? [])
+        : receivableFormUtils.getSourcePaymentMethodByType(paymentMethodType, sourcePaymentMethods ?? [])
 
     if (type === 'destination') {
       setValue('paymentDestinationId', paymentMethodPayload.paymentDestinationId)
@@ -497,7 +492,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
     setSelectedSourcePaymentMethodId: (paymentMethodId: string) => setValue('paymentSourceId', paymentMethodId),
     setSelectedDestinationPaymentMethodId: (paymentMethodId: string) =>
       setValue('paymentDestinationId', paymentMethodId),
-    availableSourceTypes: receivableUtils.getAvailablePaymentMethodTypes(
+    availableSourceTypes: receivableFormUtils.getAvailablePaymentMethodTypes(
       'source',
       sourcePaymentMethods ?? [],
       destinationPaymentMethods ?? [],
@@ -505,7 +500,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
     ),
     selectedSourceType: watch('paymentSourceType') as Mercoa.PaymentMethodType | undefined,
     setSelectedSourceType: (type: Mercoa.PaymentMethodType) => setValue('paymentSourceType', type),
-    availableDestinationTypes: receivableUtils.getAvailablePaymentMethodTypes(
+    availableDestinationTypes: receivableFormUtils.getAvailablePaymentMethodTypes(
       'destination',
       sourcePaymentMethods ?? [],
       destinationPaymentMethods ?? [],
@@ -516,7 +511,30 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
     paymentLink,
   }
 
+  const recurringScheduleContext: RecurringScheduleContext = {
+    type: paymentScheduleType as 'weekly' | 'monthly' | 'yearly' | 'daily' | 'oneTime',
+    repeatEvery: paymentScheduleRepeatEvery as number | undefined,
+    repeatOn: paymentScheduleRepeatOn as Array<Mercoa.DayOfWeek> | undefined,
+    repeatOnDay: paymentScheduleRepeatOnDay as number | undefined,
+    repeatOnMonth: paymentScheduleRepeatOnMonth as number | undefined,
+    ends: paymentScheduleEnds as Date | undefined,
+    //@ts-ignore
+    setType: (type: 'weekly' | 'monthly' | 'yearly' | 'daily' | 'oneTime') => setValue('paymentSchedule.type', type),
+    //@ts-ignore
+    setRepeatEvery: (repeatEvery: number) => setValue('paymentSchedule.repeatEvery', repeatEvery),
+    //@ts-ignore
+    setRepeatOn: (repeatOn: Array<Mercoa.DayOfWeek>) => setValue('paymentSchedule.repeatOn', repeatOn),
+    //@ts-ignore
+    setRepeatOnDay: (repeatOnDay: number) => setValue('paymentSchedule.repeatOnDay', repeatOnDay),
+    //@ts-ignore
+    setRepeatOnMonth: (repeatOnMonth: number) => setValue('paymentSchedule.repeatOnMonth', repeatOnMonth),
+    //@ts-ignore
+    setEnds: (ends: Date | undefined) => setValue('paymentSchedule.ends', ends),
+  }
+
   return {
+    propsContextValue: props,
+
     formContextValue: {
       formMethods,
       handleFormSubmit,
@@ -530,13 +548,14 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
           setValue('payer', payer)
         },
       },
+      recurringScheduleContextValue: recurringScheduleContext,
     },
 
     dataContextValue: {
-      receivableData,
+      invoice: receivableData,
+      invoiceType: invoiceType ?? 'invoice',
+      invoiceLoading: receivableDataLoading,
       refreshInvoice,
     },
-
-    propsContextValue: props,
   }
 }

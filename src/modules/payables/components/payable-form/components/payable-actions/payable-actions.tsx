@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import { EntitySelector, MercoaButton, NoSession, useMercoaSession } from '../../../../../../components'
-import { getInvoiceClient } from '../../../payable-details/utils'
+import { getInvoiceClient } from '../../../../../common/utils'
 import { PayableFormAction } from '../../constants'
 import { findApproverSlot } from '../payable-approvers/utils'
 import { PayableFormErrors } from './payable-form-errors'
@@ -507,7 +507,6 @@ export function PayableActions({
     })
   ) : (
     <MercoaButton
-      type="submit"
       isEmphasized
       disabled={
         !userPermissionConfig?.invoice?.update.statuses.includes(Mercoa.InvoiceStatus.Scheduled) &&
@@ -519,8 +518,8 @@ export function PayableActions({
         setValue('formAction', PayableFormAction.RETRY_PAYMENT)
       }}
     >
-      <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableFormAction.RETRY_PAYMENT ? (
+      <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
+        {actionLoading && formAction === PayableFormAction.CANCEL ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (
           'Retry Payment'
@@ -620,8 +619,7 @@ export function PayableActions({
         let nextButton = <></>
         if (
           paymentDestinationType === Mercoa.PaymentMethodType.Check &&
-          (paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery ===
-            Mercoa.CheckDeliveryMethod.Print
+          paymentDestinationOptions.delivery === Mercoa.CheckDeliveryMethod.Print
         ) {
           nextButton = printCheckButtonComponent
         } else {
@@ -632,6 +630,12 @@ export function PayableActions({
         break
 
       case Mercoa.InvoiceStatus.Scheduled:
+        if (
+          paymentDestinationType === Mercoa.PaymentMethodType.Check &&
+          paymentDestinationOptions.delivery === Mercoa.CheckDeliveryMethod.Print
+        ) {
+          buttons.push(printCheckButtonComponent)
+        }
         if (paymentDestinationType === Mercoa.PaymentMethodType.OffPlatform) {
           buttons.push(markPaidButtonComponent)
         }
@@ -653,13 +657,16 @@ export function PayableActions({
         buttons.push(assignToEntityComponent)
         break
 
+      case Mercoa.InvoiceStatus.Refused:
+        buttons.push(recreateDraftButtonComponent)
+        break
+
       case Mercoa.InvoiceStatus.Canceled:
         buttons.push(recreateDraftButtonComponent, deleteButtonComponent)
         break
 
       case Mercoa.InvoiceStatus.Archived:
       case Mercoa.InvoiceStatus.Pending:
-      case Mercoa.InvoiceStatus.Refused:
       default:
         break
     }

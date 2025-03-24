@@ -41,7 +41,7 @@ export function ReceivableSelectPaymentMethod({
   const sourceOrDestination = isSource ? 'paymentSourceId' : 'paymentDestinationId'
 
   const bankAccountJsx = (
-    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
       {paymentMethods
         ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)
         .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))
@@ -62,7 +62,7 @@ export function ReceivableSelectPaymentMethod({
   )
 
   const checkJsx = (
-    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
       {paymentMethods
         ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)
         .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))
@@ -83,7 +83,7 @@ export function ReceivableSelectPaymentMethod({
   )
 
   const cardJsx = (
-    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
       {paymentMethods
         ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
         .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))
@@ -104,7 +104,7 @@ export function ReceivableSelectPaymentMethod({
   )
 
   const offPlatformJsx = (
-    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
       <div className="mercoa-mt-4 mercoa-p-4 mercoa-text-gray-700 mercoa-bg-white mercoa-shadow-sm mercoa-rounded-lg mercoa-border mercoa-border-gray-200">
         Off Platform
       </div>
@@ -112,7 +112,7 @@ export function ReceivableSelectPaymentMethod({
   )
 
   const unknownJsx = (
-    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
       <div className="mercoa-mt-4 mercoa-p-4 mercoa-text-gray-700 mercoa-bg-white mercoa-shadow-sm mercoa-rounded-lg mercoa-border mercoa-border-gray-200">
         Collect data from customer
       </div>

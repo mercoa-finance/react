@@ -1,8 +1,6 @@
 import { createContext, ReactNode } from 'react'
-import { ReceivablesProps } from '../components/receivables/types'
 import { useReceivablesInternal } from '../hooks/use-receivables-internal'
-
-export type ReceivablesContextValue = ReturnType<typeof useReceivablesInternal>
+import { ReceivablesContextValue, ReceivablesProps } from '../types'
 
 export const ReceivablesContext = createContext<ReceivablesContextValue | undefined>(undefined)
 

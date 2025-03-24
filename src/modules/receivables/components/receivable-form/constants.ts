@@ -8,6 +8,6 @@ export enum ReceivableFormAction {
   SEND_EMAIL = 'sendEmail',
   RESEND_EMAIL = 'resendEmail',
   MARK_AS_PAID = 'markAsPaid',
-  SCHEDULE_PAYMENT = 'schedulePayment',
+  SCHEDULE_RECURRING_INVOICE = 'scheduleRecurringInvoice',
   RESTORE_AS_DRAFT = 'restoreAsDraft',
 }

@@ -1,6 +1,6 @@
 import { XCircleIcon } from '@heroicons/react/24/outline'
 import { ReactNode } from 'react'
-import { FieldErrors, FormProvider, useFieldArray, UseFormSetValue, UseFormWatch } from 'react-hook-form'
+import { FormProvider, useFieldArray } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import {
   CounterpartySearch,
@@ -15,22 +15,13 @@ import { useReceivableDetails } from '../../hooks/use-receivable-details'
 import { ReceivableActions } from './components/receivable-actions'
 import { ReceivablePaymentDestination } from './components/receivable-payment-destination'
 import { ReceivablePaymentSource } from './components/receivable-payment-source'
-
-export type ReceivableFormChildrenProps = {
-  invoice?: Mercoa.InvoiceResponse
-  refreshInvoice?: (invoiceId: Mercoa.InvoiceId) => void
-  setSelectedPayer: (e?: Mercoa.CounterpartyResponse) => void
-  selectedPayer?: Mercoa.CounterpartyResponse
-  setValue: UseFormSetValue<Mercoa.InvoiceCreationRequest>
-  watch: UseFormWatch<Mercoa.InvoiceCreationRequest>
-  errors: FieldErrors<Mercoa.InvoiceCreationRequest>
-}
+import { ReceivableRecurringSchedule } from './components/receivable-recurring-schedule'
 
 export function ReceivableForm({ children }: { children?: ReactNode }) {
   const mercoaSession = useMercoaSession()
   const { formContextValue, dataContextValue, propsContextValue } = useReceivableDetails()
   const { formMethods, handleFormSubmit, payerContextValue } = formContextValue
-  const { receivableData: invoice } = dataContextValue
+  const { invoice, invoiceType, refreshInvoice } = dataContextValue
   const { selectedPayer, setSelectedPayer } = payerContextValue
   const { config } = propsContextValue
   const { supportedCurrencies, disableCustomerCreation } = config ?? {}
@@ -108,7 +99,17 @@ export function ReceivableForm({ children }: { children?: ReactNode }) {
             )}
           </div>
         </div>
+
+        {/* TODO: Make the ReceivableForm frontend markup match the PayableForm frontend markup */}
         <form onSubmit={handleSubmit(handleFormSubmit)}>
+          {invoiceType === 'invoiceTemplate' && (
+            <>
+              <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full mercoa-my-6" />
+              <ReceivableRecurringSchedule />
+              <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full mercoa-my-6" />
+            </>
+          )}
+
           <div className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-3 mercoa-items-center mercoa-gap-4 mercoa-p-0.5">
             {/*  INVOICE DATE */}
             <MercoaInput

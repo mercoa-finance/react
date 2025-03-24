@@ -288,6 +288,7 @@ export function showMetadata({
   return true
 }
 
+// TODO: unused
 export function getValidationSchema({ action, config }: { action: PayableFormAction; config: object }) {
   if (action === PayableFormAction.SAVE_AS_DRAFT) return baseSaveDraftSchema
   if (action === PayableFormAction.SUBMIT_FOR_APPROVAL) return baseSubmitForApprovalSchema
@@ -295,7 +296,9 @@ export function getValidationSchema({ action, config }: { action: PayableFormAct
   return baseSchema
 }
 
-export async function validateSchema({
+// Functions used in payableFormUtils
+
+async function validateSchema({
   setError,
   schema,
   data,
@@ -319,7 +322,7 @@ export async function validateSchema({
   }
 }
 
-export const validateAndFormatPaymentSchedule = (data: any, toast: any) => {
+const validateAndFormatPaymentSchedule = (data: any, toast: any) => {
   if (data.paymentSchedule?.type) {
     if (
       isNaN(data.paymentSchedule.repeatEvery) ||
@@ -398,7 +401,7 @@ export const validateAndFormatPaymentSchedule = (data: any, toast: any) => {
   return true
 }
 
-export const validatePaymentDestinationOptions = (data: any) => {
+const validatePaymentDestinationOptions = (data: any) => {
   if (
     data.paymentDestinationOptions?.type === Mercoa.PaymentMethodType.BankAccount &&
     data.paymentDestinationType !== Mercoa.PaymentMethodType.BankAccount
@@ -413,7 +416,7 @@ export const validatePaymentDestinationOptions = (data: any) => {
   return true
 }
 
-export const validateMetadata = (
+const validateMetadata = (
   data: PayableFormData,
   invoiceData: Mercoa.InvoiceCreationRequest,
   mercoaSession: MercoaContext,
@@ -452,7 +455,7 @@ export const validateMetadata = (
   return true
 }
 
-export const validateCheckPaymentSource = (data: PayableFormData, mercoaSession: MercoaContext, setError: any) => {
+const validateCheckPaymentSource = (data: PayableFormData, mercoaSession: MercoaContext, setError: any) => {
   if (data.paymentDestinationType === 'check') {
     if (data.paymentSourceType !== 'bankAccount') {
       setError('paymentSourceId', {
@@ -468,7 +471,7 @@ export const validateCheckPaymentSource = (data: PayableFormData, mercoaSession:
   return true
 }
 
-export const validatePaymentSchemaIds = (data: PayableFormData, setError: any) => {
+const validatePaymentSchemaIds = (data: PayableFormData, setError: any) => {
   if (data.paymentDestinationSchemaId && !data.paymentSourceSchemaId) {
     setError('paymentSourceId', { type: 'manual', message: 'These payment types cannot be used together!' })
     setError('paymentDestinationId', { type: 'manual', message: 'These payment types cannot be used together!' })
@@ -477,7 +480,7 @@ export const validatePaymentSchemaIds = (data: PayableFormData, setError: any) =
   return true
 }
 
-export const validateVendorDetails = (
+const validateVendorDetails = (
   data: PayableFormData,
   mercoaSession: MercoaContext,
   setError: any,
@@ -485,10 +488,10 @@ export const validateVendorDetails = (
 ) => {
   if (data.paymentDestinationType === 'bankAccount') {
     if (selectedVendor?.accountType === 'business') {
-      if (!selectedVendor?.profile?.business?.description && !selectedVendor?.profile?.business?.website) {
-        setError('vendor', { type: 'manual', message: 'Please provide the vendor business description or website' })
-        return false
-      }
+      // if (!selectedVendor?.profile?.business?.description && !selectedVendor?.profile?.business?.website) {
+      //   setError('vendor', { type: 'manual', message: 'Please provide the vendor business description or website' })
+      //   return false
+      // }
     } else {
       if (!selectedVendor?.profile?.individual?.email && !selectedVendor?.profile?.individual?.phone?.number) {
         setError('vendor', { type: 'manual', message: 'Please provide the vendor email or phone number' })
@@ -499,6 +502,7 @@ export const validateVendorDetails = (
   return true
 }
 
+// TODO: unused
 export const validateUtilityPaymentSource = (data: PayableFormData, mercoaSession: MercoaContext, setError: any) => {
   if (data.paymentDestinationType === 'utility') {
     if (data.paymentSourceType !== 'bankAccount' && !data.paymentSourceType?.startsWith('cpms_')) {
@@ -512,7 +516,7 @@ export const validateUtilityPaymentSource = (data: PayableFormData, mercoaSessio
   return true
 }
 
-export const autoAssignVendorCredits = async (
+const autoAssignVendorCredits = async (
   invoiceData: Mercoa.InvoiceCreationRequest,
   mercoaSession: MercoaContext,
   nextInvoiceState: Mercoa.InvoiceStatus,
@@ -545,7 +549,7 @@ export const autoAssignVendorCredits = async (
   return true
 }
 
-export const validateLineItems = (
+const validateLineItems = (
   invoiceData: Mercoa.InvoiceCreationRequest,
   mercoaSession: MercoaContext,
   setError: any,
@@ -616,7 +620,7 @@ export const validateLineItems = (
   return true
 }
 
-export const validateAmount = (invoiceData: Mercoa.InvoiceCreationRequest, setError: any) => {
+const validateAmount = (invoiceData: Mercoa.InvoiceCreationRequest, setError: any) => {
   if (Number(invoiceData.amount) < 0.01) {
     setError('amount', { type: 'manual', message: 'Amount must be at least 0.01' })
     return false
@@ -624,7 +628,7 @@ export const validateAmount = (invoiceData: Mercoa.InvoiceCreationRequest, setEr
   return true
 }
 
-export const validatePaymentMethods = (
+const validatePaymentMethods = (
   invoiceData: Mercoa.InvoiceCreationRequest,
   invoice: Mercoa.InvoiceResponse,
   mercoaSession: MercoaContext,
@@ -659,7 +663,7 @@ export const validatePaymentMethods = (
   return true
 }
 
-export const validateApprovers = (
+const validateApprovers = (
   invoiceData: Mercoa.InvoiceCreationRequest,
   invoice: Mercoa.InvoiceResponse,
   setError: any,
@@ -673,7 +677,7 @@ export const validateApprovers = (
   return true
 }
 
-export const validateDeductionDate = (
+const validateDeductionDate = (
   finalStatus: Mercoa.InvoiceStatus,
   invoiceData: Mercoa.InvoiceCreationRequest,
   setError: any,
@@ -688,7 +692,7 @@ export const validateDeductionDate = (
   return true
 }
 
-export const validateAndConstructPayload = (props: {
+const validateAndConstructPayload = (props: {
   formData: PayableFormData
   invoice?: Mercoa.InvoiceResponse
   saveAsStatus: Mercoa.InvoiceStatus
@@ -713,15 +717,16 @@ export const validateAndConstructPayload = (props: {
     lineItemDescriptionOptional,
   } = props
 
-  if (!payableFormUtils.validateAndFormatPaymentSchedule(formData, toast)) {
+  if (!validateAndFormatPaymentSchedule(formData, toast)) {
     return false
   }
 
-  if (!payableFormUtils.validatePaymentDestinationOptions(formData)) {
+  if (!validatePaymentDestinationOptions(formData)) {
     return false
   }
 
   const incompleteInvoiceData: Omit<Mercoa.InvoiceCreationRequest, 'creatorEntityId' | 'creatorEntityGroupId'> = {
+    ocrJobId: formData.ocrJobId,
     status: saveAsStatus,
     amount: Number(formData.amount),
     taxAmount: formData.taxAmount !== undefined ? Number(formData.taxAmount ?? 0) : undefined,
@@ -798,7 +803,7 @@ export const validateAndConstructPayload = (props: {
     ].includes(action!)
   ) {
     if (
-      !payableFormUtils.validateSchema({
+      !validateSchema({
         setError,
         schema:
           action === PayableFormAction.SUBMIT_FOR_APPROVAL ? baseSubmitForApprovalSchema : baseSchedulePaymentSchema,
@@ -808,62 +813,51 @@ export const validateAndConstructPayload = (props: {
       return false
     }
 
-    if (!payableFormUtils.validateLineItems(invoiceRequestData, mercoaSession, setError, lineItemDescriptionOptional)) {
+    if (!validateLineItems(invoiceRequestData, mercoaSession, setError, lineItemDescriptionOptional)) {
       return false
     }
 
-    if (!payableFormUtils.validateAmount(invoiceRequestData, setError)) {
+    if (!validateAmount(invoiceRequestData, setError)) {
       return false
     }
 
-    if (
-      !payableFormUtils.validatePaymentMethods(
-        invoiceRequestData,
-        invoice!,
-        mercoaSession,
-        setError,
-        saveAsStatus,
-        toast,
-      )
-    ) {
+    if (!validatePaymentMethods(invoiceRequestData, invoice!, mercoaSession, setError, saveAsStatus, toast)) {
       return false
     }
 
-    if (!payableFormUtils.validateApprovers(invoiceRequestData, invoice!, setError)) {
+    if (!validateApprovers(invoiceRequestData, invoice!, setError)) {
       return false
     }
   }
 
-  if (!payableFormUtils.validateDeductionDate(saveAsStatus, invoiceRequestData, setError)) {
+  if (!validateDeductionDate(saveAsStatus, invoiceRequestData, setError)) {
     return false
   }
 
-  if (
-    !payableFormUtils.validateMetadata(formData, invoiceRequestData, mercoaSession, toast, setError, uploadedDocument)
-  ) {
+  if (!validateMetadata(formData, invoiceRequestData, mercoaSession, toast, setError, uploadedDocument)) {
     return false
   }
 
-  if (!payableFormUtils.validateCheckPaymentSource(formData, mercoaSession, setError)) {
+  if (!validateCheckPaymentSource(formData, mercoaSession, setError)) {
     return false
   }
 
-  if (!payableFormUtils.validatePaymentSchemaIds(formData, setError)) {
+  if (!validatePaymentSchemaIds(formData, setError)) {
     return false
   }
 
-  if (!payableFormUtils.validateVendorDetails(formData, mercoaSession, setError, selectedVendor)) {
+  if (!validateVendorDetails(formData, mercoaSession, setError, selectedVendor)) {
     return false
   }
 
-  if (!payableFormUtils.autoAssignVendorCredits(invoiceRequestData, mercoaSession, saveAsStatus, toast, invoice)) {
+  if (!autoAssignVendorCredits(invoiceRequestData, mercoaSession, saveAsStatus, toast, invoice)) {
     return false
   }
 
   return invoiceRequestData
 }
 
-export const getNextInvoiceStatus = (action: PayableFormAction, mercoaSession: MercoaContext) => {
+const getNextInvoiceStatus = (action: PayableFormAction, mercoaSession: MercoaContext) => {
   if (action === PayableFormAction.CREATE) {
     return !!mercoaSession.entityGroup?.id && !mercoaSession.entity?.id
       ? Mercoa.InvoiceStatus.Unassigned
@@ -903,6 +897,7 @@ export const payableFormUtils = {
   getNextInvoiceStatus,
 }
 
+// TODO: unused
 export const getSchema = (config: PayableFormConfig, baseSchema: any, invoice?: Mercoa.InvoiceResponse) => {
   if (!invoice || [Mercoa.InvoiceStatus.Draft, Mercoa.InvoiceStatus.Unassigned].includes(invoice.status as any)) {
     return getDraftSchema(config, baseSchema)
@@ -915,6 +910,7 @@ export const getSchema = (config: PayableFormConfig, baseSchema: any, invoice?: 
   }
 }
 
+// TODO: unused
 export const getDraftSchema = (config: PayableFormConfig, baseSchema: any) => {
   const draftConfig = config[Mercoa.InvoiceStatus.Draft]
   const draftSchema = baseSchema.shape({
@@ -929,6 +925,7 @@ export const getDraftSchema = (config: PayableFormConfig, baseSchema: any) => {
   return draftSchema as typeof baseSchema
 }
 
+// TODO: unused
 export const getApprovalSchema = (config: PayableFormConfig, baseSchema: any) => {
   const approvalConfig = config[Mercoa.InvoiceStatus.Approved]
   const approvalSchema = baseSchema.shape({
@@ -942,6 +939,7 @@ export const getApprovalSchema = (config: PayableFormConfig, baseSchema: any) =>
   return approvalSchema as typeof baseSchema
 }
 
+// TODO: unused
 export const getScheduledSchema = (config: PayableFormConfig, baseSchema: any) => {
   const scheduledConfig = config[Mercoa.InvoiceStatus.Scheduled]
   const scheduledSchema = baseSchema.shape({

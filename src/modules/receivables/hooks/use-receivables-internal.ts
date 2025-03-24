@@ -1,14 +1,20 @@
+import dayjs from 'dayjs'
+import Papa from 'papaparse'
 import { useEffect, useMemo, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { InvoiceTableColumn, useMercoaSession } from '../../../components'
 import { queryClient } from '../../../lib/react-query/query-client-provider'
+import { invoicePaymentTypeMapper } from '../../common/invoice-payment-type'
+import { useBulkDeleteReceivables, useDeleteReceivable } from '../api/mutations'
 import {
-  useReceivableMetricsByStatus,
-  useReceivables as useReceivablesQuery,
+  useReceivableMetricsByStatusQuery,
+  useReceivablesQuery,
   useReceivableStatusTabsMetricsQuery,
+  useRecurringReceivablesQuery,
 } from '../api/queries'
-import { ReceivablesProps } from '../components/receivables/types'
+import { ReceivablesTableAction } from '../components/receivables-table/constants'
 import { useReceivablesFilterStore } from '../stores/receivables-filter-store'
+import { ReceivablesContextValue, ReceivablesProps } from '../types'
 
 export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   const mercoaSession = useMercoaSession()
@@ -17,6 +23,11 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   const currentQueryOptions = queryOptions?.isInitial ? undefined : queryOptions
   const { getFilters, setFilters } = useReceivablesFilterStore()
   const { selectedStatusFilters, dateRange, dateType } = getFilters('receivables')
+  const [activeInvoiceAction, setActiveInvoiceAction] = useState<{
+    invoiceId: string[] | string
+    action: ReceivablesTableAction
+    mode: 'single' | 'multiple'
+  } | null>(null)
 
   const memoizedStatusFilters = useMemo(() => selectedStatusFilters || [], [selectedStatusFilters])
   const [currentStatuses, setCurrentStatuses] = useState<Mercoa.InvoiceStatus[]>(
@@ -35,7 +46,7 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([])
 
   const [selectedColumns, setSelectedColumns] = useState<InvoiceTableColumn[]>([
-    { title: 'Payer', field: 'payer', orderBy: Mercoa.InvoiceOrderByField.PayerName },
+    { title: 'Payer Name', field: 'payer', orderBy: Mercoa.InvoiceOrderByField.PayerName },
     { title: 'Invoice Number', field: 'invoiceNumber', orderBy: Mercoa.InvoiceOrderByField.InvoiceNumber },
     { title: 'Due Date', field: 'dueDate', orderBy: Mercoa.InvoiceOrderByField.DueDate },
     { title: 'Invoice Date', field: 'invoiceDate', orderBy: Mercoa.InvoiceOrderByField.InvoiceDate },
@@ -65,7 +76,11 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
     resultsPerPage: currentQueryOptions?.resultsPerPage ? currentQueryOptions.resultsPerPage : resultsPerPage,
   })
 
-  const { data: metricsData, isLoading: isMetricsLoading } = useReceivableMetricsByStatus({
+  const { data: recurringReceivablesData, isLoading: isRecurringReceivablesLoading } = useRecurringReceivablesQuery({
+    resultsPerPage: 100,
+  })
+
+  const { data: metricsData, isLoading: isMetricsLoading } = useReceivableMetricsByStatusQuery({
     search: currentQueryOptions?.search ? currentQueryOptions.search : debouncedSearch,
     statuses: currentQueryOptions?.currentStatuses ? currentQueryOptions.currentStatuses : memoizedStatusFilters,
     startDate: currentQueryOptions?.startDate ? currentQueryOptions.startDate : dateRange.startDate ?? undefined,
@@ -84,11 +99,8 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
     excludePayables: true,
   })
 
-  //   const { data: recurringReceivablesData, isLoading: isRecurringReceivablesLoading } = useRecurringReceivables({
-  //     resultsPerPage: 100,
-  //   })
-
-  const [isExporting, setIsExporting] = useState(false)
+  const { mutate: deleteReceivable, isPending: isDeleteReceivableLoading } = useDeleteReceivable()
+  const { mutate: bulkDeleteReceivables, isPending: isBulkDeleteReceivableLoading } = useBulkDeleteReceivables()
 
   const currentPageData = useMemo(() => {
     return data?.pages[page]?.invoices || []
@@ -227,9 +239,60 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['receivables'] })
+    queryClient.invalidateQueries({ queryKey: ['recurringReceivables'] })
     queryClient.invalidateQueries({ queryKey: ['receivableMetrics'] })
     queryClient.invalidateQueries({ queryKey: ['receivableStatusTabsMetrics'] })
     setPage(0)
+  }
+
+  const downloadInvoicesAsCSV = async () => {
+    let allInvoicePages = data?.pages ?? []
+    while (allInvoicePages[allInvoicePages.length - 1].nextCursor) {
+      const resp = await fetchNextPage()
+      allInvoicePages = resp.data?.pages ?? []
+    }
+    const allInvoices = allInvoicePages.flatMap((page) => page.invoices)
+    const csv = Papa.unparse(
+      allInvoices.map((invoice) => {
+        return {
+          'Invoice ID': invoice.id,
+          'Invoice Number': invoice.invoiceNumber,
+          Status: invoice.status,
+          Amount: invoice.amount,
+          Currency: invoice.currency,
+          Note: invoice.noteToSelf,
+          'Payer ID': invoice.payer?.id,
+          'Payer Foreign ID': invoice.payer?.foreignId,
+          'Payer Email': invoice.payer?.email,
+          'Payer Name': invoice.payer?.name,
+          'Vendor ID': invoice.vendor?.id,
+          'Vendor Foreign ID': invoice.vendor?.foreignId,
+          'Vendor Email': invoice.vendor?.email,
+          'Vendor Name': invoice.vendor?.name,
+          'Payment Type': invoicePaymentTypeMapper(invoice),
+          Metadata: JSON.stringify(invoice.metadata),
+          'Due Date': invoice.dueDate ? dayjs(invoice.dueDate).format('YYYY-MM-DD') : undefined,
+          'Deduction Date': invoice.deductionDate ? dayjs(invoice.deductionDate).format('YYYY-MM-DD') : undefined,
+          'Processed At': invoice.processedAt ? dayjs(invoice.processedAt).format('YYYY-MM-DD') : undefined,
+          'Created At': invoice.createdAt ? dayjs(invoice.createdAt).format('YYYY-MM-DD') : undefined,
+          'Updated At': invoice.updatedAt ? dayjs(invoice.updatedAt).format('YYYY-MM-DD') : undefined,
+        }
+      }),
+    )
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.setAttribute('mercoa-hidden', '')
+    a.setAttribute('href', url)
+    a.setAttribute(
+      'download',
+      `receivable-invoice-export-${dayjs(startDate).format('YYYY-MM-DD')}-to-${dayjs(endDate).format(
+        'YYYY-MM-DD',
+      )}.csv`,
+    )
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   }
 
   useEffect(() => {
@@ -238,89 +301,7 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
     })
   }, [currentStatuses])
 
-
-  type ReceivablesInternalReturn = {
-    propsContextValue: ReceivablesProps
-    dataContextValue: {
-      tableData: Array<{
-        select: string
-        id: string
-        invoice: Mercoa.InvoiceResponse
-        payer: string | undefined
-        invoiceNumber: string | undefined
-        currencyCode: string | undefined
-        payerName?: string
-        payerEmail?: string
-        amount: number | undefined
-        status: Mercoa.InvoiceStatus
-        invoiceId: string
-        dueDate: Date | undefined
-        invoiceDate: Date | undefined
-        paymentDestination: Mercoa.PaymentMethodResponse | undefined
-        invoiceType: string
-        failureType?: string | undefined
-        vendorId: string | undefined
-        payerId: string | undefined
-        paymentDestinationId?: string | undefined
-        paymentSourceId?: string | undefined
-      }>
-      infiniteData: any
-      allFetchedInvoices: Mercoa.InvoiceResponse[]
-      totalItems: number
-      isDataLoading: boolean
-      isFetching: boolean
-      isFetchingNextPage: boolean
-      isFetchingPreviousPage: boolean
-      isLoading: boolean
-      isError: boolean
-      isRefreshLoading: boolean
-      handleRefresh: () => void
-      metricsData: Mercoa.InvoiceMetricsResponse[] | undefined
-      isMetricsLoading: boolean
-      statusTabsMetrics: any
-      isStatusTabsMetricsLoading: boolean
-    }
-    filtersContextValue: {
-      search: string
-      setSearch: (search: string) => void
-      startDate: Date | undefined
-      setStartDate: (date: Date | undefined) => void
-      endDate: Date | undefined
-      setEndDate: (date: Date | undefined) => void
-      currentStatuses: Mercoa.InvoiceStatus[]
-      setCurrentStatuses: (statuses: Mercoa.InvoiceStatus[]) => void
-      toggleSelectedStatus: (status: Mercoa.InvoiceStatus) => void
-    }
-    sortingContextValue: {
-      orderBy: Mercoa.InvoiceOrderByField
-      setOrderBy: (field: Mercoa.InvoiceOrderByField) => void
-      orderDirection: Mercoa.OrderDirection
-      setOrderDirection: (direction: Mercoa.OrderDirection) => void
-      handleOrderByChange: (field: Mercoa.InvoiceOrderByField) => void
-    }
-    paginationContextValue: {
-      page: number
-      resultsPerPage: number
-      setResultsPerPage: (perPage: number) => void
-      goToNextPage: () => void
-      goToPreviousPage: () => void
-      totalEntries: number
-      isNextDisabled: boolean
-      isPrevDisabled: boolean
-    }
-    selectionContextValue: {
-      selectedInvoiceIds: string[]
-      setSelectedInvoiceIds: (ids: string[]) => void
-      isAllSelected: boolean
-      handleSelectAll: () => void
-      handleSelectRow: (invoiceId: string) => void
-      selectedColumns: InvoiceTableColumn[]
-      setSelectedColumns: (columns: InvoiceTableColumn[]) => void
-      toggleSelectedColumn: (column: InvoiceTableColumn) => void
-    }
-  }
-
-  return {
+  const out: ReceivablesContextValue = {
     propsContextValue: {
       ...receivableProps,
     },
@@ -329,7 +310,6 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
       tableData,
       infiniteData: data,
       allFetchedInvoices,
-      totalItems: data?.pages[0]?.count || 0,
       isDataLoading: isLoading && !!mercoaSession.entityId,
       isFetching,
       isFetchingNextPage,
@@ -338,6 +318,8 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
       isError,
       isRefreshLoading: isFetching,
       handleRefresh,
+      recurringReceivablesData,
+      isRecurringReceivablesLoading,
       metricsData,
       isMetricsLoading,
       statusTabsMetrics,
@@ -365,14 +347,19 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
     },
 
     paginationContextValue: {
-      page,
+      orderBy,
+      setOrderBy,
+      orderDirection,
+      setOrderDirection,
       resultsPerPage,
       setResultsPerPage: handleResultsPerPage,
+      page,
+      totalEntries: data?.pages[0]?.count || 0,
       goToNextPage,
       goToPreviousPage,
-      totalEntries: data?.pages[0]?.count || 0,
       isNextDisabled,
       isPrevDisabled,
+      handleOrderByChange,
     },
 
     selectionContextValue: {
@@ -385,5 +372,17 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
       setSelectedColumns,
       toggleSelectedColumn,
     },
-  } satisfies ReceivablesInternalReturn
+
+    actionsContextValue: {
+      deleteReceivable,
+      isDeleteReceivableLoading,
+      bulkDeleteReceivables,
+      isBulkDeleteReceivableLoading,
+      activeInvoiceAction,
+      setActiveInvoiceAction,
+      downloadInvoicesAsCSV,
+    },
+  }
+
+  return out
 }

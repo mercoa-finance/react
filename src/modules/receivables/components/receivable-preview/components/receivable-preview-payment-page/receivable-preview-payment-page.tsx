@@ -4,7 +4,7 @@ import { useMercoaSession } from '../../../../../../components'
 import { currencyCodeToSymbol } from '../../../../../../lib/currency'
 import { ReceivablePaymentPortal } from './components/receivable-payment-portal/receivable-payment-portal'
 
-export function ReceivablePreviewPaymentPageV2({ invoice }: { invoice: Mercoa.InvoiceResponse }) {
+export function ReceivablePreviewPaymentPage({ invoice }: { invoice: Mercoa.InvoiceResponse }) {
   const mercoaSession = useMercoaSession()
 
   const supportEmail = mercoaSession.organization?.supportEmail ?? 'support@mercoa.com'

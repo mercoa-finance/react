@@ -2,14 +2,15 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import Big from 'big.js'
 import dayjs from 'dayjs'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { Resolver, useFieldArray, useForm } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
-import { filterApproverOptions, getInvoiceClient, propagateApprovalPolicy, useMercoaSession } from '../../../components'
+import { filterApproverOptions, propagateApprovalPolicy, useMercoaSession } from '../../../components'
 import { queryClient } from '../../../lib/react-query/query-client-provider'
+import { getInvoiceClient } from '../../common/utils'
 import { useApprovePayable, useCreatePayable, useRejectPayable, useRunOcr, useUpdatePayable } from '../api/mutations'
 import {
-  useGetOcrJob,
+  useOcrJobQuery,
   usePayableDetailQuery,
   usePayableDocumentsQuery,
   usePayableFeeQuery,
@@ -27,6 +28,7 @@ import {
   PayableApproversContext,
   PayableCommentsContext,
   PayableDetailsContextValue,
+  PayableDetailsProps,
   PayableFeesContext,
   PayableLineItemsContext,
   PayableMetadataContext,
@@ -37,53 +39,9 @@ import {
   PayableVendorCreditContext,
   PaymentMethodContext,
   RecurringScheduleContext,
-} from '../providers/payables-detail-provider'
+} from '../types'
 
-export interface PayableDetailsHandlers {
-  onInvoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
-  onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
-  onInvoiceUpdate?: (resp: Mercoa.InvoiceResponse | undefined) => void
-  onCounterpartyPreSubmit?: (
-    counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
-    counterpartyId?: string,
-  ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
-  onCounterpartySubmit?: (data: any) => void
-  onOcrPreSubmit?: (data: any) => void
-  onOcrComplete?: (ocr: Mercoa.OcrResponse) => void
-}
-
-export interface PayableDetailsQueryParams {
-  invoiceId: string
-  invoice?: Mercoa.InvoiceResponse
-  invoiceType?: 'invoice' | 'invoiceTemplate'
-}
-
-export enum PayableDetailsViewMode {
-  Document = 'document',
-  Form = 'form',
-}
-
-export interface PayableDetailsDisplayOptions {
-  documentPosition: 'right' | 'left' | 'none'
-  heightOffset?: number
-}
-
-export interface PayableDetailsConfig {
-  supportedCurrencies?: Mercoa.CurrencyCode[]
-}
-
-export interface PayableDetailsRenderCustom {
-  toast?: any
-}
-
-export interface PayableDetailsProps {
-  queryParams: PayableDetailsQueryParams
-  handlers?: PayableDetailsHandlers
-  config?: PayableDetailsConfig
-  displayOptions?: PayableDetailsDisplayOptions
-  renderCustom?: PayableDetailsRenderCustom
-}
-
+// this is purposely added here to avoid circular dependencies need to inspect further later
 const counterpartyYupValidation = {
   id: yup.string().nullable(),
   name: yup.string().typeError('Please enter a name'),
@@ -116,7 +74,7 @@ const counterpartyYupValidation = {
 
 export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const {
-    queryParams = { invoiceId: '', invoiceType: 'invoice' },
+    queryOptions = { invoiceId: '', invoiceType: 'invoice' },
     handlers = {},
     config = {},
     displayOptions = { documentPosition: 'left', heightOffset: 0 },
@@ -125,7 +83,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const { toast } = renderCustom ?? {}
   const { supportedCurrencies } = config
   const mercoaSession = useMercoaSession()
-  const { invoiceType, invoiceId, invoice: invoiceExternal } = queryParams
+  const { invoiceType, invoiceId, invoice: invoiceExternal } = queryOptions
   const [vendorSearch, setVendorSearch] = useState('')
   const { heightOffset } = displayOptions
   const [height, setHeight] = useState<number>(
@@ -156,9 +114,9 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const { data: sourceEmails, isLoading: sourceEmailsLoading } = usePayableSourceEmailQuery(invoiceId, invoiceType)
   const { data: vendors, isLoading: vendorsLoading } = usePayeesQuery({ search: vendorSearch })
 
-  const { data: ocrJob } = useGetOcrJob(activeOcrJobId ?? '', 2500)
+  const { data: ocrJob } = useOcrJobQuery(activeOcrJobId ?? '', 2500)
 
-  const { data: invoiceOcrJob } = useGetOcrJob(invoiceData?.ocrJobId ?? '', Infinity)
+  const { data: invoiceOcrJob } = useOcrJobQuery(invoiceData?.ocrJobId ?? '', Infinity)
 
   const { mutate: updatePayable, isPending: updatePayablePending } = useUpdatePayable()
   const { mutate: createPayable, isPending: createPayablePending } = useCreatePayable()
@@ -248,92 +206,94 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     })
     .required()
 
-  const methods = useForm({
-    resolver: yupResolver(baseSchema),
-    defaultValues: {
-      id: invoiceData?.id,
-      status: invoiceData?.status,
-      invoiceNumber: invoiceData?.invoiceNumber,
-      amount: invoiceData?.amount ?? 0,
-      currency: invoiceData?.currency ?? 'USD',
-      payerId: invoiceData?.payer?.id ?? mercoaSession.entityId,
-      vendorId: invoiceData?.vendor?.id,
-      vendorName: invoiceData?.vendor?.name,
-      invoiceDate: invoiceData?.invoiceDate ? dayjs(invoiceData?.invoiceDate).toDate() : undefined,
-      dueDate: invoiceData?.dueDate ? dayjs(invoiceData?.dueDate).toDate() : undefined,
-      deductionDate: invoiceData?.deductionDate ? dayjs(invoiceData?.deductionDate).toDate() : undefined,
-      processedAt: invoiceData?.processedAt ? dayjs(invoiceData?.processedAt).toDate() : undefined,
-      lineItems: invoiceData?.lineItems ?? [],
-      paymentDestinationId: invoiceData?.paymentDestination?.id,
-      paymentDestinationType: invoiceData?.paymentDestination?.type ?? '',
-      paymentDestinationOptions: invoiceData?.paymentDestinationOptions,
-      paymentSourceId: invoiceData?.paymentSource?.id,
-      paymentSourceType: invoiceData?.paymentSource?.type ?? '',
-      paymentSourceCheckEnabled:
-        (invoiceData?.paymentSource as Mercoa.BankAccountResponse)?.checkOptions?.enabled ?? false,
-      batchPayment: invoiceData?.batchPayment ?? false,
-      description: invoiceData?.noteToSelf ?? '',
-      hasDocuments: invoiceData?.hasDocuments ?? !!uploadedDocument ?? false,
-      formAction: '',
-      saveAsAdmin: false,
-      metadata: invoiceData?.metadata ?? {},
-      approvalPolicy: invoiceData?.approvalPolicy ?? { type: 'any', approvers: [] },
-      approvers: invoiceData?.approvers ?? [],
-      fees: invoiceData?.fees,
-      vendorCreditIds: invoiceData?.vendorCreditIds ?? [],
-      taxAmount: invoiceData?.taxAmount,
-      shippingAmount: invoiceData?.shippingAmount,
-      createdAt: invoiceData?.createdAt,
-      updatedAt: invoiceData?.updatedAt,
-      newBankAccount: {
-        routingNumber: '',
-        accountNumber: '',
-        bankName: '',
-        accountType: Mercoa.BankType.Checking,
-      },
-      newCheck: {
-        payToTheOrderOf: '',
-        addressLine1: '',
-        addressLine2: '',
-        city: '',
-        state: '',
-        postalCode: '',
-        country: 'US',
-      },
-      newCounterpartyAccount: {
-        accountId: '',
-        postalCode: '',
-        nameOnAccount: '',
-      },
-      '~cpm~~': {} as any,
-      paymentSchedule: invoiceData?.paymentSchedule ?? defaultPaymentSchedule,
-      failureType: invoiceData?.failureType ?? '',
-      commentText: '',
-      comments: invoiceData?.comments ?? [],
-      creatorUser: invoiceData?.creatorUser,
-      creatorEntityId: invoiceData?.creatorEntityId,
-      ocrJobId: invoiceData?.ocrJobId,
-      vendor: {
-        id: invoiceData?.vendor?.id,
-        accountType: invoiceData?.vendor?.accountType,
-        name: invoiceData?.vendor?.name,
-        firstName: invoiceData?.vendor?.profile?.individual?.name?.firstName,
-        lastName: invoiceData?.vendor?.profile?.individual?.name?.lastName,
-        middleName: invoiceData?.vendor?.profile?.individual?.name?.middleName,
-        suffix: invoiceData?.vendor?.profile?.individual?.name?.suffix,
-        email:
-          invoiceData?.vendor?.accountType === 'business'
-            ? invoiceData?.vendor?.profile?.business?.email
-            : invoiceData?.vendor?.profile?.individual?.email,
-        website: invoiceData?.vendor?.profile?.business?.website,
-        description: invoiceData?.vendor?.profile?.business?.description,
-        accounts: [] as Mercoa.CounterpartyCustomizationAccount[],
-      },
+  const formDefaultValues = {
+    id: invoiceData?.id,
+    status: invoiceData?.status,
+    invoiceNumber: invoiceData?.invoiceNumber,
+    amount: invoiceData?.amount ?? 0,
+    currency: invoiceData?.currency ?? 'USD',
+    payerId: invoiceData?.payer?.id ?? mercoaSession.entityId,
+    vendorId: invoiceData?.vendor?.id,
+    vendorName: invoiceData?.vendor?.name,
+    invoiceDate: invoiceData?.invoiceDate ? dayjs(invoiceData?.invoiceDate).toDate() : undefined,
+    dueDate: invoiceData?.dueDate ? dayjs(invoiceData?.dueDate).toDate() : undefined,
+    deductionDate: invoiceData?.deductionDate ? dayjs(invoiceData?.deductionDate).toDate() : undefined,
+    processedAt: invoiceData?.processedAt ? dayjs(invoiceData?.processedAt).toDate() : undefined,
+    lineItems: invoiceData?.lineItems ?? [],
+    paymentDestinationId: invoiceData?.paymentDestination?.id,
+    paymentDestinationType: invoiceData?.paymentDestination?.type ?? '',
+    paymentDestinationOptions: invoiceData?.paymentDestinationOptions,
+    paymentSourceId: invoiceData?.paymentSource?.id,
+    paymentSourceType: invoiceData?.paymentSource?.type ?? '',
+    paymentSourceCheckEnabled:
+      (invoiceData?.paymentSource as Mercoa.BankAccountResponse)?.checkOptions?.enabled ?? false,
+    batchPayment: invoiceData?.batchPayment ?? false,
+    description: invoiceData?.noteToSelf ?? '',
+    hasDocuments: invoiceData?.hasDocuments ?? !!uploadedDocument ?? false,
+    formAction: '',
+    saveAsAdmin: false,
+    metadata: invoiceData?.metadata ?? {},
+    approvalPolicy: invoiceData?.approvalPolicy ?? { type: 'any', approvers: [] },
+    approvers: invoiceData?.approvers ?? [],
+    fees: invoiceData?.fees,
+    vendorCreditIds: invoiceData?.vendorCreditIds ?? [],
+    taxAmount: invoiceData?.taxAmount,
+    shippingAmount: invoiceData?.shippingAmount,
+    createdAt: invoiceData?.createdAt,
+    updatedAt: invoiceData?.updatedAt,
+    newBankAccount: {
+      routingNumber: '',
+      accountNumber: '',
+      bankName: '',
+      accountType: Mercoa.BankType.Checking,
     },
+    newCheck: {
+      payToTheOrderOf: '',
+      addressLine1: '',
+      addressLine2: '',
+      city: '',
+      state: '',
+      postalCode: '',
+      country: 'US',
+    },
+    newCounterpartyAccount: {
+      accountId: '',
+      postalCode: '',
+      nameOnAccount: '',
+    },
+    '~cpm~~': {} as any,
+    paymentSchedule: invoiceData?.paymentSchedule ?? defaultPaymentSchedule,
+    failureType: invoiceData?.failureType ?? '',
+    commentText: '',
+    comments: invoiceData?.comments ?? [],
+    creatorUser: invoiceData?.creatorUser,
+    creatorEntityId: invoiceData?.creatorEntityId,
+    ocrJobId: invoiceData?.ocrJobId,
+    vendor: {
+      id: invoiceData?.vendor?.id,
+      accountType: invoiceData?.vendor?.accountType,
+      name: invoiceData?.vendor?.name,
+      firstName: invoiceData?.vendor?.profile?.individual?.name?.firstName,
+      lastName: invoiceData?.vendor?.profile?.individual?.name?.lastName,
+      middleName: invoiceData?.vendor?.profile?.individual?.name?.middleName,
+      suffix: invoiceData?.vendor?.profile?.individual?.name?.suffix,
+      email:
+        invoiceData?.vendor?.accountType === 'business'
+          ? invoiceData?.vendor?.profile?.business?.email
+          : invoiceData?.vendor?.profile?.individual?.email,
+      website: invoiceData?.vendor?.profile?.business?.website,
+      description: invoiceData?.vendor?.profile?.business?.description,
+      accounts: [] as Mercoa.CounterpartyCustomizationAccount[],
+    },
+  }
+  type FormDefaultValues = typeof formDefaultValues
+
+  const methods = useForm<FormDefaultValues>({
+    resolver: yupResolver(baseSchema) as Resolver<FormDefaultValues>,
+    defaultValues: formDefaultValues,
   })
 
   const {
-    handleSubmit,
     setValue,
     setFocus,
     setError,
@@ -383,7 +343,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     paymentScheduleRepeatOn,
     paymentScheduleRepeatOnDay,
     paymentScheduleRepeatOnMonth,
-    //@ts-ignore
   ] = watch([
     'amount',
     'taxAmount',
@@ -423,6 +382,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
 
   const { data: fees, isLoading: feesLoading } = usePayableFeeQuery({
     amount: amount,
+    creatorEntityId: payerId,
     paymentSourceId: paymentSourceId,
     paymentDestinationId: paymentDestinationId,
     paymentDestinationOptions: paymentDestinationOptions,
@@ -457,7 +417,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     if (!invoiceData) return
 
     if (invoiceData.vendor && !selectedVendor) {
-      console.log('setting selected vendor', invoiceData.vendor)
+      mercoaSession.debug('setting selected vendor', invoiceData.vendor)
       setSelectedVendor(invoiceData.vendor)
     }
 
@@ -514,6 +474,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     setValue('paymentSchedule', invoiceData?.paymentSchedule)
     setValue('taxAmount', invoiceData?.taxAmount)
     setValue('shippingAmount', invoiceData?.shippingAmount)
+    setValue('ocrJobId', invoiceData?.ocrJobId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invoiceData])
 
@@ -579,6 +540,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     }
 
     setActiveOcrJobId(undefined)
+    setValue('ocrJobId', ocrResponse.jobId)
 
     mercoaSession.debug({ ocrResponse })
     if (ocrResponse.invoice.amount) setValue('amount', ocrResponse.invoice.amount)
@@ -692,8 +654,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       setValue('paymentDestinationOptions', {
         type: 'check',
         delivery: 'MAIL',
-        //@ts-ignore
-        printDescription: !!paymentDestinationOptions?.printDescription,
+        printDescription: true,
       })
     }
   }, [paymentDestinationOptions, setValue])
@@ -907,7 +868,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   }, [finalSupportedCurrencies, currency, setValue])
 
   useEffect(() => {
-    //@ts-ignore
     approvers.forEach((approverSlot, index) => {
       const policy = (approvalPolicy as Mercoa.ApprovalPolicyResponse[]).find(
         (e) => e.id === approverSlot.approvalPolicyId,
@@ -925,7 +885,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   }, [errors, setValue])
 
   const handleFormAction = (formData: PayableFormData, action: PayableFormAction) => {
-    console.log('handleFormAction', formData, action)
+    mercoaSession.debug('handleFormAction', formData, action)
     setIsLoading(true)
     if (!mercoaSession.token) return
     if (!mercoaSession.entity?.id && !mercoaSession.entityGroup?.id) return
@@ -996,11 +956,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
             invoice: invoiceData,
             invoiceType: invoiceType ?? 'invoice',
             requestPayload,
-            onInvoiceSubmit,
-            refreshInvoice,
-            setUploadedDocument,
-            postAction: action as any,
-            toast: toast,
           },
           {
             onSuccess: (res) => {
@@ -1011,14 +966,12 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
                 onInvoiceUpdate?.(res as Mercoa.InvoiceResponse)
                 setUploadedDocument(undefined)
                 onInvoiceSubmit?.(res as Mercoa.InvoiceResponse)
-                refreshInvoice(res?.id ?? '')
                 setIsLoading(false)
                 setValue('formAction', '')
               }
             },
             onError: async (e) => {
               toast?.error(e.message)
-              //@ts-ignore
               if (
                 requestPayload.status === 'NEW' &&
                 ![PayableFormAction.APPROVE, PayableFormAction.REJECT].includes(action)
@@ -1029,15 +982,10 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
                     invoice: invoiceData,
                     invoiceType: invoiceType ?? 'invoice',
                     requestPayload,
-                    onInvoiceSubmit,
-                    refreshInvoice,
-                    setUploadedDocument,
-                    toast,
                   },
                   {
                     onSuccess: (res) => {
                       setUploadedDocument(undefined)
-                      refreshInvoice(res?.id ?? '')
                       setIsLoading(false)
                       setValue('formAction', '')
                     },
@@ -1049,7 +997,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
                   },
                 )
               } else {
-                console.log('error', e)
+                console.error(e)
                 // toast?.error(e.message)
                 setIsLoading(false)
                 setValue('formAction', '')
@@ -1061,7 +1009,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
           {
             invoice: requestPayload,
             invoiceType: invoiceType ?? 'invoice',
-            toast,
           },
           {
             onSuccess: (res) => {
@@ -1069,7 +1016,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
               setValue('formAction', '')
               mercoaSession.debug('invoice/create API response: ', res)
               toast?.success('Invoice created')
-              refreshInvoice(res?.id ?? '')
               onInvoiceSubmit?.(res)
               onInvoiceUpdate?.(res)
               if (action && [PayableFormAction.APPROVE, PayableFormAction.REJECT].includes(action)) {
@@ -1079,7 +1025,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
             onError: (e) => {
               setIsLoading(false)
               setValue('formAction', '')
-              console.log(e.message, e.reasons)
+              console.error(e.message, e.reasons)
               toast?.error(e.message)
             },
           },
@@ -1089,7 +1035,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const handleApproveOrRejectPayable = async (invoice: Mercoa.InvoiceResponse, action: PayableFormAction) => {
     if (action === PayableFormAction.APPROVE) {
       approvePayable(
-        { invoice, invoiceType: invoiceType ?? 'invoice', toast, refreshInvoice },
+        { invoice, invoiceType: invoiceType ?? 'invoice', toast },
         {
           onSuccess: () => {
             setIsLoading(false)
@@ -1103,7 +1049,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       )
     } else {
       rejectPayable(
-        { invoice, invoiceType: invoiceType ?? 'invoice', toast, refreshInvoice },
+        { invoice, invoiceType: invoiceType ?? 'invoice', toast },
         {
           onSuccess: () => {
             setIsLoading(false)
@@ -1144,7 +1090,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       refreshInvoice(data?.id ?? '')
       return
     } else if (action === PayableFormAction.CREATE_UPDATE_COUNTERPARTY) {
-      console.log('create update counterparty', data)
+      mercoaSession.debug('create update counterparty', data)
       let profile = createCounterpartyRequest({ data: data.vendor, setError, type: 'payee' })
       if (onCounterpartyPreSubmit) {
         profile = await onCounterpartyPreSubmit(profile, data.vendor.id)
@@ -1159,7 +1105,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
             onSelect: async (counterparty) => {
               await mercoaSession.refresh()
               setTimeout(() => {
-                console.log('counterparty', counterparty)
+                mercoaSession.debug('counterparty', counterparty)
                 setSelectedVendor(counterparty)
                 setValue('formAction', PayableFormAction.CLOSE_INLINE_FORM)
               }, 100)
@@ -1200,6 +1146,8 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
           }, 100)
         } catch (e: any) {
           setError('newBankAccount', { message: e.body ?? 'Invalid Bank Account Data' })
+          setIsLoading(false)
+          setValue('formAction', '')
         }
         return
       }
@@ -1282,6 +1230,8 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
           }, 1000)
         } catch (e: any) {
           setError('newCheck', { message: e.body ?? 'Invalid Check Data' })
+          setIsLoading(false)
+          setValue('formAction', '')
         }
         return
       }
@@ -1313,9 +1263,11 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
             setValue('paymentDestinationType', pm.schemaId, { shouldDirty: true })
             setValue('paymentDestinationId', pm.id, { shouldDirty: true })
             setValue('formAction', PayableFormAction.CLOSE_INLINE_FORM)
-          }, 1000)
+          }, 100)
         } catch (e: any) {
           setError('~cpm~~', { message: e.body ?? 'Invalid Data' })
+          setIsLoading(false)
+          setValue('formAction', '')
         }
         return
       }
@@ -1333,6 +1285,8 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
         } catch (e: any) {
           console.error(e)
           toast?.error(`There was an error deleting the invoice.\n Error: ${e.body}`)
+          setIsLoading(false)
+          setValue('formAction', '')
         }
       }
       return
@@ -1386,6 +1340,8 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
         window.open(pdf.uri, '_blank')
       } else {
         toast?.error('There was an error generating the check PDF')
+        setIsLoading(false)
+        setValue('formAction', '')
       }
       return
     } else if (action === PayableFormAction.COMMENT) {
@@ -1404,6 +1360,8 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
           setValue('formAction', '')
         } else {
           toast?.error('There was an error creating the comment')
+          setIsLoading(false)
+          setValue('formAction', '')
         }
       } catch (error: any) {
         console.error('Error creating comment:', error)
@@ -1453,21 +1411,22 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     [mercoaSession.organization?.metadataSchema],
   )
 
-  //@ts-ignore
   const filteredComments = comments?.filter((comment) => comment.text || comment.associatedApprovalAction) ?? []
 
   const initialCreationComment = {
-    id: watch('id'),
-    createdAt: watch('createdAt'),
-    updatedAt: watch('updatedAt'),
+    id: watch('id') ?? '',
+    createdAt: watch('createdAt') ?? new Date(),
+    updatedAt: watch('updatedAt') ?? new Date(),
     user: watch('creatorUser') ?? {
       id: '',
       name: '',
+      roles: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
     },
     text: '',
     associatedApprovalAction: {
       action: Mercoa.ApproverAction.None,
-      //@ts-ignore
       userId: watch('creatorUser')?.id ?? '',
     },
   }
@@ -1475,7 +1434,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const addItem = () => {
     append({
       id: `li-${Math.random()}`,
-      //@ts-ignore
       name: '',
       description: `Line Item ${(lineItems?.length ?? 0) + 1}`,
       amount: 0,
@@ -1490,7 +1448,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
 
   const updateItem = (index: number, item: Mercoa.InvoiceLineItemUpdateRequest, id?: string) => {
     if (id) {
-      //@ts-ignore
       const index = lineItems.findIndex((ele) => ele.id === id)
       if (index !== -1) {
         updateItem(index, item)
@@ -1502,7 +1459,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
 
   const removeItem = (index: number, id?: string) => {
     if (id) {
-      //@ts-ignore
       const index = lineItems.findIndex((ele) => ele.id === id)
       if (index !== -1) {
         remove(index)
@@ -1578,12 +1534,10 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
 
   const handleUpdateTotalAmount = useCallback(() => {
     if (!lineItems?.length) return
-    //@ts-ignore
     const total = lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0)
     const calculatedTotal = total + (taxAmount ?? 0) + (shippingAmount ?? 0)
     if (calculatedTotal !== amount) {
       let amount = new Big(0)
-      //@ts-ignore
       lineItems?.forEach((lineItem, index) => {
         if (typeof lineItem.amount === 'string' && (!lineItem.category || lineItem.category === 'EXPENSE')) {
           const cleanedAmount = (lineItem.amount as unknown as string).replace(/,/g, '')
@@ -1599,12 +1553,10 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
 
   useEffect(() => {
     if (!lineItems?.length) return
-    //@ts-ignore
     const total = lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0)
     const calculatedTotal = total + (taxAmount ?? 0) + (shippingAmount ?? 0)
     if (calculatedTotal !== amount) {
       let amount = new Big(0)
-      //@ts-ignore
       lineItems?.forEach((lineItem, index) => {
         if (typeof lineItem.amount === 'string' && (!lineItem.category || lineItem.category === 'EXPENSE')) {
           const cleanedAmount = (lineItem.amount as unknown as string).replace(/,/g, '')
@@ -1620,8 +1572,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
 
       if (taxAmount) {
         if (typeof taxAmount === 'string') {
-          //@ts-ignore
-          const cleanedTaxAmount = taxAmount.replace(/,/g, '')
+          const cleanedTaxAmount = (taxAmount as unknown as string).replace(/,/g, '')
           const parsedTaxAmount = Number(cleanedTaxAmount)
           if (!isNaN(parsedTaxAmount)) {
             amount = amount.add(parsedTaxAmount)
@@ -1633,8 +1584,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
 
       if (shippingAmount) {
         if (typeof shippingAmount === 'string') {
-          //@ts-ignore
-          const cleanedShippingAmount = shippingAmount.replace(/,/g, '')
+          const cleanedShippingAmount = (shippingAmount as unknown as string).replace(/,/g, '')
           const parsedShippingAmount = Number(cleanedShippingAmount)
           if (!isNaN(parsedShippingAmount)) {
             amount = amount.add(parsedShippingAmount)
@@ -1651,7 +1601,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(lineItems), amount, taxAmount, shippingAmount, clearErrors, setValue, setFocus])
 
-
   const handleResize = useCallback(() => {
     setHeight(window.innerHeight - (heightOffset ?? 0))
   }, [heightOffset])
@@ -1663,8 +1612,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       window.removeEventListener('resize', handleResize)
     }
   }, [heightOffset, handleResize])
-
- 
 
   const overviewContext: PayableOverviewContext = {
     currency,
@@ -1683,7 +1630,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     setInvoiceDate: (invoiceDate: Date) => setValue('invoiceDate', invoiceDate),
     printDescriptionOnCheckRemittance: printDescriptionOnCheckRemittance ?? false,
     setPrintDescriptionOnCheckRemittance: (printDescriptionOnCheckRemittance: boolean) =>
-      //@ts-ignore
       setValue('paymentDestinationOptions.printDescription', printDescriptionOnCheckRemittance),
   }
 
@@ -1706,9 +1652,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   }
 
   const commentsContext: PayableCommentsContext = {
-    //@ts-ignore
     comments: [initialCreationComment, ...filteredComments],
-    //@ts-ignore
     commentText: watch('commentText'),
     setCommentText: (commentText: string) => setValue('commentText', commentText),
     addComment: () => {
@@ -1736,10 +1680,8 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   }
 
   const taxAndShippingContext: PayableTaxAndShippingContext = {
-    //@ts-ignore
     taxAmount: watch('taxAmount'),
     setTaxAmount: (taxAmount: number) => setValue('taxAmount', taxAmount),
-    //@ts-ignore
     shippingAmount: watch('shippingAmount'),
     setShippingAmount: (shippingAmount: number) => setValue('shippingAmount', shippingAmount),
   }
@@ -1795,17 +1737,11 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     repeatOnDay: paymentScheduleRepeatOnDay as number | undefined,
     repeatOnMonth: paymentScheduleRepeatOnMonth as number | undefined,
     ends: paymentScheduleEnds as Date | undefined,
-    //@ts-ignore
     setType: (type: 'weekly' | 'monthly' | 'yearly' | 'daily' | 'oneTime') => setValue('paymentSchedule.type', type),
-    //@ts-ignore
     setRepeatEvery: (repeatEvery: number) => setValue('paymentSchedule.repeatEvery', repeatEvery),
-    //@ts-ignore
     setRepeatOn: (repeatOn: Array<Mercoa.DayOfWeek>) => setValue('paymentSchedule.repeatOn', repeatOn),
-    //@ts-ignore
     setRepeatOnDay: (repeatOnDay: number) => setValue('paymentSchedule.repeatOnDay', repeatOnDay),
-    //@ts-ignore
     setRepeatOnMonth: (repeatOnMonth: number) => setValue('paymentSchedule.repeatOnMonth', repeatOnMonth),
-    //@ts-ignore
     setEnds: (ends: Date | undefined) => setValue('paymentSchedule.ends', ends),
   }
 
@@ -1813,7 +1749,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     approvers: watch('approvers') as Mercoa.ApprovalSlot[],
     approvalPolicy: approvalPolicy as Mercoa.ApprovalPolicyResponse[],
     setApproverBySlot: (approvalSlotId: string, assignedUserId: string) => {
-      //@ts-ignore
       const index = approvers.findIndex((approver) => approver.approvalSlotId === approvalSlotId)
       if (index !== -1) {
         setValue(`approvers.${index}.assignedUserId`, assignedUserId)
@@ -1829,13 +1764,11 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       }
     },
     getApprovalSlotOptions: (approvalSlotId: string) => {
-      //@ts-ignore
       const slot = approvers.find((approver) => approver.approvalSlotId === approvalSlotId)
       if (!slot) return []
       return [
         { disabled: false, value: { id: 'ANY', name: 'Any Approver', email: '' } },
         ...filterApproverOptions({
-          //@ts-ignore
           approverSlotIndex: approvers.findIndex((a) => a.approvalSlotId === approvalSlotId),
           eligibleRoles: slot.eligibleRoles,
           eligibleUserIds: slot.eligibleUserIds,
@@ -1850,7 +1783,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     selectedApproverBySlot: (approvalSlotId: string) => {
       return (
         [...mercoaSession.users, { id: 'ANY', name: 'Any Approver', email: '' }].find((user) => {
-          //@ts-ignore
           const approverSlot = approvers.find((e) => e?.approvalSlotId === approvalSlotId)
           if (user.id === approverSlot?.assignedUserId) return true
         }) ?? ''

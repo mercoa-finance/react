@@ -1,18 +1,29 @@
-import { UseMutateFunction } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import Papa from 'papaparse'
 import { useEffect, useMemo, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { InvoiceTableColumn, useMercoaSession } from '../../../components'
 import { queryClient } from '../../../lib/react-query/query-client-provider'
-import { ErrorResponse } from '../../../lib/react-query/types'
+import { invoicePaymentTypeMapper } from '../../common/invoice-payment-type'
 import {
-  useApprovePayableN as useApprovePayable,
+  useApprovePayable,
+  useArchivePayable,
+  useAssignApprover,
   useBulkApprovePayables,
+  useBulkArchivePayables,
+  useBulkAssignApprover,
+  useBulkCancelPayables,
   useBulkDeletePayables,
+  useBulkRejectPayables,
+  useBulkRestoreAsDraft,
   useBulkSchedulePayment,
+  useBulkSubmitForApproval,
+  useCancelPayable,
   useDeletePayable,
+  useRejectPayable,
+  useRestoreAsDraft,
   useSchedulePayment,
+  useSubmitForApproval,
 } from '../api/mutations'
 import {
   usePayableApprovalPoliciesQuery,
@@ -21,9 +32,9 @@ import {
   usePayablesQuery,
   useRecurringPayablesQuery,
 } from '../api/queries'
-import { PayableAction } from '../components/payables-table/constants'
-import { PayablesProps } from '../components/payables/types'
+import { PayablesTableAction } from '../components/payables-table/constants'
 import { usePayablesFilterStore } from '../stores/payables-filter-store'
+import { PayablesContextValue, PayablesProps } from '../types'
 
 export function usePayablesInternal(payableProps: PayablesProps) {
   const { queryOptions } = payableProps
@@ -31,10 +42,14 @@ export function usePayablesInternal(payableProps: PayablesProps) {
   const currentQueryOptions = queryOptions?.isInitial ? undefined : queryOptions
   const mercoaSession = useMercoaSession()
   const { getFilters } = usePayablesFilterStore()
-  const { selectedStatusFilters, dateRange, dateType, selectedApprovers } = getFilters('payables')
+  const { selectedStatusFilters, dateRange, dateType, selectedApprovers } = getFilters(
+    'payables',
+    [Mercoa.InvoiceStatus.Draft],
+    mercoaSession.user,
+  )
   const [activeInvoiceAction, setActiveInvoiceAction] = useState<{
     invoiceId: string[] | string
-    action: PayableAction
+    action: PayablesTableAction
     mode: 'single' | 'multiple'
   } | null>(null)
 
@@ -53,7 +68,7 @@ export function usePayablesInternal(payableProps: PayablesProps) {
   )
   const [resultsPerPage, setResultsPerPage] = useState(initialQueryOptions?.resultsPerPage || 10)
   const [page, setPage] = useState(0)
-  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([])
+  const [selectedInvoices, setSelectedInvoices] = useState<Mercoa.InvoiceResponse[]>([])
 
   const [selectedColumns, setSelectedColumns] = useState<InvoiceTableColumn[]>([
     { title: 'Vendor Name', field: 'vendor', orderBy: Mercoa.InvoiceOrderByField.VendorName },
@@ -86,8 +101,8 @@ export function usePayablesInternal(payableProps: PayablesProps) {
     orderBy: currentQueryOptions?.orderBy ? currentQueryOptions.orderBy : orderBy,
     orderDirection: currentQueryOptions?.orderDirection ? currentQueryOptions.orderDirection : orderDirection,
     resultsPerPage: currentQueryOptions?.resultsPerPage ? currentQueryOptions.resultsPerPage : resultsPerPage,
-    approverId: memoizedApprovers.includes('current') ? mercoaSession.user?.id : undefined,
-    approverAction: memoizedApprovers.includes('current') ? Mercoa.ApproverAction.None : undefined,
+    approverId: memoizedApprovers.length ? memoizedApprovers.map((e) => e.id) : undefined,
+    //approverAction: memoizedApprovers.length ? Mercoa.ApproverAction.None : undefined,
     excludeReceivables: true,
   })
 
@@ -114,15 +129,32 @@ export function usePayablesInternal(payableProps: PayablesProps) {
     excludeReceivables: true,
   })
 
-  const [isExporting, setIsExporting] = useState(false)
   const { mutate: deletePayable, isPending: isDeletePayableLoading } = useDeletePayable()
   const { mutate: bulkDeletePayables, isPending: isBulkDeletePayableLoading } = useBulkDeletePayables()
 
   const { mutate: approvePayable, isPending: isApprovePayableLoading } = useApprovePayable()
   const { mutate: bulkApprovePayables, isPending: isBulkApprovePayablesLoading } = useBulkApprovePayables()
 
+  const { mutate: rejectPayable, isPending: isRejectPayableLoading } = useRejectPayable()
+  const { mutate: bulkRejectPayables, isPending: isBulkRejectPayablesLoading } = useBulkRejectPayables()
+
   const { mutate: schedulePayment, isPending: isSchedulePaymentLoading } = useSchedulePayment()
   const { mutate: bulkSchedulePayment, isPending: isBulkSchedulePaymentLoading } = useBulkSchedulePayment()
+
+  const { mutate: restoreAsDraft, isPending: isRestoreAsDraftLoading } = useRestoreAsDraft()
+  const { mutate: bulkRestoreAsDraft, isPending: isBulkRestoreAsDraftLoading } = useBulkRestoreAsDraft()
+
+  const { mutate: submitForApproval, isPending: isSubmitForApprovalLoading } = useSubmitForApproval()
+  const { mutate: bulkSubmitForApproval, isPending: isBulkSubmitForApprovalLoading } = useBulkSubmitForApproval()
+
+  const { mutate: assignApprover, isPending: isAssignApproverLoading } = useAssignApprover()
+  const { mutate: bulkAssignApprover, isPending: isBulkAssignApproverLoading } = useBulkAssignApprover()
+
+  const { mutate: archivePayable, isPending: isArchivePayableLoading } = useArchivePayable()
+  const { mutate: bulkArchivePayables, isPending: isBulkArchivePayablesLoading } = useBulkArchivePayables()
+
+  const { mutate: cancelPayable, isPending: isCancelPayableLoading } = useCancelPayable()
+  const { mutate: bulkCancelPayables, isPending: isBulkCancelPayablesLoading } = useBulkCancelPayables()
 
   const currentPageData = useMemo(() => {
     return data?.pages[page]?.invoices || []
@@ -143,7 +175,7 @@ export function usePayablesInternal(payableProps: PayablesProps) {
   }, [search])
 
   useEffect(() => {
-    setSelectedInvoiceIds([])
+    setSelectedInvoices([])
     setPage(0)
   }, [
     currentQueryOptions?.currentStatuses,
@@ -205,21 +237,27 @@ export function usePayablesInternal(payableProps: PayablesProps) {
   }, [currentPageData])
 
   const isAllSelected =
-    allFetchedInvoices.length > 0 && allFetchedInvoices.every((invoice) => selectedInvoiceIds.includes(invoice.id))
+    allFetchedInvoices.length > 0 &&
+    allFetchedInvoices.every((invoice) => selectedInvoices.some((e) => e.id === invoice.id))
 
   const handleSelectAll = () => {
-    setSelectedInvoiceIds((prev) => {
-      const allIds = allFetchedInvoices.map((invoice) => invoice.id)
-      const areAllSelected = allIds.every((id) => prev.includes(id))
+    setSelectedInvoices((prev) => {
+      const existingIds = prev.map((e) => e.id)
+      const areAllSelected = allFetchedInvoices.every((fetchedInvoice) => existingIds.includes(fetchedInvoice.id))
 
-      return areAllSelected ? [] : allIds
+      return areAllSelected ? [] : allFetchedInvoices
     })
   }
 
-  const handleSelectRow = (invoiceId: string) => {
-    setSelectedInvoiceIds((prev) =>
-      prev.includes(invoiceId) ? prev.filter((id) => id !== invoiceId) : [...prev, invoiceId],
-    )
+  const handleSelectRow = (invoice: Mercoa.InvoiceResponse) => {
+    setSelectedInvoices((prev) => {
+      console.log('invoice', invoice)
+      console.log('prev', prev)
+      if (prev.some((e) => e.id === invoice.id)) {
+        return prev.filter((e) => e.id !== invoice.id)
+      }
+      return [...prev, invoice]
+    })
   }
 
   const goToNextPage = () => {
@@ -241,11 +279,11 @@ export function usePayablesInternal(payableProps: PayablesProps) {
   const isNextDisabled = isFetchingNextPage || !data?.pages || (page === data.pages.length - 1 && !hasNextPage)
   const isPrevDisabled = page === 0
 
-  const toggleSelectedColumn = (field: any) => {
+  const toggleSelectedColumn = (field: string) => {
     setSelectedColumns((prevColumns) =>
       prevColumns.some((column) => column.field === field)
         ? prevColumns.filter((column) => column.field !== field)
-        : [...prevColumns, { field, title: '' }],
+        : [...prevColumns, { field: field as keyof Mercoa.InvoiceResponse, title: '' }],
     )
   }
 
@@ -268,312 +306,76 @@ export function usePayablesInternal(payableProps: PayablesProps) {
     setPage(0)
   }
 
-  const invoicePaymentTypeMapper = (invoice: Mercoa.InvoiceResponse) => {
-    if (invoice.paymentDestination?.type === Mercoa.PaymentMethodType.BankAccount) {
-      if (
-        invoice.paymentDestinationOptions?.type === Mercoa.PaymentMethodType.BankAccount &&
-        invoice.paymentDestinationOptions?.delivery === Mercoa.BankDeliveryMethod.AchStandard
-      ) {
-        return 'ACH_STANDARD'
-      } else if (
-        !invoice.paymentDestinationOptions ||
-        (invoice.paymentDestinationOptions.type === Mercoa.PaymentMethodType.BankAccount &&
-          invoice.paymentDestinationOptions.delivery !== Mercoa.BankDeliveryMethod.AchStandard)
-      ) {
-        return 'ACH_SAME_DAY'
-      } else {
-        return 'UNKNOWN'
-      }
-    } else if (invoice.paymentDestination?.type === Mercoa.PaymentMethodType.Check) {
-      return 'CHECK'
-    } else if (invoice.paymentDestination?.type === Mercoa.PaymentMethodType.Custom) {
-      return 'CUSTOM'
-    } else if (invoice.paymentDestination?.type === Mercoa.PaymentMethodType.OffPlatform) {
-      return 'OFF_PLATFORM'
-    } else if (invoice.paymentDestination?.type === Mercoa.PaymentMethodType.Card) {
-      return 'CARD'
-    } else if (invoice.paymentDestination?.type === Mercoa.PaymentMethodType.Utility) {
-      return 'UTILITY'
-    } else {
-      return 'UNKNOWN'
-    }
-  }
-
-  const fetchAllInvoices = async () => {
-    // Calculate remaining pages to fetch
-    const totalPages = Math.ceil((data?.pages[0]?.count || 0) / resultsPerPage)
-    const loadedPages = data?.pages?.length || 0
-    const remainingPages = totalPages - loadedPages
-
-    // Fetch remaining pages
-    for (let i = 0; i < remainingPages; i++) {
-      await fetchNextPage()
-    }
-  }
-
   const downloadInvoicesAsCSV = async () => {
-    setIsExporting(true)
-    await fetchAllInvoices()
+    let allInvoicePages = data?.pages ?? []
+    while (allInvoicePages[allInvoicePages.length - 1].nextCursor) {
+      const resp = await fetchNextPage()
+      allInvoicePages = resp.data?.pages ?? []
+    }
+    const allInvoices = allInvoicePages.flatMap((page) => page.invoices)
+    const csv = Papa.unparse(
+      allInvoices.map((invoice) => {
+        return {
+          'Invoice ID': invoice.id,
+          'Invoice Number': invoice.invoiceNumber,
+          Status: invoice.status,
+          Amount: invoice.amount,
+          Currency: invoice.currency,
+          Note: invoice.noteToSelf,
+          'Payer ID': invoice.payer?.id,
+          'Payer Foreign ID': invoice.payer?.foreignId,
+          'Payer Email': invoice.payer?.email,
+          'Payer Name': invoice.payer?.name,
+          'Vendor ID': invoice.vendor?.id,
+          'Vendor Foreign ID': invoice.vendor?.foreignId,
+          'Vendor Email': invoice.vendor?.email,
+          'Vendor Name': invoice.vendor?.name,
+          'Payment Type': invoicePaymentTypeMapper(invoice),
+          Metadata: JSON.stringify(invoice.metadata),
+          'Due Date': invoice.dueDate ? dayjs(invoice.dueDate).format('YYYY-MM-DD') : undefined,
+          'Deduction Date': invoice.deductionDate ? dayjs(invoice.deductionDate).format('YYYY-MM-DD') : undefined,
+          'Processed At': invoice.processedAt ? dayjs(invoice.processedAt).format('YYYY-MM-DD') : undefined,
+          'Created At': invoice.createdAt ? dayjs(invoice.createdAt).format('YYYY-MM-DD') : undefined,
+          'Updated At': invoice.updatedAt ? dayjs(invoice.updatedAt).format('YYYY-MM-DD') : undefined,
+        }
+      }),
+    )
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.setAttribute('mercoa-hidden', '')
+    a.setAttribute('href', url)
+    a.setAttribute(
+      'download',
+      `payable-invoice-export-${dayjs(startDate).format('YYYY-MM-DD')}-to-${dayjs(endDate).format('YYYY-MM-DD')}.csv`,
+    )
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   }
 
-  useEffect(() => {
-    if (!data?.pages) return
-    if (!isExporting) return
-
-    const exportInvoicesAsCSV = () => {
-      const allInvoices = data?.pages.flatMap((page) => page.invoices) || []
-
-      const csv = Papa.unparse(
-        allInvoices.map((invoice) => {
-          return {
-            'Invoice ID': invoice.id,
-            'Invoice Number': invoice.invoiceNumber,
-            Status: invoice.status,
-            Amount: invoice.amount,
-            Currency: invoice.currency,
-            Note: invoice.noteToSelf,
-
-            'Payer ID': invoice.payer?.id,
-            'Payer Foreign ID': invoice.payer?.foreignId,
-            'Payer Email': invoice.payer?.email,
-            'Payer Name': invoice.payer?.name,
-            'Vendor ID': invoice.vendor?.id,
-            'Vendor Foreign ID': invoice.vendor?.foreignId,
-            'Vendor Email': invoice.vendor?.email,
-            'Vendor Name': invoice.vendor?.name,
-
-            'Payment Type': invoicePaymentTypeMapper(invoice),
-
-            Metadata: JSON.stringify(invoice.metadata),
-
-            'Due Date': dayjs(invoice.dueDate).format('YYYY-MM-DD'),
-            'Deduction Date': dayjs(invoice.deductionDate).format('YYYY-MM-DD'),
-            'Processed At': dayjs(invoice.processedAt).format('YYYY-MM-DD'),
-            'Created At': dayjs(invoice.createdAt).format('YYYY-MM-DD'),
-            'Updated At': dayjs(invoice.updatedAt).format('YYYY-MM-DD'),
-          }
-        }),
-      )
-
-      const blob = new Blob([csv], { type: 'text/csv' })
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.setAttribute('mercoa-hidden', '')
-      a.setAttribute('href', url)
-      a.setAttribute(
-        'download',
-        `mercoa-invoice-export-${dayjs(startDate).format('YYYY-MM-DD')}-to-${dayjs(endDate).format('YYYY-MM-DD')}.csv`,
-      )
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-    }
-
-    const totalPages = Math.ceil((data.pages[0]?.count || 0) / resultsPerPage)
-    const loadedPages = data.pages.length
-
-    if (totalPages === loadedPages) {
-      exportInvoicesAsCSV()
-      setIsExporting(false)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data?.pages, isExporting, resultsPerPage])
-
-  type PayablesInternalReturn = {
+  const out: PayablesContextValue = {
+    propsContextValue: payableProps,
     dataContextValue: {
-      infiniteData: any
-      tableData: Array<{
-        select: string
-        id: string
-        invoice: Mercoa.InvoiceResponse
-        invoiceNumber: string | undefined
-        currencyCode: string | undefined
-        vendorName?: string
-        vendorEmail?: string
-        amount: number | undefined
-        status: Mercoa.InvoiceStatus
-        invoiceId: string
-        dueDate: Date | undefined
-        invoiceDate: Date | undefined
-        deductionDate: Date | undefined
-        paymentDestination: Mercoa.PaymentMethodResponse | undefined
-        invoiceType: string
-        failureType?: string | undefined
-        vendorId: string | undefined
-        payerId: string | undefined
-        paymentDestinationId?: string | undefined
-        paymentSourceId?: string | undefined
-        approvers: Mercoa.ApprovalSlot[]
-      }>
-      allFetchedInvoices: Mercoa.InvoiceResponse[]
-      totalItems: number
-      totalEntries: number
-      recurringPayablesData: Mercoa.InvoiceTemplateResponse[] | undefined
-      metricsData: Mercoa.InvoiceMetricsResponse[] | undefined
-      approvalPolicies: Mercoa.ApprovalPolicyResponse[] | undefined
-      statusTabsMetrics: any
-      isFetching: boolean
-      isDataLoading: boolean
-      isLoading: boolean
-      isError: boolean
-      isFetchingNextPage: boolean
-      isFetchingPreviousPage: boolean
-      isRecurringPayablesLoading: boolean
-      isMetricsLoading: boolean
-      isApprovalPoliciesLoading: boolean
-      isStatusTabsMetricsLoading: boolean
-      isRefreshLoading: boolean
-      handleRefresh: () => void
-    }
-    filtersContextValue: {
-      currentStatuses: Mercoa.InvoiceStatus[]
-      setCurrentStatuses: (statuses: Mercoa.InvoiceStatus[]) => void
-      search: string
-      setSearch: (search: string) => void
-      startDate: Date | undefined
-      setStartDate: (date: Date | undefined) => void
-      endDate: Date | undefined
-      setEndDate: (date: Date | undefined) => void
-      selectedStatusFilters: {
-        toggleSelectedStatus: (status: Mercoa.InvoiceStatus) => void
-      }
-    }
-    paginationContextValue: {
-      orderBy: Mercoa.InvoiceOrderByField
-      setOrderBy: (field: Mercoa.InvoiceOrderByField) => void
-      orderDirection: Mercoa.OrderDirection
-      setOrderDirection: (direction: Mercoa.OrderDirection) => void
-      resultsPerPage: number
-      setResultsPerPage: (perPage: number) => void
-      page: number
-      goToNextPage: () => void
-      goToPreviousPage: () => void
-      isNextDisabled: boolean
-      isPrevDisabled: boolean
-      handleOrderByChange: (field: Mercoa.InvoiceOrderByField) => void
-    }
-    selectionContextValue: {
-      selectedInvoiceIds: string[]
-      setSelectedInvoiceIds: (ids: string[]) => void
-      isAllSelected: boolean
-      handleSelectAll: () => void
-      handleSelectRow: (invoiceId: string) => void
-      selectedColumns: InvoiceTableColumn[]
-      setSelectedColumns: (columns: InvoiceTableColumn[]) => void
-      toggleSelectedColumn: (column: InvoiceTableColumn) => void
-    }
-    actionsContextValue: {
-      deletePayable: UseMutateFunction<
-        any,
-        ErrorResponse,
-        {
-          invoiceId: string
-          invoiceType?: 'invoice' | 'invoiceTemplate'
-        },
-        unknown
-      >
-      isDeletePayableLoading: boolean
-      bulkDeletePayables: UseMutateFunction<
-        any,
-        ErrorResponse,
-        {
-          invoiceIds: string[]
-          invoiceType?: 'invoice' | 'invoiceTemplate'
-        },
-        unknown
-      >
-      isBulkDeletePayableLoading: boolean
-      schedulePayment: UseMutateFunction<
-        Mercoa.InvoiceTemplateResponse,
-        ErrorResponse,
-        {
-          invoice: Mercoa.InvoiceResponse
-          deductionDate: Date
-          invoiceType?: 'invoice' | 'invoiceTemplate'
-        },
-        unknown
-      >
-      isSchedulePaymentLoading: boolean
-      bulkSchedulePayment: UseMutateFunction<
-        {
-          success: boolean
-          successfulInvoices: string[]
-          failedInvoices: string[]
-          errors: {
-            invoiceId: string
-            error: any
-          }[]
-        },
-        ErrorResponse,
-        {
-          invoiceIds: string[]
-          invoices: Mercoa.InvoiceResponse[]
-          deductionDate: Date
-          invoiceType?: 'invoice' | 'invoiceTemplate'
-        },
-        unknown
-      >
-      isBulkSchedulePaymentLoading: boolean
-      approvePayable: UseMutateFunction<
-        any,
-        ErrorResponse,
-        {
-          invoiceId: string
-          invoiceType?: 'invoice' | 'invoiceTemplate'
-        },
-        unknown
-      >
-      isApprovePayableLoading: boolean
-      bulkApprovePayables: UseMutateFunction<
-        any,
-        ErrorResponse,
-        {
-          invoiceIds: string[]
-          invoiceType?: 'invoice' | 'invoiceTemplate'
-        },
-        unknown
-      >
-      isBulkApprovePayablesLoading: boolean
-      activeInvoiceAction: {
-        invoiceId: string[] | string
-        action: PayableAction
-        mode: 'single' | 'multiple'
-      } | null
-      setActiveInvoiceAction: (
-        action: {
-          invoiceId: string[] | string
-          action: PayableAction
-          mode: 'single' | 'multiple'
-        } | null,
-      ) => void
-      downloadInvoicesAsCSV: () => void
-    }
-    propsContextValue: PayablesProps
-  }
-
-  const out = {
-    dataContextValue: {
-      infiniteData: data,
       tableData,
+      infiniteData: data,
       allFetchedInvoices,
-      totalItems: data?.pages[0]?.count || 0,
-      totalEntries: data?.pages[0]?.count || 0,
-      recurringPayablesData,
-      metricsData,
-      approvalPolicies,
-      statusTabsMetrics,
-      isFetching,
       isDataLoading: isLoading && !!mercoaSession.entityId,
-      isLoading,
-      isError,
+      isFetching,
       isFetchingNextPage,
       isFetchingPreviousPage,
-      isRecurringPayablesLoading,
-      isMetricsLoading,
-      isApprovalPoliciesLoading,
-      isStatusTabsMetricsLoading,
+      isLoading,
+      isError,
       isRefreshLoading: isFetching,
       handleRefresh,
+      recurringPayablesData,
+      isRecurringPayablesLoading,
+      approvalPolicies,
+      isApprovalPoliciesLoading,
+      metricsData,
+      isMetricsLoading,
+      statusTabsMetrics,
+      isStatusTabsMetricsLoading,
     },
 
     filtersContextValue: {
@@ -598,6 +400,7 @@ export function usePayablesInternal(payableProps: PayablesProps) {
       resultsPerPage,
       setResultsPerPage: handleResultsPerPage,
       page,
+      totalEntries: data?.pages[0]?.count || 0,
       goToNextPage,
       goToPreviousPage,
       isNextDisabled,
@@ -606,8 +409,8 @@ export function usePayablesInternal(payableProps: PayablesProps) {
     },
 
     selectionContextValue: {
-      selectedInvoiceIds,
-      setSelectedInvoiceIds,
+      selectedInvoices,
+      setSelectedInvoices,
       isAllSelected,
       handleSelectAll,
       handleSelectRow,
@@ -629,13 +432,35 @@ export function usePayablesInternal(payableProps: PayablesProps) {
       isApprovePayableLoading,
       bulkApprovePayables,
       isBulkApprovePayablesLoading,
+      rejectPayable,
+      isRejectPayableLoading,
+      bulkRejectPayables,
+      isBulkRejectPayablesLoading,
+      restoreAsDraft,
+      isRestoreAsDraftLoading,
+      bulkRestoreAsDraft,
+      isBulkRestoreAsDraftLoading,
+      submitForApproval,
+      isSubmitForApprovalLoading,
+      bulkSubmitForApproval,
+      isBulkSubmitForApprovalLoading,
+      assignApprover,
+      isAssignApproverLoading,
+      bulkAssignApprover,
+      isBulkAssignApproverLoading,
+      archivePayable,
+      isArchivePayableLoading,
+      bulkArchivePayables,
+      isBulkArchivePayablesLoading,
+      cancelPayable,
+      isCancelPayableLoading,
+      bulkCancelPayables,
+      isBulkCancelPayablesLoading,
       activeInvoiceAction,
       setActiveInvoiceAction,
       downloadInvoicesAsCSV,
     },
-
-    propsContextValue: payableProps,
-  } satisfies PayablesInternalReturn
+  }
 
   return out
 }

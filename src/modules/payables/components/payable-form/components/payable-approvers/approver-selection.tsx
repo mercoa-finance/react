@@ -15,6 +15,7 @@ export function ApproversSelection() {
     selectedApproverBySlot,
     getApprovalSlotOptions,
   } = approversContextValue
+  const mercoaSession = useMercoaSession()
 
   if (!approvalPolicies) return <></>
 

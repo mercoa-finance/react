@@ -8,12 +8,12 @@ import { FilterIcon } from '../../../common/assets/icons/filter-icon'
 import { SearchIcon } from '../../../common/assets/icons/search-icon'
 import { InvoiceMetrics } from '../../../common/components'
 import { DateTimeFilterDropdown } from '../../../common/components/datetime-filter-dropdown'
+import { ExportsDropdown } from '../../../common/components/exports-dropdown'
 import { StatusTabs } from '../../../common/components/status-tabs'
 import { usePayablesFilterStore } from '../../stores/payables-filter-store'
 import { PayablesTable } from '../payables-table/payables-table'
 import { CumulativeFilterDropdown } from './components'
 import { ColumnFilterDropdown } from './components/column-filter-dropdown'
-import { ExportsDropdown } from './components/exports-dropdown'
 import { RecurringPayablesList } from './components/recurring-payables-list'
 
 export const PayablesDashboard: FC = memo(() => {
@@ -38,6 +38,7 @@ export const PayablesDashboard: FC = memo(() => {
   const { renderCustom, displayOptions, handlers } = propsContextValue
 
   const { columns } = renderCustom ?? {}
+
   const {
     statusTabsOptions = {
       isVisible: true,
@@ -54,17 +55,22 @@ export const PayablesDashboard: FC = memo(() => {
         Mercoa.InvoiceStatus.Archived,
       ],
     },
-    showInvoiceMetrics,
+    showInvoiceMetrics = true,
     classNames,
   } = displayOptions ?? {}
-  const { onCreateInvoice, onCreateRecurringInvoice, onSelectInvoice } = handlers ?? {}
+  const {
+    onCreateInvoice,
+    onCreateInvoiceTemplate: onCreateRecurringInvoice,
+    onSelectInvoiceTemplate: onSelectRecurringInvoice,
+  } = handlers ?? {}
+
   const mercoaSession = useMercoaSession()
   const { userPermissionConfig } = mercoaSession
   const useOnce = useRef(false)
 
   const { setFilters, getFilters } = usePayablesFilterStore()
   const { selectedStatusFilters } = getFilters('payables')
-  const [currentTabStatus, setCurrentTabStatus] = useState<Mercoa.InvoiceStatus[]>()
+
   const [showCumulativeFilter, setShowCumulativeFilter] = useState(true)
   const [showRecurringInvoices, setShowRecurringInvoices] = useState(false)
 
@@ -84,27 +90,27 @@ export const PayablesDashboard: FC = memo(() => {
       setFilters('payables', {
         selectedStatusFilters: [statusTabOptionsByUser[0]],
       })
-      setCurrentTabStatus([statusTabOptionsByUser[0]])
       useOnce.current = true
     }
   }, [userPermissionConfig, statusTabOptionsByUser, setFilters])
 
   return (
+    // NOTE: The pt-1 is to ensure the recurring invoices button is hidden by the recurring invoices panel
     <div className="mercoa-relative mercoa-pt-1">
       <div className="mercoa-flex mercoa-justify-end mercoa-items-center mercoa-gap-2">
         <div className="mercoa-flex mercoa-flex-col mercoa-mr-2">
           <span className="mercoa-text-xs mercoa-text-gray-500">Forward invoices to:</span>
           <EntityInboxEmail />
         </div>
-        {/* TODO: To be reviewed */}
-        {/* <MercoaButton
+        <div className="mercoa-flex-1" />
+        <MercoaButton
           isEmphasized={false}
           className={'mercoa-inline-flex mercoa-text-sm'}
           type="button"
           onClick={() => setShowRecurringInvoices((prev) => !prev)}
         >
           <span className="mercoa-hidden md:mercoa-inline-block">Recurring Invoices</span>
-        </MercoaButton> */}
+        </MercoaButton>
         <MercoaButton
           isEmphasized={true}
           className={'mercoa-inline-flex mercoa-text-sm'}
@@ -189,7 +195,6 @@ export const PayablesDashboard: FC = memo(() => {
             selectedStatuses={selectedStatusFilters.length ? selectedStatusFilters : [statusTabOptionsByUser[0]]}
             statuses={statusTabOptionsByUser}
             onStatusChange={(status) => {
-              setCurrentTabStatus(status)
               setFilters('payables', {
                 selectedStatusFilters: Array.isArray(status) ? status : [status],
               })
@@ -241,7 +246,7 @@ export const PayablesDashboard: FC = memo(() => {
                 <RecurringPayablesList
                   recurringPayablesData={recurringPayablesData}
                   isRecurringPayablesLoading={isRecurringPayablesLoading}
-                  onSelectInvoice={onSelectInvoice}
+                  onSelectInvoice={onSelectRecurringInvoice}
                 />
               </div>
 

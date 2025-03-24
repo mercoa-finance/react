@@ -8,7 +8,7 @@ export interface CounterpartiesResponse {
   nextCursor?: string
 }
 
-export function useCounterparties(
+export function useCounterpartiesQuery(
   entityId: string,
   type: 'payor' | 'payee',
   requestOptions?:

@@ -1,4 +1,4 @@
-import { BuildingLibraryIcon, PencilIcon } from '@heroicons/react/24/outline'
+import { BuildingLibraryIcon, PencilIcon, PlusIcon } from '@heroicons/react/24/outline'
 import accounting from 'accounting'
 import { ReactNode, useEffect, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
@@ -15,6 +15,7 @@ import {
   MercoaInput,
   MercoaInputLabel,
   NoSession,
+  PaymentMethodButton,
   PaymentMethodList,
   Tooltip,
   inputClassName,
@@ -22,73 +23,161 @@ import {
 } from './index'
 
 export function CustomPaymentMethods({
-  children,
   onSelect,
   showAdd,
   showEdit,
   showDelete,
+  showEntityConfirmation,
   hideIndicators,
-  schema,
+  entityId,
+  isPayor,
+  isPayee,
 }: {
-  children?: Function
-  onSelect?: Function
+  onSelect?: (value?: Mercoa.PaymentMethodResponse.Custom) => void
   showAdd?: boolean
   showEdit?: boolean
   showDelete?: boolean
+  showEntityConfirmation?: boolean
   hideIndicators?: boolean
-  schema?: Mercoa.CustomPaymentMethodSchemaResponse
+  entityId?: string
+  isPayor: boolean
+  isPayee: boolean
 }) {
   const [paymentMethods, setPaymentMethods] = useState<Array<Mercoa.PaymentMethodResponse.Custom>>()
-  const [showDialog, setShowDialog] = useState(false)
+  const [schemas, setSchemas] = useState<Array<Mercoa.CustomPaymentMethodSchemaResponse>>()
 
   const mercoaSession = useMercoaSession()
+
+  const entityIdFinal = entityId ?? mercoaSession.entity?.id
+
   useEffect(() => {
-    if (mercoaSession.token && mercoaSession.entity?.id) {
-      mercoaSession.client?.entity.paymentMethod.getAll(mercoaSession.entity?.id, { type: 'custom' }).then((resp) => {
+    if (mercoaSession.token && entityIdFinal) {
+      mercoaSession.client?.entity.paymentMethod.getAll(entityIdFinal, { type: 'custom' }).then((resp) => {
         setPaymentMethods(resp.map((e) => e as Mercoa.PaymentMethodResponse.Custom))
       })
     }
-  }, [mercoaSession.entity?.id, mercoaSession.token, showDialog, mercoaSession.refreshId])
+  }, [entityIdFinal, mercoaSession.token, mercoaSession.refreshId])
 
-  const onClose = (account: Mercoa.PaymentMethodResponse) => {
-    setShowDialog(false)
-    if (onSelect && account) onSelect(account)
-  }
+  useEffect(() => {
+    if (mercoaSession.token && entityIdFinal) {
+      mercoaSession.client?.customPaymentMethodSchema.getAll({}).then((resp) => {
+        setSchemas(
+          resp.filter((e) => {
+            if (e.isSource && isPayor) return true
+            if (e.isDestination && isPayee) return true
+            return false
+          }),
+        )
+      })
+    }
+  }, [entityIdFinal, mercoaSession.token, mercoaSession.refreshId])
 
   if (!mercoaSession.client) return <NoSession componentName="CustomPaymentMethod" />
-  if (children) return children({ paymentMethods })
   else {
     return (
       <>
-        {!paymentMethods ? (
+        {!paymentMethods || !schemas ? (
           <div className="mercoa-p-9 mercoa-text-center">
             <LoadingSpinnerIcon />
           </div>
         ) : (
-          <>
-            <PaymentMethodList
-              accounts={paymentMethods}
-              showDelete={showDelete || showEdit}
-              formatAccount={(account: Mercoa.PaymentMethodResponse.Custom) => (
-                <CustomPaymentMethod
-                  account={account}
-                  onSelect={onSelect}
+          <div className="mercoa-flex mercoa-flex-col mercoa-gap-y-4">
+            {schemas?.map((schema) => {
+              const filteredPaymentMethods = paymentMethods?.filter((pm) => pm.schemaId === schema.id)
+              return (
+                <CustomPaymentMethodsPerSchema
+                  entityId={entityId}
                   schema={schema}
+                  paymentMethods={filteredPaymentMethods}
+                  showDelete={showDelete}
                   showEdit={showEdit}
-                  hideDefaultIndicator={hideIndicators}
+                  showEntityConfirmation={showEntityConfirmation}
+                  showAdd={showAdd}
+                  onSelect={async (e) => {
+                    await mercoaSession.refresh()
+                    if (onSelect) onSelect(e)
+                  }}
+                  hideIndicators={hideIndicators}
+                  key={schema.id}
                 />
-              )}
-            />
-            {paymentMethods?.map((account) => <div className="mercoa-mt-2" key={account.id}></div>)}
-          </>
+              )
+            })}
+          </div>
         )}
       </>
     )
   }
 }
 
+function CustomPaymentMethodsPerSchema({
+  entityId,
+  schema,
+  paymentMethods,
+  showDelete,
+  showEdit,
+  showEntityConfirmation,
+  showAdd,
+  onSelect,
+  hideIndicators,
+}: {
+  entityId?: string
+  schema: Mercoa.CustomPaymentMethodSchemaResponse
+  paymentMethods: Mercoa.PaymentMethodResponse.Custom[]
+  showDelete?: boolean
+  showEdit?: boolean
+  showEntityConfirmation?: boolean
+  showAdd?: boolean
+  onSelect?: (value?: Mercoa.PaymentMethodResponse.Custom) => void
+  hideIndicators?: boolean
+}) {
+  const [showDialog, setShowDialog] = useState(false)
+  const onClose = (account: Mercoa.PaymentMethodResponse.Custom) => {
+    setShowDialog(false)
+    if (onSelect && account) onSelect(account)
+  }
+  return (
+    <div key={schema.id}>
+      <h3>{schema.name}</h3>
+      <PaymentMethodList
+        accounts={paymentMethods}
+        showDelete={showDelete || showEdit}
+        showEntityConfirmation={showEntityConfirmation}
+        addAccount={
+          paymentMethods && showAdd ? (
+            <div>
+              <AddDialog
+                show={showDialog}
+                onClose={onClose}
+                component={
+                  <AddCustomPaymentMethod
+                    onSubmit={(data?: Mercoa.PaymentMethodResponse.Custom) => {
+                      if (data) onClose(data)
+                    }}
+                    entityId={entityId}
+                    schema={schema}
+                  />
+                }
+              />
+              <CustomPaymentMethod onSelect={() => setShowDialog(true)} schema={schema} />
+            </div>
+          ) : undefined
+        }
+        formatAccount={(account: Mercoa.PaymentMethodResponse.Custom) => (
+          <CustomPaymentMethod
+            account={account}
+            onSelect={onSelect}
+            schema={schema}
+            showEdit={showEdit}
+            hideDefaultIndicator={hideIndicators}
+          />
+        )}
+      />
+      {paymentMethods?.map((account) => <div className="mercoa-mt-2" key={account.id}></div>)}
+    </div>
+  )
+}
+
 export function CustomPaymentMethod({
-  children,
   account,
   onSelect,
   selected,
@@ -96,9 +185,8 @@ export function CustomPaymentMethod({
   hideDefaultIndicator,
   schema,
 }: {
-  children?: Function
-  account?: Mercoa.CustomPaymentMethodResponse
-  onSelect?: Function
+  account?: Mercoa.PaymentMethodResponse.Custom
+  onSelect?: (value?: Mercoa.PaymentMethodResponse.Custom) => void
   selected?: boolean
   showEdit?: boolean
   hideDefaultIndicator?: boolean
@@ -187,36 +275,13 @@ export function CustomPaymentMethod({
     )
   } else if (schema) {
     return (
-      <div
-        onClick={() => {
-          if (onSelect) onSelect()
-        }}
-        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
-          selected ? 'mercoa-border-gray-600' : 'mercoa-border-gray-300'
-        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 ${
-          onSelect ? 'mercoa-cursor-pointer  hover:mercoa-border-gray-400' : ''
-        }`}
-      >
-        <div
-          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
-            selected
-              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
-              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
-          }`}
-        >
-          <BuildingLibraryIcon className="mercoa-size-5" />
-        </div>
-        <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
-          <div>
-            <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />
-            <p
-              className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}
-            >
-              Add new {schema.name}
-            </p>
-          </div>
-        </div>
-      </div>
+      <PaymentMethodButton
+        onSelect={onSelect}
+        account={account}
+        selected={selected}
+        icon={<PlusIcon className="mercoa-size-5" />}
+        text={`Add new ${schema.name}`}
+      />
     )
   } else {
     return <></>
@@ -230,7 +295,7 @@ export function AddCustomPaymentMethod({
   entityId,
   schema,
 }: {
-  onSubmit?: (data: Mercoa.PaymentMethodResponse) => void
+  onSubmit?: (data: Mercoa.PaymentMethodResponse.Custom) => void
   title?: ReactNode
   actions?: ReactNode
   entityId?: string
@@ -265,7 +330,7 @@ export function AddCustomPaymentMethod({
         data: filtered,
       })
       if (!onSubmit) return
-      if (resp) onSubmit(resp)
+      if (resp) onSubmit(resp as Mercoa.PaymentMethodResponse.Custom)
     }
   }
 

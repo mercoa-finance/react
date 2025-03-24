@@ -53,7 +53,7 @@ export function PayableSelectPaymentMethod({
 
   const [showBNPL, setShowBNPL] = useState(false)
 
-  const { watch, setValue, clearErrors } = useFormContext()
+  const { watch, setValue } = useFormContext()
 
   const vendorId = watch('vendorId')
 
@@ -88,7 +88,7 @@ export function PayableSelectPaymentMethod({
       )}
       {selectedType === Mercoa.PaymentMethodType.BankAccount && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+          <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)
               .filter((e) => (readOnly ? e.id === paymentId : true))
@@ -97,6 +97,8 @@ export function PayableSelectPaymentMethod({
                   <BankAccount
                     account={paymentMethod as Mercoa.PaymentMethodResponse.BankAccount}
                     selected={paymentId === paymentMethod.id}
+                    showVerification
+                    hideVerificationButton
                     onSelect={() => {
                       if (readOnly) return
                       setPaymentId(paymentMethod.id)
@@ -120,7 +122,6 @@ export function PayableSelectPaymentMethod({
           )}
           {isDestination &&
             !disableCreation &&
-            !readOnly &&
             vendorId &&
             mercoaSession.organization?.paymentMethods?.backupDisbursements.some((e) => {
               if (!e.active) return false
@@ -128,16 +129,19 @@ export function PayableSelectPaymentMethod({
               return e.type === selectedType
             }) && (
               <>
-                <div className="mercoa-col-span-full mercoa-mt-1">
-                  <PayablesInlineForm
-                    form={<AddBankAccountForm prefix="newBankAccount." />}
-                    name="Bank Account"
-                    addNewButton={<BankAccount />}
-                    formAction={PayableFormAction.CREATE_BANK_ACCOUNT}
-                  />
-                </div>
+                {!readOnly && (
+                  <div className="mercoa-col-span-full mercoa-mt-1">
+                    <PayablesInlineForm
+                      form={<AddBankAccountForm prefix="newBankAccount." />}
+                      name="Bank Account"
+                      addNewButton={<BankAccount />}
+                      formAction={PayableFormAction.CREATE_BANK_ACCOUNT}
+                    />
+                  </div>
+                )}
                 <div className="mercoa-mt-2" />
                 <MercoaCombobox
+                  readOnly={readOnly}
                   displaySelectedAs="pill"
                   label="Payment Speed"
                   showAllOptions
@@ -177,7 +181,7 @@ export function PayableSelectPaymentMethod({
       )}
       {selectedType === Mercoa.PaymentMethodType.Check && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+          <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)
               .filter((e) => (readOnly ? e.id === paymentId : true))
@@ -196,7 +200,6 @@ export function PayableSelectPaymentMethod({
           </div>
           {isDestination &&
             !disableCreation &&
-            !readOnly &&
             vendorId &&
             mercoaSession.organization?.paymentMethods?.backupDisbursements.some((e) => {
               if (!e.active) return false
@@ -204,18 +207,21 @@ export function PayableSelectPaymentMethod({
               return e.type === selectedType
             }) && (
               <>
-                <div className="mercoa-col-span-full mercoa-mt-1">
-                  <PayablesInlineForm
-                    form={<AddCheckForm prefix="newCheck." />}
-                    name="Check Address"
-                    addNewButton={<Check />}
-                    formAction={PayableFormAction.CREATE_CHECK}
-                  />
-                </div>
+                {!readOnly && (
+                  <div className="mercoa-col-span-full mercoa-mt-1">
+                    <PayablesInlineForm
+                      form={<AddCheckForm prefix="newCheck." />}
+                      name="Check Address"
+                      addNewButton={<Check />}
+                      formAction={PayableFormAction.CREATE_CHECK}
+                    />
+                  </div>
+                )}
                 <div className="mercoa-mt-2" />
                 <MercoaCombobox
                   label="Check Delivery Method"
                   showAllOptions
+                  readOnly={readOnly}
                   displaySelectedAs="pill"
                   options={[
                     {
@@ -250,7 +256,7 @@ export function PayableSelectPaymentMethod({
       )}
       {selectedType === Mercoa.PaymentMethodType.Card && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+          <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
               .filter((e) => (readOnly ? e.id === paymentId : true))
@@ -273,7 +279,7 @@ export function PayableSelectPaymentMethod({
         <>
           {readOnly && (
             <>
-              <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+              <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
                 <div
                   className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300
   mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2`}
@@ -322,7 +328,7 @@ export function PayableSelectPaymentMethod({
       )}
       {selectedType.startsWith('cpms_') && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+          <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
             {paymentMethods
               ?.filter(
                 (paymentMethod) => (paymentMethod as Mercoa.PaymentMethodResponse.Custom).schemaId === selectedType,
@@ -374,7 +380,7 @@ export function PayableSelectPaymentMethod({
       {selectedType === Mercoa.PaymentMethodType.OffPlatform && (
         <>
           {readOnly && (
-            <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+            <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
               <div
                 className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300
   mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2`}

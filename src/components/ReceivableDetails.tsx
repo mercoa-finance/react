@@ -1097,7 +1097,7 @@ export function ReceivableSelectPaymentMethodV1({
   }, [selectedType, paymentMethods, paymentId])
 
   const bankAccountJsx = (
-    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
       {paymentMethods
         ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)
         .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))
@@ -1118,7 +1118,7 @@ export function ReceivableSelectPaymentMethodV1({
   )
 
   const checkJsx = (
-    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
       {paymentMethods
         ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)
         .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))
@@ -1139,7 +1139,7 @@ export function ReceivableSelectPaymentMethodV1({
   )
 
   const cardJsx = (
-    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
       {paymentMethods
         ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
         .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))

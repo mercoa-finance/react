@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { ReceivableFormValues, useMercoaSession } from '../../../../components'
 import { useReceivableDetails } from '../../hooks/use-receivable-details'
-import { ReceivablePreviewPaymentPageV2 } from './components/receivable-preview-payment-page/receivable-preview-payment-page'
+import { ReceivablePreviewPaymentPage } from './components/receivable-preview-payment-page/receivable-preview-payment-page'
 import { ReceivablePreviewPdf } from './components/receivable-preview-pdf/receivable-preview-pdf'
 
 type PreviewType = 'pdf' | 'email' | 'paymentPage'
@@ -123,7 +123,7 @@ export default function InvoicePreview() {
         className="mercoa-h-[880px] mercoa-w-[680px] mercoa-grow mercoa-border mercoa-rounded-mercoa mercoa-shadow-md mercoa-p-10"
       >
         {previewType === 'pdf' && <ReceivablePreviewPdf invoice={invoice} />}
-        {previewType === 'paymentPage' && <ReceivablePreviewPaymentPageV2 invoice={invoice} />}
+        {previewType === 'paymentPage' && <ReceivablePreviewPaymentPage invoice={invoice} />}
       </div>
     </div>
   )

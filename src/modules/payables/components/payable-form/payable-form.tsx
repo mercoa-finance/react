@@ -34,7 +34,7 @@ export function PayableForm({ children }: { children?: ReactElement }) {
   if (!mercoaSession.client) return <NoSession componentName="PayableForm" />
 
   return (
-    <div style={{ height: `${height}px` }} className="mercoa-overflow-auto mercoa-pr-2 mercoa-pb-32">
+    <div style={{ height: `${height}px` }} className="mercoa-overflow-auto mercoa-px-0.5 mercoa-pb-32">
       <FormProvider {...formMethods}>
         <form
           id="payable-form"
@@ -54,9 +54,13 @@ export function PayableForm({ children }: { children?: ReactElement }) {
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <PayableFormHeader /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <PayableCounterpartySearch onSelect={setSelectedVendor} counterparty={selectedVendor} />{' '}
-              <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
-              {invoiceType === 'invoiceTemplate' && <PayableRecurringSchedule />}
-              <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+              {invoiceType === 'invoiceTemplate' && (
+                <>
+                  <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+                  <PayableRecurringSchedule />
+                  <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+                </>
+              )}
               <PayableOverview />
               <PayableLineItems />
               {mercoaSession.entityCustomizations?.ocr &&

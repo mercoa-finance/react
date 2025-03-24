@@ -1,6 +1,6 @@
 import { createContext, ReactNode } from 'react'
-import { PayablesProps } from '../components/payables/types'
 import { usePayablesInternal } from '../hooks/use-payables-internal'
+import { PayablesProps } from '../types'
 
 export type PayablesContextValue = ReturnType<typeof usePayablesInternal>
 
