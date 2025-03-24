@@ -1,5 +1,4 @@
 {
-  "Inbox": "Payables Dashboard",
-  "Table": "Payables Table",
-  "PayableDetails": "Payable Details"
+  "components": "Components",
+  "hooks": "Hooks"
 }

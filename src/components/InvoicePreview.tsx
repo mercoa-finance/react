@@ -3,11 +3,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { ReceivableFormValues, ReceivablePaymentPdf, ReceivablePaymentPortal, useMercoaSession } from './index'
+import { ReceivableFormValues, ReceivablePaymentPdfV1, ReceivablePaymentPortalV1, useMercoaSession } from './index'
 
 type PreviewType = 'pdf' | 'email' | 'paymentPage'
 
-export default function InvoicePreview({
+export default function InvoicePreviewV1({
   selectedPayer,
   paymentDestination,
 }: {
@@ -123,25 +123,25 @@ export default function InvoicePreview({
         ref={previewRef}
         className="mercoa-h-[880px] mercoa-w-[680px] mercoa-grow mercoa-border mercoa-rounded-mercoa mercoa-shadow-md mercoa-p-10"
       >
-        {previewType === 'pdf' && <InvoicePreviewPdf invoice={invoice} />}
-        {previewType === 'paymentPage' && <InvoicePreviewPaymentPage invoice={invoice} />}
+        {previewType === 'pdf' && <InvoicePreviewPdfV1 invoice={invoice} />}
+        {previewType === 'paymentPage' && <InvoicePreviewPaymentPageV1 invoice={invoice} />}
       </div>
     </div>
   )
 }
 
-export function InvoicePreviewPdf({ invoice, hideQR }: { invoice: Mercoa.InvoiceResponse; hideQR?: boolean }) {
-  return <ReceivablePaymentPdf invoice={invoice} hideQR={hideQR} />
+export function InvoicePreviewPdfV1({ invoice, hideQR }: { invoice: Mercoa.InvoiceResponse; hideQR?: boolean }) {
+  return <ReceivablePaymentPdfV1 invoice={invoice} hideQR={hideQR} />
 }
 
-export function InvoicePreviewPaymentPage({ invoice }: { invoice: Mercoa.InvoiceResponse }) {
+export function InvoicePreviewPaymentPageV1({ invoice }: { invoice: Mercoa.InvoiceResponse }) {
   const mercoaSession = useMercoaSession()
 
   const supportEmail = mercoaSession.organization?.supportEmail ?? 'support@mercoa.com'
   const totalDisplay = accounting.formatMoney(invoice.amount ?? '', currencyCodeToSymbol(invoice.currency))
 
   return (
-    <ReceivablePaymentPortal
+    <ReceivablePaymentPortalV1
       isPreview
       invoice={invoice}
       supportEmail={supportEmail}

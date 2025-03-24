@@ -1,19 +1,20 @@
 import { InformationCircleIcon } from '@heroicons/react/24/outline'
 import { Fragment } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { MercoaCombobox, Tooltip, useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { MercoaCombobox, Tooltip, useMercoaSession, usePayableDetails } from '../../../../../../components'
 import { isUpstreamPolicyAssigned } from './utils'
 
 export function ApproversSelection() {
+  const mercoaSession = useMercoaSession()
+  const { formContextValue } = usePayableDetails()
+  const { approversContextValue } = formContextValue
   const {
     approvers,
     approvalPolicy: approvalPolicies,
     setApproverBySlot,
     selectedApproverBySlot,
     getApprovalSlotOptions,
-  } = usePayableDetailsContext()
-  const mercoaSession = useMercoaSession()
+  } = approversContextValue
 
   if (!approvalPolicies) return <></>
 

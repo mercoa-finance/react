@@ -15,10 +15,10 @@ import {
   MercoaCombobox,
   NoSession,
   useMercoaSession,
+  usePayableDetails,
 } from '../../../../../../components'
 import { FinanceWithOatfi } from '../../../../../../components/Oatfi'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
-import { PayableAction } from '../../constants'
+import { PayableFormAction } from '../../constants'
 import { PayablesInlineForm } from './payables-inline-form'
 
 export function PayableSelectPaymentMethod({
@@ -33,6 +33,8 @@ export function PayableSelectPaymentMethod({
   readOnly?: boolean
 }) {
   const mercoaSession = useMercoaSession()
+  const { formContextValue } = usePayableDetails()
+  const { paymentMethodContextValue } = formContextValue
 
   const {
     sourcePaymentMethods,
@@ -42,12 +44,10 @@ export function PayableSelectPaymentMethod({
     setSelectedSourcePaymentMethodId,
     setSelectedDestinationPaymentMethodId,
     availableSourceTypes,
-    selectedSourceType,
     setSelectedSourceType,
     availableDestinationTypes,
-    selectedDestinationType,
     setSelectedDestinationType,
-  } = usePayableDetailsContext()
+  } = paymentMethodContextValue
 
   const paymentMethods = (isSource ? sourcePaymentMethods : destinationPaymentMethods) ?? []
 
@@ -133,7 +133,7 @@ export function PayableSelectPaymentMethod({
                     form={<AddBankAccountForm prefix="newBankAccount." />}
                     name="Bank Account"
                     addNewButton={<BankAccount />}
-                    formAction={PayableAction.CREATE_BANK_ACCOUNT}
+                    formAction={PayableFormAction.CREATE_BANK_ACCOUNT}
                   />
                 </div>
                 <div className="mercoa-mt-2" />
@@ -209,7 +209,7 @@ export function PayableSelectPaymentMethod({
                     form={<AddCheckForm prefix="newCheck." />}
                     name="Check Address"
                     addNewButton={<Check />}
-                    formAction={PayableAction.CREATE_CHECK}
+                    formAction={PayableFormAction.CREATE_CHECK}
                   />
                 </div>
                 <div className="mercoa-mt-2" />
@@ -312,7 +312,7 @@ export function PayableSelectPaymentMethod({
                   form={<AddCounterpartyAccount prefix="newCounterpartyAccount." />}
                   name="Utility Account"
                   addNewButton={<CounterpartyAccount />}
-                  formAction={PayableAction.CREATE_COUNTERPARTY_ACCOUNT}
+                  formAction={PayableFormAction.CREATE_COUNTERPARTY_ACCOUNT}
                 />
               </div>
               <div className="mercoa-mt-2" />
@@ -364,7 +364,7 @@ export function PayableSelectPaymentMethod({
                         schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
                       />
                     }
-                    formAction={PayableAction.CREATE_CUSTOM}
+                    formAction={PayableFormAction.CREATE_CUSTOM}
                   />
                 </div>
               </>

@@ -2363,6 +2363,7 @@ export function EntityOnboardingForm({
       doingBusinessAs: entity.profile.business?.doingBusinessAs,
       description: entity.profile.business?.description,
       website: entity.profile.business?.website,
+      //@ts-ignore
       formationDate: entity.profile.business?.formationDate,
       foreignId: entity.foreignId,
       emailTo: entity.emailTo,

@@ -1,8 +1,8 @@
 import { FC, useState } from 'react'
 import { MercoaButton } from '../../../../../../components/generics'
 import { Popover } from '../../../../../../lib/components'
+import { PlusIcon, RightArrowIcon } from '../../../../../common/assets/icons'
 import { useDropdownStore } from '../../../../../common/stores/dropdown-store'
-import { PlusIcon, RightArrowIcon } from '../../../../assets/icons'
 import { ApproversFilterCardDropdown } from './components/approvers-filter-card'
 import { StatusFilterCardDropdown } from './components/status-filter-card'
 

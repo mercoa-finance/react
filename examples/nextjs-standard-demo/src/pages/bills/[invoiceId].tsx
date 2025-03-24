@@ -1,4 +1,4 @@
-import { MercoaButton, PayableDetails } from '@mercoa/react'
+import { MercoaButton, PayableDetails, Payables } from '@mercoa/react'
 import { useRouter } from 'next/router'
 
 export default function Bills() {

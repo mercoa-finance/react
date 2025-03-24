@@ -27,8 +27,8 @@ import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { capitalize, constructFullName } from '../lib/lib'
-import { PayableAction } from '../modules/payables/components/payable-form/constants'
 import { findExistingCounterparty } from '../modules/payables/components/payable-form/utils'
+import { PayableFormAction } from '../modules/payables/components/payable-form/constants'
 import {
   CountryDropdown,
   DebouncedSearch,
@@ -309,7 +309,7 @@ export function CounterpartySearch({
   )
 }
 
-interface PayableCounterpartySearchChildrenProps {
+interface PayableCounterpartySearchV1ChildrenProps {
   counterparty?: Mercoa.CounterpartyResponse
   disableCreation?: boolean
   onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
@@ -320,7 +320,7 @@ interface PayableCounterpartySearchChildrenProps {
   errors: any
 }
 
-export function PayableCounterpartySearch({
+export function PayableCounterpartySearchV1({
   counterparty,
   disableCreation,
   onSelect,
@@ -331,7 +331,7 @@ export function PayableCounterpartySearch({
   disableCreation?: boolean
   onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
   network?: Mercoa.CounterpartyNetworkType[]
-  children?: (props: PayableCounterpartySearchChildrenProps) => React.ReactNode
+  children?: (props: PayableCounterpartySearchV1ChildrenProps) => React.ReactNode
 }) {
   const [edit, setEdit] = useState<boolean>(false)
   const {
@@ -1099,7 +1099,7 @@ function CounterpartyAddOrEditForm({
           onClick={() => {
             setValue('saveAsStatus', 'COUNTERPARTY')
             if (accountType === 'individual' ? watch('vendor.firstName') && watch('vendor.lastName') : true) {
-              setValue('formAction', PayableAction.CREATE_UPDATE_COUNTERPARTY)
+              setValue('formAction', PayableFormAction.CREATE_UPDATE_COUNTERPARTY)
             }
             setTimeout(() => {
               setIsSaving(true)
@@ -1110,7 +1110,7 @@ function CounterpartyAddOrEditForm({
           }}
         >
           <div className="mercoa-w-20 mercoa-h-5 mercoa-flex mercoa-items-center mercoa-justify-center">
-            {formAction === PayableAction.CREATE_UPDATE_COUNTERPARTY ? (
+            {formAction === PayableFormAction.CREATE_UPDATE_COUNTERPARTY ? (
               <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
             ) : (
               'Save'

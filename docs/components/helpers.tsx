@@ -42,3 +42,35 @@ export function ComponentContainer({
     </Tabs>
   )
 }
+
+export function NavBadge({ text, variant = 'grey' }: { text: string; variant?: 'grey' }) {
+  const styles = {
+    grey: {
+      backgroundColor: 'rgba(75, 85, 99, 0.08)',
+      color: '#4b5563',
+      border: '1px solid rgba(75, 85, 99, 0.2)',
+    }
+  }
+
+  const variantStyle = styles[variant]
+
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '9px',
+        fontWeight: '600',
+        padding: '2px 6px',
+        borderRadius: '12px',
+        marginLeft: '6px',
+        letterSpacing: '0.3px',
+        textTransform: 'uppercase',
+        ...variantStyle,
+      }}
+    >
+      {text}
+    </span>
+  )
+}

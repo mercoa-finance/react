@@ -20,7 +20,7 @@ import {
   MercoaCombobox,
   MercoaInput,
   MercoaSwitch,
-  MetadataSelection,
+  MetadataSelectionV1,
   NoSession,
   inputClassName,
   useMercoaSession,
@@ -563,7 +563,7 @@ function Trigger({
                 <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2">
                   is
                 </span>
-                <MetadataSelection
+                <MetadataSelectionV1
                   hideLabel
                   field={`policies.${index}.trigger.${triggerIndex}.value`}
                   skipValidation

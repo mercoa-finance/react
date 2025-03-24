@@ -13,7 +13,7 @@ import {
 import { jwtDecode } from 'jwt-decode'
 import { useEffect, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { PayableDetailsV2 } from '../modules/payables/components/payable-details'
+import { PayableDetails } from '../modules/payables/components/payable-details'
 import {
   AcceptToSButton,
   ApprovalPolicies,
@@ -25,9 +25,9 @@ import {
   LoadingSpinner,
   MercoaButton,
   NoSession,
-  PayableDetails,
+  PayableDetailsV1,
   Payables,
-  PayablesDashboardV2,
+  PayablesV1,
   PaymentMethods,
   Representatives,
   TokenOptions,
@@ -304,41 +304,44 @@ export function EntityPortal({ token }: { token: string }) {
       </div>
       <div className={screen === 'inbox' ? '' : 'mercoa-hidden'}>
         {version === 'new' ? (
-          <PayablesDashboardV2
-            readOnly
-            statusTabsOptions={{
-              isVisible: true,
-              statuses: [
-                Mercoa.InvoiceStatus.Draft,
-                Mercoa.InvoiceStatus.New,
-                Mercoa.InvoiceStatus.Approved,
-                Mercoa.InvoiceStatus.Scheduled,
-                Mercoa.InvoiceStatus.Pending,
-                Mercoa.InvoiceStatus.Paid,
-                Mercoa.InvoiceStatus.Canceled,
-                Mercoa.InvoiceStatus.Refused,
-                Mercoa.InvoiceStatus.Failed,
-                Mercoa.InvoiceStatus.Archived,
-              ],
+          <Payables
+            displayOptions={{
+              statusTabsOptions: {
+                isVisible: true,
+                statuses: [
+                  Mercoa.InvoiceStatus.Draft,
+                  Mercoa.InvoiceStatus.New,
+                  Mercoa.InvoiceStatus.Approved,
+                  Mercoa.InvoiceStatus.Scheduled,
+                  Mercoa.InvoiceStatus.Pending,
+                  Mercoa.InvoiceStatus.Paid,
+                  Mercoa.InvoiceStatus.Canceled,
+                  Mercoa.InvoiceStatus.Refused,
+                  Mercoa.InvoiceStatus.Failed,
+                  Mercoa.InvoiceStatus.Archived,
+                ],
+              },
             }}
-            onCreateInvoice={() => {
-              setScreen('invoice')
-              setInvoiceType('invoice')
-              setInvoice(undefined)
-            }}
-            onCreateRecurringInvoice={() => {
-              setScreen('invoice')
-              setInvoiceType('invoiceTemplate')
-              setInvoice(undefined)
-            }}
-            onSelectInvoice={(invoice) => {
-              setInvoice(invoice)
-              setInvoiceType('invoice')
-              setScreen('invoice')
+            handlers={{
+              onCreateInvoice: () => {
+                setScreen('invoice')
+                setInvoiceType('invoice')
+                setInvoice(undefined)
+              },
+              onCreateRecurringInvoice: () => {
+                setScreen('invoice')
+                setInvoiceType('invoiceTemplate')
+                setInvoice(undefined)
+              },
+              onSelectInvoice: (invoice) => {
+                setInvoice(invoice)
+                setInvoiceType('invoice')
+                setScreen('invoice')
+              },
             }}
           />
         ) : (
-          <Payables
+          <PayablesV1
             statuses={[
               Mercoa.InvoiceStatus.Draft,
               Mercoa.InvoiceStatus.New,
@@ -413,27 +416,32 @@ export function EntityPortal({ token }: { token: string }) {
       )}
       {screen === 'invoice' &&
         (version === 'new' ? (
-          <PayableDetailsV2
-            invoice={invoice}
-            invoiceType={invoiceType}
-            onInvoiceSubmit={(invoice) => {
-              if (!invoice) {
-                mercoaSession.refresh()
-                setScreen('inbox')
-              } else {
-                setInvoice(invoice)
-                mercoaSession.refresh()
-              }
+          <PayableDetails
+            queryOptions={{
+              invoiceId: invoice?.id ?? '',
+              invoiceType: invoiceType,
+              invoice: invoice,
             }}
-            onUpdate={(invoice) => {
-              if (!invoice) {
-                mercoaSession.refresh()
-                setScreen('inbox')
-              }
+            handlers={{
+              onInvoiceSubmit: (invoice) => {
+                if (!invoice) {
+                  mercoaSession.refresh()
+                  setScreen('inbox')
+                } else {
+                  setInvoice(invoice)
+                  mercoaSession.refresh()
+                }
+              },
+              onInvoiceUpdate: (invoice) => {
+                if (!invoice) {
+                  mercoaSession.refresh()
+                  setScreen('inbox')
+                }
+              },
             }}
           />
         ) : (
-          <PayableDetails
+          <PayableDetailsV1
             invoice={invoice}
             invoiceType={invoiceType}
             onInvoiceSubmit={(invoice) => {

@@ -23,6 +23,12 @@ export const useDeletePayable = () => {
           queryKey: ['payables'],
         })
         queryClient.invalidateQueries({
+          queryKey: ['payableStatusTabsMetrics'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['payableMetrics'],
+        })
+        queryClient.invalidateQueries({
           queryKey: ['recurringPayables'],
         })
       },
@@ -64,6 +70,12 @@ export const useBulkDeletePayables = () => {
           queryKey: ['payables'],
         })
         queryClient.invalidateQueries({
+          queryKey: ['payableStatusTabsMetrics'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['payableMetrics'],
+        })
+        queryClient.invalidateQueries({
           queryKey: ['recurringPayables'],
         })
       },
@@ -92,6 +104,12 @@ export const useApprovePayableN = () => {
       onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: ['payables'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['payableStatusTabsMetrics'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['payableMetrics'],
         })
         queryClient.invalidateQueries({
           queryKey: ['recurringPayables'],
@@ -138,6 +156,12 @@ export const useBulkApprovePayables = () => {
           queryKey: ['payables'],
         })
         queryClient.invalidateQueries({
+          queryKey: ['payableStatusTabsMetrics'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['payableMetrics'],
+        })
+        queryClient.invalidateQueries({
           queryKey: ['recurringPayables'],
         })
       },
@@ -174,9 +198,15 @@ export const useSchedulePayment = () => {
       })
     },
     options: {
-      onSuccess: (res) => {
+      onSuccess: () => {
         queryClient.invalidateQueries({
           queryKey: ['payables'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['payableStatusTabsMetrics'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['payableMetrics'],
         })
         queryClient.invalidateQueries({
           queryKey: ['recurringPayables'],
@@ -238,6 +268,12 @@ export const useBulkSchedulePayment = () => {
       onSuccess: (result) => {
         queryClient.invalidateQueries({
           queryKey: ['payables'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['payableStatusTabsMetrics'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['payableMetrics'],
         })
         queryClient.invalidateQueries({
           queryKey: ['recurringPayables'],
@@ -342,10 +378,16 @@ export function useCreatePayable() {
     options: {
       onSuccess: (res) => {
         queryClient.invalidateQueries({
-          queryKey: ['payables', res.id],
+          queryKey: ['payables'],
         })
         queryClient.invalidateQueries({
-          queryKey: ['recurringPayables', res.id],
+          queryKey: ['payableStatusTabsMetrics'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['payableMetrics'],
+        })
+        queryClient.invalidateQueries({
+          queryKey: ['recurringPayables'],
         })
       },
       onError: (error: any) => {

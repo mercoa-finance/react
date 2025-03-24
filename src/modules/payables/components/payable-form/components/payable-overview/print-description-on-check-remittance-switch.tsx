@@ -1,9 +1,9 @@
-import { MercoaSwitch } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { MercoaSwitch, usePayableDetails } from '../../../../../../components'
 import { afterApprovedStatus } from '../../constants'
 
 export function PrintDescriptionOnCheckRemittanceSwitch() {
-  const { formMethods } = usePayableDetailsContext()
+  const { formContextValue } = usePayableDetails()
+  const { formMethods } = formContextValue
   const {
     watch,
     register,

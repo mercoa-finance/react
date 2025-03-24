@@ -1,0 +1,287 @@
+---
+title: usePayableDetails Hook
+description: The `usePayableDetails` hook provides access to invoice details, form state, and document management within the `PayableDetails` component.
+---
+
+# usePayableDetails
+
+The `usePayableDetails` hook is used inside children of the `<PayableDetails>` component. It provides access to invoice details, form management, and display settings.
+
+## Props
+
+The props for `usePayableDetails` are the same as [`PayableDetails`](./PayableDetails), as it is meant to be used within its context.
+
+## Return Type
+
+| Name                   | Type                                                  | Description                                                  |
+| :--------------------- | :---------------------------------------------------- | :----------------------------------------------------------- |
+| `dataContextValue`     | [`PayableDataContext`](#payable-data-context)         | Provides invoice data and refresh functionality.             |
+| `displayContextValue`  | [`PayableDisplayContext`](#payable-display-context)   | Contains height configurations.                              |
+| `propsContextValue`    | `PayableDetailsProps`                                 | Access to the original props passed to `PayableDetails`.     |
+| `formContextValue`     | [`PayableFormContext`](#payable-form-context)         | Manages form state, validation, and interactions.            |
+| `documentContextValue` | [`PayableDocumentContext`](#payable-document-context) | Handles document uploads, OCR processing, and email sources. |
+
+---
+
+<a id="payable-data-context"></a>
+### Data Context (`dataContextValue`)
+
+| Name             | Type                                  | Description                       |
+| :--------------- | :------------------------------------ | :-------------------------------- |
+| `invoice`        | `Mercoa.InvoiceResponse \| undefined` | The current invoice data.         |
+| `invoiceType`    | `'invoice' \| 'invoiceTemplate'`      | Type of invoice.                  |
+| `invoiceLoading` | `boolean`                             | Whether invoice data is loading.  |
+| `refreshInvoice` | `(invoiceId: string) => void`         | Function to refresh invoice data. |
+
+---
+
+<a id="payable-display-context"></a>
+### Display Context (`displayContextValue`)
+
+| Name           | Type     | Description                  |
+| :------------- | :------- | :--------------------------- |
+| `heightOffset` | `number` | Height offset configuration. |
+| `height`       | `number` | Height configuration.        |
+
+---
+
+<a id="payable-document-context"></a>
+### Document Context (`documentContextValue`)
+
+| Name                  | Type                                                          | Description                        |
+| :-------------------- | :------------------------------------------------------------ | :--------------------------------- |
+| `documents`           | `{ fileReaderObj: string; mimeType: string; }[] \| undefined` | List of document files.            |
+| `documentsLoading`    | `boolean`                                                     | Whether documents are loading.     |
+| `handleFileUpload`    | `(fileReaderObj: string, mimeType: string) => void`           | Handles file uploads.              |
+| `ocrProcessing`       | `boolean`                                                     | Whether OCR is processing.         |
+| `sourceEmails`        | `Mercoa.EmailLog[] \| undefined`                              | List of source emails.             |
+| `sourceEmailsLoading` | `boolean`                                                     | Whether source emails are loading. |
+
+---
+
+<a id="payable-form-context"></a>
+### Form Context (`formContextValue`)
+
+| Name                            | Type                                                                | Description                        |
+| :------------------------------ | :------------------------------------------------------------------ | :--------------------------------- |
+| `formMethods`                   | `UseFormReturn<any>`                                                | React Hook Form methods.           |
+| `handleFormAction`              | `(formData: PayableFormData, action: PayableFormAction) => void`    | Handles form actions.              |
+| `formActionLoading`             | `boolean`                                                           | Whether form action is processing. |
+| `vendorContextValue`            | [`PayableVendorContext`](#payable-vendor-context)                   | Vendor management context.         |
+| `overviewContextValue`          | [`PayableOverviewContext`](#payable-overview-context)               | Invoice overview context.          |
+| `lineItemsContextValue`         | [`PayableLineItemsContext`](#payable-line-items-context)            | Line items context.                |
+| `commentsContextValue`          | [`PayableCommentsContext`](#payable-comments-context)               | Comments context.                  |
+| `metadataContextValue`          | [`PayableMetadataContext`](#payable-metadata-context)               | Metadata context.                  |
+| `paymentMethodContextValue`     | [`PaymentMethodContext`](#payment-method-context)                   | Payment method context.            |
+| `approversContextValue`         | [`PayableApproversContext`](#payable-approvers-context)             | Approvers context.                 |
+| `taxAndShippingContextValue`    | [`PayableTaxAndShippingContext`](#payable-tax-and-shipping-context) | Tax and shipping context.          |
+| `feesContextValue`              | [`PayableFeesContext`](#payable-fees-context)                       | Fees context.                      |
+| `vendorCreditContextValue`      | [`PayableVendorCreditContext`](#payable-vendor-credit-context)      | Vendor credit context.             |
+| `paymentTimingContextValue`     | [`PayablePaymentTimingContext`](#payable-payment-timing-context)    | Payment timing context.            |
+| `recurringScheduleContextValue` | [`RecurringScheduleContext`](#recurring-schedule-context)           | Recurring schedule context.        |
+
+---
+
+<a id="payable-vendor-context"></a>
+### Vendor Context (`vendorContextValue`)
+
+| Name                | Type                                                                 | Description                   |
+| :------------------ | :------------------------------------------------------------------- | :---------------------------- |
+| `selectedVendor`    | `Mercoa.CounterpartyResponse \| undefined`                           | Currently selected vendor.    |
+| `setSelectedVendor` | `Dispatch<SetStateAction<Mercoa.CounterpartyResponse \| undefined>>` | Sets the selected vendor.     |
+| `vendors`           | `Mercoa.CounterpartyResponse[] \| undefined`                         | List of available vendors.    |
+| `vendorsLoading`    | `boolean`                                                            | Whether vendors are loading.  |
+| `vendorSearch`      | `string`                                                             | Vendor search query.          |
+| `setVendorSearch`   | `(search: string) => void`                                           | Sets the vendor search query. |
+
+---
+
+<a id="payable-overview-context"></a>
+### Overview Context (`overviewContextValue`)
+
+| Name               | Type                                      | Description                   |
+| :----------------- | :---------------------------------------- | :---------------------------- |
+| `invoiceNumber`    | `string`                                  | The invoice number.           |
+| `setInvoiceNumber` | `(number: string) => void`                | Sets the invoice number.      |
+| `description`      | `string`                                  | Invoice description.          |
+| `setDescription`   | `(desc: string) => void`                  | Sets the invoice description. |
+| `currency`         | `Mercoa.CurrencyCode`                     | Invoice currency.             |
+| `setCurrency`      | `(currency: Mercoa.CurrencyCode) => void` | Sets the invoice currency.    |
+
+---
+
+<a id="payable-line-items-context"></a>
+### Line Items Context (`lineItemsContextValue`)
+
+| Name             | Type                                             | Description                 |
+| :--------------- | :----------------------------------------------- | :-------------------------- |
+| `lineItems`      | `Mercoa.LineItem[]`                              | List of invoice line items. |
+| `addLineItem`    | `() => void`                                     | Adds a new line item.       |
+| `removeLineItem` | `(index: number) => void`                        | Removes a line item.        |
+| `updateLineItem` | `(index: number, item: Mercoa.LineItem) => void` | Updates a line item.        |
+
+---
+
+<a id="payable-comments-context"></a>
+### Comments Context (`commentsContextValue`)
+
+| Name            | Type                          | Description               |
+| :-------------- | :---------------------------- | :------------------------ |
+| `comments`      | `Mercoa.Comment[]`            | List of invoice comments. |
+| `addComment`    | `(text: string) => void`      | Adds a new comment.       |
+| `deleteComment` | `(commentId: string) => void` | Deletes a comment.        |
+
+---
+
+<a id="payable-metadata-context"></a>
+### Metadata Context (`metadataContextValue`)
+
+| Name                      | Type                                                                | Description                    |
+| :------------------------ | :------------------------------------------------------------------ | :----------------------------- |
+| `metadataSchemas`         | `Mercoa.MetadataSchema[]`                                           | Available metadata schemas.    |
+| `getSchemaMetadataValues` | `(schema: Mercoa.MetadataSchema) => Promise<string[] \| undefined>` | Gets schema metadata values.   |
+| `schemaFieldValue`        | `(schemaKey: string) => string`                                     | Gets value for a schema field. |
+| `setSchemaFieldValue`     | `(schemaKey: string, value: string) => void`                        | Sets value for a schema field. |
+
+---
+
+<a id="payment-method-context"></a>
+### Payment Method Context (`paymentMethodContextValue`)
+
+| Name                                    | Type                                                  | Description                             |
+| :-------------------------------------- | :---------------------------------------------------- | :-------------------------------------- |
+| `sourcePaymentMethods`                  | `Mercoa.PaymentMethodResponse[] \| undefined`         | Available source payment methods.       |
+| `destinationPaymentMethods`             | `Mercoa.PaymentMethodResponse[] \| undefined`         | Available destination payment methods.  |
+| `selectedSourcePaymentMethodId`         | `string \| undefined`                                 | Selected source payment method ID.      |
+| `selectedDestinationPaymentMethodId`    | `string \| undefined`                                 | Selected destination payment method ID. |
+| `setSelectedSourcePaymentMethodId`      | `(paymentMethodId: string) => void`                   | Sets source payment method.             |
+| `setSelectedDestinationPaymentMethodId` | `(paymentMethodId: string) => void`                   | Sets destination payment method.        |
+| `availableSourceTypes`                  | `Array<{ key: string; value: string }>`               | Available source payment types.         |
+| `selectedSourceType`                    | `Mercoa.PaymentMethodType \| undefined`               | Selected source type.                   |
+| `setSelectedSourceType`                 | `(type: Mercoa.PaymentMethodType) => void`            | Sets source type.                       |
+| `availableDestinationTypes`             | `Array<{ key: string; value: string }>`               | Available destination types.            |
+| `selectedDestinationType`               | `Mercoa.PaymentMethodType \| undefined`               | Selected destination type.              |
+| `setSelectedDestinationType`            | `(type: Mercoa.PaymentMethodType) => void`            | Sets destination type.                  |
+| `getVendorPaymentLink`                  | `(invoiceId: string) => Promise<string \| undefined>` | Gets vendor payment link.               |
+
+---
+
+<a id="payable-approvers-context"></a>
+### Approvers Context (`approversContextValue`)
+
+| Name                     | Type                                                       | Description                      |
+| :----------------------- | :--------------------------------------------------------- | :------------------------------- |
+| `approvers`              | `Mercoa.ApprovalSlot[]`                                    | List of approval slots.          |
+| `approvalPolicy`         | `Mercoa.ApprovalPolicyResponse[]`                          | Approval policies.               |
+| `setApproverBySlot`      | `(approvalSlotId: string, assignedUserId: string) => void` | Sets approver for a slot.        |
+| `getApprovalSlotOptions` | `(approvalSlotId: string) => any`                          | Gets options for approval slot.  |
+| `selectedApproverBySlot` | `(approvalSlotId: string) => any`                          | Gets selected approver for slot. |
+
+---
+
+<a id="payable-tax-and-shipping-context"></a>
+### Tax and Shipping Context (`taxAndShippingContextValue`)
+
+| Name                | Type                       | Description           |
+| :------------------ | :------------------------- | :-------------------- |
+| `taxAmount`         | `number \| undefined`      | Tax amount.           |
+| `setTaxAmount`      | `(amount: number) => void` | Sets tax amount.      |
+| `shippingAmount`    | `number \| undefined`      | Shipping amount.      |
+| `setShippingAmount` | `(amount: number) => void` | Sets shipping amount. |
+
+---
+
+<a id="payable-fees-context"></a>
+### Fees Context (`feesContextValue`)
+
+| Name          | Type                                      | Description               |
+| :------------ | :---------------------------------------- | :------------------------ |
+| `fees`        | `Mercoa.InvoiceFeesResponse \| undefined` | Invoice fees.             |
+| `feesLoading` | `boolean`                                 | Whether fees are loading. |
+
+---
+
+<a id="payable-vendor-credit-context"></a>
+### Vendor Credit Context (`vendorCreditContextValue`)
+
+| Name                       | Type                                                     | Description                      |
+| :------------------------- | :------------------------------------------------------- | :------------------------------- |
+| `vendorCreditUsage`        | `Mercoa.CalculateVendorCreditUsageResponse \| undefined` | Vendor credit usage.             |
+| `vendorCreditUsageLoading` | `boolean`                                                | Whether credit usage is loading. |
+
+---
+
+<a id="payable-payment-timing-context"></a>
+### Payment Timing Context (`paymentTimingContextValue`)
+
+| Name                   | Type                                                 | Description                |
+| :--------------------- | :--------------------------------------------------- | :------------------------- |
+| `paymentTiming`        | `Mercoa.CalculatePaymentTimingResponse \| undefined` | Payment timing details.    |
+| `paymentTimingLoading` | `boolean`                                            | Whether timing is loading. |
+
+---
+
+<a id="recurring-schedule-context"></a>
+### Recurring Schedule Context (`recurringScheduleContextValue`)
+
+| Name               | Type                                                                        | Description                     |
+| :----------------- | :-------------------------------------------------------------------------- | :------------------------------ |
+| `type`             | `'weekly' \| 'monthly' \| 'yearly' \| 'daily' \| 'oneTime'`                 | Schedule type.                  |
+| `repeatEvery`      | `number \| undefined`                                                       | Repeat interval.                |
+| `repeatOn`         | `Array<Mercoa.DayOfWeek> \| undefined`                                      | Days to repeat on.              |
+| `repeatOnDay`      | `number \| undefined`                                                       | Day of month/year to repeat on. |
+| `repeatOnMonth`    | `number \| undefined`                                                       | Month to repeat on.             |
+| `ends`             | `Date \| undefined`                                                         | End date.                       |
+| `setType`          | `(type: 'weekly' \| 'monthly' \| 'yearly' \| 'daily' \| 'oneTime') => void` | Sets schedule type.             |
+| `setRepeatEvery`   | `(repeatEvery: number) => void`                                             | Sets repeat interval.           |
+| `setRepeatOn`      | `(repeatOn: Array<Mercoa.DayOfWeek>) => void`                               | Sets repeat days.               |
+| `setRepeatOnDay`   | `(repeatOnDay: number) => void`                                             | Sets repeat day.                |
+| `setRepeatOnMonth` | `(repeatOnMonth: number) => void`                                           | Sets repeat month.              |
+| `setEnds`          | `(ends: Date \| undefined) => void`                                         | Sets end date.                  |
+
+## Example Usage
+
+```tsx
+import { usePayableDetails } from '../hooks/use-payable-details-internal'
+import { PayableDocument, PayableForm, PayableFormHeader, PayableOverview, PayableMetadata } from '../components'
+
+const CustomLineItems = () => {
+  const {
+    formContextValue: { lineItemsContextValue },
+  } = usePayableDetails()
+
+  // Custom line items component using lineItemsContextValue
+  return (
+    <div>
+      {lineItemsContextValue.lineItems?.map((item, index) => (
+        <div key={index}>
+          <p>Description: {item.description}</p>
+          <p>Amount: {item.amount}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+const PayableDetailsExample = () => {
+  return (
+    <PayableDetails>
+      {() => [
+        <PayableDocument key="document" />,
+        <PayableForm key="form">
+          <PayableFormHeader />
+          <PayableOverview />
+          <PayableMetadata />
+          <CustomLineItems />
+          <PayablePaymentSource />
+          <PayablePaymentDestination />
+          <PaymentDestinationProcessingTime />
+          <PayableActions />
+        </PayableForm>,
+      ]}
+    </PayableDetails>
+  )
+}
+```
+
+This example demonstrates how to use the `usePayableDetails` hook inside a child of `PayableDetails`, accessing invoice data and form state dynamically.

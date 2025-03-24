@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { ReceivableFormValues, useMercoaSession } from '../../../../components'
-import { useReceivableDetailsContext } from '../../providers/receivable-detail-provider'
+import { useReceivableDetails } from '../../hooks/use-receivable-details'
 import { ReceivablePreviewPaymentPageV2 } from './components/receivable-preview-payment-page/receivable-preview-payment-page'
-import { ReceivablePreviewPdfV2 } from './components/receivable-preview-pdf/receivable-preview-pdf'
+import { ReceivablePreviewPdf } from './components/receivable-preview-pdf/receivable-preview-pdf'
 
 type PreviewType = 'pdf' | 'email' | 'paymentPage'
 
-export default function ReceivablePreviewV2() {
+export default function InvoicePreview() {
   const mercoaSession = useMercoaSession()
-  const { selectedPayer, formMethods } = useReceivableDetailsContext()
+  const { formContextValue } = useReceivableDetails()
+  const { formMethods, payerContextValue } = formContextValue
+  const { selectedPayer } = payerContextValue
 
   const { watch } = formMethods
   const fieldValues: ReceivableFormValues = watch()
@@ -120,7 +122,7 @@ export default function ReceivablePreviewV2() {
         ref={previewRef}
         className="mercoa-h-[880px] mercoa-w-[680px] mercoa-grow mercoa-border mercoa-rounded-mercoa mercoa-shadow-md mercoa-p-10"
       >
-        {previewType === 'pdf' && <ReceivablePreviewPdfV2 invoice={invoice} />}
+        {previewType === 'pdf' && <ReceivablePreviewPdf invoice={invoice} />}
         {previewType === 'paymentPage' && <ReceivablePreviewPaymentPageV2 invoice={invoice} />}
       </div>
     </div>
