@@ -28,11 +28,12 @@ The `<Payables>` component displays all payables for an entity. It includes buil
 <a id="event-handlers"></a>
 ### Event Handlers (`handlers`)
 
-| Name                       | Type                                        | Required | Description                                           |
-| -------------------------- | ------------------------------------------- | -------- | ----------------------------------------------------- |
-| `onCreateInvoice`          | `() => void`                                |          | Triggered when the user initiates invoice creation.   |
-| `onCreateRecurringInvoice` | `() => void`                                |          | Triggered when a recurring invoice is being created.  |
-| `onSelectInvoice`          | `(invoice: Mercoa.InvoiceResponse) => void` |          | Triggered when an invoice is selected from the table. |
+| Name                      | Type                                                        | Required | Description                                                    |
+| ------------------------- | ----------------------------------------------------------- | -------- | -------------------------------------------------------------- |
+| `onCreateInvoice`         | `() => void`                                                |          | Triggered when the user initiates invoice creation.            |
+| `onCreateInvoiceTemplate` | `() => void`                                                |          | Triggered when a recurring invoice is being created.           |
+| `onSelectInvoice`         | `(invoice: Mercoa.InvoiceResponse) => void`                 |          | Triggered when an invoice is selected from the table.          |
+| `onSelectInvoiceTemplate` | `(invoiceTemplate: Mercoa.InvoiceTemplateResponse) => void` |          | Triggered when an invoice template is selected from the table. |
 
 ---
 

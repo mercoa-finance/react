@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@mercoa/javascript": "^0.5.11",
-    "@mercoa/react": "^0.1.0-rc10",
+    "@mercoa/react": "^0.1.0-rc11",
     "msw": "^2.4.9",
     "next": "^14.2.15",
     "nextra": "latest",

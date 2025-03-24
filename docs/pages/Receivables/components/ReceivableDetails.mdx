@@ -17,7 +17,7 @@ The `<ReceivableDetails>` component is used to let users create and manage recei
 
 | Name             | Type                                                         | Required | Description                                                                                  |
 | ---------------- | ------------------------------------------------------------ | -------- | -------------------------------------------------------------------------------------------- |
-| `queryParams`    | [`ReceivableDetailsQueryParams`](#data-options)              | ✅       | Data-related options such as `invoiceId`.                                                    |
+| `queryOptions`   | [`ReceivableDetailsQueryOptions`](#data-options)             | ✅       | Data-related options such as `invoiceId`.                                                    |
 | `handlers`       | [`ReceivableDetailsHandlers`](#event-handlers)               |          | Callback functions for handling invoice updates.                                             |
 | `config`         | [`ReceivableDetailsConfig`](#functional-options)             |          | Functional configurations like `supportedCurrencies` and `disableCustomerCreation`.          |
 | `displayOptions` | [`ReceivableDetailsDisplayOptions`](#display-options)        |          | Options to adjust layout and visibility settings like `heightOffset` and `documentPosition`. |
@@ -28,14 +28,14 @@ The `<ReceivableDetails>` component is used to let users create and manage recei
 <a id="event-handlers"></a>
 ### Event Handlers (`handlers`)
 
-| Name       | Type                                                     | Required | Description                                      |
-| ---------- | -------------------------------------------------------- | -------- | ------------------------------------------------ |
-| `onUpdate` | `(invoice: Mercoa.InvoiceResponse \| undefined) => void` |          | Triggered when an invoice is created or updated. |
+| Name              | Type                                                     | Required | Description                                      |
+| ----------------- | -------------------------------------------------------- | -------- | ------------------------------------------------ |
+| `onInvoiceUpdate` | `(invoice: Mercoa.InvoiceResponse \| undefined) => void` |          | Triggered when an invoice is created or updated. |
 
 ---
 
 <a id="data-options"></a>
-### Data Options (`queryParams`)
+### Data Options (`queryOptions`)
 
 | Name        | Type     | Required | Description                             |
 | ----------- | -------- | -------- | --------------------------------------- |
@@ -75,16 +75,16 @@ The `<ReceivableDetails>` component is used to let users create and manage recei
 ### Create New Invoice
 
 <ComponentContainer>
-  <ReceivableDetails queryParams={{ invoiceId: '' }} />
+  <ReceivableDetails queryOptions={{ invoiceId: '', invoiceType: 'invoice' }} />
   ```jsx
   <ReceivableDetails
-    queryParams={{ invoiceId: '' }}
+    queryOptions={{ invoiceId: '', invoiceType: 'invoice' }}
     config={{
       supportedCurrencies: ['USD'],
       disableCustomerCreation: false,
     }}
     handlers={{
-      onUpdate: (invoice) => {
+      onInvoiceUpdate: (invoice) => {
         if (!invoice) {
           router.push(`/dashboard/vendors/${entityId}`)
           return
