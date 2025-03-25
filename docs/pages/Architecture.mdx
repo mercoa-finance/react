@@ -36,7 +36,7 @@ This architecture is applicable to multiple components, providing a consistent a
 The architecture standardizes props across components using a structured interface to ensure maintainability and extensibility. The following generalized props pattern is followed:
 
 ```typescript
-export type PayablesProps {
+export type PayablesProps = {
   queryOptions?: PayablesQueryOptions // query params for data
   renderCustom?: PayablesRenderCustom // custom UI overrides
   displayOptions?: PayablesDisplayOptions // controls display behavior
