@@ -88,6 +88,28 @@ function InvoiceTemplateCard({
     )
   }
 
+  const generateColor = (name: string) => {
+    if (!name) return '#E8E1D9'
+
+    let hash = 0
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash)
+    }
+
+    const color = `hsl(${hash % 360}, 60%, 70%)`
+    return color
+  }
+
+  const getInitials = (name: string) => {
+    return name
+      ? name
+          .split(' ', 2)
+          .map((word) => word[0])
+          .join('')
+          .toUpperCase()
+      : ''
+  }
+
   const { vendor, amount, currency, deductionDate, paymentSchedule } = invoiceTemplate
   const parts = []
   if (amount) {
@@ -109,13 +131,11 @@ function InvoiceTemplateCard({
       onClick={() => onSelectInvoice?.(invoiceTemplate)}
     >
       <div className="mercoa-flex mercoa-items-center">
-        <div className="mercoa-flex mercoa-items-center mercoa-justify-center mercoa-bg-gray-100 mercoa-rounded-full mercoa-h-10 mercoa-w-10 mercoa-text-sm mercoa-font-medium mercoa-text-gray-600 mercoa-border mercoa-border-gray-300">
-          {vendor?.name
-            ?.split(' ')
-            .map((word) => word[0])
-            .join('')
-            .slice(0, 2)
-            .toUpperCase() ?? 'V'}
+        <div
+          className="mercoa-flex mercoa-items-center mercoa-justify-center mercoa-rounded-full mercoa-h-10 mercoa-w-10 mercoa-text-sm mercoa-font-medium"
+          style={{ backgroundColor: generateColor(vendor?.name ?? '') }}
+        >
+          {getInitials(vendor?.name ?? '')}
         </div>
         <div className="mercoa-ml-4">
           <div className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">{vendor?.name || 'Vendor'}</div>

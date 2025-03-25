@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { MercoaCombobox, MercoaInput, useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { MercoaCombobox, MercoaInput, useMercoaSession, usePayableDetails } from '../../../../../../components'
 import { showMetadata } from '../../utils'
 
 export function MetadataSelection({
@@ -29,7 +28,9 @@ export function MetadataSelection({
   }
 }) {
   const mercoaSession = useMercoaSession()
-  const { formMethods, getSchemaMetadataValues } = usePayableDetailsContext()
+  const { formContextValue } = usePayableDetails()
+  const { formMethods, metadataContextValue } = formContextValue
+  const { getSchemaMetadataValues } = metadataContextValue
 
   const [entityMetadata, setEntityMetadata] = useState<string[]>()
 

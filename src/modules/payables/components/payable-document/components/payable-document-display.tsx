@@ -149,7 +149,7 @@ export function PayableDocumentDisplay({
                       max={numPages ?? 1}
                       value={pageNumber}
                       onChange={(e) => setPageNumber(parseInt(e.target.value))}
-                      className={inputClassName({ width: 'mercoa-w-[50px]' })}
+                      className={showSourceEmail ? inputClassName({ width: 'mercoa-w-[50px]' }) : ''}
                     />{' '}
                     / {numPages}
                   </div>
@@ -211,7 +211,7 @@ export function PayableDocumentDisplay({
                     <span className="mercoa-sr-only">Download Invoice</span>
                     <ArrowDownTrayIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
                   </a>
-                  {showSourceEmail && sourceEmails && (
+                  {showSourceEmail && sourceEmails && sourceEmails.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setView('email')}

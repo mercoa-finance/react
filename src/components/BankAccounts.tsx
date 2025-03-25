@@ -41,8 +41,10 @@ export function BankAccounts({
   showEdit,
   showDelete,
   showVerification,
+  showEntityConfirmation,
   verifiedOnly,
   hideIndicators,
+  entityId,
 }: {
   children?: Function
   onSelect?: (value?: Mercoa.PaymentMethodResponse.BankAccount) => void
@@ -50,28 +52,31 @@ export function BankAccounts({
   showEdit?: boolean
   showDelete?: boolean
   showVerification?: boolean
+  showEntityConfirmation?: boolean
   verifiedOnly?: boolean
   hideIndicators?: boolean
+  entityId?: string
 }) {
   const [bankAccounts, setBankAccounts] = useState<Array<Mercoa.PaymentMethodResponse.BankAccount>>()
 
   const mercoaSession = useMercoaSession()
+
+  const entityIdFinal = entityId ?? mercoaSession.entity?.id
+
   useEffect(() => {
-    if (mercoaSession.token && mercoaSession.entity?.id) {
-      mercoaSession.client?.entity.paymentMethod
-        .getAll(mercoaSession.entity?.id, { type: 'bankAccount' })
-        .then((resp) => {
-          setBankAccounts(
-            resp
-              .map((e) => e as Mercoa.PaymentMethodResponse.BankAccount)
-              .filter((e) => {
-                if (verifiedOnly && e.status != 'VERIFIED') return null
-                return e
-              }),
-          )
-        })
+    if (mercoaSession.token && entityIdFinal) {
+      mercoaSession.client?.entity.paymentMethod.getAll(entityIdFinal, { type: 'bankAccount' }).then((resp) => {
+        setBankAccounts(
+          resp
+            .map((e) => e as Mercoa.PaymentMethodResponse.BankAccount)
+            .filter((e) => {
+              if (verifiedOnly && e.status != 'VERIFIED') return null
+              return e
+            }),
+        )
+      })
     }
-  }, [mercoaSession.entity?.id, mercoaSession.token, mercoaSession.refreshId])
+  }, [entityIdFinal, mercoaSession.token, mercoaSession.refreshId])
 
   if (!mercoaSession.client) return <NoSession componentName="BankAccounts" />
 
@@ -88,6 +93,7 @@ export function BankAccounts({
             <PaymentMethodList
               accounts={bankAccounts}
               showDelete={showDelete || showEdit} // NOTE: For backwards compatibility, showEdit implies showDelete
+              showEntityConfirmation={showEntityConfirmation}
               addAccount={
                 bankAccounts && showAdd ? (
                   <AddBankAccountButton
@@ -101,6 +107,7 @@ export function BankAccounts({
                       }
                       if (onSelect) onSelect(account)
                     }}
+                    entityId={entityId}
                   />
                 ) : undefined
               }
@@ -300,7 +307,7 @@ export function BankAccount({
                     leaveFrom="mercoa-opacity-100"
                     leaveTo="mercoa-opacity-0"
                   >
-                    <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
+                    <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75 mercoa-transition-opacity" />
                   </Transition.Child>
 
                   <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
@@ -458,7 +465,7 @@ export function BankAccountStatus({ status }: { status: Mercoa.BankStatus }) {
         /* @ts-ignore:next-line */
         <Tooltip title="Can only receive funds">
           <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-indigo-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-indigo-800">
-            New
+            Unverified
           </span>
         </Tooltip>
       )}
@@ -845,13 +852,19 @@ export function AddBankAccountForm({ prefix }: { prefix?: string }) {
   if (!mercoaSession.client) return <NoSession componentName="AddBankAccountForm" />
   return (
     <div className="mercoa-flex mercoa-flex-col mercoa-gap-y-2">
+      <div className="mercoa-mb-1 mercoa-flex mercoa-items-center">
+        <InformationCircleIcon className="mercoa-mr-1 mercoa-h-4 mercoa-w-4 mercoa-text-gray-500" />
+        <span className="mercoa-text-xs mercoa-text-gray-500">
+          Please enter ACH routing and account details, not wire details
+        </span>
+      </div>
       <MercoaInput
-        label={`Routing Number ${bankName ? ` - ${bankName}` : ''}`}
+        label={`ACH Routing Number ${bankName ? ` - ${bankName}` : ''}`}
         name={prefix + 'routingNumber'}
         register={register}
         errors={errors}
       />
-      <MercoaInput label="Account Number" name={prefix + 'accountNumber'} register={register} errors={errors} />
+      <MercoaInput label="ACH Account Number" name={prefix + 'accountNumber'} register={register} errors={errors} />
       <div>
         <label htmlFor="accountType" className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">
           Account Type
@@ -1305,7 +1318,7 @@ export function MercoaWallet({
                     leaveFrom="mercoa-opacity-100"
                     leaveTo="mercoa-opacity-0"
                   >
-                    <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
+                    <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75 mercoa-transition-opacity" />
                   </Transition.Child>
 
                   <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">

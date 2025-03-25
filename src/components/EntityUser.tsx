@@ -455,7 +455,7 @@ export function EntityUsersTable({
             leaveFrom="mercoa-opacity-100"
             leaveTo="mercoa-opacity-0"
           >
-            <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
+            <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75 mercoa-transition-opacity" />
           </Transition.Child>
 
           <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">

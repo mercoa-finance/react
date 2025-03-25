@@ -24,22 +24,29 @@ export function Checks({
   showAdd,
   showEdit,
   showDelete,
+  showEntityConfirmation,
   hideIndicators,
+  entityId,
 }: {
   children?: Function
   onSelect?: (value?: Mercoa.PaymentMethodResponse.Check) => void
   showAdd?: boolean
   showEdit?: boolean
   showDelete?: boolean
+  showEntityConfirmation?: boolean
   hideIndicators?: boolean
+  entityId?: string
 }) {
   const [checks, setChecks] = useState<Array<Mercoa.PaymentMethodResponse.Check>>()
   const [showDialog, setShowDialog] = useState(false)
 
   const mercoaSession = useMercoaSession()
+
+  const entityIdFinal = entityId ?? mercoaSession.entity?.id
+
   useEffect(() => {
-    if (mercoaSession.token && mercoaSession.entity?.id) {
-      mercoaSession.client?.entity.paymentMethod.getAll(mercoaSession.entity?.id, { type: 'check' }).then((resp) => {
+    if (mercoaSession.token && entityIdFinal) {
+      mercoaSession.client?.entity.paymentMethod.getAll(entityIdFinal, { type: 'check' }).then((resp) => {
         setChecks(
           resp
             .filter((e) => {
@@ -49,7 +56,7 @@ export function Checks({
         )
       })
     }
-  }, [mercoaSession.entity?.id, mercoaSession.token, showDialog, mercoaSession.refreshId])
+  }, [entityIdFinal, mercoaSession.token, showDialog, mercoaSession.refreshId])
 
   const onClose = (account?: Mercoa.PaymentMethodResponse.Check) => {
     setShowDialog(false)
@@ -70,6 +77,7 @@ export function Checks({
           <PaymentMethodList
             accounts={checks}
             showDelete={showDelete || showEdit}
+            showEntityConfirmation={showEntityConfirmation}
             addAccount={
               checks && showAdd ? (
                 <div>
@@ -81,6 +89,7 @@ export function Checks({
                         onSubmit={(data?: Mercoa.PaymentMethodResponse.Check) => {
                           onClose(data)
                         }}
+                        entityId={entityId}
                       />
                     }
                   />

@@ -2,7 +2,7 @@ import { Dispatch, FC, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { InvoiceTableColumn, MercoaButton, Tooltip } from '../../../../../components'
 import { Popover } from '../../../../../lib/components'
-import { ColumnIcon } from '../../../assets/icons'
+import { ColumnIcon } from '../../../../common/assets/icons'
 
 const allColumnsDefault: InvoiceTableColumn[] = [
   { title: 'Vendor Name', field: 'vendor', orderBy: Mercoa.InvoiceOrderByField.VendorName },
@@ -10,6 +10,7 @@ const allColumnsDefault: InvoiceTableColumn[] = [
   { title: 'Due Date', field: 'dueDate' },
   { title: 'Invoice Date', field: 'invoiceDate' },
   { title: 'Amount', field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount },
+  { title: 'Approvers', field: 'approvers' },
   { title: 'Status', field: 'status' },
 ]
 
@@ -64,7 +65,7 @@ export const ColumnFilterDropdown: FC<SelectedColumnsDropdownProps> = ({
             className="mercoa-text-[14px] mercoa-flex mercoa-items-center mercoa-h-[44px] mercoa-gap-[0.5rem] mercoa-px-[0.75rem] mercoa-py-[0.5rem] mercoa-text-left mercoa-text-[#1A1919] mercoa-cursor-pointer mercoa-no-underline hover:mercoa-bg-[#F4F2F0]"
           >
             <input
-              type="checkbox" 
+              type="checkbox"
               className="mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-transprent mercoa-cursor-pointer"
               checked={selectedColumns.some((col) => col.field === column.field)}
               onChange={(e) => {
@@ -73,10 +74,12 @@ export const ColumnFilterDropdown: FC<SelectedColumnsDropdownProps> = ({
               }}
               onClick={(e) => e.stopPropagation()}
             />
-            <span 
+            <span
               className="mercoa-text-[14px] mercoa-color-[#1A1919]"
               onClick={() => handleToggleSelectedColumn(column.field)}
-            >{column.title}</span>
+            >
+              {column.title}
+            </span>
           </div>
         ))}
         <div className="mercoa-z-[100] mercoa-relative mercoa-flex mercoa-w-full mercoa-justify-end mercoa-items-center mercoa-gap-4 mercoa-cursor-pointer mercoa-py-[0.75rem] mercoa-px-[0.75rem] mercoa-bg-[#fcfbfa] mercoa-border-t mercoa-border-[#e9e5e2]">

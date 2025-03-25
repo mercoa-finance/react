@@ -64,7 +64,7 @@ import {
   CounterpartyAccount,
   CustomPaymentMethod,
   EntitySelector,
-  InvoiceComments,
+  InvoiceCommentsV1,
   InvoiceStatusPill,
   LoadingSpinnerIcon,
   MercoaButton,
@@ -73,7 +73,7 @@ import {
   MercoaInput,
   MercoaSwitch,
   NoSession,
-  PayableCounterpartySearch,
+  PayableCounterpartySearchV1,
   PayablesInlineForm,
   Tooltip,
   counterpartyYupValidation,
@@ -118,7 +118,7 @@ const afterScheduledStatus = [
 
 const afterApprovedStatus = [...afterScheduledStatus, Mercoa.InvoiceStatus.Scheduled]
 
-export type PayableDetailsChildrenProps = {
+export type PayableDetailsV1ChildrenProps = {
   invoice?: Mercoa.InvoiceResponse
   ocrResponse?: Mercoa.OcrResponse
   uploadedDocument?: string
@@ -144,7 +144,7 @@ export function getInvoiceClient(mercoaSession: MercoaContext, invoiceType: 'inv
   }
 }
 
-export function PayableDetails({
+export function PayableDetailsV1({
   invoiceType = 'invoice',
   invoiceId,
   invoice,
@@ -171,7 +171,7 @@ export function PayableDetails({
     counterpartyId?: string,
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
-  children?: (props: PayableDetailsChildrenProps) => JSX.Element[]
+  children?: (props: PayableDetailsV1ChildrenProps) => JSX.Element[]
   renderCustom?: {
     toast?: {
       success: (message: string) => void
@@ -242,7 +242,7 @@ export function PayableDetails({
     rightComponent = childrenArray[1]
   } else {
     leftComponent = (
-      <PayableDocument
+      <PayableDocumentV1
         onOcrComplete={setOcrResponse}
         setUploadedDocument={setUploadedDocument}
         height={height}
@@ -254,7 +254,7 @@ export function PayableDetails({
     )
 
     rightComponent = (
-      <PayableForm
+      <PayableFormV1
         invoiceType={invoiceType}
         invoice={invoiceLocal}
         ocrResponse={ocrResponse}
@@ -296,7 +296,7 @@ export function PayableDetails({
   )
 }
 
-export type PayableFormChildrenProps = {
+export type PayableFormV1ChildrenProps = {
   invoice?: Mercoa.InvoiceResponse
   ocrProcessing?: boolean
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void
@@ -318,7 +318,7 @@ export type PayableFormChildrenProps = {
   submitForm: () => void
 }
 
-export function PayableForm({
+export function PayableFormV1({
   invoiceType = 'invoice',
   invoice,
   ocrResponse,
@@ -357,7 +357,7 @@ export function PayableForm({
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   fullWidth?: boolean
   lineItemDescriptionOptional?: boolean
-  children?: (props: PayableFormChildrenProps) => JSX.Element
+  children?: (props: PayableFormV1ChildrenProps) => JSX.Element
   renderCustom?: {
     toast?: {
       success: (message: string) => void
@@ -1635,30 +1635,30 @@ export function PayableForm({
           ) : (
             <>
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
-              <PayableFormHeader /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
-              <PayableCounterpartySearch onSelect={setSelectedVendor} counterparty={selectedVendor} />{' '}
+              <PayableFormHeaderV1 /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+              <PayableCounterpartySearchV1 onSelect={setSelectedVendor} counterparty={selectedVendor} />{' '}
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
-              <PayableOverview />
-              <PayableLineItems />
+              <PayableOverviewV1 />
+              <PayableLineItemsV1 />
               {mercoaSession.entityCustomizations?.ocr &&
-                !mercoaSession.entityCustomizations?.ocr.taxAndShippingAsLineItems && <PayableTaxAndShipping />}
-              <PayableMetadata /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
+                !mercoaSession.entityCustomizations?.ocr.taxAndShippingAsLineItems && <PayableTaxAndShippingV1 />}
+              <PayableMetadataV1 /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               {mercoaSession.entity?.id && (
                 <>
-                  <PayablePaymentSource />{' '}
+                  <PayablePaymentSourceV1 />{' '}
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
-                  <PayablePaymentDestination />
-                  <PaymentDestinationProcessingTime />
+                  <PayablePaymentDestinationV1 />
+                  <PaymentDestinationProcessingTimeV1 />
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
-                  <PayableFees />
-                  {invoiceType === 'invoiceTemplate' && <PayableRecurringSchedule />}
+                  <PayableFeesV1 />
+                  {invoiceType === 'invoiceTemplate' && <PayableRecurringScheduleV1 />}
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
-                  <PayableApprovers />{' '}
+                  <PayableApproversV1 />{' '}
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
                 </>
               )}
-              <InvoiceComments />
-              <PayableActions
+              <InvoiceCommentsV1 />
+              <PayableActionsV1
                 submitForm={handleSubmit(saveInvoiceLoadingWrapper)}
                 refreshInvoice={refreshInvoice}
                 invoiceType={invoiceType}
@@ -1671,7 +1671,7 @@ export function PayableForm({
   )
 }
 
-export function PayableFormHeader({ hideId }: { hideId?: boolean }) {
+export function PayableFormHeaderV1({ hideId }: { hideId?: boolean }) {
   const { watch } = useFormContext()
 
   return (
@@ -1701,7 +1701,7 @@ export function PayableFormHeader({ hideId }: { hideId?: boolean }) {
   )
 }
 
-export function PayableFormErrors() {
+export function PayableFormErrorsV1() {
   const {
     formState: { errors },
     clearErrors,
@@ -1768,7 +1768,7 @@ export function PayableFormErrors() {
 
 // Document
 
-export type PayableDocumentChildrenProps = {
+export type PayableDocumentV1ChildrenProps = {
   documents?: Array<{ fileReaderObj: string; mimeType: string }>
   sourceEmails?: Mercoa.EmailLog[]
   invoice?: Mercoa.InvoiceResponse
@@ -1779,7 +1779,7 @@ export type PayableDocumentChildrenProps = {
   setOcrProcessing?: Dispatch<SetStateAction<boolean>>
 }
 
-export function PayableDocument({
+export function PayableDocumentV1({
   onOcrComplete,
   setUploadedDocument,
   invoiceType = 'invoice',
@@ -1797,7 +1797,7 @@ export function PayableDocument({
   invoice?: Mercoa.InvoiceResponse
   height: number
   theme?: 'light' | 'dark'
-  children?: (props: PayableDocumentChildrenProps) => JSX.Element
+  children?: (props: PayableDocumentV1ChildrenProps) => JSX.Element
   ocrProcessing?: boolean
   setOcrProcessing?: Dispatch<SetStateAction<boolean>>
   renderCustom?: {
@@ -1892,8 +1892,8 @@ export function PayableDocument({
     <div className={`mercoa-p-5 mercoa-rounded-mercoa`}>
       {documents ? (
         <>
-          <OcrProgressBar ocrProcessing={ocrProcessing ?? ocrProcessingInternal} />
-          <PayableDocumentDisplay
+          <OcrProgressBarV1 ocrProcessing={ocrProcessing ?? ocrProcessingInternal} />
+          <PayableDocumentDisplayV1
             documents={documents}
             invoice={invoice}
             height={height}
@@ -1909,14 +1909,14 @@ export function PayableDocument({
         </>
       ) : (
         <div className={`mercoa-min-w-[340px]`}>
-          <DocumentUploadBox onFileUpload={onFileUpload} theme={theme} renderCustom={renderCustom} />
+          <DocumentUploadBoxV1 onFileUpload={onFileUpload} theme={theme} renderCustom={renderCustom} />
         </div>
       )}
     </div>
   )
 }
 
-export function DocumentUploadBox({
+export function DocumentUploadBoxV1({
   onFileUpload,
   theme,
   renderCustom,
@@ -1992,7 +1992,7 @@ export function DocumentUploadBox({
   )
 }
 
-export function PayableDocumentDisplay({
+export function PayableDocumentDisplayV1({
   documents,
   invoice,
   height,
@@ -2277,7 +2277,7 @@ export function PayableDocumentDisplay({
   )
 }
 
-export function OcrProgressBar({ ocrProcessing }: { ocrProcessing: boolean }) {
+export function OcrProgressBarV1({ ocrProcessing }: { ocrProcessing: boolean }) {
   const [progressPercentage, setProgressPercentage] = useState(0)
 
   useEffect(() => {
@@ -2310,7 +2310,7 @@ export function OcrProgressBar({ ocrProcessing }: { ocrProcessing: boolean }) {
 
 // Action Bar
 
-export type PayableActionChildrenProps = {
+export type PayableActionV1ChildrenProps = {
   isSaving: boolean
   buttons?: JSX.Element[]
   setStatus: (status: Mercoa.InvoiceStatus) => void
@@ -2344,7 +2344,7 @@ export function findApproverSlot({
   })
 }
 
-export function PayableActions({
+export function PayableActionsV1({
   invoiceType = 'invoice',
   refreshInvoice,
   approveButton,
@@ -2395,9 +2395,9 @@ export function PayableActions({
   additionalActions?: {
     hideDefaultActions?: boolean
     position: 'left' | 'right'
-    actions: (props: PayableActionChildrenProps) => JSX.Element[]
+    actions: (props: PayableActionV1ChildrenProps) => JSX.Element[]
   }
-  children?: (props: PayableActionChildrenProps) => JSX.Element
+  children?: (props: PayableActionV1ChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
   const [isSaving, setIsSaving] = useState(false)
@@ -2855,7 +2855,7 @@ export function PayableActions({
   return (
     <>
       <div className="mercoa-col-span-full" style={{ visibility: 'hidden' }}>
-        <PayableFormErrors />
+        <PayableFormErrorsV1 />
       </div>
       <div className="mercoa-absolute mercoa-bottom-0 mercoa-right-0 mercoa-w-full mercoa-bg-white mercoa-z-10">
         {isSaving ? (
@@ -2864,7 +2864,7 @@ export function PayableActions({
           </div>
         ) : (
           <>
-            <PayableFormErrors />
+            <PayableFormErrorsV1 />
             <div className="mercoa-mx-auto mercoa-flex mercoa-flex-row-reverse mercoa-items-center mercoa-gap-2 mercoa-py-3 mercoa-px-6">
               {additionalActions?.position !== 'left' && additionalActionButtons}
               {!additionalActions?.hideDefaultActions &&
@@ -2878,7 +2878,7 @@ export function PayableActions({
   )
 }
 
-export type PayableOverviewChildrenProps = {
+export type PayableOverviewV1ChildrenProps = {
   readOnly?: boolean
   amount?: number
   setAmount?: (amount: number) => void
@@ -2898,7 +2898,7 @@ export type PayableOverviewChildrenProps = {
   setDescription?: (description: string) => void
 }
 
-export type PayableTaxAndShippingChildrenProps = {
+export type PayableTaxAndShippingV1ChildrenProps = {
   readOnly?: boolean
   taxAmount?: number
   setTaxAmount?: (taxAmount: number) => void
@@ -2906,7 +2906,7 @@ export type PayableTaxAndShippingChildrenProps = {
   setShippingAmount?: (shippingAmount: number) => void
 }
 
-export function PayableOverview({
+export function PayableOverviewV1({
   readOnly,
   supportedCurrencies,
   supportedSchedulePaymentDates,
@@ -2915,7 +2915,7 @@ export function PayableOverview({
   readOnly?: boolean
   supportedCurrencies?: Array<Mercoa.CurrencyCode>
   supportedSchedulePaymentDates?: Array<'Weekend' | 'Past' | 'Holiday'>
-  children?: (props: PayableOverviewChildrenProps) => JSX.Element
+  children?: (props: PayableOverviewV1ChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -3121,7 +3121,7 @@ export function PayableOverview({
           className="mercoa-flex mercoa-justify-between mercoa-items-center mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 "
         >
           Description
-          <PrintDescriptionOnCheckRemittanceSwitch />
+          <PrintDescriptionOnCheckRemittanceSwitchV1 />
         </label>
         <div className="mercoa-mt-2">
           <textarea
@@ -3138,12 +3138,12 @@ export function PayableOverview({
   )
 }
 
-export function PayableTaxAndShipping({
+export function PayableTaxAndShippingV1({
   readOnly,
   children,
 }: {
   readOnly?: boolean
-  children?: (props: PayableTaxAndShippingChildrenProps) => JSX.Element
+  children?: (props: PayableTaxAndShippingV1ChildrenProps) => JSX.Element
 }) {
   const {
     control,
@@ -3226,7 +3226,7 @@ export function PayableTaxAndShipping({
   )
 }
 
-function PrintDescriptionOnCheckRemittanceSwitch() {
+function PrintDescriptionOnCheckRemittanceSwitchV1() {
   const {
     watch,
     setValue,
@@ -3262,7 +3262,7 @@ function PrintDescriptionOnCheckRemittanceSwitch() {
 
 // Payment Source and Destination
 
-export function PayableSelectPaymentMethod({
+export function PayableSelectPaymentMethodV1({
   isSource,
   isDestination,
   disableCreation,
@@ -3595,7 +3595,7 @@ export function PayableSelectPaymentMethod({
       )}
       {selectedType === Mercoa.PaymentMethodType.BankAccount && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+          <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)
               .filter((e) => (readOnly ? e.id === paymentId : true))
@@ -3668,7 +3668,7 @@ export function PayableSelectPaymentMethod({
       )}
       {selectedType === Mercoa.PaymentMethodType.Check && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+          <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)
               .filter((e) => (readOnly ? e.id === paymentId : true))
@@ -3726,7 +3726,7 @@ export function PayableSelectPaymentMethod({
       )}
       {selectedType === Mercoa.PaymentMethodType.Card && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+          <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
             {paymentMethods
               ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
               .filter((e) => (readOnly ? e.id === paymentId : true))
@@ -3750,7 +3750,7 @@ export function PayableSelectPaymentMethod({
         <>
           {readOnly && (
             <>
-              <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+              <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
                 <div
                   className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300
 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2`}
@@ -3799,7 +3799,7 @@ mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-rin
       )}
       {selectedType.startsWith('cpms_') && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+          <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
             {paymentMethods
               ?.filter(
                 (paymentMethod) => (paymentMethod as Mercoa.PaymentMethodResponse.Custom).schemaId === selectedType,
@@ -3844,7 +3844,7 @@ mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-rin
       {selectedType === Mercoa.PaymentMethodType.OffPlatform && (
         <>
           {readOnly && (
-            <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+            <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
               <div
                 className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300
 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2`}
@@ -3859,7 +3859,7 @@ mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-rin
   )
 }
 
-export function PayablePaymentSource({ readOnly }: { readOnly?: boolean }) {
+export function PayablePaymentSourceV1({ readOnly }: { readOnly?: boolean }) {
   const {
     watch,
     formState: { errors },
@@ -3873,7 +3873,7 @@ export function PayablePaymentSource({ readOnly }: { readOnly?: boolean }) {
       <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mb-5">
         {readOnly ? 'Paying from:' : 'How do you want to pay?'}
       </h2>
-      <PayableSelectPaymentMethod isSource readOnly={readOnly} />
+      <PayableSelectPaymentMethodV1 isSource readOnly={readOnly} />
       {errors.paymentSourceId?.message && (
         <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentSourceId?.message.toString()}</p>
       )}
@@ -3881,7 +3881,7 @@ export function PayablePaymentSource({ readOnly }: { readOnly?: boolean }) {
   )
 }
 
-export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) {
+export function PayablePaymentDestinationV1({ readOnly }: { readOnly?: boolean }) {
   const {
     watch,
     formState: { errors },
@@ -3919,7 +3919,7 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
               </>
             )}
           </h2>
-          <PayableSelectPaymentMethod isDestination readOnly={readOnly} />
+          <PayableSelectPaymentMethodV1 isDestination readOnly={readOnly} />
           {vendorLink && (
             <div className="mercoa-flex mercoa-items-center mercoa-space-x-2 mercoa-mt-2">
               <div className="mercoa-flex-auto" />
@@ -3956,7 +3956,7 @@ export function PayablePaymentDestination({ readOnly }: { readOnly?: boolean }) 
   )
 }
 
-export function PaymentDestinationProcessingTime({
+export function PaymentDestinationProcessingTimeV1({
   children,
 }: {
   children?: ({ timing }: { timing?: Mercoa.CalculatePaymentTimingResponse }) => JSX.Element
@@ -4042,7 +4042,7 @@ export function PaymentDestinationProcessingTime({
 
 // Approvers
 
-export function PayableApprovers({ readOnly }: { readOnly?: boolean }) {
+export function PayableApproversV1({ readOnly }: { readOnly?: boolean }) {
   const mercoaSession = useMercoaSession()
   const {
     watch,
@@ -4071,7 +4071,7 @@ export function PayableApprovers({ readOnly }: { readOnly?: boolean }) {
           <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900 mercoa-mt-5">
             Approvals
           </h2>
-          {status === Mercoa.InvoiceStatus.Draft && !readOnly ? <ApproversSelection /> : <ApproverWells />}
+          {status === Mercoa.InvoiceStatus.Draft && !readOnly ? <ApproversSelectionV1 /> : <ApproverWellsV1 />}
           {errors.approvers && <p className="mercoa-text-sm mercoa-text-red-500">Please select all approvers</p>}
         </>
       )}
@@ -4079,7 +4079,7 @@ export function PayableApprovers({ readOnly }: { readOnly?: boolean }) {
   )
 }
 
-function ApproversSelection() {
+function ApproversSelectionV1() {
   const mercoaSession = useMercoaSession()
 
   const { watch, setValue } = useFormContext()
@@ -4145,7 +4145,7 @@ function ApproversSelection() {
   )
 }
 
-function ApproverWells() {
+function ApproverWellsV1() {
   const mercoaSession = useMercoaSession()
   const seenUsers: string[] = []
   const { watch } = useFormContext()
@@ -4155,17 +4155,17 @@ function ApproverWells() {
       {approvers.map((slot, index) => {
         const user = mercoaSession.users.find((user) => user.id === slot.assignedUserId)
         if (!slot.assignedUserId || slot.assignedUserId === 'ANY') {
-          return <ApproverWell key={slot.approvalSlotId} approverSlot={slot} index={index} />
+          return <ApproverWellV1 key={slot.approvalSlotId} approverSlot={slot} index={index} />
         } else if (user && !seenUsers.includes(user.id)) {
           seenUsers.push(user.id)
-          return <ApproverWell key={user.id} approverSlot={slot} approver={user} index={index} />
+          return <ApproverWellV1 key={user.id} approverSlot={slot} approver={user} index={index} />
         }
       })}
     </>
   )
 }
 
-function ApproverWell({
+function ApproverWellV1({
   approverSlot,
   approver,
   index,
@@ -4364,7 +4364,7 @@ export function propagateApprovalPolicy({
 } // End Approvers
 
 // Metadata
-export function PayableMetadata({ skipValidation, readOnly }: { skipValidation?: boolean; readOnly?: boolean }) {
+export function PayableMetadataV1({ skipValidation, readOnly }: { skipValidation?: boolean; readOnly?: boolean }) {
   const mercoaSession = useMercoaSession()
 
   const { watch } = useFormContext()
@@ -4378,7 +4378,7 @@ export function PayableMetadata({ skipValidation, readOnly }: { skipValidation?:
         Additional Invoice Details
       </label>
       {mercoaSession.organization?.metadataSchema?.map((schema) => (
-        <MetadataSelection
+        <MetadataSelectionV1
           readOnly={readOnly}
           key={schema.key}
           schema={schema}
@@ -4390,7 +4390,7 @@ export function PayableMetadata({ skipValidation, readOnly }: { skipValidation?:
   )
 }
 
-export function MetadataSelection({
+export function MetadataSelectionV1({
   schema,
   field,
   skipValidation,
@@ -4789,7 +4789,7 @@ function filterMetadataValues(entityMetadata: string[], schema: Mercoa.MetadataS
 
 // Line Items
 
-export type PayableLineItemChildrenProps = {
+export type PayableLineItemV1ChildrenProps = {
   readOnly?: boolean
   items: Mercoa.InvoiceLineItemUpdateRequest[]
   addItem: () => void
@@ -4798,12 +4798,12 @@ export type PayableLineItemChildrenProps = {
   setItems: (items: Mercoa.InvoiceLineItemUpdateRequest[]) => void
 }
 
-export function PayableLineItems({
+export function PayableLineItemsV1({
   readOnly,
   children,
 }: {
   readOnly?: boolean
-  children?: (props: PayableLineItemChildrenProps) => JSX.Element
+  children?: (props: PayableLineItemV1ChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
   const [isHidden, setIsHidden] = useState<boolean>(false)
@@ -4896,7 +4896,7 @@ export function PayableLineItems({
       </div>
 
       {/* ROWS */}
-      {!isHidden && <LineItemRows readOnly={readOnly} />}
+      {!isHidden && <LineItemRowsV1 readOnly={readOnly} />}
       {!isHidden && !readOnly && (lineItems?.length ?? 0) > 0 && (
         <div className="mercoa-col-span-full mercoa-gap-2 mercoa-flex">
           <div className="mercoa-flex-1" />
@@ -5017,7 +5017,7 @@ function LineItemOptions() {
   )
 }
 
-export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
+export function LineItemRowsV1({ readOnly }: { readOnly?: boolean }) {
   const mercoaSession = useMercoaSession()
   const { register, control, watch, setValue } = useFormContext()
   const { remove } = useFieldArray({
@@ -5078,7 +5078,7 @@ export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
           </div>
           <div className={`mercoa-grid ${filteredMetadata.length > 1 ? 'mercoa-grid-cols-2' : 'mercoa-grid-cols-1'}`}>
             {filteredMetadata.map((schema) => (
-              <MetadataSelection
+              <MetadataSelectionV1
                 schema={schema}
                 lineItem
                 key={schema.key}
@@ -5102,7 +5102,7 @@ export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
 
 // Payment Options
 
-export function PaymentOptions() {
+export function PaymentOptionsV1() {
   const {
     watch,
     register,
@@ -5141,7 +5141,7 @@ export function PaymentOptions() {
 
 // Fees
 
-export function PayableFees({
+export function PayableFeesV1({
   children,
 }: {
   children?: ({ fees }: { fees?: Mercoa.InvoiceFeesResponse }) => JSX.Element
@@ -5175,6 +5175,7 @@ export function PayableFees({
       mercoaSession.client.calculate
         .fee({
           amount: amountNumber,
+          creatorEntityId: payerId,
           paymentSourceId,
           paymentDestinationId,
           paymentDestinationOptions: paymentDestinationOptions?.type ? paymentDestinationOptions : undefined,
@@ -5282,7 +5283,7 @@ export function PayableFees({
   return null
 }
 
-export function PayableRecurringSchedule() {
+export function PayableRecurringScheduleV1() {
   return (
     <div className="mercoa-col-span-full">
       <div className="mercoa-flex mercoa-pl-1">
@@ -5296,11 +5297,13 @@ function BankSpeedEnumToLabel(speed?: Mercoa.BankDeliveryMethod) {
   if (speed === Mercoa.BankDeliveryMethod.AchAccelerated) return 'Accelerated ACH (Same Day)'
   if (speed === Mercoa.BankDeliveryMethod.AchSameDay) return 'Fast ACH (2 Days)'
   if (speed === Mercoa.BankDeliveryMethod.AchStandard) return 'Standard ACH (3-5 Days)'
-  return 'Standard ACH (3-5 Days)'
+  return 'Fast ACH (2 Days)'
 }
 
 function CheckSpeedEnumToLabel(speed?: Mercoa.CheckDeliveryMethod) {
   if (speed === Mercoa.CheckDeliveryMethod.Print) return 'Print it myself'
-  if (speed === Mercoa.CheckDeliveryMethod.Mail) return 'Mail it for me'
-  return 'Mail it for me'
+  if (speed === Mercoa.CheckDeliveryMethod.Mail) return 'Mail (USPS First Class)'
+  if (speed === Mercoa.CheckDeliveryMethod.MailPriority) return 'Mail (USPS Priority)'
+  if (speed === Mercoa.CheckDeliveryMethod.MailUpsNextDay) return 'Mail (UPS Next Day)'
+  return 'Mail (USPS First Class)'
 }

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { useCounterparties } from '../api/queries'
+import { useCounterpartiesQuery } from '../api/queries'
 
 export const useCounterpartiesTable = (
   entityId: string,
@@ -17,7 +17,7 @@ export const useCounterpartiesTable = (
   const [search, setSearch] = useState(initialRequestOptions?.search || '')
   const [debouncedSearch, setDebouncedSearch] = useState(search)
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useCounterparties(entityId, type, {
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useCounterpartiesQuery(entityId, type, {
     limit: currentRequestOptions?.limit ?? resultsPerPage,
     search: currentRequestOptions?.search ?? debouncedSearch,
     paymentMethods: currentRequestOptions?.paymentMethods ?? initialRequestOptions?.paymentMethods ?? true,

@@ -6,7 +6,7 @@ import { MainCardV2 } from './components/main-card'
 import { PaymentCompleteV2 } from './components/payment-complete'
 import { VendorDetailsCard } from './components/vendor-details-card'
 
-export function ReceivablePaymentPortalV2({
+export function ReceivablePaymentPortal({
   isPreview,
   complete,
   invoice,

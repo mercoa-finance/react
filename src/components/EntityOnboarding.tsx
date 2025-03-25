@@ -11,6 +11,7 @@ import {
   PhotoIcon,
   PlusIcon,
   TrashIcon,
+  UserCircleIcon,
   UserGroupIcon,
   UserIcon,
   XCircleIcon,
@@ -43,6 +44,7 @@ import {
   MercoaInputLabel,
   NoSession,
   PaymentMethodButton,
+  PaymentMethods,
   StateDropdown,
   Tooltip,
   inputClassName,
@@ -863,7 +865,7 @@ export function DoingBusinessAsBlock({
 export const einSchema = {
   taxID: yup.string().test('should-test-ein', 'Invalid EIN', function (code) {
     const { country } = this.parent
-    if (country === 'US') {
+    if (country === 'US' || !country) {
       if (!code) return false
       const einRegex = /^(0[1-9]|[1-9]\d)-\d{7}|[*]{2}-[*]{7}$/
       return einRegex.test(code)
@@ -1303,9 +1305,12 @@ export async function createOrUpdateEntity({
             country: data.country,
           },
         }),
-      maxTransactionSize: data.maxTransactionSize,
-      averageMonthlyTransactionVolume: data.averageMonthlyTransactionVolume,
-      averageTransactionSize: data.averageTransactionSize,
+      // NOTE: This is necessary because the `OnboardingFormData` type is wrong, these can currently be strings
+      maxTransactionSize: data.maxTransactionSize ? Number(data.maxTransactionSize) : undefined,
+      averageMonthlyTransactionVolume: data.averageMonthlyTransactionVolume
+        ? Number(data.averageMonthlyTransactionVolume)
+        : undefined,
+      averageTransactionSize: data.averageTransactionSize ? Number(data.averageTransactionSize) : undefined,
     }
   }
 
@@ -1412,7 +1417,7 @@ export function EntityOnboardingButton({
             leaveFrom="mercoa-opacity-100"
             leaveTo="mercoa-opacity-0"
           >
-            <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
+            <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75 mercoa-transition-opacity" />
           </Transition.Child>
 
           <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
@@ -1926,7 +1931,7 @@ export function RepresentativeComponent({
                     leaveFrom="mercoa-opacity-100"
                     leaveTo="mercoa-opacity-0"
                   >
-                    <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
+                    <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75 mercoa-transition-opacity" />
                   </Transition.Child>
 
                   <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
@@ -2176,7 +2181,7 @@ export function AcceptToSButton({
             leaveFrom="mercoa-opacity-100"
             leaveTo="mercoa-opacity-0"
           >
-            <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-mercoa-opacity-75 mercoa-transition-opacity" />
+            <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75 mercoa-transition-opacity" />
           </Transition.Child>
 
           <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
@@ -2699,14 +2704,15 @@ export function EntityOnboardingForm({
                 required={finalOnboardingOptions.business.type.required}
               />
             )}
-            {finalOnboardingOptions?.business.ein.show && watch('country') === 'US' && (
-              <EINBlock
-                control={control}
-                errors={errors}
-                readOnly={!finalOnboardingOptions.business.ein.edit}
-                required={finalOnboardingOptions.business.ein.required}
-              />
-            )}
+            {finalOnboardingOptions?.business.ein.show &&
+              (watch('country') === 'US' || watch('country') === '' || watch('country') === undefined) && (
+                <EINBlock
+                  control={control}
+                  errors={errors}
+                  readOnly={!finalOnboardingOptions.business.ein.edit}
+                  required={finalOnboardingOptions.business.ein.required}
+                />
+              )}
             {finalOnboardingOptions?.business.mcc.show && (
               <MCCBlock watch={watch} setValue={setValue} errors={errors} />
             )}
@@ -3011,12 +3017,14 @@ export function EntityOnboarding({
   onboardingOptions?: Mercoa.OnboardingOptionsRequest
   hideDefaultIntroduction?: boolean
   onComplete?: () => void
-  onStateChange?: (state: 'entity' | 'representatives' | 'payments' | 'complete') => void
+  onStateChange?: (state: 'entity' | 'representatives' | 'payments' | 'review' | 'complete') => void
 }) {
   const [entity, setEntity] = useState<Mercoa.EntityResponse>()
   const [representatives, setRepresentatives] = useState<Mercoa.RepresentativeResponse[]>([])
   const [entityData, setEntityData] = useState<OnboardingFormData>()
-  const [formState, setFormState] = useState<'entity' | 'representatives' | 'payments' | 'complete'>('entity')
+  const [formState, setFormState] = useState<'entity' | 'representatives' | 'payments' | 'review' | 'complete'>(
+    'entity',
+  )
 
   const mercoaSession = useMercoaSession()
 
@@ -3091,12 +3099,12 @@ export function EntityOnboarding({
       // Skip payments, transition to TOS if paymentMethod not set in onboarding options
       if (type === 'payee') {
         if (!onboardingOptionsFinal?.paymentMethod) {
-          setFormState('complete')
+          setFormState('review')
           return
         }
       } else if (type === 'payor') {
         if (!onboardingOptionsFinal?.paymentMethod) {
-          setFormState('complete')
+          setFormState('review')
           return
         }
       }
@@ -3249,8 +3257,9 @@ export function EntityOnboarding({
           <DisbursementMethods
             type={type === 'payor' ? 'payment' : 'disbursement'}
             entity={entity}
-            onSelect={() => {
-              setFormState('complete')
+            onSelect={async () => {
+              await mercoaSession.refresh()
+              setFormState('review')
             }}
             goToPreviousStep={async () => {
               await mercoaSession.refresh()
@@ -3260,6 +3269,34 @@ export function EntityOnboarding({
         </div>
       )}
 
+      <div className={formState === 'review' ? 'p-8 mercoa-text-center mercoa-text-lg' : 'mercoa-hidden'}>
+        {onboardingOptionsFinal && (
+          <OnboardingCompletedOverviewCard entity={entity} type={type} onboardingOptions={onboardingOptionsFinal} />
+        )}
+
+        <div className="mercoa-mt-10 mercoa-flex mercoa-justify-between mercoa-gap-3">
+          <MercoaButton
+            isEmphasized={false}
+            size="md"
+            onClick={async () => {
+              await mercoaSession.refresh()
+              setFormState('entity')
+            }}
+          >
+            Go Back
+          </MercoaButton>
+          <MercoaButton
+            isEmphasized
+            size="md"
+            onClick={async () => {
+              await mercoaSession.refresh()
+              setFormState('complete')
+            }}
+          >
+            Submit and Complete
+          </MercoaButton>
+        </div>
+      </div>
       <div className={formState === 'complete' ? 'p-8 mercoa-text-center mercoa-text-lg' : 'mercoa-hidden'}>
         <h1 className="mercoa-text-2xl mercoa-font-medium mercoa-text-gray-900">Thank you!</h1>
         <p className="mercoa-text-gray-700">Your information has been submitted.</p>
@@ -3275,6 +3312,188 @@ export function EntityOnboarding({
           Edit your information
         </MercoaButton>
       </div>
+    </div>
+  )
+}
+
+export function OnboardingCompletedOverviewCard({
+  entity,
+  type,
+  onboardingOptions,
+}: {
+  entity: Mercoa.EntityResponse
+  type: 'payee' | 'payor'
+  onboardingOptions: Mercoa.OnboardingOptionsResponse
+}) {
+  const fields: {
+    label: string
+    value: string | string[]
+  }[] = []
+
+  if (entity.accountType === 'business' && onboardingOptions.business) {
+    if (onboardingOptions.business.name?.show) {
+      fields.push({
+        label: 'Business Name',
+        value: entity.profile.business?.legalBusinessName || '',
+      })
+    }
+    if (onboardingOptions.business.doingBusinessAs?.show) {
+      fields.push({
+        label: 'DBA',
+        value: entity.profile.business?.doingBusinessAs || '',
+      })
+    }
+    if (onboardingOptions.business.email?.show) {
+      fields.push({
+        label: 'Email',
+        value: entity.email,
+      })
+    }
+    if (onboardingOptions.business.address?.show) {
+      fields.push({
+        label: 'Address',
+        value: [
+          entity.profile.business?.address?.addressLine1 || '',
+          entity.profile.business?.address?.city || '',
+          entity.profile.business?.address?.stateOrProvince || '',
+          entity.profile.business?.address?.postalCode || '',
+        ]
+          .filter(Boolean)
+          .join(', '),
+      })
+    }
+    if (onboardingOptions.business.phone?.show) {
+      fields.push({
+        label: 'Phone',
+        value: entity.profile.business?.phone?.number || '',
+      })
+    }
+    if (onboardingOptions.business.ein?.show) {
+      fields.push({
+        label: 'EIN',
+        value: entity.profile.business?.taxId?.ein?.number || '',
+      })
+    }
+    if (onboardingOptions.business.website?.show) {
+      fields.push({
+        label: 'Website',
+        value: entity.profile.business?.website || '',
+      })
+    }
+    if (onboardingOptions.business.description?.show) {
+      fields.push({
+        label: 'Description',
+        value: entity.profile.business?.description || '',
+      })
+    }
+    if (onboardingOptions.business.type?.show) {
+      fields.push({
+        label: 'Business Type',
+        value: entity.profile.business?.businessType || '',
+      })
+    }
+    if (onboardingOptions.business.mcc?.show) {
+      fields.push({
+        label: 'MCC',
+        value: entity.profile.business?.industryCodes?.mcc || '',
+      })
+    }
+  } else if (entity.accountType === 'individual' && onboardingOptions.individual) {
+    if (onboardingOptions.individual.name?.show) {
+      fields.push({
+        label: 'Name',
+        value: `${entity.profile.individual?.name.firstName || ''} ${entity.profile.individual?.name.lastName || ''}`,
+      })
+    }
+    if (onboardingOptions.individual.email?.show) {
+      fields.push({
+        label: 'Email',
+        value: entity.email,
+      })
+    }
+    if (onboardingOptions.individual.address?.show) {
+      fields.push({
+        label: 'Address',
+        value: [
+          entity.profile.individual?.address?.addressLine1 || '',
+          entity.profile.individual?.address?.city || '',
+          entity.profile.individual?.address?.stateOrProvince || '',
+          entity.profile.individual?.address?.postalCode || '',
+        ]
+          .filter(Boolean)
+          .join(', '),
+      })
+    }
+    if (onboardingOptions.individual.phone?.show) {
+      fields.push({
+        label: 'Phone',
+        value: entity.profile.individual?.phone?.number || '',
+      })
+    }
+    if (onboardingOptions.individual.dateOfBirth?.show) {
+      fields.push({
+        label: 'Date of Birth',
+        value: entity.profile.individual?.birthDateProvided ? `Provided` : 'Not Provided',
+      })
+    }
+    if (onboardingOptions.individual.ssn?.show) {
+      fields.push({
+        label: 'SSN',
+        value: entity.profile.individual?.governmentIdProvided ? `Provided` : 'Not Provided',
+      })
+    }
+  }
+
+  return (
+    <div className="mercoa-bg-white mercoa-shadow-sm mercoa-rounded-lg mercoa-overflow-hidden">
+      <div className="mercoa-px-6 mercoa-py-4 mercoa-border-b mercoa-border-gray-200">
+        <div className="mercoa-flex mercoa-items-center mercoa-gap-3">
+          <UserCircleIcon className="mercoa-w-8 mercoa-h-8 mercoa-text-gray-400" />
+          <h3 className="mercoa-text-lg mercoa-font-medium mercoa-text-gray-900">Account Information</h3>
+        </div>
+      </div>
+      <div className="mercoa-px-6 mercoa-py-4">
+        <div className="mercoa-divide-y mercoa-divide-gray-200 mercoa-text-left">
+          {fields.map((field) => (
+            <div key={field.label} className="mercoa-py-3 mercoa-grid mercoa-grid-cols-2 mercoa-gap-4">
+              <dt className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">{field.label}</dt>
+              <dd className="mercoa-text-sm mercoa-text-gray-700 ">{field.value || 'Not provided'}</dd>
+            </div>
+          ))}
+        </div>
+      </div>
+      {onboardingOptions.paymentMethod && (
+        <>
+          <div className="mercoa-px-6 mercoa-py-4 mercoa-border-t-2 mercoa-border-gray-200">
+            <div className="mercoa-flex mercoa-items-center mercoa-gap-3">
+              <BuildingLibraryIcon className="mercoa-w-8 mercoa-h-8 mercoa-text-gray-400" />
+              <h3 className="mercoa-text-lg mercoa-font-medium mercoa-text-gray-900">Payment Methods</h3>
+            </div>
+          </div>
+          <div className="mercoa-px-6 mercoa-py-4 mercoa-bg-gray-50 mercoa-border-t mercoa-border-gray-200 mercoa-text-left">
+            <PaymentMethods
+              entityId={entity.id}
+              showAdd={false}
+              showEdit={false}
+              showDelete={false}
+              hideIndicators={true}
+            />
+          </div>
+        </>
+      )}
+      {onboardingOptions.business.representatives.required && (
+        <>
+          <div className="mercoa-px-6 mercoa-py-4 mercoa-border-t-2 mercoa-border-gray-200">
+            <div className="mercoa-flex mercoa-items-center mercoa-gap-3">
+              <BuildingLibraryIcon className="mercoa-w-8 mercoa-h-8 mercoa-text-gray-400" />
+              <h3 className="mercoa-text-lg mercoa-font-medium mercoa-text-gray-900">Representatives</h3>
+            </div>
+          </div>
+          <div className="mercoa-px-6 mercoa-py-4 mercoa-bg-gray-50 mercoa-border-t mercoa-border-gray-200">
+            <Representatives showAdd={false} showEdit={false} />
+          </div>
+        </>
+      )}
     </div>
   )
 }

@@ -1,10 +1,10 @@
 import { Dispatch, FC, memo, SetStateAction, useEffect } from 'react'
+import { Mercoa } from '@mercoa/javascript'
 import { useMercoaSession } from '../../../../../../../components'
 import { Popover } from '../../../../../../../lib/components'
-import { useDropdownStore } from '../../../../../../../modules/common/stores/dropdown-store'
-import { CrossIcon } from '../../../../../assets/icons/cross-icon'
+import { CrossIcon } from '../../../../../../common/assets/icons/cross-icon'
+import { useDropdownStore } from '../../../../../../common/stores/dropdown-store'
 import { usePayablesFilterStore } from '../../../../../stores/payables-filter-store'
-
 interface ApproversFilterCardDropdownProps {
   tableId: string
   setShowFilterTrigger: Dispatch<SetStateAction<Boolean>>
@@ -18,20 +18,29 @@ export const ApproversFilterCardDropdown: FC<ApproversFilterCardDropdownProps> =
     const { open } = getOrCreateDropdownState(`${tableId}-approversFilterDropdown`)
     const { selectedApprovers } = getFilters(tableId)
 
-    const toggleSelection = () => {
-      const newFilters = selectedApprovers.includes('current')
-        ? selectedApprovers.filter((item) => item !== 'current')
-        : [...selectedApprovers, 'current']
+    const toggleSelection = (id: Mercoa.EntityUserResponse) => {
+      const newFilters = selectedApprovers.includes(id)
+        ? selectedApprovers.filter((item) => item !== id)
+        : [...selectedApprovers, id]
 
       setFilters(tableId, { selectedApprovers: newFilters as any })
     }
 
     const renderTriggerContent = () => {
-      if (!selectedApprovers.includes('current')) return null
+      if (!selectedApprovers.length) return null
       return (
-        <span className="mercoa-bg-white mercoa-text-[13px] mercoa-px-2 mercoa-flex mercoa-items-center mercoa-justify-center mercoa-rounded-full mercoa-h-[24px]">
-          Current User
-        </span>
+        <>
+          {selectedApprovers.map((approver) => {
+            return (
+              <span
+                key={approver.id}
+                className="mercoa-bg-white mercoa-text-[13px] mercoa-px-2 mercoa-flex mercoa-items-center mercoa-justify-center mercoa-rounded-full mercoa-h-[24px]"
+              >
+                {approver.email}
+              </span>
+            )
+          })}
+        </>
       )
     }
 
@@ -43,7 +52,7 @@ export const ApproversFilterCardDropdown: FC<ApproversFilterCardDropdownProps> =
 
     return (
       <>
-        {open || selectedApprovers.includes('current') ? (
+        {open || selectedApprovers.length > 0 ? (
           <Popover
             onOpenAutoFocus={(e) => {
               e.preventDefault()
@@ -75,18 +84,41 @@ export const ApproversFilterCardDropdown: FC<ApproversFilterCardDropdownProps> =
             }
           >
             <div className="mercoa-flex mercoa-rounded-mercoa mercoa-flex-col mercoa-relative mercoa-max-w-[calc(100vw-4rem)] mercoa-overflow-scroll mercoa-max-h-[calc(100vh-2rem)] mercoa-min-w-[16rem] mercoa-bg-white mercoa-text-[#1A1919] mercoa-shadow-[rgba(0,0,0,0.15)_1px_4px_8px_0px,rgba(0,0,0,0.1)_2px_12px_24px_0px,rgba(163,157,153,0.2)_0px_0px_0px_1px]">
-              <div
-                className="mercoa-text-[14px] mercoa-flex mercoa-items-center mercoa-h-[44px] mercoa-gap-3 mercoa-px-[0.75rem] mercoa-py-[0.5rem] mercoa-text-left mercoa-text-[#1A1919] mercoa-cursor-pointer mercoa-no-underline hover:mercoa-bg-[#F4F2F0]"
-                onClick={toggleSelection}
-              >
-                <input
-                  type="checkbox"
-                  className="mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-none"
-                  checked={selectedApprovers.includes('current')}
-                  readOnly
-                />
-                <span className="mercoa-text-[14px] mercoa-color-[#1A1919]">Current User</span>
-              </div>
+              {mercoaSession.user && (
+                <div
+                  className="mercoa-text-[14px] mercoa-flex mercoa-items-center mercoa-h-[44px] mercoa-gap-3 mercoa-px-[0.75rem] mercoa-py-[0.5rem] mercoa-text-left mercoa-text-[#1A1919] mercoa-cursor-pointer mercoa-no-underline hover:mercoa-bg-[#F4F2F0]"
+                  onClick={() => {
+                    if (mercoaSession.user) {
+                      toggleSelection(mercoaSession.user)
+                    }
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    className="mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-none"
+                    checked={selectedApprovers.find((approver) => approver.id === mercoaSession.user?.id) !== undefined}
+                    readOnly
+                  />
+                  <span className="mercoa-text-[14px] mercoa-color-[#1A1919]">Assigned to me</span>
+                </div>
+              )}
+              {mercoaSession.users
+                .filter((user) => user.id !== mercoaSession.user?.id)
+                ?.map((user) => (
+                  <div
+                    key={user.id}
+                    className="mercoa-text-[14px] mercoa-flex mercoa-items-center mercoa-h-[44px] mercoa-gap-3 mercoa-px-[0.75rem] mercoa-py-[0.5rem] mercoa-text-left mercoa-text-[#1A1919] mercoa-cursor-pointer mercoa-no-underline hover:mercoa-bg-[#F4F2F0]"
+                    onClick={() => toggleSelection(user)}
+                  >
+                    <input
+                      type="checkbox"
+                      className="mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-none"
+                      checked={selectedApprovers.find((approver) => approver.id === user.id) !== undefined}
+                      readOnly
+                    />
+                    <span className="mercoa-text-[14px] mercoa-color-[#1A1919]">{user.email}</span>
+                  </div>
+                ))}
             </div>
           </Popover>
         ) : null}

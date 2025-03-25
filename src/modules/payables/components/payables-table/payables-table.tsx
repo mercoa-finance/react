@@ -1,3 +1,4 @@
+import { Transition } from '@headlessui/react'
 import {
   ColumnDef,
   ColumnResizeDirection,
@@ -9,7 +10,7 @@ import {
 } from '@tanstack/react-table'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
-import React, { FC, memo, ReactElement, useMemo, useState } from 'react'
+import React, { FC, Fragment, memo, useMemo, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { InvoiceStatusPill } from '../../../../components/Payables'
 import { cn } from '../../../../lib/style'
@@ -23,637 +24,703 @@ import { toast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../../../../../src/lib/currency'
 import { MercoaButton, Tooltip } from '../../../../components/generics'
 import { useMercoaSession } from '../../../../components/Mercoa'
-import { filterApproverOptions } from '../../../../components/PayableDetails'
 import { SkeletonLoader } from '../../../../lib/components'
-import { UsePayablesRequestOptions } from '../../api/queries'
-import { CrossIcon } from '../../assets/icons/cross-icon'
-import { usePayablesTable } from '../../hooks'
+import { CrossIcon } from '../../../common/assets/icons/cross-icon'
+import { ResultsInfo } from '../../../common/components/results-info'
+import { usePayables } from '../../hooks'
+import { filterApproverOptions } from '../payable-form/components/payable-approvers/utils'
 import { Pagination, ResultsPerPageDropdown } from './components'
 import { ApproveBillsDialog } from './components/approve-action-dialog'
+import { ArchiveInvoiceDialog } from './components/archive-action-dialog'
+import { AssignApproverDialog } from './components/assign-approver-dialog'
+import { CancelInvoiceDialog } from './components/cancel-action-dialog'
 import { DeleteInvoiceDialog } from './components/delete-action-dialog'
-import { EntriesInfo } from './components/entries-info'
-import { EditPaymentDateDialog } from './components/schedule-action-dialog'
+import { RejectBillsDialog } from './components/reject-action-dialog'
+import { RestoreAsDraftDialog } from './components/restore-as-draft-action-dialog'
+import { SchedulePaymentDialog } from './components/schedule-action-dialog'
+import { SetPaymentDateDialog } from './components/set-payment-date-action-dialog'
+import { SubmitForApprovalDialog } from './components/submit-for-approval-dialog'
 import { TableActionDropdown } from './components/table-actions-dropdown'
-import { PayableAction } from './constants'
+import { PayablesTableAction } from './constants'
 import { getAvailableActions } from './utils'
 
-type InvoiceTableColumn = {
-  title: string
-  field: keyof Mercoa.InvoiceResponse | `${'metadata.'}${string}`
-  orderBy?: Mercoa.InvoiceOrderByField
-  format?: (value: string | number | Date | any, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
-}
+export const PayablesTable: FC = memo(() => {
+  const { dataContextValue, propsContextValue, selectionContextValue, actionsContextValue, paginationContextValue } =
+    usePayables()
 
-export interface PayablesTableV2Props {
-  columns?: InvoiceTableColumn[]
+  const { tableData: data, isDataLoading, isFetching, isFetchingNextPage, allFetchedInvoices } = dataContextValue
 
-  currentPayablesOptions?: UsePayablesRequestOptions
+  const { handlers, config, renderCustom, displayOptions } = propsContextValue
 
-  onSelectInvoice?: (invoice: Mercoa.InvoiceResponse) => void
+  const {
+    orderBy,
+    setOrderBy,
+    orderDirection,
+    handleOrderByChange,
+    resultsPerPage,
+    setResultsPerPage,
+    page,
+    totalEntries,
+    goToNextPage,
+    goToPreviousPage,
+    isNextDisabled,
+    isPrevDisabled,
+  } = paginationContextValue
 
-  readOnly?: boolean
+  const { isAllSelected, selectedInvoices, selectedColumns, setSelectedInvoices, handleSelectRow, handleSelectAll } =
+    selectionContextValue
 
-  payableData?: ReturnType<typeof usePayablesTable>
+  const {
+    submitForApproval,
+    isSubmitForApprovalLoading,
+    bulkSubmitForApproval,
+    isBulkSubmitForApprovalLoading,
+    schedulePayment,
+    isSchedulePaymentLoading,
+    bulkSchedulePayment,
+    isBulkSchedulePaymentLoading,
+    approvePayable,
+    isApprovePayableLoading,
+    bulkApprovePayables,
+    isBulkApprovePayablesLoading,
+    rejectPayable,
+    isRejectPayableLoading,
+    bulkRejectPayables,
+    isBulkRejectPayablesLoading,
+    deletePayable,
+    isDeletePayableLoading,
+    bulkDeletePayables,
+    isBulkDeletePayableLoading,
+    restoreAsDraft,
+    isRestoreAsDraftLoading,
+    bulkRestoreAsDraft,
+    isBulkRestoreAsDraftLoading,
+    activeInvoiceAction,
+    setActiveInvoiceAction,
+    assignApprover,
+    isAssignApproverLoading,
+    bulkAssignApprover,
+    isBulkAssignApproverLoading,
+    archivePayable,
+    isArchivePayableLoading,
+    bulkArchivePayables,
+    isBulkArchivePayablesLoading,
+    cancelPayable,
+    isCancelPayableLoading,
+    bulkCancelPayables,
+    isBulkCancelPayablesLoading,
+  } = actionsContextValue
 
-  classNames?: {
-    table?: {
-      root?: string
-      thead?: string
-      tbody?: string
-      th?: string
-      tr?: string
-      td?: string
-    }
-    checkbox?: string
-  }
-}
+  const { readOnly } = config ?? {}
+  const { columns } = renderCustom ?? {}
+  const { classNames } = displayOptions ?? {}
 
-export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
-  ({ onSelectInvoice, columns, currentPayablesOptions, classNames, payableData, readOnly = false }) => {
-    const [columnResizeMode, setColumnResizeMode] = useState<ColumnResizeMode>('onChange')
-    const [columnResizeDirection, setColumnResizeDirection] = useState<ColumnResizeDirection>('ltr')
-    const queryData = usePayablesTable({ currentQueryOptions: currentPayablesOptions })
+  const [columnResizeMode, setColumnResizeMode] = useState<ColumnResizeMode>('onChange')
+  const [columnResizeDirection, setColumnResizeDirection] = useState<ColumnResizeDirection>('ltr')
 
-    const mercoaSession = useMercoaSession()
+  const mercoaSession = useMercoaSession()
 
-    const {
-      data,
-      orderBy,
-      setOrderBy,
-      orderDirection,
-      setOrderDirection,
-      infiniteData,
-      handleOrderByChange,
-      isDataLoading,
-      isFetchingNextPage,
-      selectedInvoiceIds,
-      handleSelectRow,
-      handleSelectAll,
-      isAllSelected,
-      selectedColumns,
-      totalEntries,
-      resultsPerPage,
-      page,
-      setResultsPerPage,
-      isNextDisabled,
-      isPrevDisabled,
-      goToNextPage,
-      goToPreviousPage,
-      deletePayable,
-      isDeletePayableLoading,
-      setSelectedInvoiceIds,
-      bulkDeletePayables,
-      isBulkDeletePayableLoading,
-      activeInvoiceAction,
-      setActiveInvoiceAction,
-      approvePayable,
-      isApprovePayableLoading,
-      bulkApprovePayables,
-      isBulkApprovePayablesLoading,
-      handleRefresh,
-      isRefreshLoading,
-      schedulePayment,
-      isSchedulePaymentLoading,
-      bulkSchedulePayment,
-      isBulkSchedulePaymentLoading,
-      allFetchedInvoices,
-    } = payableData ?? queryData
-
-    const defaultTableColumns = useMemo<ColumnDef<(typeof data)[0]>[]>(() => {
-      const getSortIcon = (field: Mercoa.InvoiceOrderByField) => {
-        if (orderBy === field) {
-          return orderDirection === Mercoa.OrderDirection.Asc ? (
-            <SortAscending className="mercoa-h-4 mercoa-w-4" />
-          ) : (
-            <SortDescending className="mercoa-h-4 mercoa-w-4" />
-          )
-        }
-        return <ArrowUpDown className="mercoa-h-4 mercoa-w-4" />
+  const defaultTableColumns = useMemo<ColumnDef<(typeof data)[0]>[]>(() => {
+    const getSortIcon = (field: Mercoa.InvoiceOrderByField) => {
+      if (orderBy === field) {
+        return orderDirection === Mercoa.OrderDirection.Asc ? (
+          <SortAscending className="mercoa-h-4 mercoa-w-4" />
+        ) : (
+          <SortDescending className="mercoa-h-4 mercoa-w-4" />
+        )
       }
+      return <ArrowUpDown className="mercoa-h-4 mercoa-w-4" />
+    }
 
-      const cols: ColumnDef<(typeof data)[0]>[] = [
-        {
-          accessorKey: 'select',
-          header: () =>
-            readOnly ? null : (
-              <div
-                className="mercoa-flex mercoa-p-1 mercoa-justify-center mercoa-items-center mercoa-cursor-pointer"
-                onClick={(e: React.MouseEvent) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  handleSelectAll()
-                }}
-              >
-                <input
-                  onClick={(e: React.MouseEvent) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                  }}
-                  type="checkbox"
-                  className={cn(
-                    'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-transparent mercoa-cursor-pointer',
-                    classNames?.checkbox,
-                  )}
-                  checked={isAllSelected}
-                  onChange={(e) => {
-                    handleSelectAll()
-                    e.stopPropagation()
-                  }}
-                />
-              </div>
-            ),
-          cell: ({ row }) =>
-            readOnly ? null : (
-              <div
-                className="mercoa-flex mercoa-p-1 mercoa-justify-center mercoa-items-center"
-                onClick={(e: React.MouseEvent) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  handleSelectRow(row.original.id)
-                }}
-              >
-                <input
-                  onClick={(e: React.MouseEvent) => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                  }}
-                  type="checkbox"
-                  className={cn(
-                    'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-transparent mercoa-cursor-pointer',
-                    classNames?.checkbox,
-                  )}
-                  checked={selectedInvoiceIds.includes(row.original.id)}
-                  onChange={(e) => {
-                    handleSelectRow(row.original.id)
-                    e.stopPropagation()
-                  }}
-                />
-              </div>
-            ),
-          size: 10,
-          maxSize: 10,
-          meta: { align: 'center' },
-          enableResizing: false,
-        },
-        {
-          accessorKey: 'vendor',
-          header: () => (
-            <div
-              className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
-              onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.VendorName)}
-            >
-              <span>Vendor / Owner</span>
-              <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
-                {getSortIcon(Mercoa.InvoiceOrderByField.VendorName)}
-              </div>
-            </div>
-          ),
-          cell: ({ row }) => {
-            const generateColor = (name: string) => {
-              if (!name) return '#E8E1D9'
-
-              let hash = 0
-              for (let i = 0; i < name.length; i++) {
-                hash = name.charCodeAt(i) + ((hash << 5) - hash)
-              }
-
-              const color = `hsl(${hash % 360}, 60%, 70%)`
-              return color
-            }
-
-            const getInitials = (name: string) => {
-              return name
-                ? name
-                    .split(' ', 2)
-                    .map((word) => word[0])
-                    .join('')
-                    .toUpperCase()
-                : ''
-            }
-
-            return (
-              <div className="mercoa-flex mercoa-items-center mercoa-gap-2 mercoa-py-[8px]">
+    const cols: ColumnDef<(typeof data)[0]>[] = [
+      ...(readOnly
+        ? []
+        : [
+            {
+              accessorKey: 'select',
+              header: () => (
                 <div
-                  className="mercoa-w-6 mercoa-h-6 mercoa-rounded-full mercoa-flex mercoa-items-center mercoa-justify-center mercoa-text-[11px]"
-                  style={{ backgroundColor: generateColor(row.original.vendorName ?? '') }}
+                  className="mercoa-flex mercoa-p-1 mercoa-justify-center mercoa-items-center mercoa-cursor-pointer"
+                  onClick={(e: React.MouseEvent) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleSelectAll()
+                  }}
                 >
-                  {getInitials(row.original.vendorName ?? '')}
+                  <input
+                    onClick={(e: React.MouseEvent) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                    }}
+                    type="checkbox"
+                    className={cn(
+                      'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-transparent mercoa-cursor-pointer',
+                      classNames?.checkbox,
+                    )}
+                    checked={isAllSelected}
+                    onChange={(e) => {
+                      handleSelectAll()
+                      e.stopPropagation()
+                    }}
+                  />
                 </div>
-                <div className="mercoa-flex-col mercoa-gap-1">
-                  <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-800">{row.original.vendorName}</p>
+              ),
+              cell: ({
+                row,
+              }: {
+                row: any & {
+                  original: Mercoa.InvoiceResponse
+                }
+              }) => (
+                <div
+                  className="mercoa-flex mercoa-p-1 mercoa-justify-center mercoa-items-center"
+                  onClick={(e: React.MouseEvent) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleSelectRow(row.original)
+                  }}
+                >
+                  <input
+                    onClick={(e: React.MouseEvent) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                    }}
+                    type="checkbox"
+                    className={cn(
+                      'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-transparent mercoa-cursor-pointer',
+                      classNames?.checkbox,
+                    )}
+                    checked={selectedInvoices.some((e) => e.id === row.original.id)}
+                    onChange={(e) => {
+                      handleSelectRow(row.original)
+                      e.stopPropagation()
+                    }}
+                  />
                 </div>
-              </div>
-            )
-          },
-          enableResizing: true,
-        },
-        {
-          accessorKey: 'invoiceNumber',
-          header: () => (
-            <div
-              className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
-              onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.InvoiceNumber)}
-            >
-              <span>Invoice #</span>
-              <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
-                {getSortIcon(Mercoa.InvoiceOrderByField.InvoiceNumber)}
-              </div>
+              ),
+              size: 10,
+              maxSize: 10,
+              meta: { align: 'center' },
+              enableResizing: false,
+            },
+          ]),
+      {
+        accessorKey: 'vendor',
+        header: () => (
+          <div
+            className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
+            onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.VendorName)}
+          >
+            <span>Vendor / Owner</span>
+            <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
+              {getSortIcon(Mercoa.InvoiceOrderByField.VendorName)}
             </div>
-          ),
-          cell: ({ row }) => <span className="text-sm">{row.original.invoiceNumber}</span>,
-          enableResizing: true,
-        },
-        {
-          accessorKey: 'dueDate',
-          header: () => (
-            <div
-              className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
-              onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.DueDate)}
-            >
-              <span>Due Date</span>
-              <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
-                {getSortIcon(Mercoa.InvoiceOrderByField.DueDate)}
-              </div>
-            </div>
-          ),
-          cell: ({ row }) => (
-            <span className="text-sm">
-              {row.original.dueDate ? dayjs(row.original.dueDate).format('MMM DD, YYYY') : '-'}
-            </span>
-          ),
-          enableResizing: true,
-        },
-        {
-          accessorKey: 'invoiceDate',
-          header: () => (
-            <div
-              className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
-              onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.InvoiceDate)}
-            >
-              <span>Invoice Date</span>
-              <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
-                {getSortIcon(Mercoa.InvoiceOrderByField.InvoiceDate)}
-              </div>
-            </div>
-          ),
-          cell: ({ row }) => (
-            <span className="text-sm">
-              {row.original.invoiceDate ? dayjs(row.original.invoiceDate).format('MMM DD, YYYY') : '-'}
-            </span>
-          ),
-          enableResizing: true,
-        },
-        {
-          accessorKey: 'deductionDate',
-          header: () => (
-            <div
-              className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
-              onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.DeductionDate)}
-            >
-              <span>Deduction Date</span>
-              <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
-                {getSortIcon(Mercoa.InvoiceOrderByField.DeductionDate)}
-              </div>
-            </div>
-          ),
-          cell: ({ row }) => (
-            <span className="text-sm">
-              {row.original.deductionDate ? dayjs(row.original.deductionDate).format('MMM DD, YYYY') : '-'}
-            </span>
-          ),
-          enableResizing: true,
-        },
-        {
-          accessorKey: 'amount',
-          header: () => (
-            <div
-              className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
-              onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.Amount)}
-            >
-              <span>Amount</span>
-              <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
-                {getSortIcon(Mercoa.InvoiceOrderByField.Amount)}
-              </div>
-            </div>
-          ),
-          cell: ({ row }) => (
-            <span className="text-sm font-medium">
-              {accounting.formatMoney(row.original.amount ?? '', currencyCodeToSymbol(row.original.currencyCode))}
-            </span>
-          ),
-          enableResizing: true,
-        },
+          </div>
+        ),
+        cell: ({ row }) => {
+          const generateColor = (name: string) => {
+            if (!name) return '#E8E1D9'
 
-        {
-          accessorKey: 'approvers',
-          header: 'Approvers',
-          cell: ({ row }) => {
-            if (row.original.approvers.length === 0) {
-              return null
+            let hash = 0
+            for (let i = 0; i < name.length; i++) {
+              hash = name.charCodeAt(i) + ((hash << 5) - hash)
             }
-            return (
-              <div className="mercoa-gap-1 mercoa-grid">
-                {row.original.approvers?.map((approver, index) => {
-                  if (!approver.assignedUserId) {
-                    const eligibleApprovers = filterApproverOptions({
-                      approverSlotIndex: index,
-                      eligibleRoles: approver.eligibleRoles,
-                      eligibleUserIds: approver.eligibleUserIds,
-                      users: mercoaSession.users,
-                      selectedApprovers: [],
-                    })
-                    return (
-                      <Tooltip
-                        title={eligibleApprovers.map((e) => e.user.email).join(', ')}
-                        key={approver.approvalSlotId}
-                      >
-                        <div
-                          key={approver.approvalSlotId}
-                          className={`mercoa-flex mercoa-items-center mercoa-rounded-mercoa mercoa-text-xs mercoa-bg-gray-50 mercoa-text-gray-800 mercoa-py-1 mercoa-px-2`}
-                        >
-                          Any Eligible Approver
-                        </div>
-                      </Tooltip>
-                    )
-                  }
-                  const user = mercoaSession.users.find((e) => e.id === approver.assignedUserId)
+
+            const color = `hsl(${hash % 360}, 60%, 70%)`
+            return color
+          }
+
+          const getInitials = (name: string) => {
+            return name
+              ? name
+                  .split(' ', 2)
+                  .map((word) => word[0])
+                  .join('')
+                  .toUpperCase()
+              : ''
+          }
+
+          return (
+            <div className="mercoa-flex mercoa-items-center mercoa-gap-2 mercoa-py-[8px]">
+              <div
+                className="mercoa-w-6 mercoa-h-6 mercoa-rounded-full mercoa-flex mercoa-items-center mercoa-justify-center mercoa-text-[11px]"
+                style={{ backgroundColor: generateColor(row.original.vendorName ?? '') }}
+              >
+                {getInitials(row.original.vendorName ?? '')}
+              </div>
+              <div className="mercoa-flex-col mercoa-gap-1">
+                <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-800">{row.original.vendorName}</p>
+              </div>
+            </div>
+          )
+        },
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'invoiceNumber',
+        header: () => (
+          <div
+            className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
+            onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.InvoiceNumber)}
+          >
+            <span>Invoice #</span>
+            <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
+              {getSortIcon(Mercoa.InvoiceOrderByField.InvoiceNumber)}
+            </div>
+          </div>
+        ),
+        cell: ({ row }) => <span className="mercoa-text-sm">{row.original.invoiceNumber}</span>,
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'dueDate',
+        header: () => (
+          <div
+            className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
+            onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.DueDate)}
+          >
+            <span>Due Date</span>
+            <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
+              {getSortIcon(Mercoa.InvoiceOrderByField.DueDate)}
+            </div>
+          </div>
+        ),
+        cell: ({ row }) => (
+          <span className="mercoa-text-sm">
+            {row.original.dueDate ? dayjs(row.original.dueDate).format('MMM DD, YYYY') : '-'}
+          </span>
+        ),
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'invoiceDate',
+        header: () => (
+          <div
+            className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
+            onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.InvoiceDate)}
+          >
+            <span>Invoice Date</span>
+            <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
+              {getSortIcon(Mercoa.InvoiceOrderByField.InvoiceDate)}
+            </div>
+          </div>
+        ),
+        cell: ({ row }) => (
+          <span className="mercoa-text-sm">
+            {row.original.invoiceDate ? dayjs(row.original.invoiceDate).format('MMM DD, YYYY') : '-'}
+          </span>
+        ),
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'deductionDate',
+        header: () => (
+          <div
+            className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
+            onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.DeductionDate)}
+          >
+            <span>Deduction Date</span>
+            <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
+              {getSortIcon(Mercoa.InvoiceOrderByField.DeductionDate)}
+            </div>
+          </div>
+        ),
+        cell: ({ row }) => (
+          <span className="mercoa-text-sm">
+            {row.original.deductionDate ? dayjs(row.original.deductionDate).format('MMM DD, YYYY') : '-'}
+          </span>
+        ),
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'amount',
+        header: () => (
+          <div
+            className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
+            onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.Amount)}
+          >
+            <span>Amount</span>
+            <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
+              {getSortIcon(Mercoa.InvoiceOrderByField.Amount)}
+            </div>
+          </div>
+        ),
+        cell: ({ row }) => (
+          <span className="mercoa-text-sm">
+            {accounting.formatMoney(row.original.amount ?? '', currencyCodeToSymbol(row.original.currencyCode))}
+          </span>
+        ),
+        enableResizing: true,
+      },
+
+      {
+        accessorKey: 'approvers',
+        header: 'Approvers',
+        cell: ({ row }) => {
+          if (row.original.approvers?.length === 0) {
+            return null
+          }
+          return (
+            // TODO: Handle many approvers in a better way
+            // <div className="mercoa-gap-1 mercoa-grid mercoa-max-h-[32px] mercoa-overflow-y-auto">
+            <div className="mercoa-gap-1 mercoa-grid mercoa-my-1">
+              {row.original.approvers?.map((approver, index) => {
+                if (!approver.assignedUserId) {
+                  const eligibleApprovers = filterApproverOptions({
+                    approverSlotIndex: index,
+                    eligibleRoles: approver.eligibleRoles,
+                    eligibleUserIds: approver.eligibleUserIds,
+                    users: mercoaSession.users,
+                    selectedApprovers: [],
+                  })
                   return (
-                    <Tooltip title={user?.email} key={approver.approvalSlotId}>
+                    <Tooltip
+                      title={eligibleApprovers.map((e) => e.user.email).join(', ')}
+                      key={approver.approvalSlotId}
+                    >
                       <div
                         key={approver.approvalSlotId}
-                        className={`mercoa-flex mercoa-items-center mercoa-rounded-mercoa mercoa-text-xs ${
-                          approver.action === Mercoa.ApproverAction.Approve
-                            ? 'mercoa-bg-green-100 mercoa-text-green-800'
-                            : ''
-                        } ${
-                          approver.action === Mercoa.ApproverAction.Reject
-                            ? 'mercoa-bg-red-100 mercoa-text-red-800'
-                            : ''
-                        } ${
-                          approver.action === Mercoa.ApproverAction.None ? 'mercoa-bg-gray-50 mercoa-text-gray-800' : ''
-                        } mercoa-py-1 mercoa-px-2`}
+                        className={`mercoa-flex mercoa-items-center mercoa-rounded-mercoa mercoa-text-xs mercoa-bg-gray-50 mercoa-text-gray-800 mercoa-py-1 mercoa-px-2`}
                       >
-                        {user?.name}
+                        Any Eligible Approver
                       </div>
                     </Tooltip>
                   )
-                })}
-              </div>
-            )
-          },
-          enableResizing: true,
-        },
-        {
-          accessorKey: 'paymentDestination',
-          header: 'Payment Destination',
-          cell: ({ row }) => {
-            const pm = row.original.paymentDestination as Mercoa.PaymentMethodResponse
-
-            if (!pm || !pm.type) return null
-
-            switch (pm.type) {
-              case Mercoa.PaymentMethodType.BankAccount:
-                return (
-                  <span>
-                    {pm.bankName} ••••{String(pm.accountNumber).slice(-4)}
-                  </span>
-                )
-
-              case Mercoa.PaymentMethodType.Check:
-                return <span>Check • {String(pm.addressLine1).slice(0, 15)}</span>
-
-              case Mercoa.PaymentMethodType.Custom:
-                return (
-                  <span>
-                    {pm.accountName} ••••{String(pm.accountNumber).slice(-4)}
-                  </span>
-                )
-
-              default:
-                return null
-            }
-          },
-          enableResizing: true,
-        },
-        {
-          accessorKey: 'status',
-          header: 'Status',
-          cell: ({ row }) => {
-            return (
-              <InvoiceStatusPill
-                failureType={row.original.failureType}
-                status={row.original.status}
-                vendorId={row.original.vendorId}
-                payerId={row.original.payerId}
-                paymentDestinationId={row.original.paymentDestinationId}
-                paymentSourceId={row.original.paymentSourceId}
-                dueDate={row.original.dueDate}
-                amount={row.original.amount}
-                type="payable"
-              />
-            )
-          },
-          enableResizing: true,
-        },
-        {
-          accessorKey: 'action',
-          header: 'Actions',
-          size: 10,
-          maxSize: 10,
-          meta: { align: 'center' },
-          cell: ({ row }) => {
-            if (readOnly) return null
-            return (
-              <TableActionDropdown
-                validActions={getAvailableActions({
-                  rolePermissions: mercoaSession.userPermissionConfig,
-                  selectedInvoices: [row.original.invoice],
-                  currentStatuses: [row.original.status],
-                  currentUserId: mercoaSession.user?.id,
-                  users: mercoaSession.users,
-                })}
-                onAction={(actionKey) => {
-                  if (actionKey === 'delete') {
-                    setActiveInvoiceAction({
-                      invoiceId: row.original.invoiceId,
-                      action: PayableAction.Delete,
-                      mode: 'single',
-                    })
-                  } else if (actionKey === 'approve') {
-                    setActiveInvoiceAction({
-                      invoiceId: row.original.invoiceId,
-                      action: PayableAction.Approve,
-                      mode: 'single',
-                    })
-                  } else if (actionKey === 'schedulePayment') {
-                    setActiveInvoiceAction({
-                      invoiceId: row.original.invoiceId,
-                      action: PayableAction.SchedulePayment,
-                      mode: 'single',
-                    })
-                  }
-                }}
-              />
-            )
-          },
-          enableResizing: false,
-        },
-      ]
-
-      return cols.filter((col: any) => {
-        return (
-          selectedColumns.map((scol) => scol.field).includes(col.accessorKey) ||
-          ['select', 'action'].includes(col.accessorKey)
-        )
-      })
-
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [
-      classNames?.checkbox,
-      deletePayable,
-      handleSelectAll,
-      handleSelectRow,
-      isAllSelected,
-      selectedColumns,
-      selectedInvoiceIds,
-      orderBy,
-      orderDirection,
-      setOrderBy,
-    ])
-
-    const tableColumns = useMemo<ColumnDef<(typeof data)[0]>[]>(() => {
-      return (
-        columns?.map((ele) => {
-          return {
-            accessorKey: ele.field,
-            header: ele.title,
-            cell: ({ row }) => {
-              let toDisplay: any = ''
-              if (ele.field.startsWith('metadata.')) {
-                toDisplay = JSON.stringify(row.original.invoice.metadata?.[ele.field.split('.')[1]])
-              } else {
-                toDisplay = row.original.invoice?.[ele.field as keyof Mercoa.InvoiceResponse]
-              }
-              if (ele.format) {
-                toDisplay = ele.format(toDisplay, row.original.invoice)
-              } else {
-                if (ele.field === 'amount') {
-                  toDisplay = accounting.formatMoney(
-                    toDisplay ?? '',
-                    currencyCodeToSymbol(row.original.invoice.currency),
-                  )
-                } else if (toDisplay instanceof Date) {
-                  toDisplay = dayjs(toDisplay).format('MMM DD, YYYY')
-                } else if (typeof toDisplay === 'object') {
-                  if (toDisplay.name) {
-                    toDisplay = toDisplay.name
-                  } else {
-                    toDisplay = JSON.stringify(toDisplay)
-                  }
-                } else {
-                  toDisplay = toDisplay?.toString() ?? ''
                 }
-              }
-              return <span className="text-sm">{toDisplay}</span>
-            },
+                const user = mercoaSession.users.find((e) => e.id === approver.assignedUserId)
+                return (
+                  <Tooltip title={user?.email} key={approver.approvalSlotId}>
+                    <div
+                      key={approver.approvalSlotId}
+                      className={`mercoa-flex mercoa-items-center mercoa-rounded-mercoa mercoa-text-xs ${
+                        approver.action === Mercoa.ApproverAction.Approve
+                          ? 'mercoa-bg-green-100 mercoa-text-green-800'
+                          : ''
+                      } ${
+                        approver.action === Mercoa.ApproverAction.Reject ? 'mercoa-bg-red-100 mercoa-text-red-800' : ''
+                      } ${
+                        approver.action === Mercoa.ApproverAction.None ? 'mercoa-bg-gray-50 mercoa-text-gray-800' : ''
+                      } mercoa-py-1 mercoa-px-2`}
+                    >
+                      {user?.name}
+                    </div>
+                  </Tooltip>
+                )
+              })}
+            </div>
+          )
+        },
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'paymentDestination',
+        header: 'Payment Destination',
+        cell: ({ row }) => {
+          const pm = row.original.paymentDestination as Mercoa.PaymentMethodResponse
+
+          if (!pm || !pm.type) return null
+
+          switch (pm.type) {
+            case Mercoa.PaymentMethodType.BankAccount:
+              return (
+                <span>
+                  {pm.bankName} ••••{String(pm.accountNumber).slice(-4)}
+                </span>
+              )
+
+            case Mercoa.PaymentMethodType.Check:
+              return <span>Check • {String(pm.addressLine1).slice(0, 15)}</span>
+
+            case Mercoa.PaymentMethodType.Custom:
+              return (
+                <span>
+                  {pm.accountName} ••••{String(pm.accountNumber).slice(-4)}
+                </span>
+              )
+
+            default:
+              return null
           }
-        }, []) ?? []
+        },
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => {
+          return (
+            <InvoiceStatusPill
+              failureType={row.original.failureType}
+              status={row.original.status}
+              vendorId={row.original.vendorId}
+              payerId={row.original.payerId}
+              paymentDestinationId={row.original.paymentDestinationId}
+              paymentSourceId={row.original.paymentSourceId}
+              dueDate={row.original.dueDate}
+              amount={row.original.amount}
+              type="payable"
+            />
+          )
+        },
+        enableResizing: true,
+      },
+      ...(readOnly
+        ? []
+        : [
+            {
+              accessorKey: 'action',
+              header: 'Actions',
+              size: 10,
+              maxSize: 10,
+              meta: { align: 'center' },
+              cell: ({ row }: { row: any }) => {
+                return (
+                  <TableActionDropdown
+                    isDisabled={selectedInvoices.length > 0}
+                    validActions={getAvailableActions({
+                      rolePermissions: mercoaSession.userPermissionConfig,
+                      selectedInvoices: [row.original.invoice],
+                      currentStatuses: [row.original.status],
+                      currentUserId: mercoaSession.user?.id,
+                      users: mercoaSession.users,
+                    })}
+                    onAction={(actionKey) => {
+                      if (actionKey === PayablesTableAction.Delete) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.Delete,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.Approve) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.Approve,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.SchedulePayment) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.SchedulePayment,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.SetPaymentDate) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.SetPaymentDate,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.SubmitForApproval) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.SubmitForApproval,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.AddApprover) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.AddApprover,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.Archive) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.Archive,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.Cancel) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.Cancel,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.Reject) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.Reject,
+                          mode: 'single',
+                        })
+                      }
+                    }}
+                  />
+                )
+              },
+              enableResizing: false,
+            },
+          ]),
+    ]
+
+    return cols.filter((col: any) => {
+      return (
+        selectedColumns.map((scol) => scol.field).includes(col.accessorKey) ||
+        ['select', 'action'].includes(col.accessorKey)
       )
-    }, [columns])
-
-    const table = useReactTable({
-      data: data,
-      columns: columns ? tableColumns : defaultTableColumns,
-      getCoreRowModel: getCoreRowModel(),
-      columnResizeMode,
-      columnResizeDirection,
     })
 
-    const columnSizeVars = useMemo(() => {
-      const headers = table.getFlatHeaders()
-      const colSizes: { [key: string]: number } = {}
-      headers.forEach((header) => {
-        colSizes[`--header-${header.id}-size`] = header.getSize()
-        colSizes[`--col-${header.column.id}-size`] = header.column.getSize()
-      })
-      return colSizes
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [table.getState().columnSizingInfo, table.getState().columnSizing])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    classNames?.checkbox,
+    deletePayable,
+    handleSelectAll,
+    handleSelectRow,
+    isAllSelected,
+    selectedColumns,
+    selectedInvoices,
+    orderBy,
+    orderDirection,
+    setOrderBy,
+  ])
 
-    const validActions = getAvailableActions({
-      rolePermissions: mercoaSession.userPermissionConfig,
-      selectedInvoices: allFetchedInvoices.filter((e) => selectedInvoiceIds.includes(e.id)),
-      currentStatuses: allFetchedInvoices.map((e) => e.status),
-      currentUserId: mercoaSession.user?.id,
-      users: mercoaSession.users,
-    })
-
+  const tableColumns = useMemo<ColumnDef<(typeof data)[0]>[]>(() => {
     return (
-      <div className="mercoa-relative">
-        {selectedInvoiceIds.length > 0 && (
-          <div
-            className={cn(
-              'mercoa-h-[48px] mercoa-rounded-lg mercoa-opacity-50 mercoa-pointer-events-none mercoa-fixed mercoa-bottom-8 mercoa-left-[55%] mercoa-translate-x-[-50%] mercoa-w-[800px] mercoa-shadow-[0_8px_24px_rgba(0,0,0,0.15)] mercoa-z-50',
-              selectedInvoiceIds.length > 0 && 'mercoa-opacity-[100] mercoa-pointer-events-auto',
-            )}
+      columns?.map((ele) => {
+        return {
+          accessorKey: ele.field,
+          header: ele.title,
+          cell: ({ row }) => {
+            let toDisplay: any = ''
+            if (ele.field.startsWith('metadata.')) {
+              toDisplay = JSON.stringify(row.original.invoice?.metadata?.[ele.field.split('.')[1]])
+            } else {
+              toDisplay = row.original.invoice?.[ele.field as keyof Mercoa.InvoiceResponse]
+            }
+            if (ele.format && row.original.invoice) {
+              toDisplay = ele.format(toDisplay, row.original.invoice)
+            } else {
+              if (ele.field === 'amount') {
+                toDisplay = accounting.formatMoney(
+                  toDisplay ?? '',
+                  currencyCodeToSymbol(row.original.invoice?.currency ?? ''),
+                )
+              } else if (toDisplay instanceof Date) {
+                toDisplay = dayjs(toDisplay).format('MMM DD, YYYY')
+              } else if (typeof toDisplay === 'object') {
+                if (toDisplay.name) {
+                  toDisplay = toDisplay.name
+                } else {
+                  toDisplay = JSON.stringify(toDisplay)
+                }
+              } else {
+                toDisplay = toDisplay?.toString() ?? ''
+              }
+            }
+            return <span className="mercoa-text-sm">{toDisplay}</span>
+          },
+        }
+      }, []) ?? []
+    )
+  }, [columns])
+
+  const table = useReactTable({
+    data: data,
+    columns: columns ? tableColumns : defaultTableColumns,
+    getCoreRowModel: getCoreRowModel(),
+    columnResizeMode,
+    columnResizeDirection,
+  })
+
+  const columnSizeVars = useMemo(() => {
+    const headers = table.getFlatHeaders()
+    const colSizes: { [key: string]: number } = {}
+    headers.forEach((header) => {
+      colSizes[`--header-${header.id}-size`] = header.getSize()
+      colSizes[`--col-${header.column.id}-size`] = header.column.getSize()
+    })
+    return colSizes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table.getState().columnSizingInfo, table.getState().columnSizing])
+
+  const validActions = getAvailableActions({
+    rolePermissions: mercoaSession.userPermissionConfig,
+    selectedInvoices,
+    currentStatuses: allFetchedInvoices.map((e) => e.status),
+    currentUserId: mercoaSession.user?.id,
+    users: mercoaSession.users,
+  })
+
+  return (
+    <div className="mercoa-relative">
+      {data.length === 0 && !isFetchingNextPage && !isDataLoading && !isFetching ? (
+        <div className="mercoa-flex mercoa-flex-col mercoa-items-center mercoa-justify-center mercoa-py-12 mercoa-h-[522px]">
+          <p className="mercoa-text-gray-500 mercoa-text-sm">No Payables Found</p>
+        </div>
+      ) : (
+        <>
+          {/* Selected Invoices Overlay */}
+          {/* TODO: This should be extracted to a subcomponent to refactor code duplication with ReceivablesTable */}
+          <Transition
+            as={Fragment}
+            show={selectedInvoices.length > 0}
+            enter="mercoa-transition mercoa-ease-out mercoa-duration-100"
+            enterFrom="mercoa-opacity-0 mercoa-translate-y-4"
+            enterTo="mercoa-opacity-100 mercoa-translate-y-0"
+            leave="mercoa-transition mercoa-ease-in mercoa-duration-100"
+            leaveFrom="mercoa-opacity-100 mercoa-translate-y-0"
+            leaveTo="mercoa-opacity-0 mercoa-translate-y-4"
           >
-            <div
-              className={`mercoa-z-[400]  mercoa-rounded-lg mercoa-py-2 mercoa-px-3 mercoa-bg-white mercoa-flex  mercoa-gap-4 mercoa-items-center mercoa-justify-between mercoa-left-0 mercoa-right-0 mercoa-min-h-[24px] mercoa-box-border`}
-            >
-              <div className="mercoa-flex mercoa-justify-start mercoa-gap-6  mercoa-items-center mercoa-pl-[11px]">
+            <div className="mercoa-flex mercoa-gap-4 mercoa-items-center mercoa-justify-between mercoa-px-3 mercoa-h-[48px] mercoa-bg-white mercoa-rounded-lg mercoa-absolute -mercoa-top-10 mercoa-left-[50%] mercoa-translate-x-[-50%] mercoa-w-[800px] mercoa-shadow-[0_8px_24px_rgba(0,0,0,0.15)] mercoa-z-50 mercoa-border mercoa-border-2 mercoa-border-mercoa-primary-light">
+              <div className="mercoa-flex mercoa-justify-start mercoa-gap-6 mercoa-items-center">
                 <div
                   onClick={(e: React.MouseEvent) => {
-                    setSelectedInvoiceIds([])
+                    setSelectedInvoices([])
                     e.stopPropagation()
                   }}
-                  className="mercoa-bg-white mercoa-border mercoa-rounded-full mercoa-p-1 mercoa-opacity-[0.5] hover:mercoa-opacity-[1]"
+                  className="mercoa-bg-white mercoa-border mercoa-rounded-full mercoa-p-1 mercoa-opacity-[0.5] hover:mercoa-opacity-[1] mercoa-cursor-pointer"
                 >
                   <CrossIcon />
                 </div>
                 <p className="mercoa-text-[13px] mercoa-text-[#1A1919] mercoa-font-medium mercoa-whitespace-nowrap">
-                  {selectedInvoiceIds.length} Payable{selectedInvoiceIds.length > 1 ? 's' : ''} Selected
+                  {selectedInvoices.length} Invoice{selectedInvoices.length > 1 ? 's' : ''} Selected
                 </p>
               </div>
-
-              <div className="mercoa-flex mercoa-w-full mercoa-justify-end mercoa-gap-2  mercoa-items-center">
-                {validActions.includes('schedulePayment') && (
+              <div className="mercoa-flex mercoa-w-full mercoa-justify-end mercoa-gap-2 mercoa-items-center">
+                {validActions.length < 1 && (
+                  <MercoaButton
+                    isEmphasized={false}
+                    color="gray"
+                    hideOutline
+                    className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+                  >
+                    No Actions Available
+                  </MercoaButton>
+                )}
+                {validActions.includes(PayablesTableAction.AddApprover) && (
                   <MercoaButton
                     isEmphasized
                     className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
                     onClick={() => {
                       setActiveInvoiceAction({
-                        invoiceId: selectedInvoiceIds,
-                        action: PayableAction.SchedulePayment,
+                        invoiceId: selectedInvoices.map((e) => e.id),
+                        action: PayablesTableAction.AddApprover,
                         mode: 'multiple',
                       })
                     }}
                   >
-                    Schedule
+                    Add Approver
                   </MercoaButton>
                 )}
-                {validActions.includes('delete') && (
+                {validActions.includes(PayablesTableAction.SubmitForApproval) && (
                   <MercoaButton
                     isEmphasized
                     className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
                     onClick={() => {
                       setActiveInvoiceAction({
-                        invoiceId: selectedInvoiceIds,
-                        action: PayableAction.Delete,
+                        invoiceId: selectedInvoices.map((e) => e.id),
+                        action: PayablesTableAction.SubmitForApproval,
                         mode: 'multiple',
                       })
                     }}
                   >
-                    Delete
+                    Submit for Approval
                   </MercoaButton>
                 )}
-                {validActions.includes('approve') && (
+                {validActions.includes(PayablesTableAction.Approve) && (
                   <MercoaButton
                     isEmphasized
                     className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
                     onClick={() => {
                       setActiveInvoiceAction({
-                        invoiceId: selectedInvoiceIds,
-                        action: PayableAction.Approve,
+                        invoiceId: selectedInvoices.map((e) => e.id),
+                        action: PayablesTableAction.Approve,
                         mode: 'multiple',
                       })
                     }}
@@ -661,12 +728,122 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
                     Approve
                   </MercoaButton>
                 )}
+                {validActions.includes(PayablesTableAction.Reject) && (
+                  <MercoaButton
+                    isEmphasized
+                    color="secondary"
+                    className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+                    onClick={() => {
+                      setActiveInvoiceAction({
+                        invoiceId: selectedInvoices.map((e) => e.id),
+                        action: PayablesTableAction.Reject,
+                        mode: 'multiple',
+                      })
+                    }}
+                  >
+                    Reject
+                  </MercoaButton>
+                )}
+                {validActions.includes(PayablesTableAction.SetPaymentDate) && (
+                  <MercoaButton
+                    isEmphasized={false}
+                    className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+                    onClick={() => {
+                      setActiveInvoiceAction({
+                        invoiceId: selectedInvoices.map((e) => e.id),
+                        action: PayablesTableAction.SetPaymentDate,
+                        mode: 'multiple',
+                      })
+                    }}
+                  >
+                    Set Payment Date
+                  </MercoaButton>
+                )}
+                {validActions.includes(PayablesTableAction.SchedulePayment) && (
+                  <MercoaButton
+                    isEmphasized
+                    className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+                    onClick={() => {
+                      setActiveInvoiceAction({
+                        invoiceId: selectedInvoices.map((e) => e.id),
+                        action: PayablesTableAction.SchedulePayment,
+                        mode: 'multiple',
+                      })
+                    }}
+                  >
+                    {selectedInvoices.some((e) => e.status === Mercoa.InvoiceStatus.Scheduled)
+                      ? 'Reschedule'
+                      : 'Schedule'}{' '}
+                    Payment
+                  </MercoaButton>
+                )}
+                {validActions.includes(PayablesTableAction.Archive) && (
+                  <MercoaButton
+                    isEmphasized
+                    className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+                    onClick={() => {
+                      setActiveInvoiceAction({
+                        invoiceId: selectedInvoices.map((e) => e.id),
+                        action: PayablesTableAction.Archive,
+                        mode: 'multiple',
+                      })
+                    }}
+                  >
+                    Archive
+                  </MercoaButton>
+                )}
+                {validActions.includes(PayablesTableAction.Cancel) && (
+                  <MercoaButton
+                    isEmphasized={false}
+                    color="secondary"
+                    className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+                    onClick={() => {
+                      setActiveInvoiceAction({
+                        invoiceId: selectedInvoices.map((e) => e.id),
+                        action: PayablesTableAction.Cancel,
+                        mode: 'multiple',
+                      })
+                    }}
+                  >
+                    Cancel Invoice
+                  </MercoaButton>
+                )}
+                {validActions.includes(PayablesTableAction.RestoreAsDraft) && (
+                  <MercoaButton
+                    isEmphasized
+                    className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+                    onClick={() => {
+                      setActiveInvoiceAction({
+                        invoiceId: selectedInvoices.map((e) => e.id),
+                        action: PayablesTableAction.RestoreAsDraft,
+                        mode: 'multiple',
+                      })
+                    }}
+                  >
+                    Restore as Draft
+                  </MercoaButton>
+                )}
+                {validActions.includes(PayablesTableAction.Delete) && (
+                  <MercoaButton
+                    isEmphasized
+                    color="secondary"
+                    className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+                    onClick={() => {
+                      setActiveInvoiceAction({
+                        invoiceId: selectedInvoices.map((e) => e.id),
+                        action: PayablesTableAction.Delete,
+                        mode: 'multiple',
+                      })
+                    }}
+                  >
+                    Delete
+                  </MercoaButton>
+                )}
               </div>
             </div>
-          </div>
-        )}
+          </Transition>
 
-        <div className="mercoa-overflow-x-auto mercoa-overflow-y-auto">
+          {/* Table Content */}
           <div className="mercoa-overflow-x-auto mercoa-overflow-y-auto mercoa-h-[522px]">
             <table
               className={cn('mercoa-w-full mercoa-border mercoa-border-gray-200 ', classNames?.table?.root)}
@@ -686,7 +863,7 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
                       <th
                         key={header.id}
                         className={cn(
-                          'hover:mercoa-bg-gray-100 mercoa-cursor-pointer mercoa-relative mercoa-font-bold mercoa-border-r mercoa-whitespace-nowrap mercoa-text-left mercoa-px-4 mercoa-py-2 mercoa-text-gray-500  mercoa-text-xs mercoa-leading-4 mercoa-font-Inter  mercoa-border-gray-200 last:mercoa-border-r-0 mercoa-h-[32px]',
+                          'mercoa-bg-white hover:mercoa-bg-gray-50 mercoa-cursor-pointer mercoa-relative mercoa-font-bold mercoa-border-r mercoa-whitespace-nowrap mercoa-text-left mercoa-px-4 mercoa-py-2 mercoa-text-gray-500 mercoa-text-xs mercoa-leading-4 mercoa-border-gray-200 last:mercoa-border-r-0 mercoa-h-[32px]',
                           classNames?.table?.th,
                           header.id === 'action' && 'mercoa-sticky-right',
                           header.id === 'vendor' && 'mercoa-sticky-left',
@@ -698,26 +875,17 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
                             position: 'sticky',
                             right: 0,
                             width: '50px',
-                            backgroundColor: 'white', // To ensure content doesn't show through
                             zIndex: 1,
-                            boxShadow: '-1px 0 0 0 #e5e7eb',
-                            border: '1px solid #e5e7eb',
                           }),
                           ...(header.id === 'select' && {
                             position: 'sticky',
                             left: 0,
-                            backgroundColor: 'white',
                             zIndex: 1,
-                            boxShadow: '1px 0 0 0 #e5e7eb',
-                            border: '1px solid #e5e7eb',
                           }),
                           ...(header.id === 'vendor' && {
                             position: 'sticky',
-                            left: '50px', // After select column
-                            backgroundColor: 'white',
+                            ...(readOnly ? { left: '0px' } : { left: '50px' }),
                             zIndex: 1,
-                            borderRight: '1px solid #e5e7eb',
-                            boxShadow: '-1px 0 0 0 #e5e7eb',
                           }),
                         }}
                       >
@@ -745,11 +913,11 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
               <tbody className={cn('', classNames?.table?.tbody)}>
                 {table.getRowModel().rows.map((row) => (
                   <tr
-                    onClick={() => onSelectInvoice?.(row.original.invoice)}
+                    onClick={() => row.original.invoice && handlers?.onSelectInvoice?.(row.original.invoice)}
                     key={row.id}
                     className={cn(
-                      'mercoa-cursor-pointer mercoa-border-b mercoa-border-gray-200 hover:mercoa-bg-[#fcfbfa]',
-                      selectedInvoiceIds.includes(row.original.invoiceId) && 'mercoa-bg-[#fcfbfa]',
+                      'mercoa-group mercoa-cursor-pointer mercoa-border-b mercoa-border-gray-200',
+                      selectedInvoices.map((e) => e.id).includes(row.original.invoiceId) && 'mercoa-bg-[#fcfbfa]',
                       classNames?.table?.tr,
                     )}
                   >
@@ -758,7 +926,7 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
                       <td
                         onClick={(e: React.MouseEvent) => {
                           if (cell.column.id === 'select') {
-                            handleSelectRow(row.original.invoiceId)
+                            row.original.invoice && handlers?.onSelectInvoice?.(row.original.invoice)
                             e.stopPropagation()
                           }
                           if (cell.column.id === 'action') {
@@ -766,36 +934,28 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
                           }
                         }}
                         style={{
+                          maxHeight: '50px !important',
                           width: `calc(var(--col-${cell.column.id}-size) * 1px)`,
                           ...(cell.column.id === 'action' && {
                             position: 'sticky',
                             width: '50px',
                             right: 0,
-                            backgroundColor: 'white', // To ensure content doesn't show through
                             zIndex: 1,
-                            borderLeft: '1px solid #e5e7eb',
-                            boxShadow: '1px 0 0 0 #e5e7eb',
                           }),
                           ...(cell.column.id === 'select' && {
                             position: 'sticky',
                             left: 0,
-                            backgroundColor: 'white',
                             zIndex: 1,
-                            borderRight: '1px solid #e5e7eb',
-                            boxShadow: '-1px 0 0 0 #e5e7eb',
                           }),
                           ...(cell.column.id === 'vendor' && {
                             position: 'sticky',
-                            left: '50px', // After select column
-                            backgroundColor: 'white',
+                            ...(readOnly ? { left: '0px' } : { left: '50px' }), // After select column
                             zIndex: 1,
-                            borderRight: '1px solid #e5e7eb',
-                            boxShadow: '-1px 0 0 0 #e5e7eb',
                           }),
                         }}
                         key={cell.id}
                         className={cn(
-                          'mercoa-whitespace-nowrap mercoa-border-r mercoa-px-4 mercoa-text-gray-800 mercoa-text-sm  mercoa-border-gray-200  mercoa-h-[48px] mercoa-align-middle',
+                          'mercoa-bg-white group-hover:mercoa-bg-[#fcfbfa] mercoa-whitespace-nowrap mercoa-border-r mercoa-px-4 mercoa-text-gray-800 mercoa-text-sm  mercoa-border-gray-200  mercoa-h-[48px] mercoa-align-middle',
                           classNames?.table?.td,
                           cell.column.id === 'action' && 'mercoa-sticky-right',
                           cell.column.id === 'select' && 'mercoa-sticky-left',
@@ -811,181 +971,588 @@ export const PayablesTableV2: FC<PayablesTableV2Props> = memo(
               {(isDataLoading || isFetchingNextPage) && <TableSkeletonBody table={table} />}
             </table>
           </div>
+        </>
+      )}
 
-          <div className="mercoa-flex mercoa-gap-4 mercoa-justify-between mercoa-items-center mercoa-mt-4">
-            <div className="mercoa-flex mercoa-gap-4 mercoa-items-center">
-              <ResultsPerPageDropdown resultsPerPage={resultsPerPage} setResultsPerPage={setResultsPerPage} />
-              <EntriesInfo currentPage={page + 1} resultsPerPage={resultsPerPage} totalEntries={totalEntries} />
-            </div>
-            <div className="mercoa-flex mercoa-gap-4 mercoa-items-center">
-              <Pagination
-                goToNextPage={goToNextPage}
-                goToPrevPage={goToPreviousPage}
-                isNextDisabled={isNextDisabled}
-                isPrevDisabled={isPrevDisabled}
-              />
-            </div>
-          </div>
+      {/* Table Footer */}
+      <div className="mercoa-flex mercoa-gap-4 mercoa-justify-between mercoa-items-center mercoa-mt-4">
+        <div className="mercoa-flex mercoa-gap-4 mercoa-items-center">
+          <ResultsPerPageDropdown resultsPerPage={resultsPerPage} setResultsPerPage={setResultsPerPage} />
+          <ResultsInfo currentPage={page + 1} resultsPerPage={resultsPerPage} totalEntries={totalEntries} />
         </div>
-        <DeleteInvoiceDialog
-          isLoading={activeInvoiceAction?.mode === 'single' ? isDeletePayableLoading : isBulkDeletePayableLoading}
-          onConfirm={() => {
-            if (activeInvoiceAction?.invoiceId) {
-              if (activeInvoiceAction.mode === 'single') {
-                deletePayable(
-                  { invoiceId: activeInvoiceAction.invoiceId as string },
-                  {
-                    onSuccess: () => {
-                      setActiveInvoiceAction(null)
-                      toast.success('Invoice deleted successfully')
-                    },
-                    onError: (error) => {
-                      setActiveInvoiceAction(null)
-                      toast.error(error.message)
-                    },
-                  },
-                )
-              } else {
-                bulkDeletePayables(
-                  { invoiceIds: activeInvoiceAction.invoiceId as string[] },
-                  {
-                    onSuccess: () => {
-                      setActiveInvoiceAction(null)
-                      setSelectedInvoiceIds([])
-                      toast.success('Invoices deleted successfully')
-                    },
-                    onError: (error) => {
-                      setActiveInvoiceAction(null)
-                      toast.error(error.message)
-                    },
-                  },
-                )
-              }
-            }
-          }}
-          onCancel={() => {
-            setActiveInvoiceAction(null)
-          }}
-          open={activeInvoiceAction?.action === PayableAction.Delete}
-          setOpen={(_open) => {
-            if (!_open) {
-              setActiveInvoiceAction(null)
-            }
-          }}
-        />
-        {activeInvoiceAction?.action === PayableAction.Approve && (
-          <ApproveBillsDialog
-            open={activeInvoiceAction?.action === PayableAction.Approve}
-            setOpen={(_open) => {
-              if (!_open) {
-                setActiveInvoiceAction(null)
-              }
-            }}
-            onConfirm={() => {
-              if (activeInvoiceAction?.invoiceId) {
-                if (activeInvoiceAction.mode === 'single') {
-                  approvePayable(
-                    {
-                      invoiceId: activeInvoiceAction.invoiceId as string,
-                      invoiceType: 'invoice',
-                    },
-                    {
-                      onSuccess: () => {
-                        setActiveInvoiceAction(null)
-                        toast.success('Invoice approved successfully')
-                      },
-                      onError: (error) => {
-                        setActiveInvoiceAction(null)
-                        toast.error(error.message)
-                      },
-                    },
-                  )
-                } else {
-                  bulkApprovePayables(
-                    {
-                      invoiceIds: activeInvoiceAction.invoiceId as string[],
-                      invoiceType: 'invoice',
-                    },
-                    {
-                      onSuccess: () => {
-                        setActiveInvoiceAction(null)
-                        setSelectedInvoiceIds([])
-                        toast.success('Invoices approved successfully')
-                      },
-                      onError: (error) => {
-                        setActiveInvoiceAction(null)
-                        toast.error(error.message)
-                      },
-                    },
-                  )
-                }
-              }
-            }}
-            onCancel={() => {
-              setActiveInvoiceAction(null)
-            }}
-            isLoading={activeInvoiceAction?.mode === 'single' ? isApprovePayableLoading : isBulkApprovePayablesLoading}
-            billsCount={Array.isArray(activeInvoiceAction?.invoiceId) ? activeInvoiceAction.invoiceId.length : 1}
+        <div className="mercoa-flex mercoa-gap-4 mercoa-items-center">
+          <Pagination
+            goToNextPage={goToNextPage}
+            goToPrevPage={goToPreviousPage}
+            isNextDisabled={isNextDisabled}
+            isPrevDisabled={isPrevDisabled}
           />
-        )}
-        {activeInvoiceAction?.action === PayableAction.SchedulePayment && (
-          <EditPaymentDateDialog
-            open={activeInvoiceAction?.action === PayableAction.SchedulePayment}
-            setOpen={(_open) => {
-              if (!_open) {
-                setActiveInvoiceAction(null)
-              }
-            }}
-            onConfirm={(date) => {
-              if (activeInvoiceAction?.invoiceId) {
-                if (activeInvoiceAction.mode === 'single') {
-                  schedulePayment(
-                    {
-                      invoice: data.find((d) => d.id === activeInvoiceAction.invoiceId)?.invoice!,
-                      deductionDate: date,
-                    },
-                    {
-                      onSuccess: () => {
-                        setActiveInvoiceAction(null)
-                        toast.success('Invoice scheduled successfully')
-                      },
-                      onError: (error) => {
-                        setActiveInvoiceAction(null)
-                        toast.error(error.message)
-                      },
-                    },
-                  )
-                } else {
-                  bulkSchedulePayment(
-                    {
-                      invoiceIds: activeInvoiceAction.invoiceId as string[],
-                      invoices: data.filter((d) => activeInvoiceAction.invoiceId.includes(d.id)).map((d) => d.invoice!),
-                      deductionDate: date,
-                    },
-                    {
-                      onSuccess: () => {
-                        setActiveInvoiceAction(null)
-                        setSelectedInvoiceIds([])
-                      },
-                      onError: (error) => {
-                        setActiveInvoiceAction(null)
-                        setSelectedInvoiceIds([])
-                      },
-                    },
-                  )
-                }
-              }
-            }}
-            isLoading={activeInvoiceAction?.mode === 'single' ? isSchedulePaymentLoading : isBulkSchedulePaymentLoading}
-            numberOfBills={Array.isArray(activeInvoiceAction?.invoiceId) ? activeInvoiceAction.invoiceId.length : 1}
-          />
-        )}
+        </div>
       </div>
-    )
-  },
-)
 
-PayablesTableV2.displayName = 'PayablesTableV2'
+      <DeleteInvoiceDialog
+        isLoading={activeInvoiceAction?.mode === 'single' ? isDeletePayableLoading : isBulkDeletePayableLoading}
+        onConfirm={() => {
+          if (activeInvoiceAction?.invoiceId) {
+            if (activeInvoiceAction.mode === 'single') {
+              deletePayable(
+                { invoiceId: activeInvoiceAction.invoiceId as string },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    toast.success('Invoice deleted successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    toast.error(error.message)
+                  },
+                },
+              )
+            } else {
+              bulkDeletePayables(
+                { invoiceIds: activeInvoiceAction.invoiceId as string[] },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                    toast.success('Invoices deleted successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    toast.error(error.message)
+                  },
+                },
+              )
+            }
+          }
+        }}
+        onCancel={() => {
+          setActiveInvoiceAction(null)
+        }}
+        open={activeInvoiceAction?.action === PayablesTableAction.Delete}
+        setOpen={(_open) => {
+          if (!_open) {
+            setActiveInvoiceAction(null)
+          }
+        }}
+        invoiceCount={
+          activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+            ? activeInvoiceAction.invoiceId.length
+            : 1
+        }
+      />
+      <ApproveBillsDialog
+        open={activeInvoiceAction?.action === PayablesTableAction.Approve}
+        setOpen={(_open) => {
+          if (!_open) {
+            setActiveInvoiceAction(null)
+          }
+        }}
+        onConfirm={() => {
+          if (activeInvoiceAction?.invoiceId) {
+            if (activeInvoiceAction.mode === 'single') {
+              approvePayable(
+                {
+                  invoice: data.find((d) => d.id === activeInvoiceAction.invoiceId)?.invoice!,
+                  invoiceType: 'invoice',
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    toast.success('Invoice approved successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    toast.error(error.message)
+                  },
+                },
+              )
+            } else {
+              bulkApprovePayables(
+                {
+                  invoiceIds: activeInvoiceAction.invoiceId as string[],
+                  invoiceType: 'invoice',
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                    toast.success('Invoices approved successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    toast.error(error.message)
+                  },
+                },
+              )
+            }
+          }
+        }}
+        onCancel={() => {
+          setActiveInvoiceAction(null)
+        }}
+        isLoading={activeInvoiceAction?.mode === 'single' ? isApprovePayableLoading : isBulkApprovePayablesLoading}
+        invoiceCount={
+          activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+            ? activeInvoiceAction.invoiceId.length
+            : 1
+        }
+      />
+      <RejectBillsDialog
+        open={activeInvoiceAction?.action === PayablesTableAction.Reject}
+        setOpen={(_open) => {
+          if (!_open) {
+            setActiveInvoiceAction(null)
+          }
+        }}
+        onConfirm={() => {
+          if (activeInvoiceAction?.invoiceId) {
+            if (activeInvoiceAction.mode === 'single') {
+              rejectPayable(
+                {
+                  invoice: data.find((d) => d.id === activeInvoiceAction.invoiceId)?.invoice!,
+                  invoiceType: 'invoice',
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    toast.success('Invoice rejected successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    toast.error(error.message)
+                  },
+                },
+              )
+            } else {
+              bulkRejectPayables(
+                {
+                  invoiceIds: activeInvoiceAction.invoiceId as string[],
+                  invoiceType: 'invoice',
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                    toast.success('Invoices rejected successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    toast.error(error.message)
+                  },
+                },
+              )
+            }
+          }
+        }}
+        onCancel={() => {
+          setActiveInvoiceAction(null)
+        }}
+        isLoading={activeInvoiceAction?.mode === 'single' ? isRejectPayableLoading : isBulkRejectPayablesLoading}
+        invoiceCount={
+          activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+            ? activeInvoiceAction.invoiceId.length
+            : 1
+        }
+      />
+      <SchedulePaymentDialog
+        open={activeInvoiceAction?.action === PayablesTableAction.SchedulePayment}
+        setOpen={(_open) => {
+          if (!_open) {
+            setActiveInvoiceAction(null)
+          }
+        }}
+        onConfirm={(date) => {
+          if (activeInvoiceAction?.invoiceId) {
+            if (activeInvoiceAction.mode === 'single') {
+              schedulePayment(
+                {
+                  invoice: data.find((d) => d.id === activeInvoiceAction.invoiceId)?.invoice!,
+                  deductionDate: date,
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    toast.success('Invoice scheduled successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    toast.error(error.message)
+                  },
+                },
+              )
+            } else {
+              bulkSchedulePayment(
+                {
+                  invoices: data.filter((d) => activeInvoiceAction.invoiceId.includes(d.id)).map((d) => d.invoice!),
+                  deductionDate: date,
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                  },
+                },
+              )
+            }
+          }
+        }}
+        isLoading={activeInvoiceAction?.mode === 'single' ? isSchedulePaymentLoading : isBulkSchedulePaymentLoading}
+        invoiceCount={
+          activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+            ? activeInvoiceAction.invoiceId.length
+            : 1
+        }
+      />
+      <SetPaymentDateDialog
+        open={activeInvoiceAction?.action === PayablesTableAction.SetPaymentDate}
+        setOpen={(_open) => {
+          if (!_open) {
+            setActiveInvoiceAction(null)
+          }
+        }}
+        onConfirm={(date) => {
+          if (activeInvoiceAction?.invoiceId) {
+            if (activeInvoiceAction.mode === 'single') {
+              schedulePayment(
+                {
+                  invoice: data.find((d) => d.id === activeInvoiceAction.invoiceId)?.invoice!,
+                  deductionDate: date,
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    toast.success('Invoice scheduled successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    toast.error(error.message)
+                  },
+                },
+              )
+            } else {
+              bulkSchedulePayment(
+                {
+                  invoices: data.filter((d) => activeInvoiceAction.invoiceId.includes(d.id)).map((d) => d.invoice!),
+                  deductionDate: date,
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                  },
+                },
+              )
+            }
+          }
+        }}
+        isLoading={activeInvoiceAction?.mode === 'single' ? isSchedulePaymentLoading : isBulkSchedulePaymentLoading}
+        invoiceCount={
+          activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+            ? activeInvoiceAction.invoiceId.length
+            : 1
+        }
+      />
+      <RestoreAsDraftDialog
+        open={activeInvoiceAction?.action === PayablesTableAction.RestoreAsDraft}
+        setOpen={(_open) => {
+          if (!_open) {
+            setActiveInvoiceAction(null)
+          }
+        }}
+        onConfirm={() => {
+          if (activeInvoiceAction?.invoiceId) {
+            if (activeInvoiceAction.mode === 'single') {
+              restoreAsDraft(
+                {
+                  invoice: data.find((d) => d.id === activeInvoiceAction.invoiceId)?.invoice!,
+                  invoiceType: 'invoice',
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    toast.success('Invoice restored as draft successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    toast.error(error.message)
+                  },
+                },
+              )
+            } else {
+              bulkRestoreAsDraft(
+                {
+                  invoiceIds: activeInvoiceAction.invoiceId as string[],
+                  invoiceType: 'invoice',
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                    toast.success('Invoices restored as draft successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                    toast.error(error.message)
+                  },
+                },
+              )
+            }
+          }
+        }}
+        onCancel={() => {
+          setActiveInvoiceAction(null)
+        }}
+        isLoading={activeInvoiceAction?.mode === 'single' ? isRestoreAsDraftLoading : isBulkRestoreAsDraftLoading}
+        invoiceCount={
+          activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+            ? activeInvoiceAction.invoiceId.length
+            : 1
+        }
+      />
+      <SubmitForApprovalDialog
+        open={activeInvoiceAction?.action === PayablesTableAction.SubmitForApproval}
+        setOpen={(_open) => {
+          if (!_open) {
+            setActiveInvoiceAction(null)
+          }
+        }}
+        onConfirm={() => {
+          if (activeInvoiceAction?.invoiceId) {
+            if (activeInvoiceAction.mode === 'single') {
+              submitForApproval(
+                {
+                  invoice: data.find((d) => d.id === activeInvoiceAction.invoiceId)?.invoice!,
+                  invoiceType: 'invoice',
+                  toast,
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    toast.success('Invoice submitted for approval successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    toast.error(error.message)
+                  },
+                },
+              )
+            } else {
+              bulkSubmitForApproval(
+                {
+                  invoiceIds: activeInvoiceAction.invoiceId as string[],
+                  invoiceType: 'invoice',
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                    toast.success('Invoices submitted for approval successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                    toast.error(error.message)
+                  },
+                },
+              )
+            }
+          }
+        }}
+        onCancel={() => {
+          setActiveInvoiceAction(null)
+        }}
+        isLoading={activeInvoiceAction?.mode === 'single' ? isSubmitForApprovalLoading : isBulkSubmitForApprovalLoading}
+        invoiceCount={
+          activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+            ? activeInvoiceAction.invoiceId.length
+            : 1
+        }
+      />
+      <AssignApproverDialog
+        open={activeInvoiceAction?.action === PayablesTableAction.AddApprover}
+        setOpen={(_open) => {
+          if (!_open) {
+            setActiveInvoiceAction(null)
+          }
+        }}
+        onConfirm={(userId) => {
+          if (activeInvoiceAction?.invoiceId) {
+            if (activeInvoiceAction.mode === 'single') {
+              assignApprover(
+                {
+                  invoice: data.find((d) => d.id === activeInvoiceAction.invoiceId)?.invoice!,
+                  userId,
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    toast.success('Approver assigned successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    toast.error(error.message)
+                  },
+                },
+              )
+            } else {
+              bulkAssignApprover(
+                {
+                  invoices: data.filter((d) => activeInvoiceAction.invoiceId.includes(d.id)).map((d) => d.invoice!),
+                  userId,
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                    toast.success('Approver assigned successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                    toast.error(error.message)
+                  },
+                },
+              )
+            }
+          }
+        }}
+        onCancel={() => {
+          setActiveInvoiceAction(null)
+        }}
+        isLoading={activeInvoiceAction?.mode === 'single' ? isAssignApproverLoading : isBulkAssignApproverLoading}
+        invoiceCount={
+          activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+            ? activeInvoiceAction.invoiceId.length
+            : 1
+        }
+      />
+      <ArchiveInvoiceDialog
+        open={activeInvoiceAction?.action === PayablesTableAction.Archive}
+        setOpen={(_open) => {
+          if (!_open) {
+            setActiveInvoiceAction(null)
+          }
+        }}
+        onConfirm={() => {
+          if (activeInvoiceAction?.invoiceId) {
+            if (activeInvoiceAction.mode === 'single') {
+              archivePayable(
+                {
+                  invoiceId: activeInvoiceAction.invoiceId as string,
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    toast.success('Invoice archived successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    toast.error(error.message)
+                  },
+                },
+              )
+            } else {
+              bulkArchivePayables(
+                {
+                  invoiceIds: activeInvoiceAction.invoiceId as string[],
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                    toast.success('Invoices archived successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                    toast.error(error.message)
+                  },
+                },
+              )
+            }
+          }
+        }}
+        onCancel={() => {
+          setActiveInvoiceAction(null)
+        }}
+        isLoading={activeInvoiceAction?.mode === 'single' ? isArchivePayableLoading : isBulkArchivePayablesLoading}
+        invoiceCount={
+          activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+            ? activeInvoiceAction.invoiceId.length
+            : 1
+        }
+      />
+      <CancelInvoiceDialog
+        open={activeInvoiceAction?.action === PayablesTableAction.Cancel}
+        setOpen={(_open) => {
+          if (!_open) {
+            setActiveInvoiceAction(null)
+          }
+        }}
+        onConfirm={() => {
+          if (activeInvoiceAction?.invoiceId) {
+            if (activeInvoiceAction.mode === 'single') {
+              cancelPayable(
+                {
+                  invoiceId: activeInvoiceAction.invoiceId as string,
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    toast.success('Invoice canceled successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    toast.error(error.message)
+                  },
+                },
+              )
+            } else {
+              bulkCancelPayables(
+                {
+                  invoiceIds: activeInvoiceAction.invoiceId as string[],
+                },
+                {
+                  onSuccess: () => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                    toast.success('Invoices canceled successfully')
+                  },
+                  onError: (error) => {
+                    setActiveInvoiceAction(null)
+                    setSelectedInvoices([])
+                    toast.error(error.message)
+                  },
+                },
+              )
+            }
+          }
+        }}
+        onCancel={() => {
+          setActiveInvoiceAction(null)
+        }}
+        isLoading={activeInvoiceAction?.mode === 'single' ? isCancelPayableLoading : isBulkCancelPayablesLoading}
+        invoiceCount={
+          activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+            ? activeInvoiceAction.invoiceId.length
+            : 1
+        }
+      />
+    </div>
+  )
+})
+
+PayablesTable.displayName = 'PayablesTable'
 
 const CellRenderer = React.memo(({ cell }: { cell: any }) => {
   return <>{flexRender(cell.column.columnDef.cell, cell.getContext())}</>
@@ -1001,14 +1568,16 @@ const TableSkeletonBody: React.FC<{ table: Table<any> }> = ({ table }) => {
       {Array.from({ length: 10 }).map((_, rowIndex) => (
         <tr key={rowIndex} className="mercoa-border-b mercoa-border-gray-200">
           {headers.map((header) => {
+            const cellStyle = {
+              width: `calc(var(--col-${header.column.id}-size) * 1px)`,
+            }
+
             switch (header.column.id) {
               case 'select':
                 return (
                   <td
                     key={header.id}
-                    style={{
-                      width: `calc(var(--col-${header.column.id}-size) * 1px)`,
-                    }}
+                    style={cellStyle}
                     className="mercoa-whitespace-nowrap mercoa-border-r mercoa-px-4 mercoa-text-gray-800 mercoa-text-sm mercoa-border-gray-200 last:mercoa-border-r-0 mercoa-h-[48px]"
                   >
                     <div className="mercoa-flex mercoa-p-1 mercoa-justify-center mercoa-items-center">
@@ -1020,9 +1589,7 @@ const TableSkeletonBody: React.FC<{ table: Table<any> }> = ({ table }) => {
                 return (
                   <td
                     key={header.id}
-                    style={{
-                      width: `calc(var(--col-${header.column.id}-size) * 1px)`,
-                    }}
+                    style={cellStyle}
                     className="mercoa-whitespace-nowrap mercoa-border-r mercoa-px-4 mercoa-text-gray-800 mercoa-text-sm mercoa-border-gray-200 last:mercoa-border-r-0 mercoa-h-[48px]"
                   >
                     <div className="mercoa-flex mercoa-items-center mercoa-gap-2">
@@ -1035,9 +1602,7 @@ const TableSkeletonBody: React.FC<{ table: Table<any> }> = ({ table }) => {
                 return (
                   <td
                     key={header.id}
-                    style={{
-                      width: `calc(var(--col-${header.column.id}-size) * 1px)`,
-                    }}
+                    style={cellStyle}
                     className="mercoa-whitespace-nowrap mercoa-border-r mercoa-px-4 mercoa-text-gray-800 mercoa-text-sm mercoa-border-gray-200 last:mercoa-border-r-0 mercoa-h-[48px]"
                   >
                     <div className="mercoa-flex mercoa-gap-1">
@@ -1050,9 +1615,7 @@ const TableSkeletonBody: React.FC<{ table: Table<any> }> = ({ table }) => {
                 return (
                   <td
                     key={header.id}
-                    style={{
-                      width: `calc(var(--col-${header.column.id}-size) * 1px)`,
-                    }}
+                    style={cellStyle}
                     className="mercoa-whitespace-nowrap mercoa-border-r mercoa-px-4 mercoa-text-gray-800 mercoa-text-sm mercoa-border-gray-200 last:mercoa-border-r-0 mercoa-h-[48px]"
                   >
                     <SkeletonLoader width="100px" height="20px" />

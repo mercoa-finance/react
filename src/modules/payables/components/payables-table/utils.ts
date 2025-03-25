@@ -1,93 +1,53 @@
 import { Mercoa } from '@mercoa/javascript'
 import { RBACPermissions } from '../../../../lib/lib'
+import { filterApproverOptions } from '../payable-form/components/payable-approvers/utils'
+import { PayablesTableAction } from './constants'
 
-export function filterApproverOptions({
-  approverSlotIndex,
-  eligibleRoles,
-  eligibleUserIds,
-  users,
-  selectedApprovers,
-}: {
-  approverSlotIndex: number
-  eligibleRoles: string[]
-  eligibleUserIds: Mercoa.EntityUserId[]
-  users: Mercoa.EntityUserResponse[]
-  selectedApprovers: Mercoa.ApprovalSlot[]
-}) {
-  if (!Array.isArray(eligibleRoles) && !Array.isArray(eligibleUserIds)) return []
-
-  const usersFiltered: Mercoa.EntityUserResponse[] = users.filter((user) => {
-    if (user.roles.some((role) => eligibleRoles.includes(role))) return true
-    if (eligibleUserIds.some((eligibleId) => user.id === eligibleId)) return true
-  })
-
-  const options = usersFiltered.map((user) => {
-    let disabled: boolean = false
-    // if this user is already a selectedApprover elsewhere in a different approverSlot, they should not be selectable
-    if (
-      selectedApprovers.find((e) => e?.assignedUserId === user.id) &&
-      selectedApprovers[approverSlotIndex]?.assignedUserId !== user.id
-    ) {
-      disabled = true
-    }
-
-    return { user: user, disabled: disabled }
-  })
-
-  const enabledOptions = options.filter((option) => !option.disabled)
-  const disabledOptions = options.filter((option) => option.disabled)
-  return enabledOptions.concat(disabledOptions)
-}
 export function getAvailableActions(params: {
   selectedInvoices: Mercoa.InvoiceResponse[]
   currentStatuses: Mercoa.InvoiceStatus[]
   currentUserId?: string
   users?: Mercoa.EntityUserResponse[]
   rolePermissions?: RBACPermissions
-}): string[] {
+}): PayablesTableAction[] {
   const { selectedInvoices, currentStatuses, currentUserId, users, rolePermissions } = params
   if (!selectedInvoices.length) return []
 
-  const actions: string[] = []
+  const actions: PayablesTableAction[] = []
 
   // Add Approver & Submit/Approve for Draft status
   if (currentStatuses.includes(Mercoa.InvoiceStatus.Draft)) {
-    const firstInvoice = selectedInvoices[0]
-    if (firstInvoice.approvers.length > 0) {
-      actions.push('addApprover')
+    if (selectedInvoices.some((e) => e.approvers?.length > 0)) {
+      actions.push(PayablesTableAction.AddApprover)
+      if (selectedInvoices.every((e) => e.approvers.every((e) => e.assignedUserId))) {
+        actions.push(PayablesTableAction.SubmitForApproval)
+      }
     }
-    actions.push('submitNew')
   }
 
-  // Schedule/Set Payment Date
+  // Set Payment Date
   if (
-    currentStatuses.some((e) =>
-      [
-        Mercoa.InvoiceStatus.Draft,
-        Mercoa.InvoiceStatus.New,
-        Mercoa.InvoiceStatus.Approved,
-        Mercoa.InvoiceStatus.Failed,
-        //@ts-ignore
-      ].includes(e),
-    )
+    currentStatuses.some((e) => {
+      const allowedStatuses: Mercoa.InvoiceStatus[] = [Mercoa.InvoiceStatus.Draft, Mercoa.InvoiceStatus.New]
+      return allowedStatuses.includes(e)
+    })
+  ) {
+    actions.push(PayablesTableAction.SetPaymentDate)
+  }
+
+  // Schedule Payment Date
+  if (
+    currentStatuses.some((e) => {
+      const allowedStatuses: Mercoa.InvoiceStatus[] = [Mercoa.InvoiceStatus.Approved, Mercoa.InvoiceStatus.Scheduled]
+      return allowedStatuses.includes(e)
+    })
   ) {
     if (
       rolePermissions?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Scheduled) ||
       rolePermissions?.invoice.create.all ||
       rolePermissions?.invoice.all
     ) {
-      actions.push('schedulePayment')
-    }
-  }
-
-  // Reschedule Payment
-  if (currentStatuses.includes(Mercoa.InvoiceStatus.Scheduled)) {
-    if (
-      rolePermissions?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Scheduled) ||
-      rolePermissions?.invoice.create.all ||
-      rolePermissions?.invoice.all
-    ) {
-      actions.push('schedulePayment')
+      actions.push(PayablesTableAction.SchedulePayment)
     }
   }
 
@@ -112,54 +72,64 @@ export function getAvailableActions(params: {
     )
 
     if (hasEligibleInvoice) {
-      if (
-        rolePermissions?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Approved) ||
-        rolePermissions?.invoice.create.all ||
-        rolePermissions?.invoice.all
-      ) {
-        actions.push('approve')
-      }
-      if (
-        rolePermissions?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Refused) ||
-        rolePermissions?.invoice.create.all ||
-        rolePermissions?.invoice.all
-      ) {
-        actions.push('reject')
-      }
+      // if (
+      //   rolePermissions?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Approved) ||
+      //   rolePermissions?.invoice.create.all ||
+      //   rolePermissions?.invoice.all
+      // ) {
+      actions.push(PayablesTableAction.Approve)
+      // }
+      // if (
+      //   rolePermissions?.invoice.create.statuses.includes(Mercoa.InvoiceStatus.Refused) ||
+      //   rolePermissions?.invoice.create.all ||
+      //   rolePermissions?.invoice.all
+      // ) {
+      actions.push(PayablesTableAction.Reject)
+      //}
     }
   }
 
-  //@ts-ignore
-  if (currentStatuses.some((e) => [Mercoa.InvoiceStatus.Draft, Mercoa.InvoiceStatus.Canceled].includes(e))) {
-    if (rolePermissions?.invoice.delete || rolePermissions?.invoice.all) {
-      actions.push('delete')
-    }
+  // Archive
+  if (currentStatuses.includes(Mercoa.InvoiceStatus.Paid)) {
+    actions.push(PayablesTableAction.Archive)
+  }
+
+  // Restore as Draft
+  if (
+    currentStatuses.some((e) => {
+      const allowedStatuses: Mercoa.InvoiceStatus[] = [Mercoa.InvoiceStatus.Canceled, Mercoa.InvoiceStatus.Failed]
+      return allowedStatuses.includes(e)
+    })
+  ) {
+    actions.push(PayablesTableAction.RestoreAsDraft)
   }
 
   // Cancel
   if (
-    currentStatuses.some((e) =>
-      [
+    currentStatuses.some((e) => {
+      const allowedStatuses: Mercoa.InvoiceStatus[] = [
         Mercoa.InvoiceStatus.New,
         Mercoa.InvoiceStatus.Approved,
         Mercoa.InvoiceStatus.Refused,
         Mercoa.InvoiceStatus.Scheduled,
         Mercoa.InvoiceStatus.Failed,
-        //@ts-ignore
-      ].includes(e),
-    )
+      ]
+      return allowedStatuses.includes(e)
+    })
   ) {
-    actions.push('cancel')
+    actions.push(PayablesTableAction.Cancel)
   }
 
-  // Archive
-  if (currentStatuses.includes(Mercoa.InvoiceStatus.Paid)) {
-    actions.push('archive')
-  }
-
-  // Restore as Draft
-  if (currentStatuses.includes(Mercoa.InvoiceStatus.Canceled)) {
-    actions.push('restoreAsDraft')
+  // Delete
+  if (
+    currentStatuses.some((e) => {
+      const allowedStatuses: Mercoa.InvoiceStatus[] = [Mercoa.InvoiceStatus.Draft, Mercoa.InvoiceStatus.Canceled]
+      return allowedStatuses.includes(e)
+    })
+  ) {
+    if (rolePermissions?.invoice.delete || rolePermissions?.invoice.all) {
+      actions.push(PayablesTableAction.Delete)
+    }
   }
 
   return actions

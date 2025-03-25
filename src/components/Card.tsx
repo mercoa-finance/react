@@ -38,22 +38,29 @@ export function Cards({
   showAdd,
   showEdit,
   showDelete,
+  showEntityConfirmation,
   hideIndicators,
+  entityId,
 }: {
   children?: Function
   onSelect?: (value?: Mercoa.PaymentMethodResponse.Card) => void
   showAdd?: boolean
   showEdit?: boolean
   showDelete?: boolean
+  showEntityConfirmation?: boolean
   hideIndicators?: boolean
+  entityId?: string
 }) {
   const [cards, setCards] = useState<Array<Mercoa.PaymentMethodResponse.Card>>()
   const [showDialog, setShowDialog] = useState(false)
 
   const mercoaSession = useMercoaSession()
+
+  const entityIdFinal = entityId ?? mercoaSession.entity?.id
+
   useEffect(() => {
-    if (mercoaSession.token && mercoaSession.entity?.id) {
-      mercoaSession.client?.entity.paymentMethod.getAll(mercoaSession.entity?.id, { type: 'card' }).then((resp) => {
+    if (mercoaSession.token && entityIdFinal) {
+      mercoaSession.client?.entity.paymentMethod.getAll(entityIdFinal, { type: 'card' }).then((resp) => {
         setCards(
           resp
             .filter((e) => {
@@ -63,7 +70,7 @@ export function Cards({
         )
       })
     }
-  }, [mercoaSession.entity?.id, mercoaSession.token, showDialog, mercoaSession.refreshId])
+  }, [entityIdFinal, mercoaSession.token, showDialog, mercoaSession.refreshId])
 
   const onClose = (account: Mercoa.PaymentMethodResponse.Card) => {
     setShowDialog(false)
@@ -84,6 +91,7 @@ export function Cards({
           <PaymentMethodList
             accounts={cards}
             showDelete={showDelete || showEdit}
+            showEntityConfirmation={showEntityConfirmation}
             addAccount={
               cards && showAdd ? (
                 <div>
@@ -95,6 +103,7 @@ export function Cards({
                         onSubmit={(data: Mercoa.PaymentMethodResponse.Card) => {
                           onClose(data)
                         }}
+                        entityId={entityId}
                       />
                     }
                   />

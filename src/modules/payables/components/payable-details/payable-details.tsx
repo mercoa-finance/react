@@ -1,48 +1,35 @@
 import { Bar, Container, Section } from '@column-resizer/react'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import { NoSession, useMercoaSession } from '../../../../components'
-import { PayableDetailsViewMode } from '../../hooks/use-payable-details'
-import { PayableDetailsProvider } from '../../providers/payables-detail-provider'
-import { PayableDocumentV2 } from '../payable-document'
-import { PayableFormV2 } from '../payable-form'
+import { PayableDetailsProvider } from '../../providers/payable-detail-provider'
+import { PayableDetailsProps } from '../../types'
+import { PayableDocument } from '../payable-document'
+import { PayableForm } from '../payable-form'
 
-export function PayableDetailsV2({
-  invoiceType,
-  invoiceId,
-  invoice,
-  onUpdate,
-  heightOffset,
-  admin,
-  documentPosition = 'left',
-  invoicePreSubmit,
-  counterpartyPreSubmit,
-  onInvoiceSubmit,
-  renderCustom,
+export function PayableDetails({
+  queryOptions,
+  handlers,
+  config,
+  displayOptions,
+  renderCustom = {
+    toast: {
+      success: (message: string) => {
+        toast.success(message)
+      },
+      error: (message: string) => {
+        toast.error(message)
+      },
+      info: (message: string) => {
+        toast.info(message)
+      },
+    },
+  },
   children,
-}: {
-  invoiceType?: 'invoice' | 'invoiceTemplate'
-  invoiceId?: Mercoa.InvoiceId | Mercoa.InvoiceTemplateId
-  invoice?: Mercoa.InvoiceResponse
-  onUpdate?: (invoice: Mercoa.InvoiceResponse | undefined) => void
-  heightOffset?: number
-  admin?: boolean
-  documentPosition?: 'right' | 'left' | 'none'
-  invoicePreSubmit?: (invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>
-  counterpartyPreSubmit?: (
-    counterparty: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined,
-    counterpartyId?: string,
-  ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
-  onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
-  renderCustom?: {
-    toast?: {
-      success: (message: string) => void
-      error: (message: string) => void
-    }
-  }
-  children?: JSX.Element | JSX.Element[]
-}) {
+}: PayableDetailsProps) {
   const mercoaSession = useMercoaSession()
+  let { invoiceId, invoiceType, invoice } = queryOptions ?? {}
+  const { heightOffset = 0, documentPosition = 'left' } = displayOptions ?? {}
+  const { supportedCurrencies } = config ?? {}
 
   if (!mercoaSession.client) return <NoSession componentName="PayableDetails" />
 
@@ -68,19 +55,14 @@ export function PayableDetailsV2({
       return (
         <PayableDetailsProvider
           payableDetailsProps={{
-            queryParams: { invoiceId: invoiceId ?? '', invoiceType },
-            viewMode: PayableDetailsViewMode.Document,
-            handlers: {
-              onInvoicePreSubmit: invoicePreSubmit,
-              onCounterpartyPreSubmit: counterpartyPreSubmit,
-              onInvoiceUpdate: onUpdate,
-              onInvoiceSubmit: onInvoiceSubmit,
-            },
-            toast: renderCustom?.toast ?? toast,
-            layoutConfig: {
+            queryOptions: { invoiceId: invoiceId ?? '', invoiceType },
+            displayOptions: {
               heightOffset: heightOffset ?? mercoaSession.heightOffset,
-              documentPosition: documentPosition,
+              documentPosition: documentPosition ?? 'left',
             },
+            handlers,
+            config,
+            renderCustom,
           }}
         >
           {children}
@@ -88,8 +70,8 @@ export function PayableDetailsV2({
       )
     }
   } else {
-    leftComponent = <PayableDocumentV2 />
-    rightComponent = <PayableFormV2 />
+    leftComponent = <PayableDocument />
+    rightComponent = <PayableForm />
   }
 
   if (documentPosition === 'none') {
@@ -99,16 +81,16 @@ export function PayableDetailsV2({
   return (
     <PayableDetailsProvider
       payableDetailsProps={{
-        queryParams: { invoiceId: invoice?.id ?? invoiceId ?? '', invoiceType },
-        viewMode: PayableDetailsViewMode.Document,
-        handlers: {
-          onInvoicePreSubmit: invoicePreSubmit,
-          onCounterpartyPreSubmit: counterpartyPreSubmit,
-          onInvoiceUpdate: onUpdate,
-          onInvoiceSubmit: onInvoiceSubmit,
+        queryOptions: { invoiceId: invoice?.id ?? invoiceId ?? '', invoiceType },
+        handlers,
+        renderCustom,
+        config: {
+          supportedCurrencies: supportedCurrencies,
         },
-        toast: renderCustom?.toast ?? toast,
-        layoutConfig: { heightOffset: heightOffset ?? mercoaSession.heightOffset, documentPosition: documentPosition },
+        displayOptions: {
+          heightOffset: heightOffset ?? mercoaSession.heightOffset,
+          documentPosition: documentPosition,
+        },
       }}
     >
       <Container>

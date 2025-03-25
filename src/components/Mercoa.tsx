@@ -274,12 +274,18 @@ function useProvideSession({
         customDomains: true,
         rolePermissions: true,
       })
-      const schemas = await client.customPaymentMethodSchema.getAll()
       setOrganization(o)
-      setCustomPaymentMethodSchemas(schemas)
     } catch (e) {
       console.error(e)
       console.error('Failed to get organization data')
+    }
+
+    try {
+      const schemas = await client.customPaymentMethodSchema.getAll()
+      setCustomPaymentMethodSchemas(schemas)
+    } catch (e) {
+      console.error(e)
+      console.error('Failed to get payment method schemas')
     }
 
     if (entityId) {
@@ -334,12 +340,18 @@ function useProvideSession({
         metadataSchema: true,
         rolePermissions: true,
       })
-      const schemas = await client.customPaymentMethodSchema.getAll()
       setOrganization(o)
-      setCustomPaymentMethodSchemas(schemas)
     } catch (e) {
       console.error(e)
       console.error('Failed to get organization data')
+    }
+
+    try {
+      const schemas = await client.customPaymentMethodSchema.getAll()
+      setCustomPaymentMethodSchemas(schemas)
+    } catch (e) {
+      console.error(e)
+      console.error('Failed to get payment method schemas')
     }
 
     if (eid === 'all') return

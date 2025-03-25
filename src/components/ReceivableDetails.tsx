@@ -18,7 +18,7 @@ import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import InvoicePreview from './InvoicePreview'
+import InvoicePreviewV1 from './InvoicePreview'
 import {
   BankAccount,
   Card,
@@ -64,7 +64,7 @@ export type ReceivableFormValues = {
   creatorUser?: any
 }
 
-export function ReceivableDetails({
+export function ReceivableDetailsV1({
   invoiceId,
   invoice,
   onUpdate,
@@ -86,7 +86,7 @@ export function ReceivableDetails({
     selectedPayer,
     setValue,
     watch,
-  }: ReceivableFormChildrenProps) => JSX.Element
+  }: ReceivableFormV1ChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -197,7 +197,7 @@ export function ReceivableDetails({
   if (documentPosition === 'none') {
     return (
       <FormProvider {...methods}>
-        <ReceivableForm
+        <ReceivableFormV1
           invoice={invoiceLocal}
           onUpdate={onUpdate}
           refreshInvoice={refreshInvoice}
@@ -212,7 +212,7 @@ export function ReceivableDetails({
           setSelectedPayer={setSelectedPayer}
         >
           {children}
-        </ReceivableForm>
+        </ReceivableFormV1>
       </FormProvider>
     )
   }
@@ -221,7 +221,7 @@ export function ReceivableDetails({
 
   const invoicePreview = (
     <Section minSize={300} maxSize={800}>
-      <InvoicePreview
+      <InvoicePreviewV1
         selectedPayer={selectedPayer}
         paymentDestination={destinationPaymentMethods.find((e) => e.id === paymentDestinationId)}
       />
@@ -229,7 +229,7 @@ export function ReceivableDetails({
   )
   const invoiceDetails = (
     <Section className={`mercoa-relative ${documentPosition === 'left' ? 'mercoa-pl-5' : 'mercoa-pr-5'}`} minSize={400}>
-      <ReceivableForm
+      <ReceivableFormV1
         invoice={invoiceLocal}
         onUpdate={onUpdate}
         refreshInvoice={refreshInvoice}
@@ -244,7 +244,7 @@ export function ReceivableDetails({
         setSelectedPayer={setSelectedPayer}
       >
         {children}
-      </ReceivableForm>
+      </ReceivableFormV1>
     </Section>
   )
 
@@ -266,7 +266,7 @@ export function ReceivableDetails({
   )
 }
 
-export type ReceivableFormChildrenProps = {
+export type ReceivableFormV1ChildrenProps = {
   invoice?: Mercoa.InvoiceResponse
   refreshInvoice?: (invoiceId: Mercoa.InvoiceId) => void
   setSelectedPayer: (e?: Mercoa.CounterpartyResponse) => void
@@ -276,7 +276,7 @@ export type ReceivableFormChildrenProps = {
   errors: FieldErrors<Mercoa.InvoiceCreationRequest>
 }
 
-export function ReceivableForm({
+export function ReceivableFormV1({
   invoice,
   onUpdate,
   refreshInvoice,
@@ -311,7 +311,7 @@ export function ReceivableForm({
     selectedPayer,
     setValue,
     watch,
-  }: ReceivableFormChildrenProps) => JSX.Element
+  }: ReceivableFormV1ChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -856,11 +856,11 @@ export function ReceivableForm({
         </div>
 
         <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
-        <ReceivablePaymentSource />
+        <ReceivablePaymentSourceV1 />
         <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
-        <ReceivablePaymentDestination />
+        <ReceivablePaymentDestinationV1 />
 
-        <ReceivableActions
+        <ReceivableActionsV1
           invoice={invoice}
           selectedPayer={selectedPayer}
           setIsLoading={setIsLoading}
@@ -872,7 +872,7 @@ export function ReceivableForm({
   )
 }
 
-export function ReceivableSelectPaymentMethod({
+export function ReceivableSelectPaymentMethodV1({
   isSource,
   isDestination,
   readOnly,
@@ -1097,7 +1097,7 @@ export function ReceivableSelectPaymentMethod({
   }, [selectedType, paymentMethods, paymentId])
 
   const bankAccountJsx = (
-    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
       {paymentMethods
         ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)
         .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))
@@ -1118,7 +1118,7 @@ export function ReceivableSelectPaymentMethod({
   )
 
   const checkJsx = (
-    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
       {paymentMethods
         ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)
         .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))
@@ -1139,7 +1139,7 @@ export function ReceivableSelectPaymentMethod({
   )
 
   const cardJsx = (
-    <div className="mercoa-max-h-[240px] mercoa-overflow-y-auto">
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
       {paymentMethods
         ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
         .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))
@@ -1181,7 +1181,7 @@ export function ReceivableSelectPaymentMethod({
   )
 }
 
-export function ReceivablePaymentSource({ readOnly }: { readOnly?: boolean }) {
+export function ReceivablePaymentSourceV1({ readOnly }: { readOnly?: boolean }) {
   const {
     watch,
     formState: { errors },
@@ -1210,7 +1210,7 @@ export function ReceivablePaymentSource({ readOnly }: { readOnly?: boolean }) {
               </>
             )}
           </h2>
-          <ReceivableSelectPaymentMethod isSource readOnly={readOnly} />
+          <ReceivableSelectPaymentMethodV1 isSource readOnly={readOnly} />
           {errors.paymentSourceId?.message && (
             <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentSourceId?.message.toString()}</p>
           )}
@@ -1220,7 +1220,7 @@ export function ReceivablePaymentSource({ readOnly }: { readOnly?: boolean }) {
   )
 }
 
-export function ReceivablePaymentDestination({ readOnly }: { readOnly?: boolean }) {
+export function ReceivablePaymentDestinationV1({ readOnly }: { readOnly?: boolean }) {
   const {
     watch,
     formState: { errors },
@@ -1234,7 +1234,7 @@ export function ReceivablePaymentDestination({ readOnly }: { readOnly?: boolean 
       <h2 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700 mercoa-mt-5">
         {readOnly ? 'Paying to You:' : 'How do you want to get paid?'}
       </h2>
-      <ReceivableSelectPaymentMethod isDestination readOnly={readOnly} />
+      <ReceivableSelectPaymentMethodV1 isDestination readOnly={readOnly} />
       {errors.paymentDestinationId?.message && (
         <p className="mercoa-text-sm mercoa-text-red-500">{errors.paymentDestinationId?.message.toString()}</p>
       )}
@@ -1242,7 +1242,7 @@ export function ReceivablePaymentDestination({ readOnly }: { readOnly?: boolean 
   )
 }
 
-export function ReceivableActions({
+export function ReceivableActionsV1({
   invoice,
   selectedPayer,
   setIsLoading,

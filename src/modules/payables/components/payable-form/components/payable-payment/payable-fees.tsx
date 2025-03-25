@@ -1,31 +1,22 @@
 import accounting from 'accounting'
-import { currencyCodeToSymbol } from '../../../../../../../src/lib/currency'
-import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
-import { useMercoaSession } from '../../../../../../components'
-import { usePayableDetailsContext } from '../../../../providers/payables-detail-provider'
+import { currencyCodeToSymbol } from '../../../../../../../src/lib/currency'
+import { usePayableDetails } from '../../../../../../components'
 
 export function PayableFees({
   children,
 }: {
   children?: ({ fees }: { fees?: Mercoa.InvoiceFeesResponse }) => JSX.Element
 }) {
-  const mercoaSession = useMercoaSession()
+  const { formContextValue } = usePayableDetails()
+  const { formMethods, feesContextValue, vendorCreditContextValue } = formContextValue
+  const { fees } = feesContextValue
+  const { vendorCreditUsage } = vendorCreditContextValue
 
-  const { fees, vendorCreditUsage } = usePayableDetailsContext()
+  const { watch } = formMethods
 
-  const { watch, setError, clearErrors } = useFormContext()
-
-  const invoiceId = watch('id')
-  const status = watch('status')
   const amount = watch('amount')
   const currency = watch('currency')
-  const payerId = mercoaSession.entityId
-  const vendorId = watch('vendorId')
-  const paymentSourceId = watch('paymentSourceId')
-  const paymentDestinationId = watch('paymentDestinationId')
-  const paymentDestinationOptions = watch('paymentDestinationOptions')
-  const vendorCreditIds = watch('vendorCreditIds') as Mercoa.VendorCreditId[] | undefined
 
   // Convert number to digits
   let amountNumber = amount

@@ -24,7 +24,7 @@ import {
 
 dayjs.extend(utc)
 
-export function ReceivablesTable({
+export function ReceivablesTableV1({
   statuses,
   search,
   metadata,
@@ -378,7 +378,7 @@ export function ReceivablesTable({
   )
 }
 
-export function GroupReceivablesTable({
+export function GroupReceivablesTableV1({
   search,
   metadata,
   startDate,
@@ -841,7 +841,7 @@ export function GroupReceivablesTable({
   )
 }
 
-export function Receivables({
+export function ReceivablesV1({
   statuses,
   onSelectInvoice,
   statusSelectionStyle,
@@ -865,7 +865,7 @@ export function Receivables({
   return (
     <div className="mercoa-mt-8">
       {mercoaSession.entityGroup && !mercoaSession.entity ? (
-        <GroupReceivablesTable search={search} onSelectInvoice={onSelectInvoice} />
+        <GroupReceivablesTableV1 search={search} onSelectInvoice={onSelectInvoice} />
       ) : (
         <>
           <div className="mercoa-grid mercoa-items-center mercoa-grid-cols-3">
@@ -889,7 +889,7 @@ export function Receivables({
             />
           )}
           <InvoiceMetrics statuses={selectedStatuses} search={search} excludePayables />
-          <ReceivablesTable statuses={selectedStatuses} search={search} onSelectInvoice={onSelectInvoice} />
+          <ReceivablesTableV1 statuses={selectedStatuses} search={search} onSelectInvoice={onSelectInvoice} />
         </>
       )}
     </div>

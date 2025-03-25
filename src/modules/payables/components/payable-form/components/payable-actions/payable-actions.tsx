@@ -3,8 +3,8 @@ import { useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import { EntitySelector, MercoaButton, NoSession, useMercoaSession } from '../../../../../../components'
-import { getInvoiceClient } from '../../../payable-details/utils'
-import { PayableAction } from '../../constants'
+import { getInvoiceClient } from '../../../../../common/utils'
+import { PayableFormAction } from '../../constants'
 import { findApproverSlot } from '../payable-approvers/utils'
 import { PayableFormErrors } from './payable-form-errors'
 
@@ -131,7 +131,7 @@ export function PayableActions({
   const deleteButtonComponent = deleteButton ? (
     deleteButton({
       onClick: () => {
-        setValue('formAction', PayableAction.DELETE)
+        setValue('formAction', PayableFormAction.DELETE)
       },
     })
   ) : (
@@ -141,11 +141,11 @@ export function PayableActions({
       disabledTooltipText="You do not have permission to delete invoices"
       color="secondary"
       onClick={() => {
-        setValue('formAction', PayableAction.DELETE)
+        setValue('formAction', PayableFormAction.DELETE)
       }}
     >
       <div className="mercoa-w-[110px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableAction.DELETE ? (
+        {actionLoading && formAction === PayableFormAction.DELETE ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (
           'Delete Invoice'
@@ -157,7 +157,7 @@ export function PayableActions({
   const archiveButtonComponent = archiveButton ? (
     archiveButton({
       onClick: () => {
-        setValue('formAction', PayableAction.ARCHIVE)
+        setValue('formAction', PayableFormAction.ARCHIVE)
       },
     })
   ) : (
@@ -171,11 +171,11 @@ export function PayableActions({
       disabledTooltipText="You do not have permission to archive invoices"
       color="secondary"
       onClick={() => {
-        setValue('formAction', PayableAction.ARCHIVE)
+        setValue('formAction', PayableFormAction.ARCHIVE)
       }}
     >
       <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableAction.ARCHIVE ? (
+        {actionLoading && formAction === PayableFormAction.ARCHIVE ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (
           'Archive Invoice'
@@ -187,7 +187,7 @@ export function PayableActions({
   const recreateDraftButtonComponent = recreateDraftButton ? (
     recreateDraftButton({
       onClick: () => {
-        setValue('formAction', PayableAction.SAVE_AS_DRAFT)
+        setValue('formAction', PayableFormAction.SAVE_AS_DRAFT)
       },
     })
   ) : (
@@ -201,11 +201,11 @@ export function PayableActions({
       disabledTooltipText="You do not have permission to save invoices as draft"
       color="green"
       onClick={() => {
-        setValue('formAction', PayableAction.SAVE_AS_DRAFT)
+        setValue('formAction', PayableFormAction.SAVE_AS_DRAFT)
       }}
     >
       <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableAction.SAVE_AS_DRAFT ? (
+        {actionLoading && formAction === PayableFormAction.SAVE_AS_DRAFT ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (
           'Restore as Draft'
@@ -217,7 +217,7 @@ export function PayableActions({
   const cancelButtonComponent = cancelButton ? (
     cancelButton({
       onClick: () => {
-        setValue('formAction', PayableAction.CANCEL)
+        setValue('formAction', PayableFormAction.CANCEL)
       },
     })
   ) : (
@@ -231,11 +231,11 @@ export function PayableActions({
       disabledTooltipText="You do not have permission to cancel invoices"
       color="secondary"
       onClick={() => {
-        setValue('formAction', PayableAction.CANCEL)
+        setValue('formAction', PayableFormAction.CANCEL)
       }}
     >
       <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableAction.CANCEL ? (
+        {actionLoading && formAction === PayableFormAction.CANCEL ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (
           'Cancel Payment'
@@ -247,7 +247,7 @@ export function PayableActions({
   const saveDraftButtonComponent = saveDraftButton ? (
     saveDraftButton({
       onClick: () => {
-        setValue('formAction', PayableAction.SAVE_AS_DRAFT)
+        setValue('formAction', PayableFormAction.SAVE_AS_DRAFT)
       },
     })
   ) : (
@@ -260,11 +260,11 @@ export function PayableActions({
       }
       disabledTooltipText="You do not have permission to save invoices as draft"
       onClick={() => {
-        setValue('formAction', PayableAction.SAVE_AS_DRAFT)
+        setValue('formAction', PayableFormAction.SAVE_AS_DRAFT)
       }}
     >
       <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableAction.SAVE_AS_DRAFT ? (
+        {actionLoading && formAction === PayableFormAction.SAVE_AS_DRAFT ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (
           'Save Draft'
@@ -276,7 +276,7 @@ export function PayableActions({
   const printCheckButtonComponent = printCheckButton ? (
     printCheckButton({
       onClick: () => {
-        setValue('formAction', PayableAction.PRINT_CHECK)
+        setValue('formAction', PayableFormAction.PRINT_CHECK)
       },
     })
   ) : (
@@ -285,11 +285,11 @@ export function PayableActions({
       disabled={!userPermissionConfig?.invoice?.check.print && !userPermissionConfig?.invoice?.all}
       disabledTooltipText="You do not have permission to print checks"
       onClick={() => {
-        setValue('formAction', PayableAction.PRINT_CHECK)
+        setValue('formAction', PayableFormAction.PRINT_CHECK)
       }}
     >
       <div className="mercoa-w-fit mercoa-min-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center  mercoa-whitespace-nowrap">
-        {actionLoading && formAction === PayableAction.PRINT_CHECK ? (
+        {actionLoading && formAction === PayableFormAction.PRINT_CHECK ? (
           <div className="mercoa-whitespace-nowrap mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery ===
           Mercoa.CheckDeliveryMethod.Print ? (
@@ -328,7 +328,7 @@ export function PayableActions({
       }}
     >
       <div className="mercoa-w-fit mercoa-min-w-[120px] mercoa-flex mercoa-items-center mercoa-justify-center mercoa-whitespace-nowrap">
-        {actionLoading && formAction === PayableAction.GENERATE_CHECK ? (
+        {actionLoading && formAction === PayableFormAction.GENERATE_CHECK ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery ===
           Mercoa.CheckDeliveryMethod.Print ? (
@@ -343,7 +343,7 @@ export function PayableActions({
   const createInvoiceButtonComponent = createInvoiceButton ? (
     createInvoiceButton({
       onClick: () => {
-        setValue('formAction', PayableAction.CREATE)
+        setValue('formAction', PayableFormAction.CREATE)
       },
     })
   ) : (
@@ -356,11 +356,11 @@ export function PayableActions({
       }
       disabledTooltipText="You do not have permission to create invoices"
       onClick={(e: React.MouseEvent) => {
-        setValue('formAction', PayableAction.CREATE)
+        setValue('formAction', PayableFormAction.CREATE)
       }}
     >
       <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableAction.CREATE ? (
+        {actionLoading && formAction === PayableFormAction.CREATE ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (
           'Create Invoice'
@@ -373,7 +373,7 @@ export function PayableActions({
     submitForApprovalButton({
       onClick: () => {
         if (approverSlots.every((e) => e.assignedUserId)) {
-          setValue('formAction', PayableAction.SUBMIT_FOR_APPROVAL)
+          setValue('formAction', PayableFormAction.SUBMIT_FOR_APPROVAL)
         }
       },
       approversAssigned: approverSlots.every((e) => e.assignedUserId),
@@ -396,11 +396,11 @@ export function PayableActions({
           }
           disabledTooltipText="You do not have permission to submit invoices for approval"
           onClick={(e: React.MouseEvent) => {
-            setValue('formAction', PayableAction.SUBMIT_FOR_APPROVAL)
+            setValue('formAction', PayableFormAction.SUBMIT_FOR_APPROVAL)
           }}
         >
           <div className="mercoa-w-[160px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-            {actionLoading && formAction === PayableAction.SUBMIT_FOR_APPROVAL ? (
+            {actionLoading && formAction === PayableFormAction.SUBMIT_FOR_APPROVAL ? (
               <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
             ) : (
               'Submit for Approval'
@@ -414,7 +414,7 @@ export function PayableActions({
   const nextButtonComponent = nextButton ? (
     nextButton({
       onClick: () => {
-        setValue('formAction', PayableAction.SUBMIT_FOR_APPROVAL)
+        setValue('formAction', PayableFormAction.SUBMIT_FOR_APPROVAL)
       },
     })
   ) : (
@@ -428,11 +428,11 @@ export function PayableActions({
       disabledTooltipText="You do not have permission to submit invoices for approval"
       isEmphasized
       onClick={() => {
-        setValue('formAction', PayableAction.SUBMIT_FOR_APPROVAL)
+        setValue('formAction', PayableFormAction.SUBMIT_FOR_APPROVAL)
       }}
     >
       <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableAction.SUBMIT_FOR_APPROVAL ? (
+        {actionLoading && formAction === PayableFormAction.SUBMIT_FOR_APPROVAL ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (
           'Next'
@@ -444,7 +444,7 @@ export function PayableActions({
   const markPaidButtonComponent = markAsPaidButton ? (
     markAsPaidButton({
       onClick: () => {
-        setValue('formAction', PayableAction.MARK_PAID)
+        setValue('formAction', PayableFormAction.MARK_PAID)
       },
     })
   ) : (
@@ -457,11 +457,11 @@ export function PayableActions({
       }
       disabledTooltipText="You do not have permission to mark invoices as paid"
       onClick={() => {
-        setValue('formAction', PayableAction.MARK_PAID)
+        setValue('formAction', PayableFormAction.MARK_PAID)
       }}
     >
       <div className="mercoa-w-[140px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableAction.MARK_PAID ? (
+        {actionLoading && formAction === PayableFormAction.MARK_PAID ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (
           'Mark as Paid'
@@ -473,7 +473,7 @@ export function PayableActions({
   const schedulePaymentButtonComponent = schedulePaymentButton ? (
     schedulePaymentButton({
       onClick: () => {
-        setValue('formAction', PayableAction.SCHEDULE_PAYMENT)
+        setValue('formAction', PayableFormAction.SCHEDULE_PAYMENT)
       },
     })
   ) : (
@@ -486,11 +486,11 @@ export function PayableActions({
       }
       disabledTooltipText="You do not have permission to schedule invoices"
       onClick={() => {
-        setValue('formAction', PayableAction.SCHEDULE_PAYMENT)
+        setValue('formAction', PayableFormAction.SCHEDULE_PAYMENT)
       }}
     >
       <div className="mercoa-w-[140px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableAction.SCHEDULE_PAYMENT ? (
+        {actionLoading && formAction === PayableFormAction.SCHEDULE_PAYMENT ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (
           'Schedule Payment'
@@ -502,12 +502,11 @@ export function PayableActions({
   const retryPaymentButtonComponent = retryPaymentButton ? (
     retryPaymentButton({
       onClick: () => {
-        setValue('formAction', PayableAction.RETRY_PAYMENT)
+        setValue('formAction', PayableFormAction.RETRY_PAYMENT)
       },
     })
   ) : (
     <MercoaButton
-      type="submit"
       isEmphasized
       disabled={
         !userPermissionConfig?.invoice?.update.statuses.includes(Mercoa.InvoiceStatus.Scheduled) &&
@@ -516,11 +515,11 @@ export function PayableActions({
       }
       disabledTooltipText="You do not have permission to retry payments"
       onClick={() => {
-        setValue('formAction', PayableAction.RETRY_PAYMENT)
+        setValue('formAction', PayableFormAction.RETRY_PAYMENT)
       }}
     >
-      <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableAction.RETRY_PAYMENT ? (
+      <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
+        {actionLoading && formAction === PayableFormAction.CANCEL ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (
           'Retry Payment'
@@ -540,7 +539,7 @@ export function PayableActions({
   )
 
   const rejectButtonComponent = rejectButton ? (
-    rejectButton({ onClick: () => setValue('formAction', PayableAction.REJECT) })
+    rejectButton({ onClick: () => setValue('formAction', PayableFormAction.REJECT) })
   ) : (
     <MercoaButton
       disabled={
@@ -552,10 +551,10 @@ export function PayableActions({
       color="secondary"
       disabledTooltipText="You do not have permission to reject invoices"
       isEmphasized
-      onClick={() => setValue('formAction', PayableAction.REJECT)}
+      onClick={() => setValue('formAction', PayableFormAction.REJECT)}
     >
       <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableAction.REJECT ? (
+        {actionLoading && formAction === PayableFormAction.REJECT ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (
           'Reject'
@@ -566,7 +565,7 @@ export function PayableActions({
 
   const approveButtonComponent = approveButton ? (
     approveButton({
-      onClick: () => setValue('formAction', PayableAction.APPROVE),
+      onClick: () => setValue('formAction', PayableFormAction.APPROVE),
     })
   ) : (
     <MercoaButton
@@ -579,10 +578,10 @@ export function PayableActions({
       color="green"
       isEmphasized
       disabledTooltipText="You do not have permission to approve invoices"
-      onClick={() => setValue('formAction', PayableAction.APPROVE)}
+      onClick={() => setValue('formAction', PayableFormAction.APPROVE)}
     >
       <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableAction.APPROVE ? (
+        {actionLoading && formAction === PayableFormAction.APPROVE ? (
           <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
         ) : (
           'Approve'
@@ -620,8 +619,7 @@ export function PayableActions({
         let nextButton = <></>
         if (
           paymentDestinationType === Mercoa.PaymentMethodType.Check &&
-          (paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery ===
-            Mercoa.CheckDeliveryMethod.Print
+          paymentDestinationOptions.delivery === Mercoa.CheckDeliveryMethod.Print
         ) {
           nextButton = printCheckButtonComponent
         } else {
@@ -632,6 +630,12 @@ export function PayableActions({
         break
 
       case Mercoa.InvoiceStatus.Scheduled:
+        if (
+          paymentDestinationType === Mercoa.PaymentMethodType.Check &&
+          paymentDestinationOptions.delivery === Mercoa.CheckDeliveryMethod.Print
+        ) {
+          buttons.push(printCheckButtonComponent)
+        }
         if (paymentDestinationType === Mercoa.PaymentMethodType.OffPlatform) {
           buttons.push(markPaidButtonComponent)
         }
@@ -653,13 +657,16 @@ export function PayableActions({
         buttons.push(assignToEntityComponent)
         break
 
+      case Mercoa.InvoiceStatus.Refused:
+        buttons.push(recreateDraftButtonComponent)
+        break
+
       case Mercoa.InvoiceStatus.Canceled:
         buttons.push(recreateDraftButtonComponent, deleteButtonComponent)
         break
 
       case Mercoa.InvoiceStatus.Archived:
       case Mercoa.InvoiceStatus.Pending:
-      case Mercoa.InvoiceStatus.Refused:
       default:
         break
     }

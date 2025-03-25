@@ -2,23 +2,11 @@ import { Dispatch, FC, memo, SetStateAction, useEffect, useMemo } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { invoiceStatusToName, useMercoaSession } from '../../../../../../../components'
 import { Popover } from '../../../../../../../lib/components'
-import { useDropdownStore } from '../../../../../../../modules/common/stores/dropdown-store'
-import { CrossIcon } from '../../../../../assets/icons/cross-icon'
+import { CrossIcon } from '../../../../../../common/assets/icons/cross-icon'
+import { useDropdownStore } from '../../../../../../common/stores/dropdown-store'
 import { usePayablesFilterStore } from '../../../../../stores/payables-filter-store'
 
-const statuses = [
-  { id: 1, value: Mercoa.InvoiceStatus.Unassigned },
-  { id: 2, value: Mercoa.InvoiceStatus.Draft },
-  { id: 3, value: Mercoa.InvoiceStatus.New },
-  { id: 4, value: Mercoa.InvoiceStatus.Approved },
-  { id: 5, value: Mercoa.InvoiceStatus.Scheduled },
-  { id: 6, value: Mercoa.InvoiceStatus.Pending },
-  { id: 7, value: Mercoa.InvoiceStatus.Paid },
-  { id: 8, value: Mercoa.InvoiceStatus.Archived },
-  { id: 9, value: Mercoa.InvoiceStatus.Refused },
-  { id: 10, value: Mercoa.InvoiceStatus.Canceled },
-  { id: 11, value: Mercoa.InvoiceStatus.Failed },
-]
+const statuses = Object.values(Mercoa.InvoiceStatus)
 
 interface StatusFilterCardDropdownProps {
   tableId: string
@@ -44,7 +32,7 @@ export const StatusFilterCardDropdown: FC<StatusFilterCardDropdownProps> = memo(
     return userPermissionConfig
       ? statuses.filter(
           (status) =>
-            userPermissionConfig?.invoice.view.statuses.includes(status.value) ||
+            userPermissionConfig?.invoice.view.statuses.includes(status) ||
             userPermissionConfig?.invoice.view.all ||
             userPermissionConfig?.invoice.all,
         )
@@ -53,8 +41,8 @@ export const StatusFilterCardDropdown: FC<StatusFilterCardDropdownProps> = memo(
 
   const renderTriggerContent = () => {
     const selectedLabels = statusesByUser
-      .filter((status) => selectedStatusFilters.includes(status.value))
-      .map((status) => status.value)
+      .filter((status) => selectedStatusFilters.includes(status))
+      .map((status) => status)
 
     const displayed = [...selectedLabels].reverse().slice(0, 3)
     const extraCount = selectedLabels.length - displayed.length
@@ -120,18 +108,18 @@ export const StatusFilterCardDropdown: FC<StatusFilterCardDropdownProps> = memo(
           <div className="mercoa-flex mercoa-rounded-mercoa mercoa-flex-col mercoa-relative mercoa-max-w-[calc(100vw-4rem)] mercoa-max-h-[250px] mercoa-overflow-scroll mercoa-h-fit mercoa-min-w-[16rem] mercoa-bg-white mercoa-text-[#1A1919] mercoa-shadow-[rgba(0,0,0,0.15)_1px_4px_8px_0px,rgba(0,0,0,0.1)_2px_12px_24px_0px,rgba(163,157,153,0.2)_0px_0px_0px_1px]">
             {statusesByUser.map((status) => (
               <div
-                key={status.id}
+                key={status}
                 className="mercoa-text-[14px] mercoa-flex mercoa-items-center mercoa-h-[44px] mercoa-gap-3 mercoa-px-[0.75rem] mercoa-py-[0.5rem] mercoa-text-left mercoa-text-[#1A1919] mercoa-cursor-pointer mercoa-no-underline hover:mercoa-bg-[#F4F2F0]"
-                onClick={() => toggleSelection(status.value)}
+                onClick={() => toggleSelection(status)}
               >
                 <input
                   type="checkbox"
                   className="mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-none"
-                  checked={selectedStatusFilters.includes(status.value)}
+                  checked={selectedStatusFilters.includes(status)}
                   readOnly
                 />
                 <span className="mercoa-text-[14px] mercoa-color-[#1A1919] mercoa-capitalize">
-                  {invoiceStatusToName({ status: status.value as Mercoa.InvoiceStatus })}
+                  {invoiceStatusToName({ status })}
                 </span>
               </div>
             ))}
