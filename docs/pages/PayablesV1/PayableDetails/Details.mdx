@@ -4,9 +4,9 @@ import {
   PayableActions,
   PayableApprovers,
   PayableCounterpartySearch,
-  PayableDetails,
+  PayableDetailsV1,
   PayableFees,
-  PayableForm,
+  PayableFormV1,
   PayableFormHeader,
   PayableLineItems,
   PayableMetadata,
@@ -22,7 +22,7 @@ import { inv_new_ready, inv_scheduled, payerEntity, vendorEntities } from '../..
 
 # Payable Details
 
-The `<PayableDetails>` component is used to let users create and manage payable invoices.
+The `<PayableDetailsV1>` component is used to let users create and manage payable invoices.
 
 ## Customization Options
 
@@ -43,7 +43,7 @@ The `<PayableDetails>` component is used to let users create and manage payable 
 | children              | `(methods: PayableDetailsChildrenProps) => JSX.Element[]`                            |          | See [customization](#customization) for details on how to use the children prop.                                                                      |
 
 ```typescript
-type PayableDetailsChildrenProps = {
+type PayableDetailsV1ChildrenProps = {
   invoice?: Mercoa.InvoiceResponse
   ocrResponse?: Mercoa.OcrResponse
   uploadedDocument?: string
@@ -61,9 +61,9 @@ type PayableDetailsChildrenProps = {
 ### Edit Existing Invoice
 
 <ComponentContainer>
-  <PayableDetails invoiceId={'inv_new_ready'} />
+  <PayableDetailsV1 invoiceId={'inv_new_ready'} />
   ```jsx
-<PayableDetails
+<PayableDetailsV1
   invoiceId={'inv_XXXXX-XXXX-XXXXXX'}
   onUpdate={(invoice) => {
     if (!invoice) {
@@ -79,9 +79,9 @@ type PayableDetailsChildrenProps = {
 ### Create New Invoice
 
 <ComponentContainer>
-  <PayableDetails />
+  <PayableDetailsV1 />
   ```jsx
-<PayableDetails 
+<PayableDetailsV1 
   onUpdate={(invoice) => {
     if (!invoice) {
       router.push(`/dashboard/payers/${entityId}`)
@@ -96,9 +96,9 @@ type PayableDetailsChildrenProps = {
 ### Document on right
 
 <ComponentContainer>
-  <PayableDetails invoiceId={'inv_new_ready'} documentPosition="right" />
+  <PayableDetailsV1 invoiceId={'inv_new_ready'} documentPosition="right" />
   ```jsx
-<PayableDetails
+<PayableDetailsV1
   documentPosition="right"
   invoiceId={'inv_XXXXX-XXXX-XXXXXX'}   
   onUpdate={(invoice) => {
@@ -115,15 +115,15 @@ type PayableDetailsChildrenProps = {
 
 ## Customization
 
-The `PayableDetails` consists of the [`<PayableForm>`](./Form) and [`<PayableDocument>`](./Document) components. See those pages for how to customize them.
+The `PayableDetails` consists of the [`<PayableFormV1>`](./Form) and [`<PayableDocumentV1>`](./Document) components. See those pages for how to customize them.
 
 The default children is the following:
 
 ```tsx
-<PayableDetails>
+<PayableDetailsV1>
  {(props) => [
-     <PayableDocument {...props} key={1} />,
-     <PayableForm {...props} key={2} />
+     <PayableDocumentV1 {...props} key={1} />,
+     <PayableFormV1 {...props} key={2} />
   ]}
-</PayableDetails>
+</PayableDetailsV1>
 ```

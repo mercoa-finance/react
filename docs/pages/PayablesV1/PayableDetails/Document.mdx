@@ -1,7 +1,7 @@
 import {
-  OcrProgressBar,
-  PayableDocumentDisplay,
-  DocumentUploadBox
+  OcrProgressBarV1,
+  PayableDocumentDisplayV1,
+  DocumentUploadBoxV1
 } from '@mercoa/react'
 import { payerEntity, vendorEntities, inv_new_ready, inv_scheduled } from '../../../mockData'
 import { ComponentContainer } from '../../../components/helpers'
@@ -62,8 +62,8 @@ The default children is the following:
    <div className="mercoa-p-5 mercoa-rounded-mercoa">
       {documents ? (
         <>
-          <OcrProgressBar ocrProcessing={ocrProcessing} />
-          <PayableDocumentDisplay
+          <OcrProgressBarV1 ocrProcessing={ocrProcessing} />
+          <PayableDocumentDisplayV1
             documents={documents}
             invoice={invoice}
             height={height}
@@ -75,7 +75,7 @@ The default children is the following:
         </>
       ) : (
         <div className="mercoa-min-w-[340px]">
-          <DocumentUploadBox onFileUpload={onFileUpload} theme={theme} />
+          <DocumentUploadBoxV1 onFileUpload={onFileUpload} theme={theme} />
         </div>
       )}
     </div>
@@ -86,9 +86,9 @@ The default children is the following:
 ### OcrProgressBar
 
 <ComponentContainer>
- <OcrProgressBar ocrProcessing={true} />
+ <OcrProgressBarV1 ocrProcessing={true} />
   ```jsx
-  <OcrProgressBar ocrProcessing={true} />
+  <OcrProgressBarV1 ocrProcessing={true} />
   ```
 </ComponentContainer>
 
@@ -113,8 +113,8 @@ The default children is the following:
 | theme                 | `'light' \| 'dark'`                                                                  |          |                                                                            |
 
 <ComponentContainer>
-  <DocumentUploadBox />
+  <DocumentUploadBoxV1 />
   ```jsx
-  <DocumentUploadBox />
+  <DocumentUploadBoxV1 />
   ```
 </ComponentContainer>
