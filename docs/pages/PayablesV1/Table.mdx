@@ -1,11 +1,11 @@
-import { PayablesTable, MercoaSession } from '@mercoa/react'
+import { PayablesTableV1, MercoaSession } from '@mercoa/react'
 import { Mercoa } from '@mercoa/javascript'
 import { payerEntity, vendorEntities } from '../../mockData'
 import { ComponentContainer } from '../../components/helpers'
 
 # Payable Table
 
-The `<PayablesTable>` renders a list of invoices that can be selected or actioned on. The component supports multiple filtering options to let you get the data you need, and provides out of the box pagination support.
+The `<PayablesTableV1>` renders a list of invoices that can be selected or actioned on. The component supports multiple filtering options to let you get the data you need, and provides out of the box pagination support.
 
 If you want to render `UNASSIGNED` invoices for an entity group, you can use the `<GroupPayablesTable>` component, which takes the same props as `<PayablesTable>` aside from `statuses`.
 
@@ -70,7 +70,7 @@ type PayablesTableChildrenProps = {
 
 <ComponentContainer>
 <div>
-  <PayablesTable statuses={[
+  <PayablesTableV1 statuses={[
     'DRAFT',
     'NEW',
     'APPROVED',
@@ -84,7 +84,7 @@ type PayablesTableChildrenProps = {
   ]} />
 </div>
   ```jsx
-<PayablesTable statuses={[
+<PayablesTableV1 statuses={[
     'DRAFT',
     'NEW',
     'APPROVED',
@@ -103,7 +103,7 @@ type PayablesTableChildrenProps = {
 
 <ComponentContainer>
 <div>
-  <PayablesTable statuses={[
+  <PayablesTableV1 statuses={[
     'DRAFT',
     'NEW',
     'APPROVED',
@@ -119,7 +119,7 @@ type PayablesTableChildrenProps = {
 />
 </div>
   ```jsx
-<PayablesTable statuses={[
+<PayablesTableV1 statuses={[
     'DRAFT',
     'NEW',
     'APPROVED',
@@ -140,7 +140,7 @@ type PayablesTableChildrenProps = {
 
 <ComponentContainer>
 <div>
-  <PayablesTable  
+  <PayablesTableV1  
   columns={[
     {
       field: 'vendor',
@@ -180,7 +180,7 @@ type PayablesTableChildrenProps = {
    />
 </div>
   ```jsx
-<PayablesTable 
+<PayablesTableV1 
   columns={[
     {
       field: 'vendor',
@@ -226,7 +226,7 @@ type PayablesTableChildrenProps = {
 
 <ComponentContainer>
 <div>
-  <PayablesTable  
+  <PayablesTableV1  
   columns={[
     {
       field: 'vendor',
@@ -267,7 +267,7 @@ type PayablesTableChildrenProps = {
    />
 </div>
   ```jsx
-<PayablesTable 
+<PayablesTableV1 
   columns={[
     {
       field: 'vendor',
@@ -313,7 +313,7 @@ type PayablesTableChildrenProps = {
 
 
 <ComponentContainer>
-<PayablesTable statuses={[
+<PayablesTableV1 statuses={[
     'DRAFT',
     'NEW',
     'APPROVED',
@@ -359,7 +359,7 @@ type PayablesTableChildrenProps = {
   }}
   />
   ```jsx
-<PayablesTable statuses={[
+<PayablesTableV1 statuses={[
     'DRAFT',
     'NEW',
     'APPROVED',

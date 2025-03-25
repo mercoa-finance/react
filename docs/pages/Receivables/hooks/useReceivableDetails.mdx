@@ -1,0 +1,125 @@
+---
+title: useReceivableDetails Hook
+description: The `useReceivableDetails` hook provides access to receivable details, form state, and payment method management within the `ReceivableDetails` component.
+---
+
+# useReceivableDetails
+
+The `useReceivableDetails` hook is used inside children of the `<ReceivableDetails>` component. It provides access to receivable details, form management, and payment method settings.
+
+## Props
+
+The props for `useReceivableDetails` are the same as [`ReceivableDetails`](./ReceivableDetails), as it is meant to be used within its context.
+
+## Return Type
+
+| Name                | Type                                                | Description                                        |
+| :------------------ | :-------------------------------------------------- | :------------------------------------------------- |
+| `dataContextValue`  | [`ReceivableDataContext`](#receivable-data-context) | Provides receivable data and refresh functionality |
+| `formContextValue`  | [`ReceivableFormContext`](#receivable-form-context) | Manages form state and interactions                |
+| `propsContextValue` | `ReceivableDetailsProps`                            | Access to the original props                       |
+
+---
+
+<a id="receivable-data-context"></a>
+### Data Context (`dataContextValue`)
+
+| Name             | Type                                  | Description                      |
+| :--------------- | :------------------------------------ | :------------------------------- |
+| `receivableData` | `Mercoa.InvoiceResponse \| undefined` | The current receivable data      |
+| `refreshInvoice` | `(invoiceId: string) => void`         | Function to refresh invoice data |
+
+---
+
+<a id="receivable-form-context"></a>
+### Form Context (`formContextValue`)
+
+| Name                        | Type                                              | Description                       |
+| :-------------------------- | :------------------------------------------------ | :-------------------------------- |
+| `formMethods`               | `UseFormReturn<any>`                              | React Hook Form methods           |
+| `handleFormSubmit`          | `(data: any) => void`                             | Handles form submission           |
+| `formLoading`               | `boolean`                                         | Whether form is submitting        |
+| `handleActionClick`         | `(action: ReceivableFormAction) => void`          | Handles form actions              |
+| `paymentMethodContextValue` | [`PaymentMethodContext`](#payment-method-context) | Payment method management context |
+| `payerContextValue`         | [`PayerContext`](#payer-context)                  | Payer management context          |
+
+---
+
+<a id="payment-method-context"></a>
+### Payment Method Context (`paymentMethodContextValue`)
+
+| Name                                    | Type                                                                 | Description                            |
+| :-------------------------------------- | :------------------------------------------------------------------- | :------------------------------------- |
+| `sourcePaymentMethods`                  | `Mercoa.PaymentMethodResponse[] \| undefined`                        | Available source payment methods       |
+| `destinationPaymentMethods`             | `Mercoa.PaymentMethodResponse[] \| undefined`                        | Available destination payment methods  |
+| `selectedSourcePaymentMethodId`         | `string \| undefined`                                                | Selected source payment method ID      |
+| `selectedDestinationPaymentMethodId`    | `string \| undefined`                                                | Selected destination payment method ID |
+| `setSelectedSourcePaymentMethodId`      | `(paymentMethodId: string) => void`                                  | Sets source payment method             |
+| `setSelectedDestinationPaymentMethodId` | `(paymentMethodId: string) => void`                                  | Sets destination payment method        |
+| `availableSourceTypes`                  | `Array<{ key: string; value: string }>`                              | Available source payment types         |
+| `selectedSourceType`                    | `Mercoa.PaymentMethodType \| undefined`                              | Selected source type                   |
+| `setSelectedSourceType`                 | `(type: Mercoa.PaymentMethodType) => void`                           | Sets source type                       |
+| `availableDestinationTypes`             | `Array<{ key: string; value: string }>`                              | Available destination types            |
+| `selectedDestinationType`               | `Mercoa.PaymentMethodType \| undefined`                              | Selected destination type              |
+| `setSelectedDestinationType`            | `(type: Mercoa.PaymentMethodType) => void`                           | Sets destination type                  |
+| `paymentLink`                           | `string \| undefined`                                                | Payment link for the receivable        |
+| `setMethodOnTypeChange`                 | `(type: PaymentMethodType, mode: 'source' \| 'destination') => void` | Updates payment method on type change  |
+
+---
+
+<a id="payer-context"></a>
+### Payer Context (`payerContextValue`)
+
+| Name               | Type                                                  | Description              |
+| :----------------- | :---------------------------------------------------- | :----------------------- |
+| `selectedPayer`    | `Mercoa.EntityResponse \| undefined`                  | Currently selected payer |
+| `setSelectedPayer` | `(payer: Mercoa.EntityResponse \| undefined) => void` | Sets the selected payer  |
+
+## Example Usage
+
+```tsx
+import { useReceivableDetails } from '@mercoa/react'
+
+const CustomReceivableForm = () => {
+  const {
+    formContextValue: { formMethods, handleFormSubmit },
+    dataContextValue: { receivableData },
+    formContextValue: { paymentMethodContextValue },
+  } = useReceivableDetails()
+
+  return (
+    <form onSubmit={formMethods.handleSubmit(handleFormSubmit)}>
+      <div>
+        <label>Amount</label>
+        <input {...formMethods.register('amount')} />
+      </div>
+
+      <div>
+        <label>Payment Method</label>
+        <select
+          value={paymentMethodContextValue.selectedDestinationPaymentMethodId}
+          onChange={(e) => paymentMethodContextValue.setSelectedDestinationPaymentMethodId(e.target.value)}
+        >
+          {paymentMethodContextValue.destinationPaymentMethods?.map((method) => (
+            <option key={method.id} value={method.id}>
+              {method.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <button type="submit">Submit</button>
+    </form>
+  )
+}
+
+const ReceivableDetailsExample = () => {
+  return (
+    <ReceivableDetails>
+      <CustomReceivableForm />
+    </ReceivableDetails>
+  )
+}
+```
+
+This example demonstrates how to use the `useReceivableDetails` hook to create a custom form component with payment method selection.

@@ -1,0 +1,155 @@
+---
+title: useReceivables Hook
+description: The `useReceivables` hook provides access to receivables data, filtering, sorting, pagination, and selection within the `Receivables` component.
+---
+
+# useReceivables
+
+The `useReceivables` hook is used inside children of the `<Receivables>` component. It provides access to receivables data, filtering capabilities, sorting controls, pagination, and row selection.
+
+## Props
+
+The props for `useReceivables` are the same as [`Receivables`](./Receivables), as it is meant to be used within its context.
+
+## Return Type
+
+| Name                     | Type                                                              | Description                                          |
+| :----------------------- | :---------------------------------------------------------------- | :--------------------------------------------------- |
+| `dataContextValue`       | [`ReceivablesDataContext`](#receivables-data-context)             | Provides receivables data and loading states         |
+| `filtersContextValue`    | [`ReceivablesFilterContext`](#receivables-filter-context)         | Manages filtering options                            |
+| `sortingContextValue`    | [`ReceivablesSortingContext`](#receivables-sorting-context)       | Controls sorting                                     |
+| `paginationContextValue` | [`ReceivablesPaginationContext`](#receivables-pagination-context) | Controls pagination                                  |
+| `selectionContextValue`  | [`ReceivablesSelectionContext`](#receivables-selection-context)   | Handles row selection and column visibility          |
+| `propsContextValue`      | `ReceivablesProps`                                                | Access to the original props passed to `Receivables` |
+
+---
+
+<a id="receivables-data-context"></a>
+### Data Context (`dataContextValue`)
+
+| Name                 | Type                              | Description                       |
+| :------------------- | :-------------------------------- | :-------------------------------- |
+| `tableData`          | `Array<ReceivableTableRow>`       | Formatted table data              |
+| `infiniteData`       | `any`                             | Raw infinite query data           |
+| `allFetchedInvoices` | `Mercoa.InvoiceResponse[]`        | All fetched invoice data          |
+| `totalItems`         | `number`                          | Total number of items             |
+| `metricsData`        | `Mercoa.InvoiceMetricsResponse[]` | Metrics data                      |
+| `statusTabsMetrics`  | `any`                             | Metrics for status tabs           |
+| `isFetching`         | `boolean`                         | Whether data is being fetched     |
+| `isLoading`          | `boolean`                         | Whether initial load is happening |
+| `isError`            | `boolean`                         | Whether an error occurred         |
+| `isRefreshLoading`   | `boolean`                         | Whether refresh is in progress    |
+| `handleRefresh`      | `() => void`                      | Function to refresh data          |
+
+---
+
+<a id="receivables-filter-context"></a>
+### Filter Context (`filtersContextValue`)
+
+| Name                   | Type                                  | Description                       |
+| :--------------------- | :------------------------------------ | :-------------------------------- |
+| `search`               | `string`                              | Search query string               |
+| `setSearch`            | `(search: string) => void`            | Sets search query                 |
+| `startDate`            | `Date \| undefined`                   | Start date filter                 |
+| `setStartDate`         | `(date: Date \| undefined) => void`   | Sets start date filter            |
+| `endDate`              | `Date \| undefined`                   | End date filter                   |
+| `setEndDate`           | `(date: Date \| undefined) => void`   | Sets end date filter              |
+| `currentStatuses`      | `Mercoa.InvoiceStatus[]`              | Currently selected status filters |
+| `setCurrentStatuses`   | `(statuses: InvoiceStatus[]) => void` | Sets status filters               |
+| `toggleSelectedStatus` | `(status: InvoiceStatus) => void`     | Toggles a status filter           |
+
+---
+
+<a id="receivables-sorting-context"></a>
+### Sorting Context (`sortingContextValue`)
+
+| Name                  | Type                                   | Description               |
+| :-------------------- | :------------------------------------- | :------------------------ |
+| `orderBy`             | `Mercoa.InvoiceOrderByField`           | Current sort field        |
+| `setOrderBy`          | `(field: InvoiceOrderByField) => void` | Sets sort field           |
+| `orderDirection`      | `Mercoa.OrderDirection`                | Current sort direction    |
+| `setOrderDirection`   | `(direction: OrderDirection) => void`  | Sets sort direction       |
+| `handleOrderByChange` | `(field: InvoiceOrderByField) => void` | Handles sort field change |
+
+---
+
+<a id="receivables-pagination-context"></a>
+### Pagination Context (`paginationContextValue`)
+
+| Name                | Type                        | Description                        |
+| :------------------ | :-------------------------- | :--------------------------------- |
+| `page`              | `number`                    | Current page number                |
+| `resultsPerPage`    | `number`                    | Number of results per page         |
+| `setResultsPerPage` | `(perPage: number) => void` | Sets results per page              |
+| `goToNextPage`      | `() => void`                | Go to next page                    |
+| `goToPreviousPage`  | `() => void`                | Go to previous page                |
+| `totalEntries`      | `number`                    | Total number of entries            |
+| `isNextDisabled`    | `boolean`                   | Whether next page is available     |
+| `isPrevDisabled`    | `boolean`                   | Whether previous page is available |
+
+---
+
+<a id="receivables-selection-context"></a>
+### Selection Context (`selectionContextValue`)
+
+| Name                    | Type                                      | Description                    |
+| :---------------------- | :---------------------------------------- | :----------------------------- |
+| `selectedInvoiceIds`    | `string[]`                                | Currently selected invoice IDs |
+| `setSelectedInvoiceIds` | `(ids: string[]) => void`                 | Sets selected invoice IDs      |
+| `isAllSelected`         | `boolean`                                 | Whether all items are selected |
+| `handleSelectAll`       | `() => void`                              | Selects/deselects all items    |
+| `handleSelectRow`       | `(invoiceId: string) => void`             | Selects/deselects a single row |
+| `selectedColumns`       | `InvoiceTableColumn[]`                    | Visible columns                |
+| `setSelectedColumns`    | `(columns: InvoiceTableColumn[]) => void` | Sets visible columns           |
+| `toggleSelectedColumn`  | `(column: InvoiceTableColumn) => void`    | Toggles column visibility      |
+
+## Example Usage
+
+```tsx
+import { ReceivablesTable, useReceivables } from '@mercoa/react'
+
+// Custom table component using the useReceivables hook
+const CustomReceivablesTableContent = () => {
+  const {
+    dataContextValue: { tableData, isLoading },
+    selectionContextValue: { selectedInvoiceIds, handleSelectRow },
+    paginationContextValue: { goToNextPage, isNextDisabled },
+  } = useReceivables()
+
+  if (isLoading) return <div>Loading...</div>
+
+  return (
+    <div>
+      <table>
+        <tbody>
+          {tableData.map((row) => (
+            <tr
+              key={row.id}
+              onClick={() => handleSelectRow(row.id)}
+              className={selectedInvoiceIds.includes(row.id) ? 'selected' : ''}
+            >
+              <td>{row.invoiceNumber}</td>
+              <td>{row.amount}</td>
+              <td>{row.status}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <button onClick={goToNextPage} disabled={isNextDisabled}>
+        Next Page
+      </button>
+    </div>
+  )
+}
+
+// Wrapper component that provides the ReceivablesTable context
+const CustomReceivablesTable = () => {
+  return (
+    <Receivables>
+      <CustomReceivablesTableContent />
+    </Receivables>
+  )
+}
+```
+
+This example demonstrates how to use the `useReceivables` hook to create a custom table component with selection and pagination.

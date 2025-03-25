@@ -1,10 +1,10 @@
-import { ReceivableDetails, MercoaSession } from '@mercoa/react'
+import { ReceivableDetailsV1, MercoaSession } from '@mercoa/react'
 import { payerEntity, vendorEntities } from '../../mockData'
 import { ComponentContainer } from '../../components/helpers'
 
-# Payable Form
+# Receivable Form
 
-The `<ReceivableDetails>` component is used to let users create and manage receivable invoices.
+The `<ReceivableDetailsV1>` component is used to let users create and manage receivable invoices.
 
 ## Customization Options
 
@@ -24,9 +24,9 @@ The `<ReceivableDetails>` component is used to let users create and manage recei
 ### Edit Existing Invoice
 
 <ComponentContainer>
-  <ReceivableDetails invoiceId={'inv_new_ready'} />
+  <ReceivableDetailsV1 invoiceId={'inv_new_ready'} />
   ```jsx
-<ReceivableDetails
+<ReceivableDetailsV1
   invoiceId={'inv_XXXXX-XXXX-XXXXXX'}   
   onRedirect={(invoice) => {
     if (!invoice) {
@@ -42,9 +42,9 @@ The `<ReceivableDetails>` component is used to let users create and manage recei
 ### Create New Invoice
 
 <ComponentContainer>
-  <ReceivableDetails />
+  <ReceivableDetailsV1 />
   ```jsx
-<ReceivableDetails 
+<ReceivableDetailsV1 
   onRedirect={(invoice) => {
     if (!invoice) {
       router.push(`/dashboard/payers/${entityId}`)

@@ -1,0 +1,158 @@
+---
+title: 'Architecture'
+description: 'Documentation for the Provider + Context model used for handling state, async data, and UI logic across components.'
+---
+
+# Architecture
+
+## Overview
+
+The **New Component Architecture** follows a **Provider + Context model**, where components receive props, pass them into a **custom hook**, and expose processed state, asynchronous data, and event handlers via **React Context**. This ensures **centralized state management, prevents prop drilling, and optimizes re-renders** across the component tree.
+
+This architecture is applicable to multiple components, providing a consistent approach to handling **data fetching, state management, and event-driven updates**.
+
+## Architectural Flow
+
+1. **Parent Component** (e.g., `PayableDetails`)
+
+   - Accepts **query options, configuration, display settings, event handlers, and UI overrides** as props.
+   - Passes these to a **custom hook (`usePayableDetails`)** for processing.
+
+2. **Internal State Hook (`usePayableDetailsInternal`)**
+
+   - Manages **data fetching, state, and computed values**.
+   - Returns processed data and functions.
+
+3. **Internal Context Provider (`PayableDetailsProvider`)**
+
+   - Stores and provides data returned from the hook.
+   - Exposes the data and actions to child components using `usePayableDetails`.
+
+4. **Child Components (`PayableForm`, `PayableDocument`, etc.)**
+   - Consume `usePayableDetails` to access data without needing direct props.
+
+## Props Generalization
+
+The architecture standardizes props across components using a structured interface to ensure maintainability and extensibility. The following generalized props pattern is followed:
+
+```typescript
+export type PayablesProps = {
+  queryOptions?: PayablesQueryOptions // query params for data
+  renderCustom?: PayablesRenderCustom // custom UI overrides
+  displayOptions?: PayablesDisplayOptions // controls display behavior
+  handlers?: PayablesHandlers // event callbacks
+  config?: PayablesConfig // controls functional behavior
+}
+```
+
+### Explanation of Prop Categories:
+
+- **Query Options (`queryOptions`)**: Specifies parameters required for fetching and filtering data.
+- **Render Customization (`renderCustom`)**: Allows overriding default UI components and behaviors.
+- **Display Options (`displayOptions`)**: Defines structural and positional settings of the component.
+- **Handlers (`handlers`)**: Includes event callbacks for user interactions and lifecycle events.
+- **Configuration (`config`)**: Controls internal logic and functional behaviors.
+
+## Example Component Breakdown
+
+### Parent Component (`PayableDetails`)
+
+Responsible for initializing the provider and rendering child components.
+
+```tsx
+export const PayableDetails = ({
+  queryOptions,
+  handlers,
+  config,
+  displayOptions,
+  renderCustom,
+  children,
+}: PayablesV2Props) => {
+  return (
+    <PayableDetailsProvider
+      queryOptions={queryOptions}
+      handlers={handlers}
+      config={config}
+      displayOptions={displayOptions}
+      renderCustom={renderCustom}
+    >
+      {children}
+    </PayableDetailsProvider>
+  )
+}
+```
+
+### Internal Custom Hook (`usePayableDetailsInternal`)
+
+Handles data fetching, state management, and computed values.
+
+```tsx
+export const usePayableDetailsInternal = (queryOptions?: PayableDetailsQueryOptions) => {
+  // Internal logic for fetching data, handling state, and providing computed values
+}
+```
+
+### Internal Context Provider (`PayableDetailsProvider`)
+
+Exposes data and utility functions to child components.
+
+```tsx
+const PayableDetailsContext = createContext<PayableDetailsContextValue | null>(null)
+
+export const PayableDetailsProvider: FC<PayableDetailsProviderProps> = ({ queryOptions, children }) => {
+  const payables = usePayableDetailsInternal(queryOptions)
+
+  return <PayableDetailsContext.Provider value={payables}>{children}</PayableDetailsContext.Provider>
+}
+
+export const usePayableDetailsContext = () => {
+  const context = useContext(PayableDetailsContext)
+  if (!context) {
+    throw new Error('usePayableDetailsContext must be used within PayableDetailsProvider')
+  }
+  return context
+}
+```
+
+### Child Component (`PayableForm`)
+
+Consumes data from context and uses it in the UI.
+
+```tsx
+export const PayableForm = () => {
+  const { payables, loading } = usePayableDetails()
+
+  if (loading) return <div>Loading...</div>
+
+  return (
+    <div>
+      <h2>Payable Details</h2>
+      <pre>{JSON.stringify(payables, null, 2)}</pre>
+    </div>
+  )
+}
+```
+
+## Data Flow Diagram
+
+```
+  ┌───────────────────┐   Calls Hook   ┌───────────────────────────┐
+  │  PayableDetails   │ ─────────────► │ usePayableDetailsInternal │
+  └───────────────────┘                └───────────────────────────┘
+            │                                  │
+      Provides Context                      Returns
+            ▼                                  ▼
+  ┌──────────────────┐   Access via    ┌──────────────────────┐
+  │ Child Component  │ ◄────────────── │  usePayableDetails   │
+  └──────────────────┘                 └──────────────────────┘
+```
+
+## Key Benefits
+
+- **Centralized state management** reduces redundancy and improves maintainability.
+- **Separation of business logic** from UI components improves testability and reusability.
+- **Prevents prop drilling**, allowing components to access data via context.
+- **Optimized re-renders**, ensuring components only update when necessary.
+- **Consistent API design** across different components.
+
+This **New Component Architecture** provides a **scalable and maintainable pattern** for managing data and UI logic across components. It ensures a **consistent and efficient approach** to state management while keeping components decoupled from data-fetching logic.
