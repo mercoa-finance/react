@@ -41,11 +41,7 @@ export const ReceivablesDashboard = () => {
   // const { selectedStatusFilters } = getFilters('receivables')
 
   const { statusTabsOptions, showInvoiceMetrics = true, classNames } = displayOptions ?? {}
-  const {
-    onCreateInvoice,
-    onCreateInvoiceTemplate,
-    onSelectInvoiceTemplate,
-  } = handlers ?? {}
+  const { onCreateInvoice, onCreateInvoiceTemplate, onSelectInvoiceTemplate } = handlers ?? {}
 
   // const [showCumulativeFilter, setShowCumulativeFilter] = useState(true)
   const [showRecurringInvoices, setShowRecurringInvoices] = useState(false)
@@ -78,7 +74,7 @@ export const ReceivablesDashboard = () => {
         <div className="mercoa-flex mercoa-w-[50%] mercoa-mr-2 mercoa-rounded-mercoa">
           <DebouncedSearch onSettle={setSearch}>
             {({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
-              <div className="mercoa-flex mercoa-items-center mercoa-w-full mercoa-bg-transparent mercoa-relative mercoa-rounded-mercoa">
+              <div className="mercoa-flex mercoa-items-center mercoa-w-full mercoa-bg-transparent mercoa-relative mercoa-rounded-mercoa mercoa-border mercoa-h-[36px] mercoa-border-gray-200">
                 <div className="mercoa-left-[8px] mercoa-top-[50%] mercoa-translate-y-[-50%] mercoa-absolute">
                   <SearchIcon />
                 </div>
