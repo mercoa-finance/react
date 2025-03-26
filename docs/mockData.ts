@@ -17,6 +17,8 @@ const organization: Mercoa.OrganizationResponse = {
         type: 'bankAccount',
         name: 'Bank Account',
         active: true,
+        availableDeliveryMethods: [Mercoa.BankDeliveryMethod.AchStandard, Mercoa.BankDeliveryMethod.AchSameDay],
+        defaultDeliveryMethod: Mercoa.BankDeliveryMethod.AchStandard,
       },
       {
         type: 'card',
@@ -37,6 +39,7 @@ const organization: Mercoa.OrganizationResponse = {
         type: 'custom',
         name: 'cpms_0968a2ec-f59e-49b4-b6b0-bfd46133ed7a',
         active: true,
+        schemaId: 'cpms_0968a2ec-f59e-49b4-b6b0-bfd46133ed7a',
       },
     ],
     backupDisbursements: [
@@ -44,11 +47,16 @@ const organization: Mercoa.OrganizationResponse = {
         type: 'bankAccount',
         name: 'Bank Account',
         active: true,
+        availableDeliveryMethods: [Mercoa.BankDeliveryMethod.AchStandard, Mercoa.BankDeliveryMethod.AchSameDay],
+        defaultDeliveryMethod: Mercoa.BankDeliveryMethod.AchStandard,
       },
       {
         type: 'check',
         name: 'Check',
         active: true,
+        availableDeliveryMethods: [Mercoa.CheckDeliveryMethod.Mail, Mercoa.CheckDeliveryMethod.Print],
+        defaultDeliveryMethod: Mercoa.CheckDeliveryMethod.Mail,
+        printDescription: true,
       },
       {
         type: 'offPlatform',
@@ -59,6 +67,7 @@ const organization: Mercoa.OrganizationResponse = {
         type: 'custom',
         name: 'cpms_0968a2ec-f59e-49b4-b6b0-bfd46133ed7a',
         active: true,
+        schemaId: 'cpms_0968a2ec-f59e-49b4-b6b0-bfd46133ed7a',
       },
     ],
     vendorDisbursements: [
@@ -66,11 +75,16 @@ const organization: Mercoa.OrganizationResponse = {
         type: 'bankAccount',
         name: 'Bank Account',
         active: true,
+        availableDeliveryMethods: [Mercoa.BankDeliveryMethod.AchStandard, Mercoa.BankDeliveryMethod.AchSameDay],
+        defaultDeliveryMethod: Mercoa.BankDeliveryMethod.AchStandard,
       },
       {
         type: 'check',
         name: 'Check',
         active: true,
+        availableDeliveryMethods: [Mercoa.CheckDeliveryMethod.Mail, Mercoa.CheckDeliveryMethod.Print],
+        defaultDeliveryMethod: Mercoa.CheckDeliveryMethod.Mail,
+        printDescription: true,
       },
       {
         type: 'virtualCard',
@@ -81,6 +95,7 @@ const organization: Mercoa.OrganizationResponse = {
         type: 'custom',
         name: 'cpms_0968a2ec-f59e-49b4-b6b0-bfd46133ed7a',
         active: true,
+        schemaId: 'cpms_0968a2ec-f59e-49b4-b6b0-bfd46133ed7a',
       },
     ],
   },
@@ -200,6 +215,11 @@ const organization: Mercoa.OrganizationResponse = {
         show: true,
         required: true,
       },
+      bankStatement: {
+        edit: true,
+        show: true,
+        required: true,
+      },
     },
     individual: {
       name: {
@@ -243,6 +263,11 @@ const organization: Mercoa.OrganizationResponse = {
         required: true,
       },
       tenNinetyNine: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      bankStatement: {
         edit: true,
         show: true,
         required: true,
@@ -350,6 +375,11 @@ const organization: Mercoa.OrganizationResponse = {
         show: true,
         required: true,
       },
+      bankStatement: {
+        edit: true,
+        show: true,
+        required: true,
+      },
     },
     individual: {
       name: {
@@ -393,6 +423,11 @@ const organization: Mercoa.OrganizationResponse = {
         required: true,
       },
       tenNinetyNine: {
+        edit: true,
+        show: true,
+        required: true,
+      },
+      bankStatement: {
         edit: true,
         show: true,
         required: true,

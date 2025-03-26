@@ -45,7 +45,6 @@ export default function Home({ token }: { token?: string }) {
   return (
     <main style={{ paddingTop: '1.25rem', alignItems: 'center', flexDirection: 'column', display: 'flex' }}>
       <h1 style={{ fontSize: '1.25rem', fontWeight: 700, lineHeight: '2rem', margin: 0 }}>Mercoa Next.js Example</h1>
-      {token}
       {token ? (
         <MercoaSession token={token} />
       ) : (

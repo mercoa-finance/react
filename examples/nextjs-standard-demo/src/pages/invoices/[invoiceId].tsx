@@ -27,9 +27,18 @@ export default function Bills() {
         Back
       </MercoaButton>
       <ReceivableDetails
-        invoiceId={invoiceId}
-        onUpdate={(invoice) => {
-          if (invoice) router.push(`/invoices/${invoice.id}`)
+        queryOptions={{
+          invoiceType: 'invoice',
+          invoiceId,
+        }}
+        config={{
+          supportedCurrencies: ['USD'],
+          disableCustomerCreation: true,
+        }}
+        handlers={{
+          onInvoiceUpdate: (invoice) => {
+            if (invoice) router.push(`/invoices/${invoice.id}`)
+          },
         }}
       />
     </div>

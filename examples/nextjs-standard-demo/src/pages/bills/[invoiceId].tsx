@@ -27,9 +27,14 @@ export default function Bills() {
         Back
       </MercoaButton>
       <PayableDetails
-        invoiceId={invoiceId}
-        onInvoiceSubmit={(invoice) => {
-          if (invoice) router.push(`/bills/${invoice.id}`)
+        queryOptions={{
+          invoiceType: 'invoice',
+          invoiceId,
+        }}
+        handlers={{
+          onInvoiceUpdate: (invoice) => {
+            if (invoice) router.push(`/bills/${invoice.id}`)
+          },
         }}
       />
     </div>

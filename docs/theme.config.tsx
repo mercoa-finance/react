@@ -70,7 +70,7 @@ const config: DocsThemeConfig = {
           </span>
         )
       }
-      return title
+      return <>{title}</>
     },
   },
 }
