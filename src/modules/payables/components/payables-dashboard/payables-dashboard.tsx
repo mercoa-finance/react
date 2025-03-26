@@ -119,10 +119,10 @@ export const PayablesDashboard: FC = memo(() => {
       </div>
 
       <div className="mercoa-mt-2 mercoa-flex mercoa-justify-between mercoa-items-center mercoa-mb-4 mercoa-gap-5">
-        <div className="mercoa-flex mercoa-rounded-mercoa mercoa-shadow-sm mercoa-border-mercoa-primary mercoa-w-[50%]">
+        <div className="mercoa-flex mercoa-w-[50%] mercoa-mr-2 mercoa-rounded-mercoa">
           <DebouncedSearch onSettle={setSearch}>
             {({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
-              <div className="mercoa-flex mercoa-items-center mercoa-w-full mercoa-bg-transparent mercoa-relative mercoa-rounded-mercoa mercoa-border mercoa-h-[36px] mercoa-border-gray-200">
+              <div className="mercoa-flex mercoa-items-center mercoa-w-full mercoa-bg-transparent mercoa-relative mercoa-rounded-mercoa">
                 <div className="mercoa-left-[8px] mercoa-top-[50%] mercoa-translate-y-[-50%] mercoa-absolute">
                   <SearchIcon />
                 </div>

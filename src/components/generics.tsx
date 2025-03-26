@@ -524,7 +524,7 @@ export function Skeleton({ rows, height }: { rows?: number; height?: number }) {
       {[...Array(rows)].map((key) => (
         <div
           key={Math.random()}
-          className={`mercoa-w-full mercoa-rounded-mercoa mercoa-bg-gray-200`}
+          className={`mercoa-w-full mercoa-rounded-mercoa mercoa-bg-gray-100`}
           style={{ height: height + 'px' }}
         ></div>
       ))}

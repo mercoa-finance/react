@@ -23,7 +23,7 @@ export const SkeletonLoader: React.FC<SkeletonLoaderProps> = ({ height, width, s
 
   return (
     <div
-      className={classNames('mercoa-bg-black mercoa-animate-animatedBackground', className)}
+      className={classNames('mercoa-bg-gray-100 mercoa-animate-pulse', className)}
       style={{
         height,
         width: `${scaledWidth()}px`,
