@@ -13,12 +13,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (!entityId && !entityGroupId) {
     return res.status(403).send('No entity ID or entity group ID provided')
   }
-  let token
   try {
-    token = entityId ? await mercoa.entity.getToken(entityId, {}) : await mercoa.entityGroup.getToken(entityGroupId, {})
+    const token = entityId
+      ? await mercoa.entity.getToken(entityId, {})
+      : await mercoa.entityGroup.getToken(entityGroupId, {})
+    res.send(token)
   } catch (error) {
     console.error('Error getting Mercoa token:', error)
-    throw error
+    res.status(500).send('Error retrieving token')
   }
-  res.send(token)
 }
