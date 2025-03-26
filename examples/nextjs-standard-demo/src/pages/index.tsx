@@ -35,7 +35,7 @@ export default function Home() {
         </li> */}
         <li>
           The complete Mercoa component library is available at{' '}
-          <a href="https://reac.mercoa.com" className="underline text-blue-700">
+          <a href="https://react.mercoa.com" className="underline text-blue-700">
             react.mercoa.com
           </a>
           .

@@ -1,5 +1,5 @@
 import { Counterparties } from '@mercoa/react'
 
-export default function Approvals() {
+export default function Vendors() {
   return <Counterparties type="payee" />
 }

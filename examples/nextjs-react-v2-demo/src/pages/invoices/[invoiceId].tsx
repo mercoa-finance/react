@@ -1,7 +1,7 @@
 import { MercoaButton, ReceivableDetails } from '@mercoa/react'
 import { useRouter } from 'next/router'
 
-export default function Bills() {
+export default function Invoices() {
   const router = useRouter()
 
   const invoiceIdParam = router.query.invoiceId as string
