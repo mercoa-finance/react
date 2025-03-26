@@ -1,10 +1,17 @@
 import { useState } from 'react'
-import { useFormContext } from 'react-hook-form'
+import { useFormContext, UseFormReturn } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
-import { EntitySelector, MercoaButton, NoSession, useMercoaSession } from '../../../../../../components'
+import {
+  EntitySelector,
+  MercoaButton,
+  NoSession,
+  useMercoaSession,
+  usePayableDetails,
+} from '../../../../../../components'
 import { getInvoiceClient } from '../../../../../common/utils'
 import { PayableFormAction } from '../../constants'
+import { PayableFormData } from '../../types'
 import { findApproverSlot } from '../payable-approvers/utils'
 import { PayableFormErrors } from './payable-form-errors'
 
@@ -12,12 +19,10 @@ export type PayableActionChildrenProps = {
   isSaving: boolean
   buttons?: JSX.Element[]
   setStatus: (status: Mercoa.InvoiceStatus) => void
-  submitForm?: () => void
+  submitForm: () => void
 }
 
 export function PayableActions({
-  invoiceType = 'invoice',
-  refreshInvoice,
   approveButton,
   rejectButton,
   nonApproverButton,
@@ -34,13 +39,9 @@ export function PayableActions({
   markAsPaidButton,
   schedulePaymentButton,
   retryPaymentButton,
-  submitForm,
   additionalActions,
-  actionLoading,
   children,
 }: {
-  invoiceType?: 'invoice' | 'invoiceTemplate'
-  refreshInvoice?: (invoiceId: string) => void
   approveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   rejectButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   nonApproverButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
@@ -69,10 +70,20 @@ export function PayableActions({
     position: 'left' | 'right'
     actions: (props: PayableActionChildrenProps) => JSX.Element[]
   }
-  actionLoading?: boolean
   children?: (props: PayableActionChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
+
+  const { formContextValue, dataContextValue } = usePayableDetails()
+  const { formMethods, handleFormAction, formActionLoading: actionLoading } = formContextValue
+
+  const { invoiceType, refreshInvoice } = dataContextValue
+
+  const { handleSubmit } = formMethods as UseFormReturn<PayableFormData>
+
+  const submitForm = () => {
+    handleSubmit((data: PayableFormData) => handleFormAction(data, data.formAction as PayableFormAction))()
+  }
 
   const { userPermissionConfig } = mercoaSession
 

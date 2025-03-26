@@ -94,7 +94,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     return typeof originalValue === 'string' ? Number(originalValue?.replace(/,/g, '')) : originalValue
   }
 
-  const { onInvoicePreSubmit, onInvoiceSubmit, onCounterpartyPreSubmit, onInvoiceUpdate } = handlers
+  const { onInvoicePreSubmit, onInvoiceSubmit, onCounterpartyPreSubmit, onInvoiceUpdate, onOcrComplete } = handlers
 
   const [ocrResponse, setOcrResponse] = useState<Mercoa.OcrResponse>()
 
@@ -602,16 +602,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     } else if (ocrResponse.vendor.id) {
       setSelectedVendor(ocrResponse.vendor)
     }
-  }, [
-    activeOcrJobId,
-    invoiceData,
-    invoiceData?.ocrJobId,
-    invoiceData?.vendor,
-    mercoaSession,
-    ocrResponse,
-    setOcrResponse,
-    setValue,
-  ])
+  }, [activeOcrJobId, invoiceData, invoiceData?.ocrJobId, invoiceData?.vendor, mercoaSession, ocrResponse, setValue])
 
   useEffect(() => {
     if (useDocumentOnce.current === true && documents) {
@@ -631,7 +622,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     if (!!ocrJob) {
       if (ocrJob.status === Mercoa.OcrJobStatus.Success) {
         setOcrProcessing(false)
-        setOcrResponse(ocrJob.data)
+        setOcrResponse(onOcrComplete && ocrJob.data ? onOcrComplete(ocrJob.data) : ocrJob.data)
         return
       }
       if (ocrJob.status === Mercoa.OcrJobStatus.Failed) {
@@ -645,7 +636,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
 
   useEffect(() => {
     if (!!invoiceOcrJob) {
-      setOcrResponse(invoiceOcrJob.data)
+      setOcrResponse(onOcrComplete && invoiceOcrJob.data ? onOcrComplete(invoiceOcrJob.data) : invoiceOcrJob.data)
     }
   }, [invoiceOcrJob])
 

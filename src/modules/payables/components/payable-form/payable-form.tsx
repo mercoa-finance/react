@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import { ReactElement } from 'react'
+import { ReactNode } from 'react'
 import { FormProvider, UseFormReturn } from 'react-hook-form'
 import { NoSession, useMercoaSession, usePayableDetails } from '../../../../components'
 import { PayableActions } from './components/payable-actions'
@@ -21,12 +21,12 @@ import { PayableTaxAndShipping } from './components/payable-tax-and-shipping/pay
 import { PayableFormAction } from './constants'
 import { PayableFormData } from './types'
 
-export function PayableForm({ children }: { children?: ReactElement }) {
+export function PayableForm({ children }: { children?: ReactNode }) {
   const mercoaSession = useMercoaSession()
   const { displayContextValue, formContextValue, dataContextValue } = usePayableDetails()
-  const { formMethods, handleFormAction, formActionLoading, vendorContextValue } = formContextValue
-  const { selectedVendor, setSelectedVendor } = vendorContextValue
-  const { invoiceType, refreshInvoice } = dataContextValue
+  const { formMethods, handleFormAction } = formContextValue
+
+  const { invoiceType } = dataContextValue
   const { height } = displayContextValue
 
   const { handleSubmit } = formMethods as UseFormReturn<any>
@@ -53,7 +53,7 @@ export function PayableForm({ children }: { children?: ReactElement }) {
             <>
               <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
               <PayableFormHeader /> <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
-              <PayableCounterpartySearch onSelect={setSelectedVendor} counterparty={selectedVendor} />{' '}
+              <PayableCounterpartySearch />{' '}
               {invoiceType === 'invoiceTemplate' && (
                 <>
                   <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full" />
@@ -80,16 +80,7 @@ export function PayableForm({ children }: { children?: ReactElement }) {
                 </>
               )}
               <PayableComments />
-              <PayableActions
-                submitForm={() =>
-                  handleSubmit((data: PayableFormData) =>
-                    handleFormAction(data, data.formAction as PayableFormAction),
-                  )()
-                }
-                refreshInvoice={refreshInvoice}
-                invoiceType={invoiceType}
-                actionLoading={formActionLoading}
-              />
+              <PayableActions />
             </>
           )}
         </form>

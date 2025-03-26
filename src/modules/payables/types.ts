@@ -27,7 +27,7 @@ export type PayableDetailsHandlers = {
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onInvoiceUpdate?: (invoice?: Mercoa.InvoiceResponse) => void
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
-  onOcrComplete?: (ocr: Mercoa.OcrResponse) => void
+  onOcrComplete?: (ocr: Mercoa.OcrResponse) => Mercoa.OcrResponse
 }
 
 export type PayableDetailsQueryOptions = {
@@ -38,6 +38,8 @@ export type PayableDetailsQueryOptions = {
 
 export type PayableDetailsConfig = {
   supportedCurrencies?: Mercoa.CurrencyCode[]
+  disableCounterpartyCreation?: boolean
+  counterpartyNetwork?: Mercoa.CounterpartyNetworkType[]
 }
 
 export type PayableDetailsDisplayOptions = {
@@ -60,7 +62,7 @@ export type PayableDetailsContextValue = {
 
 export type PayableDataContext = {
   invoice?: Mercoa.InvoiceResponse
-  invoiceType?: 'invoice' | 'invoiceTemplate'
+  invoiceType: 'invoice' | 'invoiceTemplate'
   invoiceLoading: boolean
   refreshInvoice: (invoiceId: string) => void
 }

@@ -1,34 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
-import { CounterpartySearchBase } from '../../../../../../components'
+import { CounterpartySearchBase, usePayableDetails } from '../../../../../../components'
 import { PayableFormAction } from '../../constants'
 
-interface PayableCounterpartySearchChildrenProps {
-  counterparty?: Mercoa.CounterpartyResponse
-  disableCreation?: boolean
-  onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
-  network?: Mercoa.CounterpartyNetworkType[]
-  edit: boolean
-  setEdit: React.Dispatch<React.SetStateAction<boolean>>
-  status: any
-  errors: any
-}
-
-export function PayableCounterpartySearch({
-  counterparty,
-  disableCreation,
-  onSelect,
-  network,
-  children,
-}: {
-  counterparty?: Mercoa.CounterpartyResponse
-  disableCreation?: boolean
-  onSelect?: (counterparty: Mercoa.CounterpartyResponse | undefined) => any
-  network?: Mercoa.CounterpartyNetworkType[]
-  children?: (props: PayableCounterpartySearchChildrenProps) => React.ReactNode
-}) {
+export function PayableCounterpartySearch() {
   const [edit, setEdit] = useState<boolean>(false)
+  const { formContextValue, propsContextValue } = usePayableDetails()
+  const { vendorContextValue } = formContextValue
+  const { selectedVendor, setSelectedVendor } = vendorContextValue
+  const { config } = propsContextValue
+  const { disableCounterpartyCreation, counterpartyNetwork } = config ?? {}
 
   const {
     formState: { errors },
@@ -47,34 +29,28 @@ export function PayableCounterpartySearch({
 
   return (
     <div className="sm:mercoa-col-span-3">
-      {children ? (
-        children({ counterparty, disableCreation, onSelect, network, edit, setEdit, status, errors })
-      ) : (
-        <>
-          <label
-            htmlFor="vendor-name"
-            className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700"
-          >
-            Vendor
-          </label>
-          <div className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-left">
-            <div className="mercoa-p-3 mercoa-bg-gray-100 mercoa-rounded-mercoa mercoa-relative mercoa-w-full">
-              <CounterpartySearchBase
-                counterparty={counterparty}
-                disableCreation={disableCreation}
-                onSelect={onSelect}
-                type={'payee'}
-                network={network}
-                edit={edit}
-                setEdit={setEdit}
-                readOnly={!!status && status !== Mercoa.InvoiceStatus.Draft}
-              />
-            </div>
-          </div>
-          {errors.vendorId?.message && (
-            <p className="mercoa-text-sm mercoa-text-red-500">{errors.vendorId?.message.toString()}</p>
-          )}
-        </>
+      <label
+        htmlFor="vendor-name"
+        className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700"
+      >
+        Vendor
+      </label>
+      <div className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-left">
+        <div className="mercoa-p-3 mercoa-bg-gray-100 mercoa-rounded-mercoa mercoa-relative mercoa-w-full">
+          <CounterpartySearchBase
+            counterparty={selectedVendor}
+            disableCreation={disableCounterpartyCreation}
+            onSelect={setSelectedVendor}
+            type={'payee'}
+            network={counterpartyNetwork}
+            edit={edit}
+            setEdit={setEdit}
+            readOnly={!!status && status !== Mercoa.InvoiceStatus.Draft}
+          />
+        </div>
+      </div>
+      {errors.vendorId?.message && (
+        <p className="mercoa-text-sm mercoa-text-red-500">{errors.vendorId?.message.toString()}</p>
       )}
     </div>
   )
