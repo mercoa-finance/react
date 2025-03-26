@@ -19,6 +19,8 @@
 # misc
 .DS_Store
 *.pem
+*.gz
+*.tgz
 
 # debug
 npm-debug.log*
