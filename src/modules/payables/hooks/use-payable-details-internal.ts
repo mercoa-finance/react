@@ -640,20 +640,15 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     }
   }, [invoiceOcrJob])
 
-  useEffect(() => {
-    if (!paymentDestinationOptions?.type) {
-      setValue('paymentDestinationOptions', {
-        type: 'check',
-        delivery: 'MAIL',
-        printDescription: true,
-      })
-    }
-  }, [paymentDestinationOptions, setValue])
-
   const setMethodOnTypeChange = useCallback(
     (isDestination: boolean, selectedType: Mercoa.PaymentMethodType | string) => {
       const sourceOrDestination = isDestination ? 'paymentDestinationId' : 'paymentSourceId'
       const paymentMethods = (isDestination ? paymentMethodsDestination : paymentMethodsSource) ?? []
+      const backupDisbursement = mercoaSession.organization?.paymentMethods?.backupDisbursements.find((e) => {
+        if (!e.active) return false
+        if (e.type === 'custom') return e.name === selectedType
+        return e.type === selectedType
+      })
       if (isDestination) {
         setValue('paymentDestinationOptions', undefined)
       }
@@ -662,6 +657,12 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
           (paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount,
         ) as Mercoa.PaymentMethodResponse.BankAccount
         setValue(sourceOrDestination, account?.id)
+        if (isDestination) {
+          setValue('paymentDestinationOptions', {
+            type: 'bankAccount',
+            delivery: (backupDisbursement as Mercoa.PaymentRailResponse.BankAccount)?.defaultDeliveryMethod,
+          })
+        }
       } else if (selectedType === Mercoa.PaymentMethodType.Card) {
         setValue(
           sourceOrDestination,
@@ -672,6 +673,13 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
           sourceOrDestination,
           paymentMethods.find((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)?.id,
         )
+        if (isDestination) {
+          setValue('paymentDestinationOptions', {
+            type: 'check',
+            delivery: (backupDisbursement as Mercoa.PaymentRailResponse.Check)?.defaultDeliveryMethod,
+            printDescription: !!(backupDisbursement as Mercoa.PaymentRailResponse.Check)?.printDescription,
+          })
+        }
       } else if (selectedType === Mercoa.PaymentMethodType.Utility) {
         setValue(
           sourceOrDestination,
@@ -697,7 +705,13 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
 
       clearErrors(sourceOrDestination)
     },
-    [paymentMethodsSource, paymentMethodsDestination, setValue, clearErrors],
+    [
+      paymentMethodsSource,
+      paymentMethodsDestination,
+      setValue,
+      clearErrors,
+      mercoaSession.organization?.paymentMethods?.backupDisbursements,
+    ],
   )
 
   // set payment type defaults, and method defaults based on the type, should not run when source and destination payment types are already set
@@ -1716,7 +1730,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     setSelectedDestinationType: (type: Mercoa.PaymentMethodType) => {
       setValue('paymentDestinationType', type)
       setMethodOnTypeChange(true, type)
-      setValue('paymentDestinationOptions', undefined)
     },
     getVendorPaymentLink,
   }

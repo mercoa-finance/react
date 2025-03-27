@@ -630,7 +630,7 @@ export function PayableActions({
         let nextButton = <></>
         if (
           paymentDestinationType === Mercoa.PaymentMethodType.Check &&
-          paymentDestinationOptions.delivery === Mercoa.CheckDeliveryMethod.Print
+          paymentDestinationOptions?.delivery === Mercoa.CheckDeliveryMethod.Print
         ) {
           nextButton = printCheckButtonComponent
         } else {
@@ -643,7 +643,7 @@ export function PayableActions({
       case Mercoa.InvoiceStatus.Scheduled:
         if (
           paymentDestinationType === Mercoa.PaymentMethodType.Check &&
-          paymentDestinationOptions.delivery === Mercoa.CheckDeliveryMethod.Print
+          paymentDestinationOptions?.delivery === Mercoa.CheckDeliveryMethod.Print
         ) {
           buttons.push(printCheckButtonComponent)
         }
