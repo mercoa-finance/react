@@ -1,12 +1,13 @@
 import { ArrowRightIcon, CalendarDaysIcon } from '@heroicons/react/24/outline'
 import dayjs from 'dayjs'
+import { ReactNode } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { Tooltip, usePayableDetails } from '../../../../../../components'
 
 export function PaymentDestinationProcessingTime({
   children,
 }: {
-  children?: ({ timing }: { timing?: Mercoa.CalculatePaymentTimingResponse }) => JSX.Element
+  children?: ({ timing }: { timing?: Mercoa.CalculatePaymentTimingResponse }) => ReactNode
 }) {
   const { formContextValue } = usePayableDetails()
   const { paymentTimingContextValue } = formContextValue

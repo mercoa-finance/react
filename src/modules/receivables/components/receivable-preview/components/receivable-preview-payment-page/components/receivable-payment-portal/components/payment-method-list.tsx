@@ -1,4 +1,5 @@
 import { ExclamationTriangleIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { ReactNode } from 'react'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import { PaymentMethodButton, Tooltip, useMercoaSession } from '../../../../../../../../../components'
@@ -11,8 +12,8 @@ export function PaymentMethodList({
 }: {
   accounts?: Mercoa.PaymentMethodResponse[]
   showDelete?: boolean
-  addAccount?: JSX.Element
-  formatAccount: (account: any) => JSX.Element | JSX.Element[] | null
+  addAccount?: ReactNode
+  formatAccount: (account: any) => ReactNode | ReactNode[] | null
 }) {
   const mercoaSession = useMercoaSession()
   const hasAccounts = accounts && accounts.length > 0

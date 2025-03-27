@@ -17,7 +17,7 @@ export function PrintDescriptionOnCheckRemittanceSwitch() {
   if (paymentDestinationType !== 'check') return <></>
   return (
     <MercoaSwitch
-      label="Print Description on Check Remittance"
+      label="Print on check remittance"
       name="paymentDestinationOptions.printDescription"
       register={register}
       errors={errors}

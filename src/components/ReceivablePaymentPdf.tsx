@@ -6,7 +6,7 @@ import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { LoadingSpinner, useMercoaSession } from './index'
 
-export function ReceivablePaymentPdfV1({
+export function ReceivablePaymentPdf({
   invoice,
   hideQR = false,
 }: {
@@ -30,7 +30,7 @@ export function ReceivablePaymentPdfV1({
       })
   }, [paymentLink, invoice?.id, invoice?.payer, mercoaSession.client])
 
-  if (!invoice || mercoaSession.isLoading) return <LoadingSpinner />
+  if (!invoice || (mercoaSession.organization && mercoaSession.isLoading)) return <LoadingSpinner />
 
   const logo =
     invoice.vendor?.logo ??

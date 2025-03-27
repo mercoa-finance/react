@@ -1,6 +1,7 @@
 import { CheckCircleIcon, UserIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import { ReactNode } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import { NoSession, useMercoaSession } from './index'
@@ -16,7 +17,7 @@ export function InvoiceCommentsV1({
   children,
 }: {
   readOnly?: boolean
-  children?: (props: InvoiceCommentsV1ChildrenProps) => JSX.Element
+  children?: (props: InvoiceCommentsV1ChildrenProps) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
 

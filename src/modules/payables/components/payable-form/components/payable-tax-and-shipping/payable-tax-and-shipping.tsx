@@ -1,5 +1,5 @@
 import useResizeObserver from '@react-hook/resize-observer'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { ReactNode, useLayoutEffect, useRef, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { MercoaInput, usePayableDetails } from '../../../../../../components'
 import { currencyCodeToSymbol } from '../../../../../../lib/currency'
@@ -17,7 +17,7 @@ export function PayableTaxAndShipping({
   children,
 }: {
   readOnly?: boolean
-  children?: (props: PayableTaxAndShippingChildrenProps) => JSX.Element
+  children?: (props: PayableTaxAndShippingChildrenProps) => ReactNode
 }) {
   const { formContextValue } = usePayableDetails()
   const { formMethods, taxAndShippingContextValue } = formContextValue

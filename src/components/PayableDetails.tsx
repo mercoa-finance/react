@@ -31,7 +31,7 @@ import dayjs from 'dayjs'
 import minMax from 'dayjs/plugin/minMax'
 import tz from 'dayjs/plugin/timezone'
 import utc from 'dayjs/plugin/utc'
-import { Dispatch, Fragment, SetStateAction, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Dispatch, Fragment, ReactNode, SetStateAction, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import Dropzone from 'react-dropzone'
 import {
   Control,
@@ -171,7 +171,7 @@ export function PayableDetailsV1({
     counterpartyId?: string,
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
-  children?: (props: PayableDetailsV1ChildrenProps) => JSX.Element[]
+  children?: (props: PayableDetailsV1ChildrenProps) => ReactNode[]
   renderCustom?: {
     toast?: {
       success: (message: string) => void
@@ -221,8 +221,8 @@ export function PayableDetailsV1({
 
   if (!mercoaSession.client) return <NoSession componentName="PayableDetails" />
 
-  let leftComponent: JSX.Element | undefined
-  let rightComponent: JSX.Element | undefined
+  let leftComponent: ReactNode | undefined
+  let rightComponent: ReactNode | undefined
   if (children) {
     const childrenArray = children({
       invoice: invoiceLocal,
@@ -357,7 +357,7 @@ export function PayableFormV1({
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   fullWidth?: boolean
   lineItemDescriptionOptional?: boolean
-  children?: (props: PayableFormV1ChildrenProps) => JSX.Element
+  children?: (props: PayableFormV1ChildrenProps) => ReactNode
   renderCustom?: {
     toast?: {
       success: (message: string) => void
@@ -1797,7 +1797,7 @@ export function PayableDocumentV1({
   invoice?: Mercoa.InvoiceResponse
   height: number
   theme?: 'light' | 'dark'
-  children?: (props: PayableDocumentV1ChildrenProps) => JSX.Element
+  children?: (props: PayableDocumentV1ChildrenProps) => ReactNode
   ocrProcessing?: boolean
   setOcrProcessing?: Dispatch<SetStateAction<boolean>>
   renderCustom?: {
@@ -2312,7 +2312,7 @@ export function OcrProgressBarV1({ ocrProcessing }: { ocrProcessing: boolean }) 
 
 export type PayableActionV1ChildrenProps = {
   isSaving: boolean
-  buttons?: JSX.Element[]
+  buttons?: ReactNode[]
   setStatus: (status: Mercoa.InvoiceStatus) => void
   submitForm?: () => void
 }
@@ -2369,35 +2369,35 @@ export function PayableActionsV1({
 }: {
   invoiceType?: 'invoice' | 'invoiceTemplate'
   refreshInvoice?: (invoiceId: string) => void
-  approveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  rejectButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  nonApproverButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  recreateDraftButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  deleteButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  archiveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  cancelButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  saveDraftButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  printCheckButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  viewCheckButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  createInvoiceButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  approveButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  rejectButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  nonApproverButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  recreateDraftButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  deleteButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  archiveButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  cancelButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  saveDraftButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  printCheckButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  viewCheckButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  createInvoiceButton?: ({ onClick }: { onClick: () => void }) => ReactNode
   submitForApprovalButton?: ({
     onClick,
     approversAssigned,
   }: {
     onClick: () => void
     approversAssigned: boolean
-  }) => JSX.Element
-  nextButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  markAsPaidButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  schedulePaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
-  retryPaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  }) => ReactNode
+  nextButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  markAsPaidButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  schedulePaymentButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  retryPaymentButton?: ({ onClick }: { onClick: () => void }) => ReactNode
   submitForm?: () => void
   additionalActions?: {
     hideDefaultActions?: boolean
     position: 'left' | 'right'
-    actions: (props: PayableActionV1ChildrenProps) => JSX.Element[]
+    actions: (props: PayableActionV1ChildrenProps) => ReactNode[]
   }
-  children?: (props: PayableActionV1ChildrenProps) => JSX.Element
+  children?: (props: PayableActionV1ChildrenProps) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
   const [isSaving, setIsSaving] = useState(false)
@@ -2425,7 +2425,7 @@ export function PayableActionsV1({
     : undefined
   const [selectedEntity, setSelectedEntity] = useState<Mercoa.EntityResponse>()
 
-  const buttons: JSX.Element[] = []
+  const buttons: ReactNode[] = []
 
   if (!mercoaSession.client) return <NoSession componentName="PayableActions" />
 
@@ -2755,7 +2755,7 @@ export function PayableActionsV1({
   } else {
     switch (status) {
       case Mercoa.InvoiceStatus.Draft:
-        let saveButton = <></>
+        let saveButton: ReactNode = <></>
         if (approverSlots && approverSlots.length > 0) {
           saveButton = submitForApprovalButtonComponent
         } else {
@@ -2774,7 +2774,7 @@ export function PayableActionsV1({
         break
 
       case Mercoa.InvoiceStatus.Approved:
-        let nextButton = <></>
+        let nextButton: ReactNode = <></>
         if (paymentDestinationType === Mercoa.PaymentMethodType.OffPlatform) {
           nextButton = markPaidButtonComponent
         } else if (
@@ -2915,7 +2915,7 @@ export function PayableOverviewV1({
   readOnly?: boolean
   supportedCurrencies?: Array<Mercoa.CurrencyCode>
   supportedSchedulePaymentDates?: Array<'Weekend' | 'Past' | 'Holiday'>
-  children?: (props: PayableOverviewV1ChildrenProps) => JSX.Element
+  children?: (props: PayableOverviewV1ChildrenProps) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -3143,7 +3143,7 @@ export function PayableTaxAndShippingV1({
   children,
 }: {
   readOnly?: boolean
-  children?: (props: PayableTaxAndShippingV1ChildrenProps) => JSX.Element
+  children?: (props: PayableTaxAndShippingV1ChildrenProps) => ReactNode
 }) {
   const {
     control,
@@ -3959,7 +3959,7 @@ export function PayablePaymentDestinationV1({ readOnly }: { readOnly?: boolean }
 export function PaymentDestinationProcessingTimeV1({
   children,
 }: {
-  children?: ({ timing }: { timing?: Mercoa.CalculatePaymentTimingResponse }) => JSX.Element
+  children?: ({ timing }: { timing?: Mercoa.CalculatePaymentTimingResponse }) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
   const { watch } = useFormContext()
@@ -4411,7 +4411,7 @@ export function MetadataSelectionV1({
       setValue: (value: string) => void
       value: string
       values: string[]
-    }) => JSX.Element
+    }) => ReactNode
   }
 }) {
   const mercoaSession = useMercoaSession()
@@ -4803,7 +4803,7 @@ export function PayableLineItemsV1({
   children,
 }: {
   readOnly?: boolean
-  children?: (props: PayableLineItemV1ChildrenProps) => JSX.Element
+  children?: (props: PayableLineItemV1ChildrenProps) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
   const [isHidden, setIsHidden] = useState<boolean>(false)
@@ -5144,7 +5144,7 @@ export function PaymentOptionsV1() {
 export function PayableFeesV1({
   children,
 }: {
-  children?: ({ fees }: { fees?: Mercoa.InvoiceFeesResponse }) => JSX.Element
+  children?: ({ fees }: { fees?: Mercoa.InvoiceFeesResponse }) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
 

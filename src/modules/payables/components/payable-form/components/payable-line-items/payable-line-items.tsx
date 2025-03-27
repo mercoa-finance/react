@@ -1,11 +1,11 @@
 import { EyeIcon, EyeSlashIcon, PlusCircleIcon, PlusIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { ReactNode, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { MercoaButton, Tooltip, useMercoaSession, usePayableDetails } from '../../../../../../components'
 import { LineItemOptions } from './line-item-options'
 import { LineItemRows } from './line-item-rows'
 
-export function PayableLineItems({ readOnly, children }: { readOnly?: boolean; children?: JSX.Element }) {
+export function PayableLineItems({ readOnly, children }: { readOnly?: boolean; children?: ReactNode }) {
   const mercoaSession = useMercoaSession()
   const [isHidden, setIsHidden] = useState<boolean>(false)
 

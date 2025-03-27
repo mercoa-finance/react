@@ -1,4 +1,5 @@
 import accounting from 'accounting'
+import { ReactNode } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../../../../../../../src/lib/currency'
 import { usePayableDetails } from '../../../../../../components'
@@ -6,7 +7,7 @@ import { usePayableDetails } from '../../../../../../components'
 export function PayableFees({
   children,
 }: {
-  children?: ({ fees }: { fees?: Mercoa.InvoiceFeesResponse }) => JSX.Element
+  children?: ({ fees }: { fees?: Mercoa.InvoiceFeesResponse }) => ReactNode
 }) {
   const { formContextValue } = usePayableDetails()
   const { formMethods, feesContextValue, vendorCreditContextValue } = formContextValue

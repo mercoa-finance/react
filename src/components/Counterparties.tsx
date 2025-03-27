@@ -20,7 +20,7 @@ import accounting from 'accounting'
 import dayjs from 'dayjs'
 import debounce from 'lodash/debounce'
 import Papa from 'papaparse'
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, ReactNode, useEffect, useRef, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
@@ -531,19 +531,19 @@ export function CounterpartySearchBase({
       onSearchChangeCb: (search: string) => void
       selectedCounterparty: Mercoa.CounterpartyResponse | undefined
       setSelectedCounterparty: (counterparty: Mercoa.CounterpartyResponse | undefined) => void
-    }) => JSX.Element
+    }) => ReactNode
     selectedCounterparty?: (props: {
       selectedCounterparty?: Mercoa.CounterpartyResponse
       clearSelection: () => void
       readOnly?: boolean
       disableCreation?: boolean
-    }) => JSX.Element
+    }) => ReactNode
     counterpartySearchDropdown?: (props: {
       counterparties: Mercoa.CounterpartyResponse[]
       onSearchChangeCb: (search: string) => void
       selectedCounterparty: Mercoa.CounterpartyResponse | undefined
       setSelectedCounterparty: (counterparty: Mercoa.CounterpartyResponse | undefined) => void
-    }) => JSX.Element
+    }) => ReactNode
   }
 }) {
   const mercoaSession = useMercoaSession()
@@ -1179,7 +1179,7 @@ export function Counterparties({
     setResultsPerPage,
     counterparties,
     count,
-  }: CounterpartiesChildrenProps) => JSX.Element
+  }: CounterpartiesChildrenProps) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
   const [entities, setEntities] = useState<Mercoa.CounterpartyResponse[] | undefined>(undefined)
@@ -1556,7 +1556,7 @@ export function CounterpartyDetails({
   }: {
     counterparty?: Mercoa.CounterpartyResponse
     invoices?: Mercoa.InvoiceResponse[]
-  }) => JSX.Element
+  }) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
 

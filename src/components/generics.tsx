@@ -722,8 +722,8 @@ export function PaymentMethodList({
 }: {
   accounts?: Mercoa.PaymentMethodResponse[]
   showDelete?: boolean
-  addAccount?: JSX.Element
-  formatAccount: (account: any) => JSX.Element | JSX.Element[] | null
+  addAccount?: ReactNode
+  formatAccount: (account: any) => ReactNode | ReactNode[] | null
   showEntityConfirmation?: boolean
 }) {
   const mercoaSession = useMercoaSession()
@@ -869,7 +869,7 @@ export function DebouncedSearch({
   onSettle: (value: string) => void
   placeholder?: string
   leadingIcon?: ReactNode
-  children?: ({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => JSX.Element
+  children?: ({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => ReactNode
 }) {
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearch = useRef(debounce(onSettle, 200)).current
@@ -1747,8 +1747,8 @@ export function PayablesInlineForm({
 }: {
   name: string
   saveAsStatus: string
-  addNewButton: JSX.Element
-  form: JSX.Element
+  addNewButton: ReactNode
+  form: ReactNode
 }) {
   const [open, setOpen] = useState(false)
 
@@ -1814,8 +1814,8 @@ export function PaymentMethodButton({
   onSelect?: (account?: any) => void
   account?: Mercoa.PaymentMethodResponse
   selected?: boolean
-  icon?: JSX.Element
-  text: string | JSX.Element
+  icon?: ReactNode
+  text: string | ReactNode
 }) {
   return (
     <div

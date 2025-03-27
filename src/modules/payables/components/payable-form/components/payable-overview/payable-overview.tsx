@@ -3,44 +3,38 @@ import dayjs from 'dayjs'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../../../../../../../src/lib/currency'
-import { MercoaInput, useMercoaSession, usePayableDetails } from '../../../../../../components'
+import { MercoaInput, usePayableDetails } from '../../../../../../components'
 import { isSupportedScheduleDate, isWeekday } from '../../../../../../lib/scheduling'
 import { afterApprovedStatus, afterScheduledStatus } from '../../constants'
 import { PrintDescriptionOnCheckRemittanceSwitch } from './print-description-on-check-remittance-switch'
 
-export type PayableOverviewChildrenProps = {
-  readOnly?: boolean
-  amount?: number
-  setAmount?: (amount: number) => void
-  supportedCurrencies?: Array<Mercoa.CurrencyCode>
-  currency?: Mercoa.CurrencyCode
-  setCurrency?: (currency: Mercoa.CurrencyCode) => void
-  dueDate?: Date
-  setDueDate?: (dueDate: Date) => void
-  invoiceDate?: Date
-  setInvoiceDate?: (invoiceDate: Date) => void
-  supportedSchedulePaymentDates?: Array<'Weekend' | 'Past' | 'Holiday'>
-  schedulePaymentDate?: Date
-  setSchedulePaymentDate?: (schedulePaymentDate: Date) => void
-  invoiceNumber?: string
-  setInvoiceNumber?: (invoiceNumber: string) => void
-  description?: string
-  setDescription?: (description: string) => void
-}
+// export type PayableOverviewChildrenProps = {
+//   readOnly?: boolean
+//   amount?: number
+//   setAmount?: (amount: number) => void
+//   supportedCurrencies?: Array<Mercoa.CurrencyCode>
+//   currency?: Mercoa.CurrencyCode
+//   setCurrency?: (currency: Mercoa.CurrencyCode) => void
+//   dueDate?: Date
+//   setDueDate?: (dueDate: Date) => void
+//   invoiceDate?: Date
+//   setInvoiceDate?: (invoiceDate: Date) => void
+//   supportedSchedulePaymentDates?: Array<'Weekend' | 'Past' | 'Holiday'>
+//   schedulePaymentDate?: Date
+//   setSchedulePaymentDate?: (schedulePaymentDate: Date) => void
+//   invoiceNumber?: string
+//   setInvoiceNumber?: (invoiceNumber: string) => void
+//   description?: string
+//   setDescription?: (description: string) => void
+// }
 
 export function PayableOverview({
   readOnly,
-  supportedCurrencies,
   supportedSchedulePaymentDates,
-  children,
 }: {
   readOnly?: boolean
-  supportedCurrencies?: Array<Mercoa.CurrencyCode>
   supportedSchedulePaymentDates?: Array<'Weekend' | 'Past' | 'Holiday'>
-  children?: (props: PayableOverviewChildrenProps) => JSX.Element
 }) {
-  const mercoaSession = useMercoaSession()
-
   const { formContextValue } = usePayableDetails()
   const { formMethods, overviewContextValue, lineItemsContextValue } = formContextValue
   const { currency, supportedCurrencies: finalSupportedCurrencies } = overviewContextValue
@@ -49,7 +43,6 @@ export function PayableOverview({
   const {
     register,
     control,
-    setValue,
     formState: { errors },
     watch,
   } = formMethods
@@ -75,10 +68,6 @@ export function PayableOverview({
 
   const wrapperDiv = useRef(null)
   const width = useWidth(wrapperDiv)
-
-  if (children) {
-    return <>{children}</>
-  }
 
   let formCols = 'mercoa-grid-cols-1'
   if (width && width > 300) {

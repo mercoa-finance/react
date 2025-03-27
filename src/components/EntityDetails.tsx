@@ -1,6 +1,6 @@
 import { Square2StackIcon } from '@heroicons/react/24/outline'
 import dayjs from 'dayjs'
-import { useEffect, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import { MercoaCombobox, NoSession, TableNavigation, Tooltip, useMercoaSession } from './index'
@@ -114,7 +114,7 @@ export function EntityEmailLogs({
     resultsPerPage,
     setResultsPerPage,
     count,
-  }: EntityEmailLogsChildrenProps) => JSX.Element
+  }: EntityEmailLogsChildrenProps) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
   const entitySelected = entity || mercoaSession.entity

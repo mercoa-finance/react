@@ -1,5 +1,6 @@
 import { CheckCircleIcon, UserIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import dayjs from 'dayjs'
+import { ReactNode } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import { NoSession, useMercoaSession, usePayableDetails } from '../../../../../../components'
@@ -15,7 +16,7 @@ export function PayableComments({
   children,
 }: {
   readOnly?: boolean
-  children?: (props: PayableCommentsChildrenProps) => JSX.Element
+  children?: (props: PayableCommentsChildrenProps) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
   const { userPermissionConfig } = mercoaSession

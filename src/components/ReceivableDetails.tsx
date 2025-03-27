@@ -4,7 +4,7 @@ import { EllipsisVerticalIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
-import { useEffect, useState } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 import {
   FieldErrors,
   FormProvider,
@@ -86,7 +86,7 @@ export function ReceivableDetailsV1({
     selectedPayer,
     setValue,
     watch,
-  }: ReceivableFormV1ChildrenProps) => JSX.Element
+  }: ReceivableFormV1ChildrenProps) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -311,7 +311,7 @@ export function ReceivableFormV1({
     selectedPayer,
     setValue,
     watch,
-  }: ReceivableFormV1ChildrenProps) => JSX.Element
+  }: ReceivableFormV1ChildrenProps) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
 

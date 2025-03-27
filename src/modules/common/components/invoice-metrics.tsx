@@ -1,6 +1,7 @@
 import { NoSession } from '../../../components'
 
 import accounting from 'accounting'
+import { ReactNode } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { Skeleton, StatCard, useMercoaSession } from '../../../components'
 import { currencyCodeToSymbol } from '../../../lib/currency'
@@ -12,7 +13,7 @@ export function InvoiceMetrics({
 }: {
   metrics?: Mercoa.InvoiceMetricsResponse[]
   isLoading?: boolean
-  children?: ({ metrics }: { metrics?: Mercoa.InvoiceMetricsResponse[] }) => JSX.Element
+  children?: ({ metrics }: { metrics?: Mercoa.InvoiceMetricsResponse[] }) => ReactNode
 }) {
   const mercoaSession = useMercoaSession()
 
