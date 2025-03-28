@@ -3,7 +3,7 @@ import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import Papa from 'papaparse'
-import { ReactElement, ReactNode, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import DatePicker from 'react-datepicker'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
@@ -1954,7 +1954,7 @@ export function InvoiceMetrics({
   returnByDate?: Mercoa.InvoiceMetricsPerDateGroupBy
   excludePayables?: boolean
   excludeReceivables?: boolean
-  children?: ({ metrics }: { metrics?: Mercoa.InvoiceMetricsResponse[] }) => ReactNode
+  children?: ({ metrics }: { metrics?: Mercoa.InvoiceMetricsResponse[] }) => JSX.Element
 }) {
   // default to AP
   if (typeof excludePayables === 'undefined' && typeof excludeReceivables === 'undefined') {

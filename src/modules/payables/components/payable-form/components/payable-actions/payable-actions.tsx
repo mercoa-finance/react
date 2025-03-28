@@ -42,17 +42,17 @@ export function PayableActions({
   additionalActions,
   children,
 }: {
-  approveButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  rejectButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  nonApproverButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  recreateDraftButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  deleteButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  archiveButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  cancelButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  saveDraftButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  printCheckButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  viewCheckButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  createInvoiceButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  approveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  rejectButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  nonApproverButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  recreateDraftButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  deleteButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  archiveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  cancelButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  saveDraftButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  printCheckButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  viewCheckButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  createInvoiceButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   submitForm?: () => void
   submitForApprovalButton?: ({
     onClick,
@@ -60,17 +60,17 @@ export function PayableActions({
   }: {
     onClick: () => void
     approversAssigned: boolean
-  }) => ReactNode
-  nextButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  markAsPaidButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  schedulePaymentButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  retryPaymentButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  }) => JSX.Element
+  nextButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  markAsPaidButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  schedulePaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  retryPaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   additionalActions?: {
     hideDefaultActions?: boolean
     position: 'left' | 'right'
-    actions: (props: PayableActionChildrenProps) => ReactNode[]
+    actions: (props: PayableActionChildrenProps) => JSX.Element[]
   }
-  children?: (props: PayableActionChildrenProps) => ReactNode
+  children?: (props: PayableActionChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 

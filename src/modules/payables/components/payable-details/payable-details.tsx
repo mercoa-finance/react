@@ -1,5 +1,4 @@
 import { Bar, Container, Section } from '@column-resizer/react'
-import { ReactNode } from 'react'
 import { toast } from 'react-toastify'
 import { NoSession, useMercoaSession } from '../../../../components'
 import { PayableDetailsProvider } from '../../providers/payable-detail-provider'
@@ -44,14 +43,14 @@ export function PayableDetails({
   }
 
   // Handle children prop
-  let leftComponent: ReactNode | undefined
-  let rightComponent: ReactNode | undefined
+  let leftComponent: JSX.Element | undefined
+  let rightComponent: JSX.Element | undefined
 
   if (children) {
     if (Array.isArray(children)) {
       // If children is an array, use first two elements as left/right components
-      leftComponent = children[0] as ReactNode
-      rightComponent = children[1] as ReactNode
+      leftComponent = children[0] as JSX.Element
+      rightComponent = children[1] as JSX.Element
     } else {
       return (
         <PayableDetailsProvider

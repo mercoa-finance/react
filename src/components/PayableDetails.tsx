@@ -171,7 +171,7 @@ export function PayableDetailsV1({
     counterpartyId?: string,
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
-  children?: (props: PayableDetailsV1ChildrenProps) => ReactNode[]
+  children?: (props: PayableDetailsV1ChildrenProps) => JSX.Element[]
   renderCustom?: {
     toast?: {
       success: (message: string) => void
@@ -357,7 +357,7 @@ export function PayableFormV1({
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   fullWidth?: boolean
   lineItemDescriptionOptional?: boolean
-  children?: (props: PayableFormV1ChildrenProps) => ReactNode
+  children?: (props: PayableFormV1ChildrenProps) => JSX.Element
   renderCustom?: {
     toast?: {
       success: (message: string) => void
@@ -1797,7 +1797,7 @@ export function PayableDocumentV1({
   invoice?: Mercoa.InvoiceResponse
   height: number
   theme?: 'light' | 'dark'
-  children?: (props: PayableDocumentV1ChildrenProps) => ReactNode
+  children?: (props: PayableDocumentV1ChildrenProps) => JSX.Element
   ocrProcessing?: boolean
   setOcrProcessing?: Dispatch<SetStateAction<boolean>>
   renderCustom?: {
@@ -2369,35 +2369,35 @@ export function PayableActionsV1({
 }: {
   invoiceType?: 'invoice' | 'invoiceTemplate'
   refreshInvoice?: (invoiceId: string) => void
-  approveButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  rejectButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  nonApproverButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  recreateDraftButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  deleteButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  archiveButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  cancelButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  saveDraftButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  printCheckButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  viewCheckButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  createInvoiceButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  approveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  rejectButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  nonApproverButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  recreateDraftButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  deleteButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  archiveButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  cancelButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  saveDraftButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  printCheckButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  viewCheckButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  createInvoiceButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   submitForApprovalButton?: ({
     onClick,
     approversAssigned,
   }: {
     onClick: () => void
     approversAssigned: boolean
-  }) => ReactNode
-  nextButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  markAsPaidButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  schedulePaymentButton?: ({ onClick }: { onClick: () => void }) => ReactNode
-  retryPaymentButton?: ({ onClick }: { onClick: () => void }) => ReactNode
+  }) => JSX.Element
+  nextButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  markAsPaidButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  schedulePaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  retryPaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   submitForm?: () => void
   additionalActions?: {
     hideDefaultActions?: boolean
     position: 'left' | 'right'
-    actions: (props: PayableActionV1ChildrenProps) => ReactNode[]
+    actions: (props: PayableActionV1ChildrenProps) => JSX.Element[]
   }
-  children?: (props: PayableActionV1ChildrenProps) => ReactNode
+  children?: (props: PayableActionV1ChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
   const [isSaving, setIsSaving] = useState(false)
@@ -2915,7 +2915,7 @@ export function PayableOverviewV1({
   readOnly?: boolean
   supportedCurrencies?: Array<Mercoa.CurrencyCode>
   supportedSchedulePaymentDates?: Array<'Weekend' | 'Past' | 'Holiday'>
-  children?: (props: PayableOverviewV1ChildrenProps) => ReactNode
+  children?: (props: PayableOverviewV1ChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -3143,7 +3143,7 @@ export function PayableTaxAndShippingV1({
   children,
 }: {
   readOnly?: boolean
-  children?: (props: PayableTaxAndShippingV1ChildrenProps) => ReactNode
+  children?: (props: PayableTaxAndShippingV1ChildrenProps) => JSX.Element
 }) {
   const {
     control,
@@ -3959,7 +3959,7 @@ export function PayablePaymentDestinationV1({ readOnly }: { readOnly?: boolean }
 export function PaymentDestinationProcessingTimeV1({
   children,
 }: {
-  children?: ({ timing }: { timing?: Mercoa.CalculatePaymentTimingResponse }) => ReactNode
+  children?: ({ timing }: { timing?: Mercoa.CalculatePaymentTimingResponse }) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
   const { watch } = useFormContext()
@@ -4411,7 +4411,7 @@ export function MetadataSelectionV1({
       setValue: (value: string) => void
       value: string
       values: string[]
-    }) => ReactNode
+    }) => JSX.Element
   }
 }) {
   const mercoaSession = useMercoaSession()
@@ -4803,7 +4803,7 @@ export function PayableLineItemsV1({
   children,
 }: {
   readOnly?: boolean
-  children?: (props: PayableLineItemV1ChildrenProps) => ReactNode
+  children?: (props: PayableLineItemV1ChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
   const [isHidden, setIsHidden] = useState<boolean>(false)
@@ -5144,7 +5144,7 @@ export function PaymentOptionsV1() {
 export function PayableFeesV1({
   children,
 }: {
-  children?: ({ fees }: { fees?: Mercoa.InvoiceFeesResponse }) => ReactNode
+  children?: ({ fees }: { fees?: Mercoa.InvoiceFeesResponse }) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
 

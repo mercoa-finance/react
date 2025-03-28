@@ -723,7 +723,7 @@ export function PaymentMethodList({
   accounts?: Mercoa.PaymentMethodResponse[]
   showDelete?: boolean
   addAccount?: ReactNode
-  formatAccount: (account: any) => ReactNode | ReactNode[] | null
+  formatAccount: (account: any) => JSX.Element | JSX.Element[] | null
   showEntityConfirmation?: boolean
 }) {
   const mercoaSession = useMercoaSession()
@@ -869,7 +869,7 @@ export function DebouncedSearch({
   onSettle: (value: string) => void
   placeholder?: string
   leadingIcon?: ReactNode
-  children?: ({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => ReactNode
+  children?: ({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => JSX.Element
 }) {
   const [searchTerm, setSearchTerm] = useState('')
   const debouncedSearch = useRef(debounce(onSettle, 200)).current

@@ -1,5 +1,5 @@
 import { UseMutateFunction } from '@tanstack/react-query'
-import { Dispatch, ReactElement, ReactNode, SetStateAction } from 'react'
+import { Dispatch, ReactElement, SetStateAction } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import { ErrorResponse } from '../../lib/react-query/types'
@@ -16,7 +16,7 @@ export type PayableDetailsProps = {
   config?: PayableDetailsConfig
   displayOptions?: PayableDetailsDisplayOptions
   renderCustom?: PayableDetailsRenderCustom
-  children?: ReactNode
+  children?: JSX.Element
 }
 
 export type PayableDetailsHandlers = {

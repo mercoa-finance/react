@@ -13,7 +13,7 @@ export function PaymentMethodList({
   accounts?: Mercoa.PaymentMethodResponse[]
   showDelete?: boolean
   addAccount?: ReactNode
-  formatAccount: (account: any) => ReactNode | ReactNode[] | null
+  formatAccount: (account: any) => JSX.Element | JSX.Element[] | null
 }) {
   const mercoaSession = useMercoaSession()
   const hasAccounts = accounts && accounts.length > 0

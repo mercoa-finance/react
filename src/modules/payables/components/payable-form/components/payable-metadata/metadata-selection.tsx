@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { MercoaCombobox, MercoaInput, useMercoaSession, usePayableDetails } from '../../../../../../components'
 import { showMetadata } from '../../utils'
@@ -24,7 +24,7 @@ export function MetadataSelection({
       setValue: (value: string) => void
       value: string
       values: string[]
-    }) => ReactNode
+    }) => JSX.Element
   }
 }) {
   const mercoaSession = useMercoaSession()

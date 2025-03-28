@@ -1,6 +1,6 @@
 import { Square2StackIcon } from '@heroicons/react/24/outline'
 import dayjs from 'dayjs'
-import { ReactNode, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import { MercoaCombobox, NoSession, TableNavigation, Tooltip, useMercoaSession } from './index'
@@ -27,19 +27,21 @@ export function EntityStatus({
   let title = '',
     color = '',
     content = ''
-  if (entity.status === 'unverified')
+  if (entity.status === Mercoa.EntityStatus.Unverified)
     (title = 'Can only receive funds'),
       (color = 'mercoa-bg-indigo-100 mercoa-text-indigo-800'),
       (content = 'Unverified')
-  if (entity.status === 'verified')
+  if (entity.status === Mercoa.EntityStatus.Verified)
     (title = 'Can send and receive funds'),
       (color = 'mercoa-bg-green-100 mercoa-text-green-800'),
       (content = 'Verified')
-  if (entity.status === 'pending')
+  if (entity.status === Mercoa.EntityStatus.Pending)
     (title = 'Can only receive funds'), (color = 'mercoa-bg-yellow-100 mercoa-text-yellow-800'), (content = 'Pending')
-  if (entity.status === 'resubmit')
+  if (entity.status === Mercoa.EntityStatus.Resubmit)
     (title = 'Can only receive funds'), (color = 'mercoa-bg-red-100 mercoa-text-red-800'), (content = 'Resubmit')
-  if (entity.status === 'failed')
+  if (entity.status === Mercoa.EntityStatus.Review)
+    (title = 'Can only receive funds'), (color = 'mercoa-bg-blue-100 mercoa-text-blue-800'), (content = 'Review')
+  if (entity.status === Mercoa.EntityStatus.Failed)
     (title = 'Can only receive funds'), (color = 'mercoa-bg-red-100 mercoa-text-red-800'), (content = 'Failed')
 
   if (showTooltip) {
@@ -114,7 +116,7 @@ export function EntityEmailLogs({
     resultsPerPage,
     setResultsPerPage,
     count,
-  }: EntityEmailLogsChildrenProps) => ReactNode
+  }: EntityEmailLogsChildrenProps) => JSX.Element
 }) {
   const mercoaSession = useMercoaSession()
   const entitySelected = entity || mercoaSession.entity
