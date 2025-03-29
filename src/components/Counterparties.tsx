@@ -1752,17 +1752,19 @@ function CounterpartyDetailsCard({
           </div>
           <div className="mercoa-flex-grow"></div>
 
-          <Tooltip title="Edit counterparty details">
-            <MercoaButton
-              size="sm"
-              isEmphasized={false}
-              onClick={() => {
-                setEditModalOpen(true)
-              }}
-            >
-              Edit Details
-            </MercoaButton>
-          </Tooltip>
+          {!hideCounterpartyDetails && (
+            <Tooltip title="Edit counterparty details">
+              <MercoaButton
+                size="sm"
+                isEmphasized={false}
+                onClick={() => {
+                  setEditModalOpen(true)
+                }}
+              >
+                Edit Details
+              </MercoaButton>
+            </Tooltip>
+          )}
 
           {/* Onboarding Link Buttons (only needed if showing counterparty details) */}
           {!hideCounterpartyDetails && (
@@ -1785,12 +1787,14 @@ function CounterpartyDetailsCard({
                           expiresIn: '30d',
                           ...onboardingLinkOptions,
                           type: Mercoa.EntityOnboardingLinkType.Payor,
+                          connectedEntityId: mercoaSession.entityId,
                         })
                       } else {
                         url = await mercoaSession.client?.entity.getOnboardingLink(counterparty.id, {
                           expiresIn: '30d',
                           ...onboardingLinkOptions,
                           type: Mercoa.EntityOnboardingLinkType.Payee,
+                          connectedEntityId: mercoaSession.entityId,
                         })
                       }
                       if (url) {
@@ -1833,12 +1837,14 @@ function CounterpartyDetailsCard({
                           expiresIn: '30d',
                           ...onboardingEmailOptions,
                           type: Mercoa.EntityOnboardingLinkType.Payor,
+                          connectedEntityId: mercoaSession.entityId,
                         })
                       } else {
                         url = await mercoaSession.client?.entity.sendOnboardingLink(counterparty.id, {
                           expiresIn: '30d',
                           ...onboardingEmailOptions,
                           type: Mercoa.EntityOnboardingLinkType.Payee,
+                          connectedEntityId: mercoaSession.entityId,
                         })
                       }
                       toast.info('Link Sent')
