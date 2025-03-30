@@ -448,7 +448,23 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     setValue('dueDate', invoiceData.dueDate ? dayjs(invoiceData.dueDate).toDate() : undefined)
     setValue('deductionDate', invoiceData.deductionDate ? dayjs(invoiceData.deductionDate).toDate() : undefined)
     setValue('processedAt', invoiceData.processedAt ? dayjs(invoiceData.processedAt).toDate() : undefined)
-    setValue('lineItems', (invoiceData.lineItems ?? []) as any)
+    setValue(
+      'lineItems',
+      (invoiceData.lineItems ?? []).map((item) => ({
+        id: item.id,
+        amount: item.amount ?? 0,
+        currency: item.currency ?? 'USD',
+        category: item.category ?? 'EXPENSE',
+        createdAt: item.createdAt ?? new Date(),
+        updatedAt: item.updatedAt ?? new Date(),
+        description: item.description ?? '',
+        glAccountId: item.glAccountId ?? '',
+        name: item.name ?? '',
+        quantity: item.quantity ?? 0,
+        unitPrice: item.unitPrice ?? 0,
+        metadata: item.metadata ?? {},
+      })),
+    )
     setValue('paymentDestinationId', invoiceData.paymentDestination?.id)
     setValue('paymentDestinationOptions', invoiceData.paymentDestinationOptions)
     setValue('paymentSourceId', invoiceData.paymentSource?.id)
