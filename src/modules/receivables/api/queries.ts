@@ -135,6 +135,7 @@ export function useRecurringReceivablesQuery({
       // Entity > Invoice > Get All and Get Metrics currently exist
       // Entity > Invoice Template > Get All and Get Metrics should be added
       const filter: Mercoa.invoiceTemplate.GetAllInvoiceTemplatesRequest = {
+        entityId: mercoaSession.entity.id,
         vendorId: mercoaSession.entity.id, // Functionally the same as entityId + excludePayables
         status: currentStatuses,
         search,
