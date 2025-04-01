@@ -373,9 +373,9 @@ function Level({
         </p>
       </li>
 
-      {policies.map((policy, index) => {
+      {policies.map((policy) => {
         return (
-          <li key={index} className="mercoa-relative mercoa-flex mercoa-gap-x-4">
+          <li key={policy.id} className="mercoa-relative mercoa-flex mercoa-gap-x-4">
             <div
               className={`-mercoa-bottom-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center`}
             >

@@ -27,7 +27,7 @@ export type PayableDetailsHandlers = {
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   onInvoiceUpdate?: (invoice?: Mercoa.InvoiceResponse) => void
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
-  onOcrComplete?: (ocr: Mercoa.OcrResponse) => Mercoa.OcrResponse
+  onOcrComplete?: (ocr: Mercoa.OcrResponse) => Promise<Mercoa.OcrResponse>
 }
 
 export type PayableDetailsQueryOptions = {
@@ -45,6 +45,7 @@ export type PayableDetailsConfig = {
 export type PayableDetailsDisplayOptions = {
   heightOffset?: number
   documentPosition?: 'right' | 'left' | 'none'
+  formLayout?: 'fullWidth' | 'grid'
 }
 
 export type PayableDetailsRenderCustom = {
@@ -125,6 +126,7 @@ export type PayableOverviewContext = {
 
 export type PayableLineItemsContext = {
   lineItems: Mercoa.InvoiceLineItemUpdateRequest[]
+  setLineItems: (lineItems: Mercoa.InvoiceLineItemUpdateRequest[]) => void
   addItem: () => void
   removeItem: (index: number, id?: string) => void
   updateItem: (index: number, item: Mercoa.InvoiceLineItemUpdateRequest, id?: string) => void

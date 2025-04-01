@@ -638,7 +638,13 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     if (!!ocrJob) {
       if (ocrJob.status === Mercoa.OcrJobStatus.Success) {
         setOcrProcessing(false)
-        setOcrResponse(onOcrComplete && ocrJob.data ? onOcrComplete(ocrJob.data) : ocrJob.data)
+        if (ocrJob.data && onOcrComplete) {
+          onOcrComplete(ocrJob.data).then((response) => {
+            setOcrResponse(response)
+          })
+        } else {
+          setOcrResponse(ocrJob.data)
+        }
         return
       }
       if (ocrJob.status === Mercoa.OcrJobStatus.Failed) {
@@ -652,7 +658,13 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
 
   useEffect(() => {
     if (!!invoiceOcrJob) {
-      setOcrResponse(onOcrComplete && invoiceOcrJob.data ? onOcrComplete(invoiceOcrJob.data) : invoiceOcrJob.data)
+      if (onOcrComplete && invoiceOcrJob.data) {
+        onOcrComplete(invoiceOcrJob.data).then((response) => {
+          setOcrResponse(response)
+        })
+      } else {
+        setOcrResponse(invoiceOcrJob.data)
+      }
     }
   }, [invoiceOcrJob])
 
@@ -1656,6 +1668,8 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
 
   const lineItemsContext: PayableLineItemsContext = {
     lineItems: lineItems,
+    setLineItems: (lineItems: Mercoa.InvoiceLineItemUpdateRequest[]) =>
+      setValue('lineItems', lineItems as Mercoa.InvoiceLineItemResponse[]),
     addItem,
     removeItem,
     updateItem,

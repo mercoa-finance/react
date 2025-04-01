@@ -23,12 +23,13 @@ import { PayableFormData } from './types'
 
 export function PayableForm({ children }: { children?: ReactNode }) {
   const mercoaSession = useMercoaSession()
-  const { displayContextValue, formContextValue, dataContextValue } = usePayableDetails()
+  const { displayContextValue, formContextValue, dataContextValue, propsContextValue } = usePayableDetails()
   const { formMethods, handleFormAction } = formContextValue
 
   const { invoiceType } = dataContextValue
   const { height } = displayContextValue
-
+  const { displayOptions } = propsContextValue
+  const { formLayout } = displayOptions ?? {}
   const { handleSubmit } = formMethods as UseFormReturn<any>
 
   if (!mercoaSession.client) return <NoSession componentName="PayableForm" />
@@ -45,6 +46,7 @@ export function PayableForm({ children }: { children?: ReactNode }) {
           }}
           className={classNames(
             `mercoa-grid-cols-3 mercoa-mt-6 mercoa-grid md:mercoa-gap-x-6 md:mercoa-gap-y-4 mercoa-gap-2 mercoa-p-0.5`,
+            formLayout === 'fullWidth' && 'mercoa-grid-cols-none',
           )}
         >
           {children ? (

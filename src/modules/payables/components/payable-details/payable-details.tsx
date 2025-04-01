@@ -28,7 +28,7 @@ export function PayableDetails({
 }: PayableDetailsProps) {
   const mercoaSession = useMercoaSession()
   let { invoiceId, invoiceType, invoice } = queryOptions ?? {}
-  const { heightOffset = 0, documentPosition = 'left' } = displayOptions ?? {}
+  const { heightOffset = 0, documentPosition = 'left' , formLayout} = displayOptions ?? {}
   const { supportedCurrencies } = config ?? {}
 
   if (!mercoaSession.client) return <NoSession componentName="PayableDetails" />
@@ -59,6 +59,7 @@ export function PayableDetails({
             displayOptions: {
               heightOffset: heightOffset ?? mercoaSession.heightOffset,
               documentPosition: documentPosition ?? 'left',
+              formLayout: formLayout,
             },
             handlers,
             config,
@@ -90,6 +91,7 @@ export function PayableDetails({
         displayOptions: {
           heightOffset: heightOffset ?? mercoaSession.heightOffset,
           documentPosition: documentPosition,
+          formLayout: formLayout,
         },
       }}
     >
