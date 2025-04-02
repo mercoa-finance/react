@@ -11,6 +11,8 @@ interface CancelInvoiceDialogProps {
   invoiceCount: number
 }
 
+// TODO: Refactor code duplication between this component and `PayablesTable`'s `CancelInvoiceDialog`
+// This is a perfect copy of `PayablesTable`'s `CancelInvoiceDialog`!
 export const CancelInvoiceDialog: React.FC<CancelInvoiceDialogProps> = ({
   onConfirm,
   onCancel,

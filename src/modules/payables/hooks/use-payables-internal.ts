@@ -32,9 +32,8 @@ import {
   usePayablesQuery,
   useRecurringPayablesQuery,
 } from '../api/queries'
-import { PayablesTableAction } from '../components/payables-table/constants'
 import { usePayablesFilterStore } from '../stores/payables-filter-store'
-import { PayablesContextValue, PayablesProps } from '../types'
+import { PayablesContextValue, PayablesProps, PayablesTableActionProps } from '../types'
 
 export function usePayablesInternal(payableProps: PayablesProps) {
   const { queryOptions } = payableProps
@@ -47,11 +46,7 @@ export function usePayablesInternal(payableProps: PayablesProps) {
     [Mercoa.InvoiceStatus.Draft],
     mercoaSession.user,
   )
-  const [activeInvoiceAction, setActiveInvoiceAction] = useState<{
-    invoiceId: string[] | string
-    action: PayablesTableAction
-    mode: 'single' | 'multiple'
-  } | null>(null)
+  const [activeInvoiceAction, setActiveInvoiceAction] = useState<PayablesTableActionProps | null>(null)
 
   const memoizedStatusFilters = useMemo(() => selectedStatusFilters || [], [selectedStatusFilters])
   const memoizedApprovers = useMemo(() => selectedApprovers || [], [selectedApprovers])

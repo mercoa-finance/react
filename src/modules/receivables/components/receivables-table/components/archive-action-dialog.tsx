@@ -2,7 +2,7 @@ import { DialogTitle } from '@radix-ui/react-dialog'
 import React from 'react'
 import { MercoaButton } from '../../../../../components/generics'
 import { Dialog } from '../../../../../lib/components'
-interface CancelInvoiceDialogProps {
+interface ArchiveInvoiceDialogProps {
   onConfirm: () => void
   onCancel: () => void
   open: boolean
@@ -11,7 +11,9 @@ interface CancelInvoiceDialogProps {
   invoiceCount: number
 }
 
-export const CancelInvoiceDialog: React.FC<CancelInvoiceDialogProps> = ({
+// TODO: Refactor code duplication between this component and `PayablesTable`'s `ArchiveInvoiceDialog`
+// This is a perfect copy of `PayablesTable`'s `ArchiveInvoiceDialog`!
+export const ArchiveInvoiceDialog: React.FC<ArchiveInvoiceDialogProps> = ({
   onConfirm,
   onCancel,
   open,
@@ -25,10 +27,12 @@ export const CancelInvoiceDialog: React.FC<CancelInvoiceDialogProps> = ({
         <div className="mercoa-text-left">
           <DialogTitle>
             <h3 className="mercoa-text-[16px] mercoa-font-semibold mercoa-text-[#1A1919]">
-              Cancel {invoiceCount} invoice{invoiceCount === 1 ? '' : 's'}?
+              Archive {invoiceCount} invoice{invoiceCount === 1 ? '' : 's'}?
             </h3>
           </DialogTitle>
-          <p className="mercoa-mt-[8px] mercoa-text-[14px] mercoa-text-[#6E6A68]">You can&apos;t undo this action.</p>
+          <p className="mercoa-mt-[8px] mercoa-text-[14px] mercoa-text-[#6E6A68]">
+            This action will move these invoices to the archived state.
+          </p>
         </div>
         <div className="mercoa-flex mercoa-justify-end mercoa-gap-[12px] mercoa-mt-[16px]">
           <MercoaButton
@@ -41,21 +45,20 @@ export const CancelInvoiceDialog: React.FC<CancelInvoiceDialogProps> = ({
             color="gray"
             className="mercoa-text-[14px] mercoa-font-medium mercoa-text-[#1A1919] hover:mercoa-underline"
           >
-            Never Mind
+            Cancel
           </MercoaButton>
           <MercoaButton
             onClick={() => {
               onConfirm()
             }}
-            color="secondary"
             isEmphasized={true}
-            className="mercoa-w-[120px] mercoa-text-sm mercoa-justify-center mercoa-flex"
+            className="mercoa-w-[80px] mercoa-text-sm mercoa-justify-center mercoa-flex"
           >
-            <div className="mercoa-w-20 mercoa-whitespace-nowrap mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
+            <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
               {isLoading ? (
                 <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
               ) : (
-                'Cancel Invoice'
+                'Archive'
               )}
             </div>
           </MercoaButton>

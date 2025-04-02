@@ -108,6 +108,13 @@ export type RecurringScheduleContext = {
 }
 
 // Receivables Props
+
+export type ReceivablesTableActionProps = {
+  invoiceId: string[] | string
+  action: ReceivablesTableAction
+  mode: 'single' | 'multiple'
+}
+
 export type ReceivablesProps = {
   queryOptions?: ReceivablesQueryOptions
   renderCustom?: ReceivablesRenderCustom
@@ -269,11 +276,11 @@ type ReceivablesPagination = {
 }
 
 type ReceivablesSelection = {
-  selectedInvoiceIds: string[]
-  setSelectedInvoiceIds: (ids: string[]) => void
+  selectedInvoices: Mercoa.InvoiceResponse[]
+  setSelectedInvoices: (invoices: Mercoa.InvoiceResponse[]) => void
   isAllSelected: boolean
   handleSelectAll: () => void
-  handleSelectRow: (invoiceId: string) => void
+  handleSelectRow: (invoice: Mercoa.InvoiceResponse) => void
   selectedColumns: InvoiceTableColumn[]
   setSelectedColumns: (columns: InvoiceTableColumn[]) => void
   toggleSelectedColumn: (column: InvoiceTableColumn) => void
@@ -286,6 +293,7 @@ type ReceivablesActions = {
     {
       invoiceId: string
       invoiceType?: 'invoice' | 'invoiceTemplate'
+      toast?: ToastClient
     },
     unknown
   >
@@ -296,10 +304,70 @@ type ReceivablesActions = {
     {
       invoiceIds: string[]
       invoiceType?: 'invoice' | 'invoiceTemplate'
+      toast?: ToastClient
     },
     unknown
   >
   isBulkDeleteReceivableLoading: boolean
+  restoreAsDraft: UseMutateFunction<
+    any,
+    ErrorResponse,
+    {
+      invoice: Mercoa.InvoiceResponse
+      invoiceType?: 'invoice' | 'invoiceTemplate'
+      toast?: ToastClient
+    },
+    unknown
+  >
+  isRestoreAsDraftReceivableLoading: boolean
+  bulkRestoreAsDraft: UseMutateFunction<
+    any,
+    ErrorResponse,
+    {
+      invoiceIds: string[]
+      invoiceType?: 'invoice' | 'invoiceTemplate'
+    },
+    unknown
+  >
+  isBulkRestoreAsDraftReceivableLoading: boolean
+  archiveReceivable: UseMutateFunction<
+    any,
+    ErrorResponse,
+    {
+      invoiceId: string
+    },
+    unknown
+  >
+  isArchiveReceivableLoading: boolean
+  bulkArchiveReceivables: UseMutateFunction<
+    any,
+    ErrorResponse,
+    {
+      invoiceIds: string[]
+    },
+    unknown
+  >
+  isBulkArchiveReceivablesLoading: boolean
+  cancelReceivable: UseMutateFunction<
+    any,
+    ErrorResponse,
+    {
+      invoiceId: string
+      toast?: ToastClient
+    },
+    unknown
+  >
+  isCancelReceivableLoading: boolean
+  bulkCancelReceivables: UseMutateFunction<
+    any,
+    ErrorResponse,
+    {
+      invoiceIds: string[]
+      toast?: ToastClient
+    },
+    unknown
+  >
+  isBulkCancelReceivablesLoading: boolean
   activeInvoiceAction: {
     invoiceId: string[] | string
     action: ReceivablesTableAction

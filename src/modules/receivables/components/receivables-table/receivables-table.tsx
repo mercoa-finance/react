@@ -17,16 +17,19 @@ import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
-import { InvoiceStatusPill, MercoaButton, useMercoaSession } from '../../../../components'
+import { InvoiceStatusPill, useMercoaSession } from '../../../../components'
 import { SkeletonLoader } from '../../../../lib/components'
 import { currencyCodeToSymbol } from '../../../../lib/currency'
 import { cn } from '../../../../lib/style'
-import { CrossIcon } from '../../../common/assets/icons/cross-icon'
 import { ResultsInfo } from '../../../common/components/results-info'
 import { ResultsPerPageDropdown } from '../../../common/components/results-per-page-dropdown'
 import { Pagination } from '../../../common/components/table-pagination'
 import { useReceivables } from '../../hooks/use-receivables'
+import { ArchiveInvoiceDialog } from './components/archive-action-dialog'
+import { CancelInvoiceDialog } from './components/cancel-action-dialog'
 import { DeleteInvoiceDialog } from './components/delete-action-dialog'
+import { RestoreAsDraftDialog } from './components/restore-as-draft-action-dialog'
+import { TableActionsBar } from './components/table-actions-bar'
 import { TableActionDropdown } from './components/table-actions-dropdown'
 import { ReceivablesTableAction } from './constants'
 import { getAvailableActions } from './utils'
@@ -54,20 +57,26 @@ export const ReceivablesTable = () => {
     isPrevDisabled,
   } = paginationContextValue
 
-  const {
-    isAllSelected,
-    selectedInvoiceIds,
-    selectedColumns,
-    setSelectedInvoiceIds,
-    handleSelectRow,
-    handleSelectAll,
-  } = selectionContextValue
+  const { isAllSelected, selectedInvoices, selectedColumns, setSelectedInvoices, handleSelectRow, handleSelectAll } =
+    selectionContextValue
 
   const {
     deleteReceivable,
     isDeleteReceivableLoading,
     bulkDeleteReceivables,
     isBulkDeleteReceivableLoading,
+    restoreAsDraft,
+    isRestoreAsDraftReceivableLoading,
+    bulkRestoreAsDraft,
+    isBulkRestoreAsDraftReceivableLoading,
+    archiveReceivable,
+    isArchiveReceivableLoading,
+    bulkArchiveReceivables,
+    isBulkArchiveReceivablesLoading,
+    cancelReceivable,
+    isCancelReceivableLoading,
+    bulkCancelReceivables,
+    isBulkCancelReceivablesLoading,
     activeInvoiceAction,
     setActiveInvoiceAction,
   } = actionsContextValue
@@ -132,7 +141,7 @@ export const ReceivablesTable = () => {
                   onClick={(e: React.MouseEvent) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    handleSelectRow(row.original.id)
+                    handleSelectRow(row.original)
                   }}
                 >
                   <input
@@ -145,9 +154,9 @@ export const ReceivablesTable = () => {
                       'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-transparent mercoa-cursor-pointer',
                       classNames?.checkbox,
                     )}
-                    checked={selectedInvoiceIds.includes(row.original.id)}
+                    checked={selectedInvoices.some((e) => e.id === row.original.id)}
                     onChange={(e) => {
-                      handleSelectRow(row.original.id)
+                      handleSelectRow(row.original)
                       e.stopPropagation()
                     }}
                   />
@@ -351,7 +360,7 @@ export const ReceivablesTable = () => {
     handleSelectRow,
     isAllSelected,
     selectedColumns,
-    selectedInvoiceIds,
+    selectedInvoices,
     orderBy,
     orderDirection,
     setOrderBy,
@@ -417,7 +426,7 @@ export const ReceivablesTable = () => {
 
   const validActions = getAvailableActions({
     rolePermissions: mercoaSession.userPermissionConfig,
-    selectedInvoices: allFetchedInvoices.filter((e) => selectedInvoiceIds.includes(e.id)),
+    selectedInvoices: allFetchedInvoices.filter((e) => selectedInvoices.map((e) => e.id).includes(e.id)),
     currentStatuses: allFetchedInvoices.map((e) => e.status),
     currentUserId: mercoaSession.user?.id,
     users: mercoaSession.users,
@@ -433,52 +442,12 @@ export const ReceivablesTable = () => {
         ) : (
           <>
             {/* Selected Invoices Overlay */}
-            {/* TODO: This should be extracted to a subcomponent to refactor code duplication with PayablesTable */}
-            {selectedInvoiceIds.length > 0 && (
-              <div
-                className={cn(
-                  'mercoa-h-[48px] mercoa-rounded-lg mercoa-opacity-50 mercoa-pointer-events-none mercoa-fixed mercoa-bottom-8 mercoa-left-[55%] mercoa-translate-x-[-50%] mercoa-w-[800px] mercoa-shadow-[0_8px_24px_rgba(0,0,0,0.15)] mercoa-z-50',
-                  selectedInvoiceIds.length > 0 && 'mercoa-opacity-[100] mercoa-pointer-events-auto',
-                )}
-              >
-                <div
-                  className={`mercoa-z-[400]  mercoa-rounded-lg mercoa-py-2 mercoa-px-3 mercoa-bg-white mercoa-flex  mercoa-gap-4 mercoa-items-center mercoa-justify-between mercoa-left-0 mercoa-right-0 mercoa-min-h-[24px] mercoa-box-border`}
-                >
-                  <div className="mercoa-flex mercoa-justify-start mercoa-gap-6  mercoa-items-center mercoa-pl-[11px]">
-                    <div
-                      onClick={(e: React.MouseEvent) => {
-                        setSelectedInvoiceIds([])
-                        e.stopPropagation()
-                      }}
-                      className="mercoa-bg-white mercoa-border mercoa-rounded-full mercoa-p-1 mercoa-opacity-[0.5] hover:mercoa-opacity-[1] mercoa-cursor-pointer"
-                    >
-                      <CrossIcon />
-                    </div>
-                    <p className="mercoa-text-[13px] mercoa-text-[#1A1919] mercoa-font-medium mercoa-whitespace-nowrap">
-                      {selectedInvoiceIds.length} Invoice{selectedInvoiceIds.length > 1 ? 's' : ''} Selected
-                    </p>
-                  </div>
-
-                  <div className="mercoa-flex mercoa-w-full mercoa-justify-end mercoa-gap-2  mercoa-items-center">
-                    {validActions.includes('delete') && (
-                      <MercoaButton
-                        isEmphasized
-                        className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
-                        onClick={() => {
-                          setActiveInvoiceAction({
-                            invoiceId: selectedInvoiceIds,
-                            action: ReceivablesTableAction.Delete,
-                            mode: 'multiple',
-                          })
-                        }}
-                      >
-                        Delete
-                      </MercoaButton>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
+            <TableActionsBar
+              selectedInvoices={selectedInvoices}
+              setSelectedInvoices={setSelectedInvoices}
+              validActions={validActions}
+              setActiveInvoiceAction={setActiveInvoiceAction}
+            />
 
             {/* Table Content */}
             <div className="mercoa-overflow-x-auto mercoa-overflow-y-auto mercoa-h-[522px]">
@@ -651,7 +620,7 @@ export const ReceivablesTable = () => {
                   {
                     onSuccess: () => {
                       setActiveInvoiceAction(null)
-                      setSelectedInvoiceIds([])
+                      setSelectedInvoices([])
                       toast.success('Invoices deleted successfully')
                     },
                     onError: (error) => {
@@ -672,6 +641,190 @@ export const ReceivablesTable = () => {
               setActiveInvoiceAction(null)
             }
           }}
+          invoiceCount={
+            activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+              ? activeInvoiceAction.invoiceId.length
+              : 1
+          }
+        />
+
+        <RestoreAsDraftDialog
+          open={activeInvoiceAction?.action === ReceivablesTableAction.RestoreAsDraft}
+          setOpen={(_open) => {
+            if (!_open) {
+              setActiveInvoiceAction(null)
+            }
+          }}
+          onConfirm={() => {
+            if (activeInvoiceAction?.invoiceId) {
+              if (activeInvoiceAction.mode === 'single') {
+                restoreAsDraft(
+                  {
+                    invoice: data.find((d) => d.id === activeInvoiceAction.invoiceId)?.invoice!,
+                    invoiceType: 'invoice',
+                  },
+                  {
+                    onSuccess: () => {
+                      setActiveInvoiceAction(null)
+                      toast.success('Invoice restored as draft successfully')
+                    },
+                    onError: (error) => {
+                      setActiveInvoiceAction(null)
+                      toast.error(error.message)
+                    },
+                  },
+                )
+              } else {
+                bulkRestoreAsDraft(
+                  {
+                    invoiceIds: activeInvoiceAction.invoiceId as string[],
+                    invoiceType: 'invoice',
+                  },
+                  {
+                    onSuccess: () => {
+                      setActiveInvoiceAction(null)
+                      setSelectedInvoices([])
+                      toast.success('Invoices restored as draft successfully')
+                    },
+                    onError: (error) => {
+                      setActiveInvoiceAction(null)
+                      setSelectedInvoices([])
+                      toast.error(error.message)
+                    },
+                  },
+                )
+              }
+            }
+          }}
+          onCancel={() => {
+            setActiveInvoiceAction(null)
+          }}
+          isLoading={
+            activeInvoiceAction?.mode === 'single'
+              ? isRestoreAsDraftReceivableLoading
+              : isBulkRestoreAsDraftReceivableLoading
+          }
+          invoiceCount={
+            activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+              ? activeInvoiceAction.invoiceId.length
+              : 1
+          }
+        />
+        <ArchiveInvoiceDialog
+          open={activeInvoiceAction?.action === ReceivablesTableAction.Archive}
+          setOpen={(_open) => {
+            if (!_open) {
+              setActiveInvoiceAction(null)
+            }
+          }}
+          onConfirm={() => {
+            if (activeInvoiceAction?.invoiceId) {
+              if (activeInvoiceAction.mode === 'single') {
+                archiveReceivable(
+                  {
+                    invoiceId: activeInvoiceAction.invoiceId as string,
+                  },
+                  {
+                    onSuccess: () => {
+                      setActiveInvoiceAction(null)
+                      toast.success('Invoice archived successfully')
+                    },
+                    onError: (error) => {
+                      setActiveInvoiceAction(null)
+                      toast.error(error.message)
+                    },
+                  },
+                )
+              } else {
+                bulkArchiveReceivables(
+                  {
+                    invoiceIds: activeInvoiceAction.invoiceId as string[],
+                  },
+                  {
+                    onSuccess: () => {
+                      setActiveInvoiceAction(null)
+                      setSelectedInvoices([])
+                      toast.success('Invoices archived successfully')
+                    },
+                    onError: (error) => {
+                      setActiveInvoiceAction(null)
+                      setSelectedInvoices([])
+                      toast.error(error.message)
+                    },
+                  },
+                )
+              }
+            }
+          }}
+          onCancel={() => {
+            setActiveInvoiceAction(null)
+          }}
+          isLoading={
+            activeInvoiceAction?.mode === 'single' ? isArchiveReceivableLoading : isBulkArchiveReceivablesLoading
+          }
+          invoiceCount={
+            activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+              ? activeInvoiceAction.invoiceId.length
+              : 1
+          }
+        />
+        <CancelInvoiceDialog
+          open={activeInvoiceAction?.action === ReceivablesTableAction.Cancel}
+          setOpen={(_open) => {
+            if (!_open) {
+              setActiveInvoiceAction(null)
+            }
+          }}
+          onConfirm={() => {
+            if (activeInvoiceAction?.invoiceId) {
+              if (activeInvoiceAction.mode === 'single') {
+                cancelReceivable(
+                  {
+                    invoiceId: activeInvoiceAction.invoiceId as string,
+                  },
+                  {
+                    onSuccess: () => {
+                      setActiveInvoiceAction(null)
+                      toast.success('Invoice canceled successfully')
+                    },
+                    onError: (error) => {
+                      setActiveInvoiceAction(null)
+                      toast.error(error.message)
+                    },
+                  },
+                )
+              } else {
+                bulkCancelReceivables(
+                  {
+                    invoiceIds: activeInvoiceAction.invoiceId as string[],
+                  },
+                  {
+                    onSuccess: () => {
+                      setActiveInvoiceAction(null)
+                      setSelectedInvoices([])
+                      toast.success('Invoices canceled successfully')
+                    },
+                    onError: (error) => {
+                      setActiveInvoiceAction(null)
+                      setSelectedInvoices([])
+                      toast.error(error.message)
+                    },
+                  },
+                )
+              }
+            }
+          }}
+          onCancel={() => {
+            setActiveInvoiceAction(null)
+          }}
+          isLoading={
+            activeInvoiceAction?.mode === 'single' ? isCancelReceivableLoading : isBulkCancelReceivablesLoading
+          }
+          invoiceCount={
+            activeInvoiceAction && Array.isArray(activeInvoiceAction?.invoiceId)
+              ? activeInvoiceAction.invoiceId.length
+              : 1
+          }
         />
       </div>
     </div>

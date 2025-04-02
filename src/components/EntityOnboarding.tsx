@@ -111,28 +111,28 @@ export function UploadBlock({
 }) {
   const mercoaSession = useMercoaSession()
 
-  const [existingDocument, setExistingDocument] = useState<string | null | undefined>()
+  const [existingDocumentUri, setExistingDocumentUri] = useState<string | undefined>()
+  const [existingDocumentId, setExistingDocumentId] = useState<string | undefined>()
   const [isEditing, setIsEditing] = useState(true)
 
   useEffect(() => {
-    if (entity) {
-      if (type === 'Logo') {
-        setExistingDocument(entity.logo)
-      } else {
-        mercoaSession.client?.entity.document
-          .getAll(entity.id, {
-            type: uploadTypeToDocumentType[type],
-          })
-          .then((resp) => setExistingDocument(resp.find((d) => d.type === uploadTypeToDocumentType[type])?.uri))
-      }
+    if (!entity) return
+    if (type === 'Logo') {
+      setExistingDocumentUri(entity.logo)
+      return
     }
-  }, [entity])
+    mercoaSession.client?.entity.document.getAll(entity.id, { type: uploadTypeToDocumentType[type] }).then((resp) => {
+      const document = resp.find((d) => d.type === uploadTypeToDocumentType[type])
+      setExistingDocumentUri(document?.uri)
+      setExistingDocumentId(document?.id)
+    })
+  }, [entity, type])
 
   useEffect(() => {
-    if (existingDocument) {
+    if (existingDocumentUri) {
       setIsEditing(false)
     }
-  }, [existingDocument])
+  }, [existingDocumentUri])
 
   let defaultIcon = (
     <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
@@ -144,25 +144,25 @@ export function UploadBlock({
   }
 
   const embeddedDocument = useMemo(() => {
-    if (existingDocument) {
+    if (existingDocumentUri) {
       return (
         <div className="mercoa-col-span-full mercoa-border mercoa-border-gray-200 mercoa-rounded-lg mercoa-p-4">
           <h3 className="mercoa-text-lg mercoa-font-medium mercoa-mb-2 mercoa-text-gray-700 mercoa-text-left">
             {type}
           </h3>
           {type === 'Logo' ? (
-            <img className="mercoa-mx-auto mercoa-h-12" src={existingDocument} alt="Logo" />
+            <img className="mercoa-mx-auto mercoa-h-12" src={existingDocumentUri} alt="Logo" />
           ) : (
-            <embed className="mercoa-w-full mercoa-h-64" src={existingDocument} />
+            <embed className="mercoa-w-full mercoa-h-64" src={existingDocumentUri} />
           )}
         </div>
       )
     }
     return null
-  }, [existingDocument])
+  }, [existingDocumentUri])
 
   if (!edit) {
-    if (!existingDocument) {
+    if (!existingDocumentUri) {
       return <div className="mercoa-col-span-full mercoa-text-gray-500 mercoa-text-left">No {type} uploaded</div>
     } else {
       return embeddedDocument
@@ -172,55 +172,50 @@ export function UploadBlock({
     <div className="mercoa-col-span-full">
       {isEditing ? (
         <Dropzone
-          onDropAccepted={(acceptedFiles) => {
-            blobToDataUrl(acceptedFiles[0]).then((fileReaderObj) => {
+          onDropAccepted={async (acceptedFiles) => {
+            try {
+              const fileReaderObj = await blobToDataUrl(acceptedFiles[0])
               mercoaSession.debug(fileReaderObj)
-              if (entity) {
-                if (type === 'Logo') {
-                  mercoaSession.client?.entity
-                    .update(entity.id, {
-                      logo: fileReaderObj,
-                    })
-                    .then(() => {
-                      mercoaSession.refresh()
-                      toast.success('Logo Updated')
-                    })
-                } else if (type === 'W9') {
-                  mercoaSession.client?.entity.document
-                    .upload(entity.id, {
-                      document: fileReaderObj,
-                      type: 'W9',
-                    })
-                    .then(() => {
-                      mercoaSession.refresh()
-                      toast.success('W9 Updated')
-                    })
-                } else if (type === '1099') {
-                  mercoaSession.client?.entity.document
-                    .upload(entity.id, {
-                      document: fileReaderObj,
-                      type: 'TEN_NINETY_NINE',
-                    })
-                    .then(() => {
-                      mercoaSession.refresh()
-                      toast.success('1099 Updated')
-                    })
-                } else if (type === 'Bank Statement') {
-                  mercoaSession.client?.entity.document
-                    .upload(entity.id, {
-                      document: fileReaderObj,
-                      type: 'BANK_STATEMENT',
-                    })
-                    .then(() => {
-                      mercoaSession.refresh()
-                      toast.success('Bank Statement Updated')
-                    })
-                }
+              if (!entity) return
+
+              const updateActions = {
+                Logo: () => mercoaSession.client?.entity.update(entity.id, { logo: fileReaderObj }),
+                W9: () =>
+                  mercoaSession.client?.entity.document.upload(entity.id, { document: fileReaderObj, type: 'W9' }),
+                '1099': () =>
+                  mercoaSession.client?.entity.document.upload(entity.id, {
+                    document: fileReaderObj,
+                    type: 'TEN_NINETY_NINE',
+                  }),
+                'Bank Statement': () =>
+                  mercoaSession.client?.entity.document.upload(entity.id, {
+                    document: fileReaderObj,
+                    type: 'BANK_STATEMENT',
+                  }),
               }
-            })
+
+              const action = updateActions[type]
+              if (!action) return
+
+              await action()
+              if (existingDocumentId) {
+                mercoaSession.debug(`Deleting existing document ${existingDocumentId}`)
+                await mercoaSession.client?.entity.document.delete(entity.id, existingDocumentId)
+              }
+              await mercoaSession.refresh()
+              toast.success(`${type} Updated`)
+            } catch (error) {
+              console.error('Error uploading file:', error)
+              toast.error(`Failed to update ${type}`)
+            }
           }}
           onDropRejected={(_, event) => {
-            toast.error('Invalid file type or file is too large')
+            try {
+              toast.error('Invalid file type or file is too large')
+            } catch (error) {
+              console.error('Error handling rejected file:', error)
+              toast.error('An error occurred while processing the file')
+            }
           }}
           minSize={0}
           maxSize={100_000_000}

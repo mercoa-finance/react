@@ -221,6 +221,12 @@ export type PayableApproversContext = {
 
 //Payables Props
 
+export type PayablesTableActionProps = {
+  invoiceId: string[] | string
+  action: PayablesTableAction
+  mode: 'single' | 'multiple'
+}
+
 export type PayablesProps = {
   queryOptions?: PayablesQueryOptions
   renderCustom?: PayablesRenderCustom

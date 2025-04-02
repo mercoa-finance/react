@@ -5,7 +5,16 @@ import { Mercoa } from '@mercoa/javascript'
 import { InvoiceTableColumn, useMercoaSession } from '../../../components'
 import { queryClient } from '../../../lib/react-query/query-client-provider'
 import { invoicePaymentTypeMapper } from '../../common/invoice-payment-type'
-import { useBulkDeleteReceivables, useDeleteReceivable } from '../api/mutations'
+import {
+  useArchiveReceivable,
+  useBulkArchiveReceivables,
+  useBulkCancelReceivables,
+  useBulkDeleteReceivables,
+  useBulkRestoreAsDraftReceivable,
+  useCancelReceivable,
+  useDeleteReceivable,
+  useRestoreAsDraftReceivable,
+} from '../api/mutations'
 import {
   useReceivableMetricsByStatusQuery,
   useReceivablesQuery,
@@ -43,7 +52,7 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   )
   const [resultsPerPage, setResultsPerPage] = useState(initialQueryOptions?.resultsPerPage || 10)
   const [page, setPage] = useState(0)
-  const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([])
+  const [selectedInvoices, setSelectedInvoices] = useState<Mercoa.InvoiceResponse[]>([])
 
   const [selectedColumns, setSelectedColumns] = useState<InvoiceTableColumn[]>([
     { title: 'Payer Name', field: 'payer', orderBy: Mercoa.InvoiceOrderByField.PayerName },
@@ -101,6 +110,13 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
 
   const { mutate: deleteReceivable, isPending: isDeleteReceivableLoading } = useDeleteReceivable()
   const { mutate: bulkDeleteReceivables, isPending: isBulkDeleteReceivableLoading } = useBulkDeleteReceivables()
+  const { mutate: restoreAsDraft, isPending: isRestoreAsDraftReceivableLoading } = useRestoreAsDraftReceivable()
+  const { mutate: bulkRestoreAsDraft, isPending: isBulkRestoreAsDraftReceivableLoading } =
+    useBulkRestoreAsDraftReceivable()
+  const { mutate: archiveReceivable, isPending: isArchiveReceivableLoading } = useArchiveReceivable()
+  const { mutate: bulkArchiveReceivables, isPending: isBulkArchiveReceivablesLoading } = useBulkArchiveReceivables()
+  const { mutate: cancelReceivable, isPending: isCancelReceivableLoading } = useCancelReceivable()
+  const { mutate: bulkCancelReceivables, isPending: isBulkCancelReceivablesLoading } = useBulkCancelReceivables()
 
   const currentPageData = useMemo(() => {
     return data?.pages[page]?.invoices || []
@@ -121,7 +137,7 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   }, [search])
 
   useEffect(() => {
-    setSelectedInvoiceIds([])
+    setSelectedInvoices([])
     setPage(0)
   }, [
     currentQueryOptions?.currentStatuses,
@@ -184,21 +200,27 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   }, [currentPageData])
 
   const isAllSelected =
-    allFetchedInvoices.length > 0 && allFetchedInvoices.every((invoice) => selectedInvoiceIds.includes(invoice.id))
+    allFetchedInvoices.length > 0 &&
+    allFetchedInvoices.every((invoice) => selectedInvoices.map((e) => e.id).includes(invoice.id))
 
   const handleSelectAll = () => {
-    setSelectedInvoiceIds((prev) => {
-      const allIds = allFetchedInvoices.map((invoice) => invoice.id)
-      const areAllSelected = allIds.every((id) => prev.includes(id))
+    setSelectedInvoices((prev) => {
+      const existingIds = prev.map((e) => e.id)
+      const areAllSelected = allFetchedInvoices.every((fetchedInvoice) => existingIds.includes(fetchedInvoice.id))
 
-      return areAllSelected ? [] : allIds
+      return areAllSelected ? [] : allFetchedInvoices
     })
   }
 
-  const handleSelectRow = (invoiceId: string) => {
-    setSelectedInvoiceIds((prev) =>
-      prev.includes(invoiceId) ? prev.filter((id) => id !== invoiceId) : [...prev, invoiceId],
-    )
+  const handleSelectRow = (invoice: Mercoa.InvoiceResponse) => {
+    setSelectedInvoices((prev) => {
+      console.log('invoice', invoice)
+      console.log('prev', prev)
+      if (prev.some((e) => e.id === invoice.id)) {
+        return prev.filter((e) => e.id !== invoice.id)
+      }
+      return [...prev, invoice]
+    })
   }
 
   const goToNextPage = () => {
@@ -365,8 +387,8 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
     },
 
     selectionContextValue: {
-      selectedInvoiceIds,
-      setSelectedInvoiceIds,
+      selectedInvoices,
+      setSelectedInvoices,
       isAllSelected,
       handleSelectAll,
       handleSelectRow,
@@ -383,6 +405,18 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
       activeInvoiceAction,
       setActiveInvoiceAction,
       downloadInvoicesAsCSV,
+      restoreAsDraft,
+      isBulkRestoreAsDraftReceivableLoading,
+      bulkRestoreAsDraft,
+      isRestoreAsDraftReceivableLoading,
+      archiveReceivable,
+      isArchiveReceivableLoading,
+      bulkArchiveReceivables,
+      isBulkArchiveReceivablesLoading,
+      cancelReceivable,
+      isCancelReceivableLoading,
+      bulkCancelReceivables,
+      isBulkCancelReceivablesLoading,
     },
   }
 
