@@ -541,10 +541,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   useEffect(() => {
     if (!ocrResponse) return
 
-    if (!invoiceData?.ocrJobId && !activeOcrJobId) {
-      return
-    }
-
     if (
       invoiceData?.ocrJobId &&
       (invoiceData?.vendor ||
@@ -555,7 +551,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       return
     }
 
-    setActiveOcrJobId(undefined)
     setValue('ocrJobId', ocrResponse.jobId)
 
     mercoaSession.debug({ ocrResponse })
@@ -635,15 +630,18 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   }, [documents])
 
   useEffect(() => {
-    if (!!ocrJob) {
+    if (!!ocrJob && activeOcrJobId === ocrJob.data?.jobId) {
       if (ocrJob.status === Mercoa.OcrJobStatus.Success) {
-        setOcrProcessing(false)
         if (ocrJob.data && onOcrComplete) {
+          setActiveOcrJobId(undefined)
           onOcrComplete(ocrJob.data).then((response) => {
             setOcrResponse(response)
+            setOcrProcessing(false)
           })
         } else {
+          setActiveOcrJobId(undefined)
           setOcrResponse(ocrJob.data)
+          setOcrProcessing(false)
         }
         return
       }
@@ -654,7 +652,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
         return
       }
     }
-  }, [ocrJob, toast])
+  }, [ocrJob, toast, activeOcrJobId])
 
   useEffect(() => {
     if (!!invoiceOcrJob) {
@@ -1483,10 +1481,10 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     if (id) {
       const index = lineItems.findIndex((ele) => ele.id === id)
       if (index !== -1) {
-        updateItem(index, item)
+        setValue(`lineItems.${index}`, item as Mercoa.InvoiceLineItemResponse)
       }
     } else {
-      updateItem(index, item)
+      setValue(`lineItems.${index}`, item as Mercoa.InvoiceLineItemResponse)
     }
   }
 

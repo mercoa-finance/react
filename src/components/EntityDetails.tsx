@@ -15,7 +15,9 @@ export function EntityStatus({
   entity,
   showTooltip = true,
 }: {
-  entity?: Mercoa.EntityResponse
+  entity?: {
+    status: Mercoa.EntityStatus
+  }
   showTooltip?: boolean
 }) {
   const mercoaSession = useMercoaSession()

@@ -253,7 +253,7 @@ export function CustomPaymentMethod({
               </>
             ) : (
               <>
-                {account?.availableBalance && (
+                {account?.availableBalance !== undefined && (
                   <Tooltip title="Available balance" offset={30}>
                     <p
                       className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
@@ -261,7 +261,7 @@ export function CustomPaymentMethod({
                       }`}
                     >
                       {accounting.formatMoney(
-                        account?.availableBalance ?? '',
+                        account.availableBalance,
                         currencyCodeToSymbol(account.supportedCurrencies[0]),
                       )}
                     </p>
@@ -577,10 +577,12 @@ export function EditCustomPaymentMethod({
       mercoaSession.client?.entity.paymentMethod
         .update(mercoaSession.entity?.id, account.id, {
           type: Mercoa.PaymentMethodType.Custom,
-          ...(updateRequest.accountName && { accountName: updateRequest.accountName }),
-          ...(updateRequest.accountNumber && { accountNumber: updateRequest.accountNumber }),
-          ...(updateRequest.availableBalance && { availableBalance: Number(updateRequest.availableBalance) }),
-          ...(data && { data }),
+          ...(updateRequest.accountName !== undefined && { accountName: updateRequest.accountName }),
+          ...(updateRequest.accountNumber !== undefined && { accountNumber: updateRequest.accountNumber }),
+          ...(updateRequest.availableBalance !== undefined && {
+            availableBalance: Number(updateRequest.availableBalance),
+          }),
+          ...(data !== undefined && { data }),
         })
         .then(() => {
           toast.success('Custom payment method updated')
