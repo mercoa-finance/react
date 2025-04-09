@@ -33,12 +33,12 @@ import {
   PayableLineItemsContext,
   PayableMetadataContext,
   PayableOverviewContext,
+  PayablePaymentMethodContext,
   PayablePaymentTimingContext,
+  PayableRecurringScheduleContext,
   PayableTaxAndShippingContext,
   PayableVendorContext,
   PayableVendorCreditContext,
-  PaymentMethodContext,
-  RecurringScheduleContext,
 } from '../types'
 
 // this is purposely added here to avoid circular dependencies need to inspect further later
@@ -942,13 +942,17 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     }
   }
 
+  const refreshPayables = () => {
+    queryClient.invalidateQueries({ queryKey: ['payables'] })
+    queryClient.invalidateQueries({ queryKey: ['recurringPayables'] })
+    queryClient.invalidateQueries({ queryKey: ['payableStatusTabsMetrics'] })
+    queryClient.invalidateQueries({ queryKey: ['payableMetrics'] })
+  }
+
   const refreshInvoice = useCallback(
     (invoiceId: string) => {
       queryClient.invalidateQueries({ queryKey: ['payableDetail', invoiceId, invoiceType] })
-      queryClient.invalidateQueries({ queryKey: ['payables'] })
-      queryClient.invalidateQueries({ queryKey: ['recurringPayables'] })
-      queryClient.invalidateQueries({ queryKey: ['payableStatusTabsMetrics'] })
-      queryClient.invalidateQueries({ queryKey: ['payableMetrics'] })
+      refreshPayables()
     },
     [invoiceType],
   )
@@ -1305,13 +1309,14 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     } else if (action === PayableFormAction.DELETE) {
       if (invoiceData?.id) {
         try {
-          if (confirm('Are your sure you want to delete this invoice? This cannot be undone.')) {
+          if (confirm('Are you sure you want to delete this invoice? This cannot be undone.')) {
             await getInvoiceClient(mercoaSession, invoiceType ?? 'invoice')?.delete(invoiceData.id)
             toast?.success('Invoice deleted')
             if (onInvoiceUpdate) onInvoiceUpdate(undefined)
           }
           setIsLoading(false)
           setValue('formAction', '')
+          refreshPayables()
           return
         } catch (e: any) {
           console.error(e)
@@ -1734,7 +1739,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     paymentTimingLoading,
   }
 
-  const paymentMethodContext: PaymentMethodContext = {
+  const paymentMethodContext: PayablePaymentMethodContext = {
     sourcePaymentMethods: paymentMethodsSource,
     destinationPaymentMethods: paymentMethodsDestination,
     selectedSourcePaymentMethodId: selectedSourcePaymentMethodId,
@@ -1762,7 +1767,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     getVendorPaymentLink,
   }
 
-  const recurringScheduleContext: RecurringScheduleContext = {
+  const recurringScheduleContext: PayableRecurringScheduleContext = {
     type: paymentScheduleType as 'weekly' | 'monthly' | 'yearly' | 'daily' | 'oneTime',
     repeatEvery: paymentScheduleRepeatEvery as number | undefined,
     repeatOn: paymentScheduleRepeatOn as Array<Mercoa.DayOfWeek> | undefined,
