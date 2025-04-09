@@ -3,6 +3,7 @@ import { MercoaButton } from '../../../../../../components/generics'
 import { Popover } from '../../../../../../lib/components'
 import { PlusIcon, RightArrowIcon } from '../../../../../common/assets/icons'
 import { useDropdownStore } from '../../../../../common/stores/dropdown-store'
+import { ApproverActionFilterCardDropdown } from './components/approvers-action-card'
 import { ApproversFilterCardDropdown } from './components/approvers-filter-card'
 import { StatusFilterCardDropdown } from './components/status-filter-card'
 
@@ -33,7 +34,9 @@ export const CumulativeFilterDropdown: FC = () => {
       <StatusFilterCardDropdown tableId="payables" setShowFilterTrigger={setShowFilterTrigger} />
       {/* <PaymentModeFilterCardDropdown tableId="payables" setShowFilterTrigger={setShowFilterTrigger} /> */}
       <ApproversFilterCardDropdown tableId="payables" setShowFilterTrigger={setShowFilterTrigger} />
-      {showFilterTrigger ? (
+      <ApproverActionFilterCardDropdown tableId="payables" setShowFilterTrigger={setShowFilterTrigger} />
+
+      {showFilterTrigger && (
         <Popover
           sideOffset={12}
           trigger={
@@ -68,7 +71,7 @@ export const CumulativeFilterDropdown: FC = () => {
             ))}
           </div>
         </Popover>
-      ) : null}
+      )}
     </div>
   )
 }

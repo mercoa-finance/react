@@ -41,7 +41,7 @@ export function usePayablesInternal(payableProps: PayablesProps) {
   const currentQueryOptions = queryOptions?.isInitial ? undefined : queryOptions
   const mercoaSession = useMercoaSession()
   const { getFilters } = usePayablesFilterStore()
-  const { selectedStatusFilters, dateRange, dateType, selectedApprovers } = getFilters(
+  const { selectedStatusFilters, dateRange, dateType, selectedApprovers, selectedApproverActions } = getFilters(
     'payables',
     [Mercoa.InvoiceStatus.Draft],
     mercoaSession.user,
@@ -50,6 +50,7 @@ export function usePayablesInternal(payableProps: PayablesProps) {
 
   const memoizedStatusFilters = useMemo(() => selectedStatusFilters || [], [selectedStatusFilters])
   const memoizedApprovers = useMemo(() => selectedApprovers || [], [selectedApprovers])
+  const memoizedApproverActions = useMemo(() => selectedApproverActions || [], [selectedApproverActions])
   const [currentStatuses, setCurrentStatuses] = useState<Mercoa.InvoiceStatus[]>(
     initialQueryOptions?.currentStatuses || [],
   )
@@ -97,7 +98,7 @@ export function usePayablesInternal(payableProps: PayablesProps) {
     orderDirection: currentQueryOptions?.orderDirection ? currentQueryOptions.orderDirection : orderDirection,
     resultsPerPage: currentQueryOptions?.resultsPerPage ? currentQueryOptions.resultsPerPage : resultsPerPage,
     approverId: memoizedApprovers.length ? memoizedApprovers.map((e) => e.id) : undefined,
-    //approverAction: memoizedApprovers.length ? Mercoa.ApproverAction.None : undefined,
+    approverActions: memoizedApproverActions.length ? memoizedApproverActions : undefined,
     excludeReceivables: true,
   })
 

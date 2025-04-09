@@ -1722,6 +1722,30 @@ export async function getAllUsers(client: MercoaClient, entityId: string) {
   return userResp
 }
 
+export async function getAllUsersFromGroup(client: MercoaClient, entityGroupId: string) {
+  const userResp: Mercoa.EntityUserResponse[] = []
+  let hasMore = true
+  while (hasMore) {
+    const resp = await client?.entityGroup.user.find(entityGroupId, {
+      limit: 100,
+      startingAfter: userResp.length > 0 ? userResp[userResp.length - 1].foreignId : undefined,
+    })
+    if (resp) {
+      userResp.push(
+        ...resp.data.map((user) => ({
+          ...user,
+          id: user.foreignId,
+          roles: [...new Set(user.entities.map((entity) => entity.roles).flat())], // TODO: this is a hack to get the roles
+        })),
+      )
+      hasMore = resp.hasMore
+    } else {
+      hasMore = false
+    }
+  }
+  return userResp
+}
+
 export function NoSession({ componentName }: { componentName: string }) {
   return (
     <div className="mercoa-text-red-700">

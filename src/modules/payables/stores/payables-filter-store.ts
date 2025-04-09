@@ -10,6 +10,7 @@ export interface PayablesFilters {
   selectedStatusFilters: Mercoa.InvoiceStatus[]
   selectedPaymentModeFilters: Mercoa.PaymentMethodType[]
   selectedApprovers: Mercoa.EntityUserResponse[]
+  selectedApproverActions: Mercoa.ApproverAction[]
   dateRange: DateRange
   dateType: Mercoa.InvoiceDateFilter
 }
@@ -56,6 +57,7 @@ export const usePayablesFilterStore = create<PayablesFilterStoreState & Payables
       selectedStatusFilters: initialStatusFilters,
       selectedPaymentModeFilters: [],
       selectedApprovers: [],
+      selectedApproverActions: [],
       dateRange: { startDate: null, endDate: null },
       dateType: Mercoa.InvoiceDateFilter.CreatedAt,
     }

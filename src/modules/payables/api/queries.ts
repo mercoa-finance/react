@@ -24,7 +24,7 @@ export interface UsePayablesRequestOptions {
   metadata?: Mercoa.MetadataFilter | Mercoa.MetadataFilter[]
   dateType?: Mercoa.InvoiceDateFilter
   approverId?: string[]
-  approverAction?: Mercoa.ApproverAction
+  approverActions?: Mercoa.ApproverAction[]
 }
 
 export function usePayablesQuery({
@@ -40,7 +40,7 @@ export function usePayablesQuery({
   metadata,
   dateType = Mercoa.InvoiceDateFilter.CreatedAt,
   approverId,
-  approverAction,
+  approverActions,
 }: UsePayablesRequestOptions) {
   const mercoaSession = useMercoaSession()
 
@@ -58,7 +58,7 @@ export function usePayablesQuery({
       paymentType,
       dateType,
       approverId,
-      approverAction,
+      approverActions,
     ],
     queryFn: async ({ pageParam = undefined }) => {
       if (!mercoaSession || !mercoaSession.client || !mercoaSession.entityId) {
@@ -83,7 +83,7 @@ export function usePayablesQuery({
         paymentType: paymentType,
         dateType: dateType,
         approverId: approverId,
-        approverAction: approverAction,
+        approverAction: approverActions,
       }
 
       const response = await mercoaSession.client.entity.invoice.find(mercoaSession.entityId, filter)
@@ -115,7 +115,7 @@ export function useRecurringPayablesQuery({
   metadata,
   dateType = Mercoa.InvoiceDateFilter.CreatedAt,
   approverId,
-  approverAction,
+  approverActions,
 }: UsePayablesRequestOptions) {
   const mercoaSession = useMercoaSession()
 
@@ -133,7 +133,7 @@ export function useRecurringPayablesQuery({
       paymentType,
       dateType,
       approverId,
-      approverAction,
+      approverActions,
     ],
     queryFn: async () => {
       if (!mercoaSession || !mercoaSession.client || !mercoaSession.entity?.id) {
@@ -156,7 +156,8 @@ export function useRecurringPayablesQuery({
         metadata: metadata,
         paymentType: paymentType,
         dateType: dateType,
-        ...(approverId && approverAction && { approverId, approverAction }),
+        approverId: approverId,
+        approverAction: approverActions,
       }
 
       const response = await mercoaSession.client.invoiceTemplate.find(filter)

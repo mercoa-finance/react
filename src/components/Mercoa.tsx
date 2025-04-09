@@ -5,7 +5,7 @@ import { ToastContainer } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { RBACPermissions, buildRbacPermissions, setStyle } from '../lib/lib'
 import { MercoaQueryClientProvider } from '../lib/react-query/query-client-provider'
-import { EntityPortal, TokenOptions, getAllUsers } from './index'
+import { EntityPortal, TokenOptions, getAllUsers, getAllUsersFromGroup } from './index'
 
 export interface MercoaContext {
   token?: string
@@ -411,6 +411,29 @@ function useProvideSession({
       } catch (e) {
         console.error(e)
         console.error('Failed to get entity group ' + egi)
+      }
+
+      // get entity user id from passed prop or token
+      let uid = entityUserId
+      if (!uid) {
+        try {
+          const { userId } = jwtDecode(String(tokenLocal)) as TokenOptions
+          uid = userId
+        } catch (e) {
+          console.error(e)
+        }
+      }
+
+      // get user data
+      try {
+        const allUsers = await getAllUsersFromGroup(client, egi)
+        setUsers(allUsers)
+        if (uid) {
+          setUser(allUsers.find((u) => u.foreignId === uid))
+        }
+      } catch (e) {
+        console.error(e)
+        console.error('Failed to get users for entity group ' + egi)
       }
     }
   }
