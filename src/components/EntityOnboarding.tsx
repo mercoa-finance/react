@@ -940,7 +940,7 @@ export function MCCBlock({ watch, setValue, errors }: { watch: Function; setValu
         }))}
         showAllOptions
         displayIndex="name"
-        label="Merchant Categorization Code"
+        label="Merchant Category Code"
         value={mccCodes.find((e) => e.code === mcc)}
         onChange={({ code }) => {
           setValue('mcc', code, { shouldDirty: true })

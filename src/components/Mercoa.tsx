@@ -5,7 +5,7 @@ import { ToastContainer } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { RBACPermissions, buildRbacPermissions, setStyle } from '../lib/lib'
 import { MercoaQueryClientProvider } from '../lib/react-query/query-client-provider'
-import { EntityPortal, TokenOptions, getAllUsers, getAllUsersFromGroup } from './index'
+import { EntityPortal, TokenOptions, getAllUsers } from './index'
 
 export interface MercoaContext {
   token?: string
@@ -263,7 +263,7 @@ function useProvideSession({
 
     // Get org data
     try {
-      const o = await client.organization.get({
+      const organization = await client.organization.get({
         paymentMethods: true,
         emailProvider: true,
         externalAccountingSystemProvider: true,
@@ -274,7 +274,7 @@ function useProvideSession({
         customDomains: true,
         rolePermissions: true,
       })
-      setOrganization(o)
+      setOrganization(organization)
     } catch (e) {
       console.error(e)
       console.error('Failed to get organization data')
@@ -316,21 +316,21 @@ function useProvideSession({
     setIsLoading(false)
   }
 
-  async function refreshEntity(eid?: string) {
+  async function refreshEntity(entityId?: string) {
     // get entity Id from passed prop or token
-    if (!eid) {
+    if (!entityId) {
       try {
-        const { entityId } = jwtDecode(String(tokenLocal)) as TokenOptions
-        eid = entityId
+        const { entityId: entityIdFromToken } = jwtDecode(String(tokenLocal)) as TokenOptions
+        entityId = entityIdFromToken
       } catch (e) {
         console.error(e)
       }
     }
-    if (eid === 'undefined') return
+    if (entityId === 'undefined') return
 
     // Get org data
     try {
-      const o = await client.organization.get({
+      const organization = await client.organization.get({
         paymentMethods: true,
         emailProvider: true,
         externalAccountingSystemProvider: true,
@@ -340,7 +340,7 @@ function useProvideSession({
         metadataSchema: true,
         rolePermissions: true,
       })
-      setOrganization(o)
+      setOrganization(organization)
     } catch (e) {
       console.error(e)
       console.error('Failed to get organization data')
@@ -354,86 +354,66 @@ function useProvideSession({
       console.error('Failed to get payment method schemas')
     }
 
-    if (eid === 'all') return
+    if (entityId === 'all') return
 
     // Get entity data
-    if (eid) {
+    if (entityId) {
       try {
-        const e = await client.entity.get(eid, {
+        const entity = await client.entity.get(entityId, {
           returnMetadata: fetchMetadata,
         })
-        setEntity(e)
-        const ec = await client.entity.customization.get(eid)
-        setEntityCustomizations(ec)
+        setEntity(entity)
+        const entityCustomizations = await client.entity.customization.get(entityId)
+        setEntityCustomizations(entityCustomizations)
       } catch (e) {
         console.error(e)
-        console.error('Failed to get entity ' + eid)
+        console.error('Failed to get entity ' + entityId)
       }
 
-      // get entity user id from passed prop or token
-      let uid = entityUserId
-      if (!uid) {
-        try {
-          const { userId } = jwtDecode(String(tokenLocal)) as TokenOptions
-          uid = userId
-        } catch (e) {
-          console.error(e)
-        }
-      }
+      await refreshEntityUsers(entityId, entityUserId)
+    }
+  }
 
-      // get user data
+  async function refreshEntityUsers(entityId: string, entityUserId?: string) {
+    // get entity user id from passed prop or token
+    if (!entityUserId) {
       try {
-        const allUsers = await getAllUsers(client, eid)
-        setUsers(allUsers)
-        if (uid) {
-          setUser(allUsers.find((u) => u.id === uid || u.foreignId === uid))
-        }
+        const { userId: userIdFromToken } = jwtDecode(String(tokenLocal)) as TokenOptions
+        entityUserId = userIdFromToken
       } catch (e) {
         console.error(e)
-        console.error('Failed to get users for entity ' + eid)
       }
+    }
+
+    // get user data
+    try {
+      const allUsers = await getAllUsers(client, entityId)
+      setUsers(allUsers)
+      if (entityUserId) {
+        setUser(allUsers.find((u) => u.id === entityUserId || u.foreignId === entityUserId))
+      }
+    } catch (e) {
+      console.error(e)
+      console.error('Failed to get users for entity ' + entityId)
     }
   }
 
   async function refreshEntityGroup() {
-    let egi = entityGroupId
-    if (!egi) {
-      const { entityGroupId } = jwtDecode(String(tokenLocal)) as TokenOptions
-      egi = entityGroupId
+    let groupId = entityGroupId
+    if (!groupId) {
+      const { entityGroupId: groupIdFromToken } = jwtDecode(String(tokenLocal)) as TokenOptions
+      groupId = groupIdFromToken
     }
     // Get entity data
-    if (egi && egi !== 'all') {
+    if (groupId && groupId !== 'all') {
       try {
-        const group = await client.entityGroup.get(egi, {
+        const group = await client.entityGroup.get(groupId, {
           returnEntityMetadata: fetchMetadata,
         })
         setEntityGroup(group)
       } catch (e) {
         console.error(e)
-        console.error('Failed to get entity group ' + egi)
-      }
-
-      // get entity user id from passed prop or token
-      let uid = entityUserId
-      if (!uid) {
-        try {
-          const { userId } = jwtDecode(String(tokenLocal)) as TokenOptions
-          uid = userId
-        } catch (e) {
-          console.error(e)
-        }
-      }
-
-      // get user data
-      try {
-        const allUsers = await getAllUsersFromGroup(client, egi)
-        setUsers(allUsers)
-        if (uid) {
-          setUser(allUsers.find((u) => u.foreignId === uid))
-        }
-      } catch (e) {
-        console.error(e)
-        console.error('Failed to get users for entity group ' + egi)
+        console.error('Failed to get entity group ' + groupId)
       }
     }
   }
@@ -487,6 +467,9 @@ function useProvideSession({
     entities: entityGroup?.entities,
     setEntity: (entity?: Mercoa.EntityResponse) => {
       setEntity(entity)
+      if (entity) {
+        refreshEntityUsers(entity.id, entityUserId)
+      }
       refresh()
     },
     user,
