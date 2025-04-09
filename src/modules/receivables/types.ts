@@ -47,6 +47,12 @@ export type ReceivableDetailsRenderCustom = {
 }
 
 // Receivable Details Context
+export type ReceivableDetailsContextValue = {
+  propsContextValue: ReceivableDetailsProps
+  formContextValue: ReceivableFormContext
+  dataContextValue: ReceivableDataContext
+}
+
 export type ReceivablePaymentMethodContext = {
   setMethodOnTypeChange: (paymentMethodType: Mercoa.PaymentMethodType | string, type: 'source' | 'destination') => void
   sourcePaymentMethods?: Mercoa.PaymentMethodResponse[]
@@ -64,12 +70,6 @@ export type ReceivablePaymentMethodContext = {
   paymentLink?: string
 }
 
-export type ReceivableDetailsContextValue = {
-  propsContextValue: ReceivableDetailsProps
-  formContextValue: ReceivableFormContext
-  dataContextValue: ReceivableDataContext
-}
-
 export type ReceivableFormContext = {
   formMethods: UseFormReturn<any>
   handleFormSubmit: (data: any) => void
@@ -77,7 +77,7 @@ export type ReceivableFormContext = {
   handleActionClick: (action: ReceivableFormAction) => void
   paymentMethodContextValue: ReceivablePaymentMethodContext
   payerContextValue: ReceivablePayerContext
-  recurringScheduleContextValue: RecurringScheduleContext
+  recurringScheduleContextValue: ReceivableRecurringScheduleContext
 }
 
 export type ReceivableDataContext = {
@@ -92,7 +92,7 @@ export type ReceivablePayerContext = {
   setSelectedPayer: (payer?: Mercoa.EntityResponse) => void
 }
 
-export type RecurringScheduleContext = {
+export type ReceivableRecurringScheduleContext = {
   type: 'weekly' | 'monthly' | 'yearly' | 'daily' | 'oneTime'
   repeatEvery?: number
   repeatOn?: Array<Mercoa.DayOfWeek>

@@ -6,13 +6,23 @@ const getPrefillReceivableData = ({
   destinationPaymentMethods,
   receivableData,
   supportedCurrencies,
+  invoiceType = 'invoice',
 }: {
   destinationPaymentMethods?: Mercoa.PaymentMethodResponse[]
   receivableData?: Mercoa.InvoiceResponse
   supportedCurrencies?: Mercoa.CurrencyCode[]
+  invoiceType?: 'invoice' | 'invoiceTemplate'
 }) => {
   const defaultPaymentMethodDestinationType = getDefaultDestinationType(destinationPaymentMethods ?? [])
   const defaultPaymentMethodDestination = getDefaultDestinationPaymentMethod(destinationPaymentMethods ?? [])
+  const defaultPaymentSchedule =
+    invoiceType === 'invoiceTemplate'
+      ? {
+          type: 'daily',
+          repeatEvery: 1,
+          ends: new Date(),
+        }
+      : undefined
 
   const prefillReceivableData = {
     id: receivableData?.id,
@@ -67,7 +77,7 @@ const getPrefillReceivableData = ({
     paymentSourceCheckEnabled: receivableData
       ? (receivableData?.paymentSource as Mercoa.BankAccountResponse)?.checkOptions?.enabled ?? false
       : undefined,
-    paymentSchedule: receivableData?.paymentSchedule,
+    paymentSchedule: receivableData?.paymentSchedule ?? defaultPaymentSchedule,
     description: receivableData?.noteToSelf ?? '',
     metadata: receivableData?.metadata ?? {},
     creatorUser: receivableData?.creatorUser,

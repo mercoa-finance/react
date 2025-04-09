@@ -122,7 +122,7 @@ export function useRecurringPayablesQuery({
   return useQuery<Mercoa.InvoiceTemplateResponse[] | undefined>({
     queryKey: [
       'recurringPayables',
-      mercoaSession?.entity?.id,
+      mercoaSession?.entityId,
       currentStatuses,
       search,
       startDate,

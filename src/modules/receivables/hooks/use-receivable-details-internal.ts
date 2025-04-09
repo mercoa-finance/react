@@ -15,7 +15,12 @@ import {
 } from '../api/queries'
 import { ReceivableFormAction } from '../components/receivable-form/constants'
 import { receivableFormUtils } from '../components/receivable-form/utils'
-import { ReceivableDetailsProps, ReceivablePaymentMethodContext, RecurringScheduleContext } from '../types'
+import {
+  ReceivableDetailsContextValue,
+  ReceivableDetailsProps,
+  ReceivablePaymentMethodContext,
+  ReceivableRecurringScheduleContext,
+} from '../types'
 
 export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
   const { queryOptions = { invoiceId: '', invoiceType: 'invoice' }, handlers = {}, config = {}, renderCustom } = props
@@ -181,6 +186,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
         destinationPaymentMethods,
         receivableData,
         supportedCurrencies: supportedCurrencies ?? supportedCurrenciesFromQuery,
+        invoiceType,
       })
       reset(prefillReceivableData as any)
       usePrefillOnce.current = false
@@ -251,15 +257,20 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
     }
   }, [errors])
 
-  const refreshInvoice = (invoiceId: string, updatedInvoice?: Mercoa.InvoiceResponse) => {
-    queryClient.invalidateQueries({ queryKey: ['receivableDetail', invoiceId] })
+  const refreshReceivables = () => {
     queryClient.invalidateQueries({ queryKey: ['receivables'] })
     queryClient.invalidateQueries({ queryKey: ['recurringReceivables'] })
     queryClient.invalidateQueries({ queryKey: ['receivableMetrics'] })
     queryClient.invalidateQueries({ queryKey: ['receivableStatusTabsMetrics'] })
+  }
+
+  const refreshInvoice = (invoiceId: string, updatedInvoice?: Mercoa.InvoiceResponse) => {
+    queryClient.invalidateQueries({ queryKey: ['receivableDetail', invoiceId] })
+    refreshReceivables()
     const updatedPrefillReceivableData = receivableFormUtils.getPrefillReceivableData({
       receivableData: updatedInvoice,
       supportedCurrencies: supportedCurrencies ?? supportedCurrenciesFromQuery,
+      invoiceType,
     })
     reset(updatedPrefillReceivableData as any)
     if (onInvoiceUpdate) {
@@ -342,6 +353,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
             toast?.success('Invoice deleted')
             if (onInvoiceUpdate) onInvoiceUpdate(undefined)
             setValue('formAction', '')
+            refreshReceivables()
           }
           break
 
@@ -511,7 +523,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
     paymentLink,
   }
 
-  const recurringScheduleContext: RecurringScheduleContext = {
+  const recurringScheduleContext: ReceivableRecurringScheduleContext = {
     type: paymentScheduleType as 'weekly' | 'monthly' | 'yearly' | 'daily' | 'oneTime',
     repeatEvery: paymentScheduleRepeatEvery as number | undefined,
     repeatOn: paymentScheduleRepeatOn as Array<Mercoa.DayOfWeek> | undefined,
@@ -532,7 +544,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
     setEnds: (ends: Date | undefined) => setValue('paymentSchedule.ends', ends),
   }
 
-  return {
+  const out: ReceivableDetailsContextValue = {
     propsContextValue: props,
 
     formContextValue: {
@@ -558,4 +570,6 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
       refreshInvoice,
     },
   }
+
+  return out
 }

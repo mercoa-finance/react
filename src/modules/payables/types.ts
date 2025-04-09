@@ -52,7 +52,7 @@ export type PayableDetailsRenderCustom = {
   toast?: ToastClient
 }
 
-//Payable Details Context
+// Payable Details Context
 export type PayableDetailsContextValue = {
   dataContextValue: PayableDataContext
   displayContextValue: PayableDisplayContext
@@ -82,13 +82,13 @@ export type PayableFormContext = {
   lineItemsContextValue: PayableLineItemsContext
   commentsContextValue: PayableCommentsContext
   metadataContextValue: PayableMetadataContext
-  paymentMethodContextValue: PaymentMethodContext
+  paymentMethodContextValue: PayablePaymentMethodContext
   approversContextValue: PayableApproversContext
   taxAndShippingContextValue: PayableTaxAndShippingContext
   feesContextValue: PayableFeesContext
   vendorCreditContextValue: PayableVendorCreditContext
   paymentTimingContextValue: PayablePaymentTimingContext
-  recurringScheduleContextValue: RecurringScheduleContext
+  recurringScheduleContextValue: PayableRecurringScheduleContext
 }
 
 export type PayableDocumentContext = {
@@ -180,7 +180,7 @@ export type PayableMetadataContext = {
   setSchemaFieldValue: (schemaKey: string, value: string) => void
 }
 
-export type PaymentMethodContext = {
+export type PayablePaymentMethodContext = {
   sourcePaymentMethods?: Mercoa.PaymentMethodResponse[]
   destinationPaymentMethods?: Mercoa.PaymentMethodResponse[]
   selectedSourcePaymentMethodId?: string
@@ -196,7 +196,7 @@ export type PaymentMethodContext = {
   getVendorPaymentLink: (invoiceId: string) => Promise<string | undefined>
 }
 
-export type RecurringScheduleContext = {
+export type PayableRecurringScheduleContext = {
   type: 'weekly' | 'monthly' | 'yearly' | 'daily' | 'oneTime'
   repeatEvery?: number
   repeatOn?: Array<Mercoa.DayOfWeek>
