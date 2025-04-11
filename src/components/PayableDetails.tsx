@@ -4590,8 +4590,8 @@ function MetadataCombobox({
   readOnly = false,
 }: {
   schema: Mercoa.MetadataSchema
-  setValue: (e: string) => void
-  value?: string
+  setValue: (e: string | string[]) => void
+  value?: string | string[]
   values: string[]
   readOnly: boolean
 }) {
@@ -4647,42 +4647,36 @@ function MetadataCombobox({
   useEffect(() => {
     if (!value) return
     if (schema.type === Mercoa.MetadataType.KeyValue) {
-      const foundValue = JSON.parse(
-        values.find((e) => {
-          let parsedValue = { key: '' }
-          try {
-            parsedValue = JSON.parse(e) as { key: string }
-            parsedValue.key = `${parsedValue.key}`
-          } catch (e) {
-            console.error(e)
-          }
-          return parsedValue?.key === `${value ?? ''}`
-        }) ?? '{}',
-      ) as any
-      try {
-        const valueParsed = JSON.parse(foundValue.value) as { value: string; title?: string; subtitle?: string }
-        if (valueParsed.value) {
-          foundValue.value = valueParsed.title ?? valueParsed.value
-        }
-      } catch (e) {}
-      setValueState(foundValue.value ? foundValue.value : foundValue)
+      if (schema.allowMultiple) {
+        const selectedValues = (value as string[]).map((key) => {
+          const foundValue = options.find((option) => option.value.key === key)?.value
+          return foundValue
+        })
+        setValueState(selectedValues)
+      } else {
+        const foundValue = options.find((option) => option.value.key === value)?.value
+        setValueState(foundValue)
+      }
     } else {
       let comboboxValue: string | string[] | undefined = value
       if (schema.allowMultiple) {
-        // Metadata is stored as a comma separated string, but comboboxes expect an array
         if (Array.isArray(value)) comboboxValue = value
         else comboboxValue = value?.split(',')
       }
       setValueState(comboboxValue)
     }
-  }, [value])
+  }, [value, options])
 
   if (schema.type === Mercoa.MetadataType.KeyValue) {
     return (
       <MercoaCombobox
         options={options}
         onChange={(value) => {
-          setValue(value?.key)
+          if (schema.allowMultiple && Array.isArray(value)) {
+            setValue(value.map((v) => (v as { key: string }).key))
+          } else {
+            setValue(value?.key)
+          }
         }}
         showAllOptions
         displayIndex="value"

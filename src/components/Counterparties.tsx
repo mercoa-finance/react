@@ -1136,6 +1136,30 @@ export type CounterpartiesChildrenProps = {
   counterparties: Mercoa.CounterpartyResponse[]
 }
 
+export type CounterpartyDetailsButtons = {
+  onboardingLink?: ({
+    onClick,
+    counterparty,
+  }: {
+    onClick: () => void
+    counterparty: Mercoa.CounterpartyResponse
+  }) => JSX.Element
+  onboardingEmail?: ({
+    onClick,
+    counterparty,
+  }: {
+    onClick: () => void
+    counterparty: Mercoa.CounterpartyResponse
+  }) => JSX.Element
+  editButton?: ({
+    onClick,
+    counterparty,
+  }: {
+    onClick: () => void
+    counterparty: Mercoa.CounterpartyResponse
+  }) => JSX.Element
+}
+
 export function Counterparties({
   type,
   network,
@@ -1150,6 +1174,7 @@ export function Counterparties({
   hideSendOnboardingEmail,
   counterpartyPreSubmit,
   admin,
+  counterpartyDetailsButtons,
   children,
 }: {
   type: 'payor' | 'payee'
@@ -1168,6 +1193,7 @@ export function Counterparties({
   ) => Promise<Mercoa.EntityRequest | Mercoa.EntityUpdateRequest | undefined>
   network?: Mercoa.CounterpartyNetworkType[]
   admin?: boolean
+  counterpartyDetailsButtons?: CounterpartyDetailsButtons
   children?: ({
     setSearch,
     dataLoaded,
@@ -1438,6 +1464,7 @@ export function Counterparties({
               <CounterpartyDetails
                 counterparty={selected}
                 admin={admin}
+                counterpartyDetailsButtons={counterpartyDetailsButtons}
                 hideCounterpartyDetails={hideCounterpartyDetails}
                 hideCounterpartyPaymentMethods={hideCounterpartyPaymentMethods}
                 hideCounterpartyInvoices={hideCounterpartyInvoices}
@@ -1535,6 +1562,7 @@ export function CounterpartyDetails({
   hideSendOnboardingEmail,
   onboardingLinkOptions,
   onboardingEmailOptions,
+  counterpartyDetailsButtons,
   type,
   children,
 }: {
@@ -1550,6 +1578,7 @@ export function CounterpartyDetails({
   onboardingLinkOptions?: Mercoa.entity.GenerateOnboardingLink
   onboardingEmailOptions?: Mercoa.entity.SendOnboardingLink
   type: 'payor' | 'payee'
+  counterpartyDetailsButtons?: CounterpartyDetailsButtons
   children?: ({
     counterparty,
     invoices,
@@ -1674,6 +1703,7 @@ export function CounterpartyDetails({
         hideSendOnboardingEmail={hideSendOnboardingEmail}
         onboardingLinkOptions={onboardingLinkOptions}
         onboardingEmailOptions={onboardingEmailOptions}
+        counterpartyDetailsButtons={counterpartyDetailsButtons}
       />
 
       {!hideCounterpartyPaymentMethods && (
@@ -1701,6 +1731,7 @@ function CounterpartyDetailsCard({
   hideSendOnboardingEmail,
   onboardingLinkOptions,
   onboardingEmailOptions,
+  counterpartyDetailsButtons,
 }: {
   type: 'payor' | 'payee'
   counterparty: Mercoa.EntityResponse
@@ -1711,6 +1742,7 @@ function CounterpartyDetailsCard({
   hideSendOnboardingEmail?: boolean
   onboardingLinkOptions?: Mercoa.entity.GenerateOnboardingLink
   onboardingEmailOptions?: Mercoa.entity.SendOnboardingLink
+  counterpartyDetailsButtons?: CounterpartyDetailsButtons
 }) {
   const mercoaSession = useMercoaSession()
   const [editModalOpen, setEditModalOpen] = useState<boolean>(false)
@@ -1727,6 +1759,65 @@ function CounterpartyDetailsCard({
 
   const TenNinetyNine = documents?.find((e) => e.type === Mercoa.DocumentType.TenNinetyNine)
   const W9 = documents?.find((e) => e.type === Mercoa.DocumentType.W9)
+
+  const onEdit = () => {
+    setEditModalOpen(true)
+  }
+
+  const onGetOnboardingLink = async () => {
+    if (!mercoaSession.entityId) return
+    let url
+    if (type === 'payor') {
+      url = await mercoaSession.client?.entity.getOnboardingLink(counterparty.id, {
+        expiresIn: '30d',
+        ...onboardingLinkOptions,
+        type: Mercoa.EntityOnboardingLinkType.Payor,
+        connectedEntityId: mercoaSession.entityId,
+      })
+    } else {
+      url = await mercoaSession.client?.entity.getOnboardingLink(counterparty.id, {
+        expiresIn: '30d',
+        ...onboardingLinkOptions,
+        type: Mercoa.EntityOnboardingLinkType.Payee,
+        connectedEntityId: mercoaSession.entityId,
+      })
+    }
+    if (url) {
+      navigator.clipboard.writeText(url).then(
+        function () {
+          toast.info('Link Copied')
+        },
+        function (err) {
+          toast.error('There was an issue generating the onboarding link. Please refresh and try again.')
+        },
+      )
+    } else {
+      toast.error('There was an issue generating the onboarding link. Please refresh and try again.')
+      mercoaSession.refresh()
+    }
+    mercoaSession.refresh()
+  }
+
+  const onSendOnboardingEmail = async () => {
+    if (!mercoaSession.entityId) return
+    let url
+    if (type === 'payor') {
+      url = await mercoaSession.client?.entity.sendOnboardingLink(counterparty.id, {
+        expiresIn: '30d',
+        ...onboardingEmailOptions,
+        type: Mercoa.EntityOnboardingLinkType.Payor,
+        connectedEntityId: mercoaSession.entityId,
+      })
+    } else {
+      url = await mercoaSession.client?.entity.sendOnboardingLink(counterparty.id, {
+        expiresIn: '30d',
+        ...onboardingEmailOptions,
+        type: Mercoa.EntityOnboardingLinkType.Payee,
+        connectedEntityId: mercoaSession.entityId,
+      })
+    }
+    toast.info('Link Sent')
+  }
 
   return (
     <>
@@ -1752,110 +1843,70 @@ function CounterpartyDetailsCard({
           </div>
           <div className="mercoa-flex-grow"></div>
 
-          {!hideCounterpartyDetails && (
-            <Tooltip title="Edit counterparty details">
-              <MercoaButton
-                size="sm"
-                isEmphasized={false}
-                onClick={() => {
-                  setEditModalOpen(true)
-                }}
-              >
-                Edit Details
-              </MercoaButton>
-            </Tooltip>
-          )}
+          <div className="mercoa-flex mercoa-items-center mercoa-gap-2">
+            {!hideCounterpartyDetails && (
+              <>
+                {counterpartyDetailsButtons?.editButton ? (
+                  counterpartyDetailsButtons?.editButton({
+                    onClick: onEdit,
+                    counterparty,
+                  })
+                ) : (
+                  <Tooltip title="Edit counterparty details">
+                    <MercoaButton size="sm" isEmphasized={false} onClick={onEdit}>
+                      Edit Details
+                    </MercoaButton>
+                  </Tooltip>
+                )}
+              </>
+            )}
 
-          {/* Onboarding Link Buttons (only needed if showing counterparty details) */}
-          {!hideCounterpartyDetails && (
-            <>
-              {!hideOnboardingLink && (
-                <Tooltip
-                  title={`Get a link for the ${
-                    type === 'payor' ? 'Customer' : 'Vendor'
-                  } to fill out their own information`}
-                >
-                  <MercoaButton
-                    isEmphasized={false}
-                    size="sm"
-                    className="mercoa-ml-2"
-                    onClick={async () => {
-                      if (!mercoaSession.entityId) return
-                      let url
-                      if (type === 'payor') {
-                        url = await mercoaSession.client?.entity.getOnboardingLink(counterparty.id, {
-                          expiresIn: '30d',
-                          ...onboardingLinkOptions,
-                          type: Mercoa.EntityOnboardingLinkType.Payor,
-                          connectedEntityId: mercoaSession.entityId,
-                        })
-                      } else {
-                        url = await mercoaSession.client?.entity.getOnboardingLink(counterparty.id, {
-                          expiresIn: '30d',
-                          ...onboardingLinkOptions,
-                          type: Mercoa.EntityOnboardingLinkType.Payee,
-                          connectedEntityId: mercoaSession.entityId,
-                        })
-                      }
-                      if (url) {
-                        navigator.clipboard.writeText(url).then(
-                          function () {
-                            toast.info('Link Copied')
-                          },
-                          function (err) {
-                            toast.error(
-                              'There was an issue generating the onboarding link. Please refresh and try again.',
-                            )
-                          },
-                        )
-                      } else {
-                        toast.error('There was an issue generating the onboarding link. Please refresh and try again.')
-                        mercoaSession.refresh()
-                      }
-                      mercoaSession.refresh()
-                    }}
-                  >
-                    Onboarding Link
-                  </MercoaButton>
-                </Tooltip>
-              )}
-              {!hideSendOnboardingEmail && (
-                <Tooltip
-                  title={`Send a link for the ${
-                    type === 'payor' ? 'Customer' : 'Vendor'
-                  } to fill out their own information`}
-                >
-                  <MercoaButton
-                    isEmphasized={false}
-                    size="sm"
-                    className="mercoa-ml-2"
-                    onClick={async () => {
-                      if (!mercoaSession.entityId) return
-                      let url
-                      if (type === 'payor') {
-                        url = await mercoaSession.client?.entity.sendOnboardingLink(counterparty.id, {
-                          expiresIn: '30d',
-                          ...onboardingEmailOptions,
-                          type: Mercoa.EntityOnboardingLinkType.Payor,
-                          connectedEntityId: mercoaSession.entityId,
-                        })
-                      } else {
-                        url = await mercoaSession.client?.entity.sendOnboardingLink(counterparty.id, {
-                          expiresIn: '30d',
-                          ...onboardingEmailOptions,
-                          type: Mercoa.EntityOnboardingLinkType.Payee,
-                          connectedEntityId: mercoaSession.entityId,
-                        })
-                      }
-                      toast.info('Link Sent')
-                    }}
-                  >
-                    Send Onboarding Email
-                  </MercoaButton>
-                </Tooltip>
-              )}
-            </>
-          )}
+            {/* Onboarding Link Buttons (only needed if showing counterparty details) */}
+            {!hideCounterpartyDetails && (
+              <>
+                {!hideOnboardingLink && (
+                  <>
+                    {counterpartyDetailsButtons?.onboardingLink ? (
+                      counterpartyDetailsButtons?.onboardingLink({
+                        onClick: onGetOnboardingLink,
+                        counterparty,
+                      })
+                    ) : (
+                      <Tooltip
+                        title={`Get a link for the ${
+                          type === 'payor' ? 'Customer' : 'Vendor'
+                        } to fill out their own information`}
+                      >
+                        <MercoaButton isEmphasized={false} size="sm" onClick={onGetOnboardingLink}>
+                          Onboarding Link
+                        </MercoaButton>
+                      </Tooltip>
+                    )}
+                  </>
+                )}
+                {!hideSendOnboardingEmail && (
+                  <>
+                    {counterpartyDetailsButtons?.onboardingEmail ? (
+                      counterpartyDetailsButtons?.onboardingEmail({
+                        onClick: onSendOnboardingEmail,
+                        counterparty,
+                      })
+                    ) : (
+                      <Tooltip
+                        title={`Send a link for the ${
+                          type === 'payor' ? 'Customer' : 'Vendor'
+                        } to fill out their own information`}
+                      >
+                        <MercoaButton isEmphasized={false} size="sm" onClick={onSendOnboardingEmail}>
+                          Send Onboarding Email
+                        </MercoaButton>
+                      </Tooltip>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Details */}

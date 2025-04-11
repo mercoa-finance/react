@@ -613,6 +613,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     } else if (ocrResponse.vendor.id) {
       setSelectedVendor(ocrResponse.vendor)
     }
+    setOcrResponse(undefined)
   }, [activeOcrJobId, invoiceData, invoiceData?.ocrJobId, invoiceData?.vendor, mercoaSession, ocrResponse, setValue])
 
   useEffect(() => {

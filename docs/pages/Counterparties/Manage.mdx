@@ -28,7 +28,42 @@ The `<Counterparties>` renders a list of counterparties that can be selected, as
 | onboardingLinkOptions        | `Mercoa.entity.GenerateOnboardingLink`                         |          | Options for generating the onboarding link                                                                      |
 | onboardingEmailOptions       | `Mercoa.entity.SendOnboardingLink`                            |          | Options for sending the onboarding email                                                                        |
 | counterpartyPreSubmit        | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined, counterPartyId?: string) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Function to call before an entity is submitted to Mercoa. Useful for adding custom fields to the entity or preventing submission |
+| counterpartyDetailsButtons   | `CounterpartyDetailsButtons`                                   |          | Custom buttons for counterparty details section                                                                 |
 | children                     | `(props: CounterpartiesChildrenProps) => JSX.Element`          |          | Fully customize the UI with the help of these hooks and helper functions. See [example](#custom-design)          |
+
+### CounterpartyDetailsButtons Type
+
+The `CounterpartyDetailsButtons` type allows customization of buttons in the counterparty details section:
+
+```typescript
+type CounterpartyDetailsButtons = {
+  onboardingLink?: ({
+    onClick,
+    counterparty,
+  }: {
+    onClick: () => void
+    counterparty: Mercoa.CounterpartyResponse
+  }) => JSX.Element
+  onboardingEmail?: ({
+    onClick,
+    counterparty,
+  }: {
+    onClick: () => void
+    counterparty: Mercoa.CounterpartyResponse
+  }) => JSX.Element
+  editButton?: ({
+    onClick,
+    counterparty,
+  }: {
+    onClick: () => void
+    counterparty: Mercoa.CounterpartyResponse
+  }) => JSX.Element
+}
+```
+
+### CounterpartiesChildrenProps Type
+
+The `CounterpartiesChildrenProps` type allows customization of the counterparty list:
 
 ```typescript
 type CounterpartiesChildrenProps = {

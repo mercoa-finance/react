@@ -29,7 +29,7 @@ import {
   useState,
 } from 'react'
 import DatePicker from 'react-datepicker'
-import { Control, Controller, FieldErrors, UseFormRegister, useFormContext } from 'react-hook-form'
+import { Control, Controller, FieldErrors, UseFormRegister, useForm, useFormContext } from 'react-hook-form'
 import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
@@ -570,7 +570,7 @@ export function DefaultPaymentMethodIndicator({
   )
 }
 
-export function PaymentMethodDetailsDialog({
+export function PaymentMethodConfirmationDialog({
   show,
   onClose,
   account,
@@ -581,6 +581,13 @@ export function PaymentMethodDetailsDialog({
 }) {
   const mercoaSession = useMercoaSession()
   const [schema, setSchema] = useState<Mercoa.CustomPaymentMethodSchemaResponse | null>(null)
+  const [error, setError] = useState('')
+  const { register, handleSubmit, reset } = useForm({
+    defaultValues: {
+      routingNumber: '',
+      accountNumber: '',
+    },
+  })
 
   useEffect(() => {
     if (
@@ -595,7 +602,14 @@ export function PaymentMethodDetailsDialog({
     }
   }, [mercoaSession.token, mercoaSession.entity?.id, account.id, account.type])
 
-  const handleVerify = async () => {
+  const onSubmit = async (data: { routingNumber: string; accountNumber: string }) => {
+    if (account.type === Mercoa.PaymentMethodType.BankAccount) {
+      if (data.routingNumber !== account.routingNumber || data.accountNumber !== account.accountNumber) {
+        setError('The routing number or account number does not match')
+        return
+      }
+    }
+
     if (mercoaSession.token && mercoaSession.entity?.id && account.id) {
       try {
         await mercoaSession.client?.entity.paymentMethod.update(mercoaSession.entity?.id, account.id, {
@@ -615,40 +629,37 @@ export function PaymentMethodDetailsDialog({
   return (
     <AddDialog
       show={show}
-      onClose={onClose}
+      onClose={() => {
+        reset()
+        setError('')
+        onClose()
+      }}
       component={
-        <div className="mercoa-space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="mercoa-space-y-4">
           <h3 className="mercoa-text-lg mercoa-font-medium mercoa-text-gray-900">Payment Method Details</h3>
           {account.type === Mercoa.PaymentMethodType.BankAccount && (
-            <div className="mercoa-space-y-2 mercoa-bg-gray-50 mercoa-p-4 mercoa-rounded-lg mercoa-border mercoa-border-gray-200">
-              <div className="mercoa-grid mercoa-grid-cols-2">
-                <div className="mercoa-col-span-2 mercoa-mb-2">
-                  <span className="mercoa-font-semibold mercoa-text-gray-700">Bank Information</span>
-                </div>
-                <div>
-                  <span className="mercoa-font-medium mercoa-text-gray-600">Bank Name:</span>
-                </div>
-                <div>{account.bankName}</div>
-                <div>
-                  <span className="mercoa-font-medium mercoa-text-gray-600">Account Type:</span>
-                </div>
-                <div>{account.accountType}</div>
-                <div>
-                  <span className="mercoa-font-medium mercoa-text-gray-600">Account Number:</span>
-                </div>
-                <div>{account.accountNumber}</div>
-                <div>
-                  <span className="mercoa-font-medium mercoa-text-gray-600">Routing Number:</span>
-                </div>
-                <div>{account.routingNumber}</div>
-                {account.accountName && (
-                  <>
-                    <div>
-                      <span className="mercoa-font-medium mercoa-text-gray-600">Account Name:</span>
-                    </div>
-                    <div>{account.accountName}</div>
-                  </>
-                )}
+            <div className="mercoa-space-y-4">
+              <div className="mercoa-text-sm mercoa-text-gray-600">
+                Please verify your bank account by entering the routing and account numbers.
+              </div>
+              <div className="mercoa-space-y-2">
+                <MercoaInput
+                  label="Routing Number"
+                  type="text"
+                  name="routingNumber"
+                  register={register}
+                  placeholder="Enter routing number"
+                />
+                <MercoaInput
+                  label={account.accountNumber.length < 5 ? 'Last 4 Digits of Account Number' : 'Account Number'}
+                  type="text"
+                  name="accountNumber"
+                  register={register}
+                  placeholder={
+                    account.accountNumber.length < 5 ? 'Enter last 4 digits of account number' : 'Enter account number'
+                  }
+                />
+                {error && <div className="mercoa-text-sm mercoa-text-red-600">{error}</div>}
               </div>
             </div>
           )}
@@ -703,11 +714,11 @@ export function PaymentMethodDetailsDialog({
             <MercoaButton isEmphasized={false} onClick={onClose} size="sm" color="gray" hideOutline>
               Cancel
             </MercoaButton>
-            <MercoaButton isEmphasized onClick={handleVerify} size="sm">
+            <MercoaButton isEmphasized type="submit" size="sm">
               Confirm Details
             </MercoaButton>
           </div>
-        </div>
+        </form>
       }
     />
   )
@@ -728,7 +739,7 @@ export function PaymentMethodList({
 }) {
   const mercoaSession = useMercoaSession()
   const hasAccounts = accounts && accounts.length > 0
-  const [showDetailsDialog, setShowDetailsDialog] = useState(false)
+  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false)
   const [selectedAccount, setSelectedAccount] = useState<Mercoa.PaymentMethodResponse | null>(null)
 
   return (
@@ -753,11 +764,12 @@ export function PaymentMethodList({
                       size="sm"
                       onClick={() => {
                         setSelectedAccount(account)
-                        setShowDetailsDialog(true)
+                        setShowConfirmationDialog(true)
                       }}
                       className="mercoa-ml-2"
                     >
-                      Confirm Details
+                      <p>Confirm </p>
+                      <p>Details</p>
                     </MercoaButton>
                   </div>
                 )}
@@ -806,10 +818,10 @@ export function PaymentMethodList({
         </div>
       )}
       {selectedAccount && (
-        <PaymentMethodDetailsDialog
-          show={showDetailsDialog}
+        <PaymentMethodConfirmationDialog
+          show={showConfirmationDialog}
           onClose={() => {
-            setShowDetailsDialog(false)
+            setShowConfirmationDialog(false)
             setSelectedAccount(null)
           }}
           account={selectedAccount}

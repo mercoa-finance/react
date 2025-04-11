@@ -546,6 +546,9 @@ function Trigger({
         </div>
       )}
       {fields.map((field, triggerIndex) => {
+        const metadataSchema = mercoaSession.organization?.metadataSchema?.find(
+          (e) => e.key === (triggerWatch[triggerIndex] as Mercoa.Trigger.Metadata)?.key,
+        )
         const previousTriggers: string[] = triggerWatch?.slice(0, triggerIndex).map((t) => t?.type ?? '') ?? []
         const triggerOptions = [
           ...(previousTriggers.every((e) => e !== 'amount')
@@ -680,17 +683,17 @@ function Trigger({
             {triggerWatch?.[triggerIndex]?.type === 'metadata' && (
               <>
                 <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2">
-                  is
+                  {metadataSchema?.type === 'STRING' || metadataSchema?.type === 'KEY_VALUE' ? 'is one of' : 'is'}
                 </span>
                 <MetadataSelectionV1
+                  key={watch(`policies.${index}.trigger.${triggerIndex}.key`)}
                   hideLabel
                   field={`policies.${index}.trigger.${triggerIndex}.value`}
                   skipValidation
-                  schema={
-                    mercoaSession.organization?.metadataSchema?.find(
-                      (e) => e.key === (triggerWatch[triggerIndex] as Mercoa.Trigger.Metadata)?.key,
-                    ) ?? { key: '', displayName: '', type: 'STRING' }
-                  }
+                  schema={{
+                    ...(metadataSchema ?? { key: '', displayName: '', type: 'STRING' }),
+                    allowMultiple: metadataSchema?.type === 'STRING' || metadataSchema?.type === 'KEY_VALUE',
+                  }}
                 />
               </>
             )}
