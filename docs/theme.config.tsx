@@ -55,6 +55,7 @@ const config: DocsThemeConfig = {
     </>
   ),
   sidebar: {
+    defaultMenuCollapseLevel: 2,
     titleComponent: ({ title, route }) => {
       if (['Architecture', 'Payables', 'Receivables', 'Migration'].includes(title) && !route.includes('components')) {
         return (
