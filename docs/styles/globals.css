@@ -1,0 +1,22 @@
+/* make layout full width */
+.nx-max-w-\[90rem\] {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+/* increase sidebar width */
+@media (min-width: 768px) {
+  .nextra-sidebar-container {
+    width: 17vw !important;
+  }
+
+  .nextra-toc {
+    width: 16vw !important;
+  }
+}
+
+/* increase central sectionfont size */
+main > table {
+  font-size: 0.875rem !important;
+  border-radius: 0.2rem !important;
+}

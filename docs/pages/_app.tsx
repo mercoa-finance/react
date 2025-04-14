@@ -3,6 +3,7 @@ import '@mercoa/react/dist/style.css'
 import { setupWorker } from 'msw/browser'
 import { useEffect, useState } from 'react'
 import { mockToken, mswHandlers } from '../mockData'
+import '../styles/globals.css'
 
 export default function MyApp({ Component, pageProps }: { Component: any; pageProps: any }) {
   const [isLoaded, setIsLoaded] = useState(false)
