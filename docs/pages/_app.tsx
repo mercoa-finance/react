@@ -17,9 +17,7 @@ export default function MyApp({ Component, pageProps }: { Component: any; pagePr
   if (!isLoaded) return <></>
   return (
     <MercoaSession token={mockToken}>
-      <div style={{  }}>
-        <Component {...pageProps} />
-      </div>
+      <Component {...pageProps} />
     </MercoaSession>
   )
 }
