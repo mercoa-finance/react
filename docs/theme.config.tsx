@@ -56,23 +56,6 @@ const config: DocsThemeConfig = {
   ),
   sidebar: {
     defaultMenuCollapseLevel: 2,
-    titleComponent: ({ title, route }) => {
-      if (['Architecture', 'Payables', 'Receivables', 'Migration'].includes(title) && !route.includes('components')) {
-        return (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {title} <NavBadge text="new" />
-          </span>
-        )
-      }
-      if (['Payables (Legacy)', 'Receivables (Legacy)'].includes(title)) {
-        return (
-          <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {title.split(' ')[0]} <NavBadge text="legacy" />
-          </span>
-        )
-      }
-      return <>{title}</>
-    },
   },
 }
 
