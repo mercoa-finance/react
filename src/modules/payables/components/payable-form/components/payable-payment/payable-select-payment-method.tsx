@@ -21,6 +21,166 @@ import { FinanceWithOatfi } from '../../../../../../components/Oatfi'
 import { PayableFormAction } from '../../constants'
 import { PayablesInlineForm } from './payables-inline-form'
 
+const PaymentMethodList = ({
+  paymentMethods,
+  paymentId,
+  readOnly,
+  setPaymentId,
+  type,
+  Component,
+  showVerification = false,
+}: {
+  paymentMethods: Array<Mercoa.PaymentMethodResponse>
+  paymentId: string | undefined
+  readOnly: boolean | undefined
+  setPaymentId: (id: string) => void
+  type: Mercoa.PaymentMethodType
+  Component: React.ComponentType<any>
+  showVerification?: boolean
+}) => {
+  const filteredPaymentMethods = (paymentMethods ?? [])
+    ?.filter((paymentMethod) => paymentMethod.type === type)
+    .filter((e) => (readOnly ? e.id === paymentId : true))
+
+  return (
+    <div
+      className={`mercoa-max-h-[240px] ${
+        filteredPaymentMethods.length > 2 ? 'mercoa-overflow-y-scroll' : ''
+      } mercoa-overflow-x-hidden`}
+    >
+      {filteredPaymentMethods.map((paymentMethod) => (
+        <div key={paymentMethod.id} className="mercoa-mt-1">
+          <Component
+            account={paymentMethod}
+            selected={paymentId === paymentMethod.id}
+            showVerification={showVerification}
+            hideVerificationButton={showVerification}
+            onSelect={() => {
+              if (readOnly) return
+              setPaymentId(paymentMethod.id)
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+const BankAccountForm = ({
+  readOnly,
+  backupDisbursement,
+  destinationOptions,
+  setValue,
+}: {
+  readOnly: boolean | undefined
+  backupDisbursement: Mercoa.PaymentRailResponse.BankAccount | undefined
+  destinationOptions: Mercoa.PaymentDestinationOptions.BankAccount | undefined
+  setValue: (name: string, value: any) => void
+}) => (
+  <>
+    {!readOnly && (
+      <div className="mercoa-col-span-full mercoa-mt-1">
+        <PayablesInlineForm
+          form={<AddBankAccountForm prefix="newBankAccount." />}
+          name="Bank Account"
+          addNewButton={<BankAccount />}
+          formAction={PayableFormAction.CREATE_BANK_ACCOUNT}
+        />
+      </div>
+    )}
+    <div className="mercoa-mt-2" />
+    <MercoaCombobox
+      displaySelectedAs="pill"
+      label="Payment Speed"
+      showAllOptions
+      options={
+        backupDisbursement?.availableDeliveryMethods?.map((e) => ({
+          value: {
+            key: e,
+            value: BankSpeedEnumToLabel(e),
+          },
+          disabled: false,
+        })) ?? []
+      }
+      onChange={(selected) => {
+        setValue('paymentDestinationOptions', {
+          type: 'bankAccount',
+          delivery: selected.key,
+        })
+      }}
+      displayIndex="value"
+      value={() => {
+        const speed = destinationOptions?.delivery
+        return { key: speed, value: BankSpeedEnumToLabel(speed) }
+      }}
+    />
+  </>
+)
+
+const CheckForm = ({
+  readOnly,
+  backupDisbursement,
+  destinationOptions,
+  setValue,
+}: {
+  readOnly: boolean | undefined
+  backupDisbursement: Mercoa.PaymentRailResponse.Check | undefined
+  destinationOptions: Mercoa.PaymentDestinationOptions.Check | undefined
+  setValue: (name: string, value: any) => void
+}) => (
+  <>
+    {!readOnly && (
+      <div className="mercoa-col-span-full mercoa-mt-1">
+        <PayablesInlineForm
+          form={<AddCheckForm prefix="newCheck." />}
+          name="Check Address"
+          addNewButton={<Check />}
+          formAction={PayableFormAction.CREATE_CHECK}
+        />
+      </div>
+    )}
+    <div className="mercoa-mt-2" />
+    <MercoaCombobox
+      label="Check Delivery Method"
+      showAllOptions
+      displaySelectedAs="pill"
+      options={
+        backupDisbursement?.availableDeliveryMethods
+          ?.sort((a, b) => CheckSpeedSort(a) - CheckSpeedSort(b))
+          .map((e) => ({
+            value: {
+              key: e,
+              value: CheckSpeedEnumToLabel(e),
+            },
+            disabled: false,
+          })) ?? []
+      }
+      onChange={(selected) => {
+        setValue('paymentDestinationOptions.type', 'check')
+        setValue('paymentDestinationOptions.delivery', selected.key)
+      }}
+      displayIndex="value"
+      value={() => {
+        const speed = destinationOptions?.delivery
+        return { key: speed, value: CheckSpeedEnumToLabel(speed) }
+      }}
+    />
+  </>
+)
+
+const hasBackupDisbursement = ({
+  organization,
+  selectedType,
+}: {
+  organization: Mercoa.OrganizationResponse | undefined
+  selectedType: string
+}) =>
+  organization?.paymentMethods?.backupDisbursements.some((e) => {
+    if (!e.active) return false
+    if (e.type === 'custom') return e.name === selectedType
+    return e.type === selectedType
+  })
+
 export function PayableSelectPaymentMethod({
   isSource,
   isDestination,
@@ -83,6 +243,7 @@ export function PayableSelectPaymentMethod({
   )
 
   if (!mercoaSession.client) return <NoSession componentName="SelectPaymentMethod" />
+
   return (
     <div>
       {!readOnly && (
@@ -96,27 +257,18 @@ export function PayableSelectPaymentMethod({
           showAllOptions
         />
       )}
+
       {selectedType === Mercoa.PaymentMethodType.BankAccount && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
-            {paymentMethods
-              ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount)
-              .filter((e) => (readOnly ? e.id === paymentId : true))
-              .map((paymentMethod) => (
-                <div key={paymentMethod.id} className="mercoa-mt-1">
-                  <BankAccount
-                    account={paymentMethod as Mercoa.PaymentMethodResponse.BankAccount}
-                    selected={paymentId === paymentMethod.id}
-                    showVerification
-                    hideVerificationButton
-                    onSelect={() => {
-                      if (readOnly) return
-                      setPaymentId(paymentMethod.id)
-                    }}
-                  />
-                </div>
-              ))}
-          </div>
+          <PaymentMethodList
+            paymentMethods={paymentMethods}
+            paymentId={paymentId}
+            readOnly={readOnly}
+            setPaymentId={setPaymentId}
+            type={Mercoa.PaymentMethodType.BankAccount}
+            Component={BankAccount}
+            showVerification
+          />
           {isSource && enableBNPL && (
             <>
               {showBNPL ? (
@@ -133,152 +285,66 @@ export function PayableSelectPaymentMethod({
           {isDestination &&
             !disableCreation &&
             vendorId &&
-            mercoaSession.organization?.paymentMethods?.backupDisbursements.some((e) => {
-              if (!e.active) return false
-              if (e.type === 'custom') return e.name === selectedType
-              return e.type === selectedType
+            hasBackupDisbursement({
+              organization: mercoaSession.organization,
+              selectedType,
             }) && (
-              <>
-                {!readOnly && (
-                  <div className="mercoa-col-span-full mercoa-mt-1">
-                    <PayablesInlineForm
-                      form={<AddBankAccountForm prefix="newBankAccount." />}
-                      name="Bank Account"
-                      addNewButton={<BankAccount />}
-                      formAction={PayableFormAction.CREATE_BANK_ACCOUNT}
-                    />
-                  </div>
-                )}
-                <div className="mercoa-mt-2" />
-                <MercoaCombobox
-                  displaySelectedAs="pill"
-                  label="Payment Speed"
-                  showAllOptions
-                  options={(backupDisbursement as Mercoa.PaymentRailResponse.BankAccount)?.availableDeliveryMethods.map(
-                    (e) => ({
-                      value: {
-                        key: e,
-                        value: BankSpeedEnumToLabel(e),
-                      },
-                      disabled: false,
-                    }),
-                  )}
-                  onChange={(selected) => {
-                    setValue('paymentDestinationOptions', {
-                      type: 'bankAccount',
-                      delivery: selected.key,
-                    })
-                  }}
-                  displayIndex="value"
-                  value={() => {
-                    const speed = (destinationOptions as Mercoa.PaymentDestinationOptions.BankAccount)?.delivery
-                    return { key: speed, value: BankSpeedEnumToLabel(speed) }
-                  }}
-                />
-              </>
+              <BankAccountForm
+                readOnly={readOnly}
+                backupDisbursement={backupDisbursement as Mercoa.PaymentRailResponse.BankAccount}
+                destinationOptions={destinationOptions as Mercoa.PaymentDestinationOptions.BankAccount}
+                setValue={setValue}
+              />
             )}
         </>
       )}
+
       {selectedType === Mercoa.PaymentMethodType.Check && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
-            {paymentMethods
-              ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Check)
-              .filter((e) => (readOnly ? e.id === paymentId : true))
-              .map((paymentMethod) => (
-                <div key={paymentMethod.id} className="mercoa-mt-1">
-                  <Check
-                    account={paymentMethod as Mercoa.PaymentMethodResponse.Check}
-                    selected={paymentId === paymentMethod.id}
-                    onSelect={() => {
-                      if (readOnly) return
-                      setPaymentId(paymentMethod.id)
-                    }}
-                  />
-                </div>
-              ))}
-          </div>
+          <PaymentMethodList
+            paymentMethods={paymentMethods}
+            paymentId={paymentId}
+            readOnly={readOnly}
+            setPaymentId={setPaymentId}
+            type={Mercoa.PaymentMethodType.Check}
+            Component={Check}
+          />
           {isDestination &&
             !disableCreation &&
             vendorId &&
-            mercoaSession.organization?.paymentMethods?.backupDisbursements.some((e) => {
-              if (!e.active) return false
-              if (e.type === 'custom') return e.name === selectedType
-              return e.type === selectedType
+            hasBackupDisbursement({
+              organization: mercoaSession.organization,
+              selectedType,
             }) && (
-              <>
-                {!readOnly && (
-                  <div className="mercoa-col-span-full mercoa-mt-1">
-                    <PayablesInlineForm
-                      form={<AddCheckForm prefix="newCheck." />}
-                      name="Check Address"
-                      addNewButton={<Check />}
-                      formAction={PayableFormAction.CREATE_CHECK}
-                    />
-                  </div>
-                )}
-                <div className="mercoa-mt-2" />
-                <MercoaCombobox
-                  label="Check Delivery Method"
-                  showAllOptions
-                  displaySelectedAs="pill"
-                  options={(backupDisbursement as Mercoa.PaymentRailResponse.Check)?.availableDeliveryMethods
-                    .sort((a, b) => CheckSpeedSort(a) - CheckSpeedSort(b))
-                    .map((e) => ({
-                      value: {
-                        key: e,
-                        value: CheckSpeedEnumToLabel(e),
-                      },
-                      disabled: false,
-                    }))}
-                  onChange={(selected) => {
-                    setValue('paymentDestinationOptions.type', 'check')
-                    setValue('paymentDestinationOptions.delivery', selected.key)
-                  }}
-                  displayIndex="value"
-                  value={() => {
-                    const speed = (destinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery
-                    return { key: speed, value: CheckSpeedEnumToLabel(speed) }
-                  }}
-                />
-              </>
+              <CheckForm
+                readOnly={readOnly}
+                backupDisbursement={backupDisbursement as Mercoa.PaymentRailResponse.Check}
+                destinationOptions={destinationOptions as Mercoa.PaymentDestinationOptions.Check}
+                setValue={setValue}
+              />
             )}
         </>
       )}
+
       {selectedType === Mercoa.PaymentMethodType.Card && (
-        <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
-            {paymentMethods
-              ?.filter((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Card)
-              .filter((e) => (readOnly ? e.id === paymentId : true))
-              .map((paymentMethod) => (
-                <div key={paymentMethod.id} className="mercoa-mt-1">
-                  <Card
-                    account={paymentMethod as Mercoa.PaymentMethodResponse.Card}
-                    selected={paymentId === paymentMethod.id}
-                    onSelect={() => {
-                      if (readOnly) return
-                      setPaymentId(paymentMethod.id)
-                    }}
-                  />
-                </div>
-              ))}
-          </div>
-        </>
+        <PaymentMethodList
+          paymentMethods={paymentMethods}
+          paymentId={paymentId}
+          readOnly={readOnly}
+          setPaymentId={setPaymentId}
+          type={Mercoa.PaymentMethodType.Card}
+          Component={Card}
+        />
       )}
+
       {selectedType === Mercoa.PaymentMethodType.Utility && (
         <>
           {readOnly && (
-            <>
-              <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
-                <div
-                  className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300
-  mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2`}
-                >
-                  <div className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900`}>Automated Utility Pay</div>
-                </div>
+            <div className="mercoa-max-h-[240px]">
+              <div className="mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2">
+                <div className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">Automated Utility Pay</div>
               </div>
-            </>
+            </div>
           )}
           {isDestination && !disableCreation && !readOnly && vendorId && (
             <>
@@ -317,70 +383,51 @@ export function PayableSelectPaymentMethod({
           )}
         </>
       )}
+
       {selectedType.startsWith('cpms_') && (
         <>
-          <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
-            {paymentMethods
-              ?.filter(
-                (paymentMethod) => (paymentMethod as Mercoa.PaymentMethodResponse.Custom).schemaId === selectedType,
-              )
-              .filter((e) => (readOnly ? e.id === paymentId : true))
-              .map((paymentMethod) => (
-                <div key={paymentMethod.id} className="mercoa-mt-1">
-                  <CustomPaymentMethod
-                    account={paymentMethod as Mercoa.PaymentMethodResponse.Custom}
-                    selected={paymentId === paymentMethod.id}
-                    onSelect={() => {
-                      if (readOnly) return
-                      setPaymentId(paymentMethod.id)
-                    }}
-                  />
-                </div>
-              ))}
-          </div>
+          <PaymentMethodList
+            paymentMethods={paymentMethods}
+            paymentId={paymentId}
+            readOnly={readOnly}
+            setPaymentId={setPaymentId}
+            type={selectedType as Mercoa.PaymentMethodType}
+            Component={CustomPaymentMethod}
+          />
           {isDestination &&
             !disableCreation &&
             !readOnly &&
             vendorId &&
-            mercoaSession.organization?.paymentMethods?.backupDisbursements.some((e) => {
-              if (!e.active) return false
-              if (e.type === 'custom') return e.name === selectedType
-              return e.type === selectedType
+            hasBackupDisbursement({
+              organization: mercoaSession.organization,
+              selectedType,
             }) && (
-              <>
-                <div className="mercoa-col-span-full mercoa-mt-1">
-                  <PayablesInlineForm
-                    form={
-                      <AddCustomPaymentMethodForm
-                        schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
-                      />
-                    }
-                    name={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)?.name ?? 'Other'}
-                    addNewButton={
-                      <CustomPaymentMethod
-                        schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
-                      />
-                    }
-                    formAction={PayableFormAction.CREATE_CUSTOM}
-                  />
-                </div>
-              </>
+              <div className="mercoa-col-span-full mercoa-mt-1">
+                <PayablesInlineForm
+                  form={
+                    <AddCustomPaymentMethodForm
+                      schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
+                    />
+                  }
+                  name={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)?.name ?? 'Other'}
+                  addNewButton={
+                    <CustomPaymentMethod
+                      schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
+                    />
+                  }
+                  formAction={PayableFormAction.CREATE_CUSTOM}
+                />
+              </div>
             )}
         </>
       )}
-      {selectedType === Mercoa.PaymentMethodType.OffPlatform && (
-        <>
-          {readOnly && (
-            <div className="mercoa-max-h-[240px] mercoa-overflow-y-scroll">
-              <div
-                className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300
-  mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2`}
-              >
-                <div className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900`}>Off Platform</div>
-              </div>
-            </div>
-          )}
-        </>
+
+      {selectedType === Mercoa.PaymentMethodType.OffPlatform && readOnly && (
+        <div className="mercoa-max-h-[240px]">
+          <div className="mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border mercoa-border-gray-300 mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2">
+            <div className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">Off Platform</div>
+          </div>
+        </div>
       )}
     </div>
   )
