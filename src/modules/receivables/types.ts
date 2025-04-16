@@ -149,6 +149,7 @@ type ReceivablesQueryOptions = {
 
 type ReceivablesRenderCustom = {
   columns?: InvoiceTableColumn[]
+  toast?: ToastClient
 }
 
 type ReceivablesDisplayOptions = {

@@ -15,7 +15,7 @@ import {
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import { useMemo, useState } from 'react'
-import { toast } from 'react-toastify'
+import { toast as reactToast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import { InvoiceStatusPill, useMercoaSession } from '../../../../components'
 import { SkeletonLoader } from '../../../../lib/components'
@@ -82,8 +82,10 @@ export const ReceivablesTable = () => {
   } = actionsContextValue
 
   const { readOnly } = config ?? {}
-  const { columns } = renderCustom ?? {}
+  const { columns, toast: customToast } = renderCustom ?? {}
   const { classNames } = displayOptions ?? {}
+
+  const toast = customToast ?? reactToast
 
   const [columnResizeMode, setColumnResizeMode] = useState<ColumnResizeMode>('onChange')
   const [columnResizeDirection, setColumnResizeDirection] = useState<ColumnResizeDirection>('ltr')

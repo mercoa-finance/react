@@ -19,7 +19,7 @@ import {
   BarsArrowUpIcon as SortAscending,
   BarsArrowDownIcon as SortDescending,
 } from '@heroicons/react/24/outline'
-import { toast } from 'react-toastify'
+import { toast as reactToast } from 'react-toastify'
 import { currencyCodeToSymbol } from '../../../../../src/lib/currency'
 import { Tooltip } from '../../../../components/generics'
 import { useMercoaSession } from '../../../../components/Mercoa'
@@ -111,8 +111,10 @@ export const PayablesTable: FC = memo(() => {
   } = actionsContextValue
 
   const { readOnly } = config ?? {}
-  const { columns } = renderCustom ?? {}
+  const { columns, toast: customToast } = renderCustom ?? {}
   const { classNames } = displayOptions ?? {}
+
+  const toast = customToast ?? reactToast
 
   const [columnResizeMode, setColumnResizeMode] = useState<ColumnResizeMode>('onChange')
   const [columnResizeDirection, setColumnResizeDirection] = useState<ColumnResizeDirection>('ltr')

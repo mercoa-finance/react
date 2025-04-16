@@ -261,6 +261,7 @@ type PayablesQueryOptions = {
 
 type PayablesRenderCustom = {
   columns?: InvoiceTableColumn[]
+  toast?: ToastClient
 }
 
 type PayablesDisplayOptions = {
