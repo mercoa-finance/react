@@ -2,7 +2,7 @@ import { DialogTitle } from '@radix-ui/react-dialog'
 import React, { useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { useMercoaSession } from '../../../../../components/Mercoa'
-import { MercoaButton, MercoaCombobox } from '../../../../../components/generics'
+import { ButtonLoadingSpinner, MercoaButton, MercoaCombobox } from '../../../../../components/generics'
 import { Dialog } from '../../../../../lib/components'
 
 interface AssignApproverDialogProps {
@@ -78,15 +78,9 @@ export const AssignApproverDialog: React.FC<AssignApproverDialogProps> = ({
             }}
             isEmphasized={true}
             disabled={!selectedUser}
-            className="mercoa-w-[80px] mercoa-text-sm mercoa-justify-center mercoa-flex"
+            className="mercoa-whitespace-nowrap"
           >
-            <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-              {isLoading ? (
-                <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-              ) : (
-                'Assign'
-              )}
-            </div>
+            <ButtonLoadingSpinner isLoading={isLoading}>Assign</ButtonLoadingSpinner>
           </MercoaButton>
         </div>
       </div>

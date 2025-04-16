@@ -1,7 +1,7 @@
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { ReactNode, useEffect, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
-import { MercoaButton } from '../../../../../../components'
+import { ButtonLoadingSpinner, MercoaButton } from '../../../../../../components'
 import { PayableFormAction } from '../../constants'
 
 export function PayablesInlineForm({
@@ -50,19 +50,14 @@ export function PayablesInlineForm({
             {form}
             <MercoaButton
               size="md"
-              className="mercoa-mt-2"
+              className="mercoa-mt-2 mercoa-whitespace-nowrap"
               isEmphasized
               onClick={() => {
                 setValue('formAction', formAction)
               }}
+              disabled={status === formAction}
             >
-              <div className="mercoa-w-[130px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-                {status === formAction ? (
-                  <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-white" />
-                ) : (
-                  `Add ${name}`
-                )}
-              </div>
+              <ButtonLoadingSpinner isLoading={status === formAction}>Add {name}</ButtonLoadingSpinner>
             </MercoaButton>
           </div>
         </>

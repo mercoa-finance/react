@@ -1,7 +1,7 @@
 import { Menu, Transition } from '@headlessui/react'
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
-import { MercoaButton } from '../../../../../components'
+import { ButtonLoadingSpinner, MercoaButton } from '../../../../../components'
 import { useReceivableDetails } from '../../../hooks/use-receivable-details'
 import { ReceivableFormAction } from '../constants'
 
@@ -16,14 +16,12 @@ export function ReceivableActions() {
   const formAction = watch('formAction')
 
   const createInvoiceButton = (
-    <MercoaButton onClick={() => handleActionClick(ReceivableFormAction.CREATE)} className="mercoa-mt-5" isEmphasized>
-      <div className="mercoa-w-[80px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {formAction === ReceivableFormAction.CREATE ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Create'
-        )}
-      </div>
+    <MercoaButton
+      onClick={() => handleActionClick(ReceivableFormAction.CREATE)}
+      isEmphasized
+      className="mercoa-whitespace-nowrap"
+    >
+      <ButtonLoadingSpinner isLoading={formAction === ReceivableFormAction.CREATE}>Create</ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -43,14 +41,9 @@ export function ReceivableActions() {
         e.stopPropagation()
         handleActionClick(ReceivableFormAction.DELETE)
       }}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[80px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {formAction === ReceivableFormAction.DELETE ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Delete'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={formAction === ReceivableFormAction.DELETE}>Delete</ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -62,14 +55,9 @@ export function ReceivableActions() {
       onClick={() => handleActionClick(ReceivableFormAction.CANCEL)}
       type="button"
       color="secondary"
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[80px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {formAction === ReceivableFormAction.CANCEL ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Cancel'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={formAction === ReceivableFormAction.CANCEL}>Cancel</ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -131,14 +119,12 @@ export function ReceivableActions() {
 
   const showSaveDraftButton = invoice?.status === Mercoa.InvoiceStatus.Draft
   const saveDraftButton = (
-    <MercoaButton onClick={() => handleActionClick(ReceivableFormAction.SAVE_DRAFT)} isEmphasized={false}>
-      <div className="mercoa-w-[100px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {formAction === ReceivableFormAction.SAVE_DRAFT ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Save Draft'
-        )}
-      </div>
+    <MercoaButton
+      onClick={() => handleActionClick(ReceivableFormAction.SAVE_DRAFT)}
+      isEmphasized={false}
+      className="mercoa-whitespace-nowrap"
+    >
+      <ButtonLoadingSpinner isLoading={formAction === ReceivableFormAction.SAVE_DRAFT}>Save Draft</ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -160,21 +146,13 @@ export function ReceivableActions() {
             : ReceivableFormAction.RESEND_EMAIL,
         )
       }
-      // type="button"
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {(
-          invoice?.status === Mercoa.InvoiceStatus.Draft
-            ? formAction === ReceivableFormAction.SEND_EMAIL
-            : formAction === ReceivableFormAction.RESEND_EMAIL
-        ) ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : invoice?.status === Mercoa.InvoiceStatus.Draft ? (
-          'Send Invoice'
-        ) : (
-          'Resend Invoice'
-        )}
-      </div>
+      <ButtonLoadingSpinner
+        isLoading={formAction === ReceivableFormAction.SEND_EMAIL || formAction === ReceivableFormAction.RESEND_EMAIL}
+      >
+        {invoice?.status === Mercoa.InvoiceStatus.Draft ? 'Send Invoice' : 'Resend Invoice'}
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -185,15 +163,11 @@ export function ReceivableActions() {
       disabled={!selectedPayer}
       isEmphasized
       onClick={() => handleActionClick(ReceivableFormAction.SCHEDULE_RECURRING_INVOICE)}
-      // type="button"
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[140px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {formAction === ReceivableFormAction.SCHEDULE_RECURRING_INVOICE ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Schedule Invoice'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={formAction === ReceivableFormAction.SCHEDULE_RECURRING_INVOICE}>
+        Schedule Invoice
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -206,14 +180,11 @@ export function ReceivableActions() {
       isEmphasized={true}
       onClick={() => handleActionClick(ReceivableFormAction.MARK_AS_PAID)}
       type="button"
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {formAction === ReceivableFormAction.MARK_AS_PAID ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Mark as Paid'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={formAction === ReceivableFormAction.MARK_AS_PAID}>
+        Mark as Paid
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -224,14 +195,11 @@ export function ReceivableActions() {
       color="green"
       onClick={() => handleActionClick(ReceivableFormAction.RESTORE_AS_DRAFT)}
       type="button"
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {formAction === ReceivableFormAction.RESTORE_AS_DRAFT ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Restore as Draft'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={formAction === ReceivableFormAction.RESTORE_AS_DRAFT}>
+        Restore as Draft
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 

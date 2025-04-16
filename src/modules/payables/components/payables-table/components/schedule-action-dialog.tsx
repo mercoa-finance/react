@@ -2,7 +2,7 @@ import { DialogTitle } from '@radix-ui/react-dialog'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import DatePicker from 'react-datepicker'
-import { MercoaButton } from '../../../../../components/generics'
+import { ButtonLoadingSpinner, MercoaButton } from '../../../../../components/generics'
 import { Dialog } from '../../../../../lib/components'
 import { isWeekday } from '../../../../../lib/scheduling'
 
@@ -66,16 +66,10 @@ export const SchedulePaymentDialog: React.FC<SchedulePaymentDialogProps> = ({
               if (selectedDate) onConfirm(selectedDate)
             }}
             isEmphasized={true}
-            className="mercoa-w-[140px] mercoa-text-sm mercoa-justify-center mercoa-flex mercoa-whitespace-nowrap"
+            className="mercoa-whitespace-nowrap"
             disabled={!selectedDate || isLoading}
           >
-            <div className="mercoa-flex mercoa-items-center mercoa-justify-center">
-              {isLoading ? (
-                <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-              ) : (
-                `Schedule payment`
-              )}
-            </div>
+            <ButtonLoadingSpinner isLoading={isLoading}>Schedule payment</ButtonLoadingSpinner>
           </MercoaButton>
         </div>
       </div>

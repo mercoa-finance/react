@@ -3,6 +3,7 @@ import { useFormContext, UseFormReturn } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import {
+  ButtonLoadingSpinner,
   EntitySelector,
   MercoaButton,
   NoSession,
@@ -127,14 +128,11 @@ export function PayableActions({
             mercoaSession.setEntity(selectedEntity)
           }
         }}
+        className="mercoa-whitespace-nowrap"
       >
-        <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-          {actionLoading ? (
-            <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-          ) : (
-            'Assign to Entity'
-          )}
-        </div>
+        <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.ASSIGN_TO_ENTITY}>
+          Assign to Entity
+        </ButtonLoadingSpinner>
       </MercoaButton>
     </div>
   )
@@ -154,14 +152,11 @@ export function PayableActions({
       onClick={() => {
         setValue('formAction', PayableFormAction.DELETE)
       }}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[110px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableFormAction.DELETE ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Delete Invoice'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.DELETE}>
+        Delete Invoice
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -184,14 +179,11 @@ export function PayableActions({
       onClick={() => {
         setValue('formAction', PayableFormAction.ARCHIVE)
       }}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableFormAction.ARCHIVE ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Archive Invoice'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.ARCHIVE}>
+        Archive Invoice
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -214,14 +206,11 @@ export function PayableActions({
       onClick={() => {
         setValue('formAction', PayableFormAction.SAVE_AS_DRAFT)
       }}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableFormAction.SAVE_AS_DRAFT ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Restore as Draft'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.SAVE_AS_DRAFT}>
+        Restore as Draft
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -244,14 +233,11 @@ export function PayableActions({
       onClick={() => {
         setValue('formAction', PayableFormAction.CANCEL)
       }}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableFormAction.CANCEL ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Cancel Payment'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.CANCEL}>
+        Cancel Payment
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -273,14 +259,11 @@ export function PayableActions({
       onClick={() => {
         setValue('formAction', PayableFormAction.SAVE_AS_DRAFT)
       }}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableFormAction.SAVE_AS_DRAFT ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Save Draft'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.SAVE_AS_DRAFT}>
+        Save Draft
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -298,17 +281,14 @@ export function PayableActions({
       onClick={() => {
         setValue('formAction', PayableFormAction.PRINT_CHECK)
       }}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-fit mercoa-min-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center  mercoa-whitespace-nowrap">
-        {actionLoading && formAction === PayableFormAction.PRINT_CHECK ? (
-          <div className="mercoa-whitespace-nowrap mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery ===
-          Mercoa.CheckDeliveryMethod.Print ? (
-          'Print Check'
-        ) : (
-          'View Mailed Check'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.PRINT_CHECK}>
+        {(paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery ===
+        Mercoa.CheckDeliveryMethod.Print
+          ? 'Print Check'
+          : 'View Mailed Check'}
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -337,17 +317,14 @@ export function PayableActions({
           toast.error('There was an error generating the check PDF')
         }
       }}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-fit mercoa-min-w-[120px] mercoa-flex mercoa-items-center mercoa-justify-center mercoa-whitespace-nowrap">
-        {actionLoading && formAction === PayableFormAction.GENERATE_CHECK ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery ===
-          Mercoa.CheckDeliveryMethod.Print ? (
-          'Print Check'
-        ) : (
-          'View Mailed Check'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.PRINT_CHECK}>
+        {(paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Check)?.delivery ===
+        Mercoa.CheckDeliveryMethod.Print
+          ? 'Print Check'
+          : 'View Mailed Check'}
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -369,14 +346,11 @@ export function PayableActions({
       onClick={(e: React.MouseEvent) => {
         setValue('formAction', PayableFormAction.CREATE)
       }}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableFormAction.CREATE ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Create Invoice'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.CREATE}>
+        Create Invoice
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -392,10 +366,10 @@ export function PayableActions({
   ) : (
     <>
       {!approverSlots.every((e) => e.assignedUserId) ? (
-        <MercoaButton type="submit" isEmphasized disabled>
-          <div className="mercoa-w-[200px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
+        <MercoaButton type="submit" isEmphasized disabled className="mercoa-whitespace-nowrap">
+          <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.SUBMIT_FOR_APPROVAL}>
             Please assign all approvers
-          </div>
+          </ButtonLoadingSpinner>
         </MercoaButton>
       ) : (
         <MercoaButton
@@ -409,14 +383,11 @@ export function PayableActions({
           onClick={(e: React.MouseEvent) => {
             setValue('formAction', PayableFormAction.SUBMIT_FOR_APPROVAL)
           }}
+          className="mercoa-whitespace-nowrap"
         >
-          <div className="mercoa-w-[160px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-            {actionLoading && formAction === PayableFormAction.SUBMIT_FOR_APPROVAL ? (
-              <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-            ) : (
-              'Submit for Approval'
-            )}
-          </div>
+          <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.SUBMIT_FOR_APPROVAL}>
+            Submit for Approval
+          </ButtonLoadingSpinner>
         </MercoaButton>
       )}
     </>
@@ -441,14 +412,11 @@ export function PayableActions({
       onClick={() => {
         setValue('formAction', PayableFormAction.SUBMIT_FOR_APPROVAL)
       }}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableFormAction.SUBMIT_FOR_APPROVAL ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Next'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.SUBMIT_FOR_APPROVAL}>
+        Next
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -470,14 +438,11 @@ export function PayableActions({
       onClick={() => {
         setValue('formAction', PayableFormAction.MARK_PAID)
       }}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[140px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableFormAction.MARK_PAID ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Mark as Paid'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.MARK_PAID}>
+        Mark as Paid
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -499,14 +464,11 @@ export function PayableActions({
       onClick={() => {
         setValue('formAction', PayableFormAction.SCHEDULE_PAYMENT)
       }}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[140px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableFormAction.SCHEDULE_PAYMENT ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Schedule Payment'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.SCHEDULE_PAYMENT}>
+        Schedule Payment
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -528,24 +490,19 @@ export function PayableActions({
       onClick={() => {
         setValue('formAction', PayableFormAction.RETRY_PAYMENT)
       }}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-[120px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableFormAction.CANCEL ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Retry Payment'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.RETRY_PAYMENT}>
+        Retry Payment
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
   const nonApproverButtonComponent = nonApproverButton ? (
     nonApproverButton({ onClick: () => {} })
   ) : (
-    <MercoaButton disabled color="gray" isEmphasized type="button">
-      <div className="mercoa-w-[150px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        Waiting for approval
-      </div>
+    <MercoaButton disabled color="gray" isEmphasized type="button" className="mercoa-whitespace-nowrap">
+      Waiting for approval
     </MercoaButton>
   )
 
@@ -563,14 +520,11 @@ export function PayableActions({
       disabledTooltipText="You do not have permission to reject invoices"
       isEmphasized
       onClick={() => setValue('formAction', PayableFormAction.REJECT)}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableFormAction.REJECT ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Reject'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.REJECT}>
+        Reject
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 
@@ -590,14 +544,11 @@ export function PayableActions({
       isEmphasized
       disabledTooltipText="You do not have permission to approve invoices"
       onClick={() => setValue('formAction', PayableFormAction.APPROVE)}
+      className="mercoa-whitespace-nowrap"
     >
-      <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-        {actionLoading && formAction === PayableFormAction.APPROVE ? (
-          <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-        ) : (
-          'Approve'
-        )}
-      </div>
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.APPROVE}>
+        Approve
+      </ButtonLoadingSpinner>
     </MercoaButton>
   )
 

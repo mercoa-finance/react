@@ -1,6 +1,6 @@
 import { DialogTitle } from '@radix-ui/react-dialog'
 import React from 'react'
-import { MercoaButton } from '../../../../../components/generics'
+import { ButtonLoadingSpinner, MercoaButton } from '../../../../../components/generics'
 import { Dialog } from '../../../../../lib/components'
 
 interface ApproveBillsDialogProps {
@@ -30,7 +30,7 @@ export const ApproveBillsDialog: React.FC<ApproveBillsDialogProps> = ({
             </h3>
           </DialogTitle>
           <p className="mercoa-mt-[8px] mercoa-text-[14px] mercoa-text-[#6E6A68]">
-            Make sure you&apos;ve thoroughly reviewed these invoices prior to approving.
+            Make sure you&apos;ve reviewed these invoices before approving.
           </p>
         </div>
         <div className="mercoa-flex mercoa-justify-end mercoa-gap-[12px] mercoa-mt-[16px]">
@@ -51,15 +51,9 @@ export const ApproveBillsDialog: React.FC<ApproveBillsDialogProps> = ({
               onConfirm()
             }}
             isEmphasized={true}
-            className="mercoa-w-[80px] mercoa-text-sm mercoa-justify-center mercoa-flex"
+            className="mercoa-whitespace-nowrap"
           >
-            <div className="mercoa-w-[80px] mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-              {isLoading ? (
-                <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-              ) : (
-                'Approve'
-              )}
-            </div>
+            <ButtonLoadingSpinner isLoading={isLoading}>Approve</ButtonLoadingSpinner>
           </MercoaButton>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { DialogTitle } from '@radix-ui/react-dialog'
 import React from 'react'
-import { MercoaButton } from '../../../../../components/generics'
+import { ButtonLoadingSpinner, MercoaButton } from '../../../../../components/generics'
 import { Dialog } from '../../../../../lib/components'
 interface DeleteInvoiceDialogProps {
   onConfirm: () => void
@@ -51,15 +51,9 @@ export const DeleteInvoiceDialog: React.FC<DeleteInvoiceDialogProps> = ({
             }}
             color="secondary"
             isEmphasized={true}
-            className="mercoa-w-[80px] mercoa-text-sm mercoa-justify-center mercoa-flex"
+            className="mercoa-whitespace-nowrap"
           >
-            <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-              {isLoading ? (
-                <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-              ) : (
-                'Delete'
-              )}
-            </div>
+            <ButtonLoadingSpinner isLoading={isLoading}>Delete</ButtonLoadingSpinner>
           </MercoaButton>
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { DialogTitle } from '@radix-ui/react-dialog'
 import React from 'react'
-import { MercoaButton } from '../../../../../components/generics'
+import { ButtonLoadingSpinner, MercoaButton } from '../../../../../components/generics'
 import { Dialog } from '../../../../../lib/components'
 interface ArchiveInvoiceDialogProps {
   onConfirm: () => void
@@ -52,15 +52,9 @@ export const ArchiveInvoiceDialog: React.FC<ArchiveInvoiceDialogProps> = ({
               onConfirm()
             }}
             isEmphasized={true}
-            className="mercoa-w-[80px] mercoa-text-sm mercoa-justify-center mercoa-flex"
+            className="mercoa-whitespace-nowrap"
           >
-            <div className="mercoa-w-20 mercoa-h-6 mercoa-flex mercoa-items-center mercoa-justify-center">
-              {isLoading ? (
-                <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-              ) : (
-                'Archive'
-              )}
-            </div>
+            <ButtonLoadingSpinner isLoading={isLoading}>Archive</ButtonLoadingSpinner>
           </MercoaButton>
         </div>
       </div>

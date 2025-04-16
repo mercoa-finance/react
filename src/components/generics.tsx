@@ -2031,3 +2031,16 @@ export function CountryDropdown({ value, setValue }: { value: string | null; set
     />
   )
 }
+
+export function ButtonLoadingSpinner({ children, isLoading }: { children: ReactNode; isLoading: boolean }) {
+  if (!isLoading) return <>{children}</>
+  return (
+    <div className="mercoa-relative mercoa-inline-flex mercoa-items-center mercoa-justify-center">
+      <div className="mercoa-invisible">{children}</div>
+      <div
+        className="mercoa-absolute mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400"
+        aria-label="Loading"
+      />
+    </div>
+  )
+}

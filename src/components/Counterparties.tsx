@@ -30,6 +30,7 @@ import { capitalize, constructFullName } from '../lib/lib'
 import { PayableFormAction } from '../modules/payables/components/payable-form/constants'
 import { findExistingCounterparty } from '../modules/payables/components/payable-form/utils'
 import {
+  ButtonLoadingSpinner,
   CountryDropdown,
   DebouncedSearch,
   EntityOnboardingForm,
@@ -1110,13 +1111,9 @@ function CounterpartyAddOrEditForm({
             }, 2000)
           }}
         >
-          <div className="mercoa-w-20 mercoa-h-5 mercoa-flex mercoa-items-center mercoa-justify-center">
-            {formAction === PayableFormAction.CREATE_UPDATE_COUNTERPARTY && isSaving ? (
-              <div className="mercoa-animate-spin mercoa-inline-block mercoa-w-[18px] mercoa-h-[18px] mercoa-border-2 mercoa-border-current mercoa-border-t-transparent mercoa-rounded-full mercoa-text-gray-400" />
-            ) : (
-              'Save'
-            )}
-          </div>
+          <ButtonLoadingSpinner isLoading={formAction === PayableFormAction.CREATE_UPDATE_COUNTERPARTY && isSaving}>
+            Save
+          </ButtonLoadingSpinner>
         </MercoaButton>
       )}
     </>
