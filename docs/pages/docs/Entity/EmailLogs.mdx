@@ -1,0 +1,44 @@
+import { EntityEmailLogs, MercoaSession } from '@mercoa/react'
+import { payerEntity, vendorEntities } from '../../../mockData'
+import { ComponentContainer } from '../../../components/helpers'
+
+# Entity Email Logs / Activity
+
+The `<EntityEmailLogs>` component displays emails that have been sent to the entity's email address
+
+## Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ❌     |     ❌     |        ✅        |
+
+## Props
+
+| Name     | Type                                                   | Required | Description                                                                    |
+| :------- | :----------------------------------------------------- | :------- | :----------------------------------------------------------------------------- |
+| entity   | `Mercoa.EntityResponse`                                |          | The entity to display. Will pull from session if not specified                 |
+| onClick  | `(invoiceId: string) => void`                          |          | If the email created an invoice, this will be called when the email is clicked |
+| children | `(props: EntityEmailLogsChildrenProps) => JSX.Element` |          | Fully customize the UI with the help of these hooks and helper functions.      |
+
+```ts
+type EntityEmailLogsChildrenProps = {
+  dataLoaded: boolean
+  emails: Mercoa.EmailLog[]
+  hasNext: boolean
+  getNext: () => void
+  hasPrevious: boolean
+  getPrevious: () => void
+  count: number
+  resultsPerPage: number
+  setResultsPerPage: (value: number) => void
+}
+```
+
+## Examples
+
+<ComponentContainer>
+  <EntityEmailLogs entity={payerEntity} />
+  ```jsx
+  <EntityEmailLogs entity={payerEntity} />
+  ```
+</ComponentContainer>

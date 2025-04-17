@@ -1,0 +1,35 @@
+import { EntityOnboardingForm, MercoaSession } from '@mercoa/react'
+import { payerEntity, vendorEntities } from '../../../mockData'
+import { ComponentContainer } from '../../../components/helpers'
+
+# Entity Onboarding Form
+
+The `<EntityOnboardingForm>` component is the raw form used to collect onboarding information from your customers (C2) and their counterparties (C3).
+
+Most of the time, you should use the [`<EntityOnboarding`> component](/Entity/Onboarding), but if you want to process the data before it is sent to Mercoa, you can use this component.
+
+Fields displayed on the onboarding component are controlled by your [onboarding configuration](https://mercoa.com/dashboard/developers#customizations).
+
+## Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+## Props
+
+| Name               | Type                                   | Required | Description                                                                                                                         |
+| :----------------- | :------------------------------------- | :------- | :---------------------------------------------------------------------------------------------------------------------------------- |
+| entity             | `Mercoa.EntityResponse`                | ✅       | The entity to onboard                                                                                                               |
+| type               | `"payee"` `"payor"`                    | ✅       | Use `Payee` to onboard a vendor, and `Payor` to onboard a payer                                                                     |
+| onOnboardingSubmit | `((data: OnboardingFormData) => void)` |          | Callback called with all form data when submitted                                                                                   |
+| admin              | `boolean`                              |          | If true, will show all fields as well as additional fields like `isPayor` and `isPayee`. Useful to build internal admin dashboards. |
+
+## Examples
+
+<ComponentContainer>
+  <EntityOnboardingForm entity={payerEntity} type="payor" />
+  ```jsx
+  <EntityOnboarding entity={payerEntity} type="payor" />
+  ```
+</ComponentContainer>

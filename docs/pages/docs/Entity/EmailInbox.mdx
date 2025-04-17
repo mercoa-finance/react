@@ -1,0 +1,31 @@
+import { EntityInboxEmail, MercoaSession } from '@mercoa/react'
+import { payerEntity, vendorEntities } from '../../../mockData'
+import { ComponentContainer } from '../../../components/helpers'
+
+# Entity Inbox Email Address
+
+The `<EntityInboxEmail>` component displays an entity's email inbox address and lets them easily copy it to their clipboard.
+
+If an entity group token is passed in, this component will render the email address for the entity group unless an entity is selected at the `MercoaSession` level.
+
+## Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+## Props
+
+| Name   | Type              | Required | Description                       |
+| :----- | :---------------- | :------- | :-------------------------------- |
+| layout | `"left", "right"` |          | Which side to place the copy icon |
+| theme  | `"dark", "light"` |          | Light or dark theme               |
+
+## Examples
+
+<ComponentContainer>
+  <EntityInboxEmail />
+  ```jsx
+  <EntityInboxEmail />
+  ```
+</ComponentContainer>

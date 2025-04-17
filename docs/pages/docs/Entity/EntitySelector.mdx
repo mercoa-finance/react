@@ -1,0 +1,31 @@
+import { EntitySelector } from '@mercoa/react'
+import { payerEntity, vendorEntities } from '../../../mockData'
+import { ComponentContainer } from '../../../components/helpers'
+
+# Entity Inbox Email Address
+
+The `<EntitySelector>` component lets you select an entity from a list of entities in an entity group.
+
+## Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+## Props
+
+| Name       | Type                                       | Required | Description                                                                                       |
+| :--------- | :----------------------------------------- | :------- | :------------------------------------------------------------------------------------------------ |
+| onSelect   | `(entity?: Mercoa.EntityResponse) => void` |          | Callback when an entity is selected, if not provided, the entity will be set at the session level |
+| allowClear | `boolean`                                  |          | If true, allows the user to clear the selection and the selected entity at the session level      |
+
+## Examples
+
+<ComponentContainer>
+  <div style={{ marginBottom: '100px' }}>
+    <EntitySelector onSelect={(e) => console.log(e)} />
+  </div>
+  ```jsx
+  <EntitySelector />
+  ```
+</ComponentContainer>
