@@ -78,7 +78,16 @@ The `<Payables>` component displays all payables for an entity. It includes buil
 | Name      | Type                   | Required | Description                           |
 | --------- | ---------------------- | -------- | ------------------------------------- |
 | `columns` | `InvoiceTableColumn[]` |          | Custom columns for the invoice table. |
+| `toast`   | `ToastClient`          |          | Custom toast client.                  |
 
+
+```typescript
+type ToastClient = {
+  success: (message: string) => void
+  error: (message: string) => void
+  info: (message: string) => void
+}
+```
 ---
 
 <a id="functional-options"></a>

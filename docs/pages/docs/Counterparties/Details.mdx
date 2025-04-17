@@ -1,4 +1,4 @@
-import { CounterpartyDetails, MercoaSession } from '@mercoa/react'
+import { CounterpartyDetails } from '@mercoa/react'
 import { ComponentContainer } from '../../../components/helpers'
 import { payerEntity, vendorEntities } from '../../../mockData'
 
@@ -58,28 +58,6 @@ type CounterpartyDetailsButtons = {
     onClick: () => void
     counterparty: Mercoa.CounterpartyResponse
   }) => JSX.Element
-}
-```
-
-### CounterpartiesChildrenProps Type
-
-The `CounterpartiesChildrenProps` type allows customization of the counterparty list:
-
-```typescript
-type CounterpartiesChildrenProps = {
-  dataLoaded: boolean // If data is loaded, this is true. Otherwise this is false.
-  counterparties: Mercoa.CounterpartyResponse[] // List of counterparties. Will be an empty list if dataLoaded is false.
-
-  setSearch: (search: string) => void // Update the search filter
-
-  hasNext: boolean // Has next page of counterparties
-  getNext: () => void // Get next page of counterparties
-  hasPrevious: boolean // Has previous page of counterparties
-  getPrevious: () => void // Get previous page of counterparties
-  count: number // Total number of counterparties
-
-  resultsPerPage: number // Max number of results shown per page
-  setResultsPerPage: (value: number) => void // Set max number of results shown per page (1-100)
 }
 ```
 

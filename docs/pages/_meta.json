@@ -8,7 +8,11 @@
     "type": "page"
   },
   "index": {
-    "title": "Home",
-    "display": "hidden"
+    "title": "",
+    "display": "hidden",
+    "theme": {
+      "breadcrumb": false,
+      "layout": "full"
+    }
   }
 }

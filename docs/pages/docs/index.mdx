@@ -49,7 +49,7 @@ export default function Index() {
   const token = 'YOUR_ENTITY_TOKEN' // See https://docs.mercoa.com/api-reference/entity/user/get-token
   return (
     <MercoaSession token={token}>
-      <PayableDetails invoiceId="inv_75120d92-58a2-4d05-8b3f-b8e6c01f879f " />
+      <PayableDetails invoiceId="inv_75120d92-58a2-4d05-8b3f-b8e6c01f879f" />
     </MercoaSession>
   )
 }
@@ -77,4 +77,4 @@ module.exports = {
 
 ## Theme
 
-You can setup the theme in your [Mercoa Developer Settings](https://mercoa.com/dashboard/developers#customizations), the the components will pull theme information from the JWT used to authenticate.
+You can setup the theme in your [Mercoa Developer Settings](https://mercoa.com/dashboard/developers#customizations), then the components will pull theme information from the JWT used to authenticate.

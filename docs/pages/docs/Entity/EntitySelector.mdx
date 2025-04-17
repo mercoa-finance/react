@@ -1,8 +1,7 @@
 import { EntitySelector } from '@mercoa/react'
-import { payerEntity, vendorEntities } from '../../../mockData'
 import { ComponentContainer } from '../../../components/helpers'
 
-# Entity Inbox Email Address
+# Entity Selector
 
 The `<EntitySelector>` component lets you select an entity from a list of entities in an entity group.
 
@@ -26,6 +25,6 @@ The `<EntitySelector>` component lets you select an entity from a list of entiti
     <EntitySelector onSelect={(e) => console.log(e)} />
   </div>
   ```jsx
-  <EntitySelector />
+  <EntitySelector onSelect={(e) => console.log(e)} />
   ```
 </ComponentContainer>
