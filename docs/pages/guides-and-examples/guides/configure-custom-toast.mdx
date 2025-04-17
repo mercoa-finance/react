@@ -1,1 +1,150 @@
-someone
+import { Payables, PayableDetails, Receivables, ReceivableDetails } from '@mercoa/react'
+import { toast } from 'react-toastify'
+import { ComponentContainer } from '../../../components/helpers'
+
+# Configuring Custom Toast Notifications
+
+You can customize toast notifications in the Payables, PayableDetails, Receivables, and ReceivableDetails components by using the `renderCustom` prop. This allows you to override the default toast implementation with your own notification system.
+
+## Examples using Alert
+
+The examples below use the basic `alert()` function, but you can implement any custom notification system of your choice, such as react-toastify, Material-UI Snackbar, or your own custom components.
+
+Your custom toast should be configured with the following interface:
+
+```ts
+interface ToastClient {
+  success: (message: string) => void
+  error: (message: string) => void
+  info: (message: string) => void
+}
+```
+
+### Payables Component
+
+<ComponentContainer showCodeTabFirst>
+  <Payables
+    handlers={{
+      onSelectInvoice: (invoice) => router.push(`/dashboard/vendors/${mercoaSession.entityId}/invoices/${invoice.id}`),
+    }}
+    renderCustom={{
+      toast: {
+        success: (message) => alert(message),
+        error: (message) => alert(message),
+        info: (message) => alert(message),
+      },
+    }}
+  />
+  ```jsx
+  <Payables
+    handlers={{
+      onSelectInvoice: (invoice) => {
+        router.push(`/dashboard/vendors/${mercoaSession.entityId}/invoices/${invoice.id}`)
+      },
+    }}
+    renderCustom={{
+      toast: {
+        success: (message) => alert(message),
+        error: (message) => alert(message),
+        info: (message) => alert(message),
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### PayableDetails Component
+
+<ComponentContainer showCodeTabFirst>
+  <PayableDetails
+    handlers={{
+      onBack: () => router.back(),
+    }}
+    renderCustom={{
+      toast: {
+        success: (message) => alert(message),
+        error: (message) => alert(message),
+        info: (message) => alert(message),
+      },
+    }}
+  />
+  ```jsx
+  <PayableDetails
+    handlers={{
+      onBack: () => router.back(),
+    }}
+    renderCustom={{
+      toast: {
+        success: (message) => alert(message),
+        error: (message) => alert(message),
+        info: (message) => alert(message),
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Receivables Component
+
+<ComponentContainer showCodeTabFirst>
+  <Receivables
+    handlers={{
+      onSelectInvoice: (invoice) =>
+        router.push(`/dashboard/customers/${mercoaSession.entityId}/invoices/${invoice.id}`),
+    }}
+    renderCustom={{
+      toast: {
+        success: (message) => alert(message),
+        error: (message) => alert(message),
+        info: (message) => alert(message),
+      },
+    }}
+  />
+  ```jsx
+  <Receivables
+    handlers={{
+      onSelectInvoice: (invoice) => {
+        router.push(`/dashboard/customers/${mercoaSession.entityId}/invoices/${invoice.id}`)
+      },
+    }}
+    renderCustom={{
+      toast: {
+        success: (message) => alert(message),
+        error: (message) => alert(message),
+        info: (message) => alert(message),
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### ReceivableDetails Component
+
+<ComponentContainer showCodeTabFirst>
+  <ReceivableDetails
+    handlers={{
+      onBack: () => router.back(),
+    }}
+    renderCustom={{
+      toast: {
+        success: (message) => alert(message),
+        error: (message) => alert(message),
+        info: (message) => alert(message),
+      },
+    }}
+  />
+  ```jsx
+  <ReceivableDetails
+    handlers={{
+      onBack: () => router.back(),
+    }}
+    renderCustom={{
+      toast: {
+        success: (message) => alert(message),
+        error: (message) => alert(message),
+        info: (message) => alert(message),
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
