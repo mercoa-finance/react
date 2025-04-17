@@ -1,0 +1,120 @@
+import {
+  OcrProgressBarV1,
+  PayableDocumentDisplayV1,
+  DocumentUploadBoxV1
+} from '@mercoa/react'
+import { payerEntity, vendorEntities, inv_new_ready, inv_scheduled } from '../../../../../mockData'
+import { ComponentContainer } from '../../../../../components/helpers'
+import { Callout } from 'nextra/components'
+import { useEffect } from 'react'
+
+# Payable Document
+
+The `<PayableDocument>` component should be used as a child of the [`<PayableDetails>`](./Details) component. Normally, all props should come from the parent `<PayableDetails>` component. It renders the document, email log, and OCR progress for an invoice.
+
+## Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ✅     |        ✅        |
+
+## Props
+
+| Name                  | Type                                                                                 | Required | Description                                                                                                                                           |
+| :---------------------| :------------------------------------------------------------------------------------| :--------| :-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| invoice               | `Mercoa.InvoiceResponse`                                                             |          | The ID of the invoice to edit. Leave blank if creating a new invoice                                                                                  |
+| onOcrComplete         | `(ocrResponse?: Mercoa.OcrResponse) => void`                                         |          | Callback when OCR is completed
+| setUploadedDocument   | `(document: string) => void`                                                         |          | Callback of base64 docuemnt when the document is uploaded                                                                          |
+| height                | `number`                                                                             |   ✅     | Height of the component in pixels |
+| theme                 | `'light' \| 'dark'`                                                                  |          |                                                                            |
+| downloadButton        | `({ onClick }: { onClick: () => void }) => JSX.Element`                              |          | Override for download invoice button                                                                                                                                 |
+| viewEmailButton       | `({ onClick }: { onClick: () => void }) => JSX.Element`                              |          | Override for view email invoice button                              |
+| children              | `(methods: PayableDocumentChildrenProps) => JSX.Element`                             |          | See [customization](#customization) for details on how to use the children prop.                                                                      |
+
+```typescript
+type PayableDocumentChildrenProps = {
+  documents?: Array<{ fileReaderObj: string; mimeType: string }> // Documents uploaded or related to invoice
+  sourceEmails?: Mercoa.EmailLog[] // Incomming emails related to this invoice
+  ocrProcessing: boolean // True if OCR is still processing
+  invoice?: Mercoa.InvoiceResponse
+  height: number
+  downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  viewEmailButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  theme?: 'light' | 'dark'
+  onFileUpload: (fileReaderObj: string, mimeType: string) => void
+};
+```
+
+## Customization
+
+The `PayableDocument` component consists of multiple subcomponents that can all be customized. Additionally, you can mix in your own custom components to further control the UX.
+
+<Callout>
+All of the subcomponents must be children of a `PayableDocument` component
+</Callout>
+
+
+The default children is the following:
+
+```tsx
+<>
+  {({ documents, sourceEmails, ocrProcessing, invoice, height, downloadButton, viewEmailButton, theme, onFileUpload })) => 
+   <div className="mercoa-p-5 mercoa-rounded-mercoa">
+      {documents ? (
+        <>
+          <OcrProgressBarV1 ocrProcessing={ocrProcessing} />
+          <PayableDocumentDisplayV1
+            documents={documents}
+            invoice={invoice}
+            height={height}
+            showSourceEmail
+            sourceEmails={sourceEmails}
+            downloadButton={downloadButton}
+            viewEmailButton={viewEmailButton}
+          />
+        </>
+      ) : (
+        <div className="mercoa-min-w-[340px]">
+          <DocumentUploadBoxV1 onFileUpload={onFileUpload} theme={theme} />
+        </div>
+      )}
+    </div>
+  }
+</>
+```
+
+### OcrProgressBar
+
+<ComponentContainer>
+ <OcrProgressBarV1 ocrProcessing={true} />
+  ```jsx
+  <OcrProgressBarV1 ocrProcessing={true} />
+  ```
+</ComponentContainer>
+
+
+### PayableDocumentDisplay
+
+| Name                  | Type                                                                                 | Required | Description                                                                                                                                           |
+| :---------------------| :------------------------------------------------------------------------------------| :--------| :-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| invoice               | `Mercoa.InvoiceResponse`                                                             |          | The invoice object                                                                                  |
+| documents             | `Array<{ fileReaderObj: string; mimeType: string }>`                                 |          | Documents to render                                                                          |
+| sourceEmails          | `Mercoa.EmailLog[]`                                                                 |          | Incomming emails related to the invoice |
+| showSourceEmail       | `boolean`                                                                            |          | Show/Hide source emails                                   |
+| downloadButton        | `({ onClick }: { onClick: () => void }) => JSX.Element`                              |          | Override for download invoice button                                                                                                                                 |
+| viewEmailButton       | `({ onClick }: { onClick: () => void }) => JSX.Element`                              |          | Override for view email invoice button                              |
+
+
+### DocumentUploadBox
+
+| Name                  | Type                                                                                 | Required | Description                                                                                                                                           |
+| :---------------------| :------------------------------------------------------------------------------------| :--------| :-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| onFileUpload          | `(fileReaderObj: string, mimeType: string) => void`                                  |          | Callback on file upload                                                                                  |
+| theme                 | `'light' \| 'dark'`                                                                  |          |                                                                            |
+
+<ComponentContainer>
+  <DocumentUploadBoxV1 />
+  ```jsx
+  <DocumentUploadBoxV1 />
+  ```
+</ComponentContainer>

@@ -1,0 +1,151 @@
+import { BankAccounts, BankAccount, AddBankAccountButton, MercoaSession } from '@mercoa/react'
+import { payerBankAccount } from '../../../mockData'
+import { ComponentContainer } from '../../../components/helpers'
+
+# Bank Account Components
+
+## Bank Account List
+
+The `<BankAccounts>` component can be used to manage (create/edit) bank accounts linked to an Entity. The entity will be pulled from the JWT token provided to the `<MercoaSession>`.
+
+### Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+### Props
+
+| Name         | Type                                                                       | Required | Description                                             |
+| :----------- | :------------------------------------------------------------------------- | :------- | :------------------------------------------------------ |
+| showEdit     | `boolean`                                                                  |          | Allow user to edit bank account details                 |
+| showAdd      | `boolean`                                                                  |          | Allow user to add new bank accounts                     |
+| verifiedOnly | `boolean`                                                                  |          | Only show verified bank accounts that can make payments |
+| onSelect     | `((value: Mercoa.PaymentMethodResponse.BankAccount \| undefined) => void)` |          | If provided, bank account will be selectable            |
+
+### Examples
+
+#### Show Existing
+
+<ComponentContainer>
+  <div>
+    <BankAccounts />
+  </div>
+  ```jsx
+  <div>
+    <BankAccounts />
+  </div>
+  ```
+</ComponentContainer>
+
+#### Edit Existing
+
+<ComponentContainer>
+  <div>
+    <BankAccounts showEdit />
+  </div>
+  ```jsx
+  <div>
+    <BankAccounts showEdit />
+  </div>
+  ```
+</ComponentContainer>
+
+#### Show Existing with Add New
+
+<ComponentContainer>
+  <div>
+    <BankAccounts showAdd />
+  </div>
+  ```jsx
+  <div>
+    <BankAccounts showAdd />
+  </div>
+  ```
+</ComponentContainer>
+
+### Show Verified
+
+<ComponentContainer>
+  <div>
+    <BankAccounts verifiedOnly />
+  </div>
+  ```jsx
+  <div>
+    <BankAccounts verifiedOnly />
+  </div>
+  ```
+</ComponentContainer>
+
+## Bank Account Details
+
+The `<BankAccount>` component can be used to select and manage (create/edit) a bank account linked to an Entity. The entity will be pulled from the JWT token provided to the `<MercoaSession>`.
+
+### Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+### Props
+
+| Name     | Type                                                                       | Required | Description                                  |
+| :------- | :------------------------------------------------------------------------- | :------- | :------------------------------------------- |
+| account  | `Mercoa.PaymentMethodResponse.BankAccount`                                 | ✅       | Bank Account Object to view/edit             |
+| showEdit | `boolean`                                                                  |          | Allow user to edit bank account details      |
+| selected | `boolean`                                                                  |          | Toggle the `selected` CSS style on or off    |
+| onSelect | `((value: Mercoa.PaymentMethodResponse.BankAccount \| undefined) => void)` |          | If provided, bank account will be selectable |
+
+### Examples
+
+#### Show Existing
+
+<ComponentContainer>
+  <div>
+    <BankAccount account={payerBankAccount} />
+  </div>
+  ```jsx
+  <div>
+    <BankAccount account={payerBankAccount} />
+  </div>
+  ```
+</ComponentContainer>
+
+#### Edit Existing
+
+<ComponentContainer>
+  <div>
+    <BankAccount account={payerBankAccount} showEdit />
+  </div>
+  ```jsx
+  <div>
+    <BankAccount account={payerBankAccount} showEdit />
+  </div>
+  ```
+</ComponentContainer>
+
+#### Show Existing as Selected
+
+<ComponentContainer>
+  <div>
+    <BankAccount account={payerBankAccount} selected />
+  </div>
+  ```jsx
+  <div>
+    <BankAccount account={payerBankAccount} selected />
+  </div>
+  ```
+</ComponentContainer>
+
+#### Standalone Add Bank Account Button
+
+<ComponentContainer>
+  <div>
+    <AddBankAccountButton />
+  </div>
+  ```jsx
+  <div>
+    <AddBankAccountButton />
+  </div>
+  ```
+</ComponentContainer>

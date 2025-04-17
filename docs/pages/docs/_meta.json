@@ -1,0 +1,14 @@
+{
+  "index": "Introduction",
+  "Architecture": "Architecture",
+  "Migration": "Migration",
+  "Session": "useMercoaSession",
+  "Portal": "Drop In Portal",
+  "Entity": "Entity",
+  "Counterparties": "Counterparties",
+  "Payables": "Payables",
+  "Receivables": "Receivables",
+  "PaymentMethods": "Payment Methods",
+  "Metrics": "Invoice Metrics / Graphs",
+  "Approvals": "Approvals"
+}

@@ -1,0 +1,71 @@
+import { CounterpartyDetails } from '@mercoa/react'
+import { ComponentContainer } from '../../../components/helpers'
+import { payerEntity, vendorEntities } from '../../../mockData'
+
+# Counterparty Details
+
+The `<CounterpartyDetails>` component displays details about a counterparty entity.
+
+## Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+## Props
+
+| Name                           | Type                                          | Required | Description                                                                  |
+| :----------------------------- | :-------------------------------------------- | :------- | :--------------------------------------------------------------------------- |
+| counterpartyId                 | `string`                                      |          | The ID of the counterparty entity to display                                 |
+| counterparty                   | `Mercoa.CounterpartyResponse`                 |          | The counterparty object to display                                           |
+| type                           | `"payee"` \| `"payor"`                        | ✅       | Use `"payee"` to view as a payee (AP), and `"payor"` to view as a payor (AR) |
+| admin                          | `boolean`                                     |          | Whether to show admin controls                                               |
+| hideCounterpartyDetails        | `boolean`                                     |          | Hide the counterparty details section                                        |
+| hideCounterpartyPaymentMethods | `boolean`                                     |          | Hide the payment methods section                                             |
+| hideCounterpartyInvoices       | `boolean`                                     |          | Hide the invoices section                                                    |
+| hideCounterpartyVendorCredits  | `boolean`                                     |          | Hide the vendor credits section                                              |
+| hideOnboardingLink             | `boolean`                                     |          | Hide the onboarding link button                                              |
+| hideSendOnboardingEmail        | `boolean`                                     |          | Hide the send onboarding email button                                        |
+| onboardingLinkOptions          | `Mercoa.entity.GenerateOnboardingLink`        |          | Options for generating the onboarding link                                   |
+| onboardingEmailOptions         | `Mercoa.entity.SendOnboardingLink`            |          | Options for sending the onboarding email                                     |
+| counterpartyDetailsButtons     | `CounterpartyDetailsButtons`                  |          | Custom buttons to display in the counterparty details section                |
+| children                       | `({ counterparty, invoices }) => JSX.Element` |          | Render prop for custom content, receives counterparty and invoices data      |
+
+### CounterpartyDetailsButtons Type
+
+The `CounterpartyDetailsButtons` type allows customization of buttons in the counterparty details section:
+
+```typescript
+type CounterpartyDetailsButtons = {
+  onboardingLink?: ({
+    onClick,
+    counterparty,
+  }: {
+    onClick: () => void
+    counterparty: Mercoa.CounterpartyResponse
+  }) => JSX.Element
+  onboardingEmail?: ({
+    onClick,
+    counterparty,
+  }: {
+    onClick: () => void
+    counterparty: Mercoa.CounterpartyResponse
+  }) => JSX.Element
+  editButton?: ({
+    onClick,
+    counterparty,
+  }: {
+    onClick: () => void
+    counterparty: Mercoa.CounterpartyResponse
+  }) => JSX.Element
+}
+```
+
+## Examples
+
+<ComponentContainer>
+  <CounterpartyDetails counterpartyId={vendorEntities[0]} type="payee" />
+  ```jsx
+  <CounterpartyDetails counterpartyId={'ent_XXXX-XXXX-XXX'} type="payee" />
+  ```
+</ComponentContainer>

@@ -1,0 +1,22 @@
+import { PaymentMethods, MercoaSession } from '@mercoa/react'
+import { payerEntity, vendorEntities } from '../../../mockData'
+import { ComponentContainer } from '../../../components/helpers'
+
+# Manage Entity Payment Methods
+
+The `<PaymentMethods>` component can be used to manage (create/edit) payment methods linked to an Entity. The entity will be pulled from the JWT token provided to the `<MercoaSession>`.
+
+## Customization Options
+
+| Themeable | Variations | Custom Component |
+| :-------: | :--------: | :--------------: |
+|    ✅     |     ❌     |        ❌        |
+
+## Examples
+
+<ComponentContainer>
+  <PaymentMethods />
+  ```jsx
+  <PaymentMethods />
+  ```
+</ComponentContainer>

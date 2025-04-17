@@ -6,12 +6,14 @@ export function ComponentContainer({
   children,
   minHeight,
   display,
+  showCodeTabFirst = false,
 }: {
   children: React.ReactNode
   minHeight?: string
   display?: 'flex' | 'block'
+  showCodeTabFirst?: boolean
 }) {
-  const items = ['Component', 'Code']
+  const items = showCodeTabFirst ? ['Code', 'Component'] : ['Component', 'Code']
   const arrayChildren = Children.toArray(children)
   const mercoaSession = useMercoaSession()
 
@@ -24,6 +26,7 @@ export function ComponentContainer({
   if (arrayChildren.length < 2) items.pop()
   return (
     <Tabs items={items}>
+      {arrayChildren[1] && showCodeTabFirst && <Tabs.Tab>{arrayChildren[1]}</Tabs.Tab>}
       <Tabs.Tab>
         <div
           style={{
@@ -38,7 +41,7 @@ export function ComponentContainer({
           {mercoaSession.token && arrayChildren[0]}
         </div>
       </Tabs.Tab>
-      {arrayChildren[1] && <Tabs.Tab>{arrayChildren[1]}</Tabs.Tab>}
+      {arrayChildren[1] && !showCodeTabFirst && <Tabs.Tab>{arrayChildren[1]}</Tabs.Tab>}
     </Tabs>
   )
 }
@@ -49,7 +52,7 @@ export function NavBadge({ text, variant = 'grey' }: { text: string; variant?: '
       backgroundColor: 'rgba(75, 85, 99, 0.08)',
       color: '#4b5563',
       border: '1px solid rgba(75, 85, 99, 0.2)',
-    }
+    },
   }
 
   const variantStyle = styles[variant]
