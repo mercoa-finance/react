@@ -27,6 +27,7 @@ const PaymentMethodList = ({
   readOnly,
   setPaymentId,
   type,
+  schemaId,
   Component,
   showVerification = false,
 }: {
@@ -34,12 +35,16 @@ const PaymentMethodList = ({
   paymentId: string | undefined
   readOnly: boolean | undefined
   setPaymentId: (id: string) => void
-  type: Mercoa.PaymentMethodType
+  type?: Mercoa.PaymentMethodType
+  schemaId?: string
   Component: React.ComponentType<any>
   showVerification?: boolean
 }) => {
   const filteredPaymentMethods = (paymentMethods ?? [])
-    ?.filter((paymentMethod) => paymentMethod.type === type)
+    ?.filter(
+      (paymentMethod) =>
+        paymentMethod.type === type || (paymentMethod.type === 'custom' && paymentMethod.schemaId === schemaId),
+    )
     .filter((e) => (readOnly ? e.id === paymentId : true))
 
   return (
@@ -391,7 +396,7 @@ export function PayableSelectPaymentMethod({
             paymentId={paymentId}
             readOnly={readOnly}
             setPaymentId={setPaymentId}
-            type={selectedType as Mercoa.PaymentMethodType}
+            schemaId={selectedType}
             Component={CustomPaymentMethod}
           />
           {isDestination &&

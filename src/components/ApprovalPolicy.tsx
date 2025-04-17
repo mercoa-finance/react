@@ -44,15 +44,37 @@ function ArrowDownLeftIcon({ className }: { className?: string }) {
   )
 }
 
-export function ApprovalPolicies({ onSave, additionalRoles }: { onSave?: () => void; additionalRoles?: string[] }) {
+export function ApprovalPolicies({
+  onSave,
+  additionalRoles,
+  restrictedRoles,
+  maxRules,
+  supportedCurrencies,
+  allowAutoAssign = true,
+}: {
+  onSave?: () => void
+  additionalRoles?: string[]
+  restrictedRoles?: string[]
+  maxRules?: number
+  supportedCurrencies?: Mercoa.CurrencyCode[]
+  allowAutoAssign?: boolean
+}) {
   const mercoaSession = useMercoaSession()
 
   const [policies, setPolicies] = useState<Mercoa.ApprovalPolicyResponse[]>()
   const [isSaving, setIsSaving] = useState(false)
 
   const roles = useMemo(
-    () => [...new Set([...mercoaSession.users.map((user) => user.roles).flat(), ...(additionalRoles ?? [])])],
-    [mercoaSession.users, additionalRoles],
+    () =>
+      [...new Set([...mercoaSession.users.map((user) => user.roles).flat(), ...(additionalRoles ?? [])])].filter(
+        (role) => !restrictedRoles?.includes(role),
+      ),
+    [mercoaSession.users, additionalRoles, restrictedRoles],
+  )
+
+  const users = useMemo(
+    () => mercoaSession.users.filter((user) => !restrictedRoles?.some((role) => user.roles.includes(role))),
+    [mercoaSession.users, restrictedRoles],
   )
 
   const methods = useForm({
@@ -233,10 +255,13 @@ export function ApprovalPolicies({ onSave, additionalRoles }: { onSave?: () => v
           watch={watch}
           register={register}
           setValue={setValue}
-          users={mercoaSession.users}
+          users={users}
           roles={roles}
           formPolicies={formPolicies}
           upstreamPolicyId="root"
+          allowAutoAssign={allowAutoAssign}
+          maxRules={maxRules}
+          supportedCurrencies={supportedCurrencies}
         />
         <MercoaButton isEmphasized size="md" className="mercoa-mt-5" disabled={isSaving}>
           Save Rules
@@ -259,6 +284,9 @@ function Level({
   roles,
   formPolicies,
   isFullyCollapsed,
+  allowAutoAssign,
+  maxRules,
+  supportedCurrencies,
 }: {
   level: number
   upstreamPolicyId: string
@@ -272,6 +300,9 @@ function Level({
   roles: string[]
   formPolicies: Mercoa.ApprovalPolicyResponse[]
   isFullyCollapsed?: boolean
+  allowAutoAssign?: boolean
+  maxRules?: number
+  supportedCurrencies?: Mercoa.CurrencyCode[]
 }) {
   const [collapsedPolicyIds, setCollapsedPolicyIds] = useState<string[]>([])
   const policies = formPolicies.filter((e) => e.upstreamPolicyId === upstreamPolicyId)
@@ -338,6 +369,9 @@ function Level({
           formPolicies={formPolicies}
           upstreamPolicyId={policy.id}
           isFullyCollapsed={isFullyCollapsed || collapsedPolicyIds.includes(policy.id)}
+          allowAutoAssign={allowAutoAssign}
+          maxRules={maxRules}
+          supportedCurrencies={supportedCurrencies}
         />
       </div>
     )
@@ -433,6 +467,7 @@ function Level({
                   <>
                     <div className="mercoa-grid mercoa-grid-cols-4 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-mercoa mercoa-bg-white">
                       <Trigger
+                        supportedCurrencies={supportedCurrencies}
                         control={control}
                         watch={watch}
                         register={register}
@@ -448,6 +483,7 @@ function Level({
                       roles={roles}
                       index={formPolicies.findIndex((e) => e.id == policy.id)}
                       noTrigger={policy.trigger.length === 0}
+                      allowAutoAssign={allowAutoAssign}
                     />
                     <div className="mercoa-ml-10">
                       <Level
@@ -463,6 +499,9 @@ function Level({
                         formPolicies={formPolicies}
                         upstreamPolicyId={policy.id}
                         isFullyCollapsed={isFullyCollapsed || collapsedPolicyIds.includes(policy.id)}
+                        allowAutoAssign={allowAutoAssign}
+                        maxRules={maxRules}
+                        supportedCurrencies={supportedCurrencies}
                       />
                     </div>
                   </>
@@ -491,6 +530,8 @@ function Level({
               upstreamPolicyId={upstreamPolicyId}
               append={append}
               trigger={[]}
+              watch={watch}
+              maxRules={maxRules}
             />
           </p>
         </li>
@@ -521,12 +562,14 @@ function Trigger({
   register,
   setValue,
   index,
+  supportedCurrencies,
 }: {
   control: any
   watch: any
   register: any
   setValue: any
   index: number
+  supportedCurrencies?: Mercoa.CurrencyCode[]
 }) {
   const mercoaSession = useMercoaSession()
   const trigger = `policies.${index}.trigger`
@@ -654,11 +697,13 @@ function Trigger({
                         {...register(`policies.${index}.trigger.${triggerIndex}.currency`)}
                         className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
                       >
-                        {Object.values(Mercoa.CurrencyCode).map((option: Mercoa.CurrencyCode, index: number) => (
-                          <option key={index} value={option}>
-                            {option}
-                          </option>
-                        ))}
+                        {(supportedCurrencies ?? Object.values(Mercoa.CurrencyCode)).map(
+                          (option: Mercoa.CurrencyCode, index: number) => (
+                            <option key={index} value={option}>
+                              {option}
+                            </option>
+                          ),
+                        )}
                       </select>
                     </>
                   }
@@ -760,6 +805,7 @@ function Rule({
   roles,
   index,
   noTrigger,
+  allowAutoAssign,
 }: {
   watch: any
   register: any
@@ -768,6 +814,7 @@ function Rule({
   roles: string[]
   index: number
   noTrigger?: boolean
+  allowAutoAssign?: boolean
 }) {
   const [ruleIdType, setRuleIdType] = useState('rolesList')
 
@@ -864,20 +911,22 @@ function Rule({
           />
         )}
       </div>
-      <MercoaSwitch
-        tooltip={
-          <span>
-            If enabled, the policy will automatically assign approvers.
-            <br />
-            If more than one approver is eligible, the policy will assign all eligible approvers to the invoice.
-            <br />
-            If disabled, approvers must be manually selected from the list of eligible approvers.
-          </span>
-        }
-        label="Automatically Assign Approvers"
-        name={`policies.${index}.rule.autoAssign`}
-        register={register}
-      />
+      {allowAutoAssign && (
+        <MercoaSwitch
+          tooltip={
+            <span>
+              If enabled, the policy will automatically assign approvers.
+              <br />
+              If more than one approver is eligible, the policy will assign all eligible approvers to the invoice.
+              <br />
+              If disabled, approvers must be manually selected from the list of eligible approvers.
+            </span>
+          }
+          label="Automatically Assign Approvers"
+          name={`policies.${index}.rule.autoAssign`}
+          register={register}
+        />
+      )}
     </div>
   )
 }
@@ -887,15 +936,24 @@ function AddRule({
   upstreamPolicyId,
   append,
   trigger,
+  watch,
+  maxRules,
 }: {
   id: string
   upstreamPolicyId: string
   append: any
   trigger: Mercoa.Trigger[]
+  maxRules?: number
+  watch: any
 }) {
+  const noOfPrimaryRules = (watch(`policies`) as Mercoa.ApprovalPolicyResponse[]).filter(
+    (e) => e.upstreamPolicyId === 'root',
+  ).length
+
   return (
     <MercoaButton
       isEmphasized
+      disabled={upstreamPolicyId === 'root' && maxRules ? noOfPrimaryRules >= maxRules : false}
       size="sm"
       type="button"
       className="mercoa-flex"
