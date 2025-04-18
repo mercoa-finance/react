@@ -110,12 +110,14 @@ type ToastClient = {
   ```
 </ComponentContainer>
 
-### Select Invoice Handler
+### With Event Handlers
 
 <ComponentContainer>
   <Receivables
     handlers={{
       onSelectInvoice: (invoice) => router.push(`/dashboard/vendors/${mercoaSession.entityId}/invoices/${invoice.id}`),
+      onCreateInvoice: () => router.push('/create-invoice'),
+      onCreateRecurringInvoice: () => router.push('/create-recurring-invoice'),
     }}
   />
   ```jsx
@@ -124,6 +126,132 @@ type ToastClient = {
       onSelectInvoice: (invoice) => {
         router.push(`/dashboard/vendors/${mercoaSession.entityId}/invoices/${invoice.id}`)
       },
+      onCreateInvoice: () => {
+        router.push('/create-invoice')
+      },
+      onCreateRecurringInvoice: () => {
+        router.push('/create-recurring-invoice')
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### With Display Options
+
+<ComponentContainer>
+  <Receivables
+    displayOptions={{
+      tableOnly: true,
+      showCumulativeFilter: false,
+      statusTabsOptions: {
+        isVisible: true,
+        statuses: ['DRAFT', 'PENDING', 'APPROVED'],
+      },
+      showInvoiceMetrics: true,
+      classNames: {
+        table: 'custom-table-class',
+        container: 'custom-container-class',
+      },
+    }}
+  />
+  ```jsx
+  <Receivables
+    displayOptions={{
+      tableOnly: true,
+      showCumulativeFilter: false,
+      statusTabsOptions: {
+        isVisible: true,
+        statuses: ['DRAFT', 'PENDING', 'APPROVED'],
+      },
+      showInvoiceMetrics: true,
+      classNames: {
+        table: 'custom-table-class',
+        container: 'custom-container-class',
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### With Query Options
+
+<ComponentContainer>
+  <Receivables
+    queryOptions={{
+      resultsPerPage: 10,
+      orderBy: 'dueDate',
+      orderDirection: 'desc',
+      dateType: 'dueDate',
+    }}
+    renderCustom={{
+      toast: {
+        success: (msg) => customToast.success(msg),
+        error: (msg) => customToast.error(msg),
+        info: (msg) => customToast.info(msg),
+      },
+    }}
+  />
+  ```jsx
+  <Receivables
+    queryOptions={{
+      currentStatuses: ['PENDING', 'APPROVED'],
+      search: 'Invoice #123',
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-12-31'),
+      resultsPerPage: 10,
+      orderBy: 'dueDate',
+      orderDirection: 'desc',
+      dateType: 'dueDate',
+    }}
+    renderCustom={{
+      toast: {
+        success: (msg) => customToast.success(msg),
+        error: (msg) => customToast.error(msg),
+        info: (msg) => customToast.info(msg),
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### With Custom Toast
+
+<ComponentContainer>
+  <Receivables
+    renderCustom={{
+      toast: {
+        success: (msg) => customToast.success(msg),
+        error: (msg) => customToast.error(msg),
+        info: (msg) => customToast.info(msg),
+      },
+    }}
+  />
+  ```jsx
+  <Receivables
+    renderCustom={{
+      toast: {
+        success: (msg) => customToast.success(msg),
+        error: (msg) => customToast.error(msg),
+        info: (msg) => customToast.info(msg),
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Read-Only Mode
+
+<ComponentContainer>
+  <Receivables
+    config={{
+      readOnly: true,
+    }}
+  />
+  ```jsx
+  <Receivables
+    config={{
+      readOnly: true,
     }}
   />
   ```
