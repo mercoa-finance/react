@@ -236,10 +236,10 @@ export type PayablesProps = {
 }
 
 export type InvoiceTableColumn = {
-  title: string
   field: keyof Mercoa.InvoiceResponse | `${'metadata.'}${string}`
   orderBy?: Mercoa.InvoiceOrderByField
-  format?: (value: string | number | Date | any, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
+  header?: string | ReactElement | null
+  cell?: (value: string | number | Date | any, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
 }
 
 type PayablesQueryOptions = {
@@ -316,8 +316,7 @@ export type PayablesDataContext = {
     invoice?: Mercoa.InvoiceResponse
     invoiceNumber?: string
     currencyCode?: string
-    vendorName?: string
-    vendorEmail?: string
+    vendor?: Mercoa.CounterpartyResponse
     amount?: number
     status: Mercoa.InvoiceStatus
     invoiceId: string

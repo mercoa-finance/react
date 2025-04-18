@@ -1,24 +1,24 @@
 import { Dispatch, FC, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { InvoiceTableColumn, MercoaButton, Tooltip } from '../../../../../components'
+import { MercoaButton, Tooltip } from '../../../../../components'
 import { Popover } from '../../../../../lib/components'
 import { ColumnIcon } from '../../../../common/assets/icons'
+import { InvoiceTableColumn } from '../../../types'
 
 const allColumnsDefault: InvoiceTableColumn[] = [
-  { title: 'Vendor Name', field: 'vendor', orderBy: Mercoa.InvoiceOrderByField.VendorName },
-  { title: 'Invoice Number', field: 'invoiceNumber', orderBy: Mercoa.InvoiceOrderByField.InvoiceNumber },
-  { title: 'Due Date', field: 'dueDate' },
-  { title: 'Invoice Date', field: 'invoiceDate' },
-  { title: 'Amount', field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount },
-  { title: 'Approvers', field: 'approvers' },
-  { title: 'Status', field: 'status' },
+  { field: 'vendor', orderBy: Mercoa.InvoiceOrderByField.VendorName, header: 'Vendor Name' },
+  { field: 'invoiceNumber', orderBy: Mercoa.InvoiceOrderByField.InvoiceNumber, header: 'Invoice Number' },
+  { field: 'dueDate', header: 'Due Date' },
+  { field: 'invoiceDate', header: 'Invoice Date' },
+  { field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount, header: 'Amount' },
+  { field: 'approvers', header: 'Approvers' },
+  { field: 'status', header: 'Status' },
 ]
 
 interface SelectedColumnsDropdownProps {
-  selectedColumns: { title: string; field: string }[]
+  selectedColumns: InvoiceTableColumn[]
   setSelectedColumns: Dispatch<React.SetStateAction<InvoiceTableColumn[]>>
   handleToggleSelectedColumn: (field: string) => void
-
   allColumns?: InvoiceTableColumn[]
 }
 
@@ -78,7 +78,7 @@ export const ColumnFilterDropdown: FC<SelectedColumnsDropdownProps> = ({
               className="mercoa-text-[14px] mercoa-color-[#1A1919]"
               onClick={() => handleToggleSelectedColumn(column.field)}
             >
-              {column.title}
+              {column.header}
             </span>
           </div>
         ))}

@@ -1460,12 +1460,11 @@ export function inputClassName({
   return `mercoa-block ${width ?? 'mercoa-w-full'} mercoa-flex-1 mercoa-rounded-mercoa mercoa-py-1.5 ${pl} ${
     trailingIcon ? 'mercoa-pr-[3.7rem]' : 'mercoa-pr-2'
   } mercoa-text-gray-900 sm:mercoa-text-sm sm:mercoa-leading-6
-  ${noBorder ? 'mercoa-ring-0' : 'mercoa-ring-1'}
+  ${noBorder ? 'mercoa-border-0' : 'mercoa-border mercoa-border-gray-300 focus:mercoa-border-mercoa-primary'}
   ${align === 'left' ? 'mercoa-text-left' : ''}
   ${align === 'right' ? 'mercoa-text-right' : ''}
   ${align === 'center' ? 'mercoa-text-center' : ''}
-  mercoa-ring-inset mercoa-ring-gray-300 mercoa-border-0 mercoa-outline-0
-  focus:mercoa-ring-1 focus:mercoa-ring-mercoa-primary focus:mercoa-border-0 focus:mercoa-outline-0 mercoa-overflow-hidden`
+  mercoa-outline-0 mercoa-ring-0 focus:mercoa-ring-0 focus:mercoa-outline-0 mercoa-overflow-hidden`
 }
 
 export function MercoaInputLabel({ label, name }: { label: string; name?: string }) {

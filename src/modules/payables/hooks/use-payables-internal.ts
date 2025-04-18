@@ -2,7 +2,7 @@ import dayjs from 'dayjs'
 import Papa from 'papaparse'
 import { useEffect, useMemo, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { InvoiceTableColumn, useMercoaSession } from '../../../components'
+import { useMercoaSession } from '../../../components'
 import { queryClient } from '../../../lib/react-query/query-client-provider'
 import { invoicePaymentTypeMapper } from '../../common/invoice-payment-type'
 import {
@@ -33,7 +33,7 @@ import {
   useRecurringPayablesQuery,
 } from '../api/queries'
 import { usePayablesFilterStore } from '../stores/payables-filter-store'
-import { PayablesContextValue, PayablesProps, PayablesTableActionProps } from '../types'
+import { InvoiceTableColumn, PayablesContextValue, PayablesProps, PayablesTableActionProps } from '../types'
 
 export function usePayablesInternal(payableProps: PayablesProps) {
   const { queryOptions } = payableProps
@@ -67,14 +67,14 @@ export function usePayablesInternal(payableProps: PayablesProps) {
   const [selectedInvoices, setSelectedInvoices] = useState<Mercoa.InvoiceResponse[]>([])
 
   const [selectedColumns, setSelectedColumns] = useState<InvoiceTableColumn[]>([
-    { title: 'Vendor Name', field: 'vendor', orderBy: Mercoa.InvoiceOrderByField.VendorName },
-    { title: 'Invoice Number', field: 'invoiceNumber', orderBy: Mercoa.InvoiceOrderByField.InvoiceNumber },
-    { title: 'Due Date', field: 'dueDate', orderBy: Mercoa.InvoiceOrderByField.DueDate },
-    { title: 'Invoice Date', field: 'invoiceDate', orderBy: Mercoa.InvoiceOrderByField.InvoiceDate },
-    { title: 'Deduction Date', field: 'deductionDate', orderBy: Mercoa.InvoiceOrderByField.DeductionDate },
-    { title: 'Amount', field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount },
-    { title: 'Status', field: 'status' },
-    { title: 'Approvers', field: 'approvers' },
+    { header: 'Vendor Name', field: 'vendor', orderBy: Mercoa.InvoiceOrderByField.VendorName },
+    { header: 'Invoice Number', field: 'invoiceNumber', orderBy: Mercoa.InvoiceOrderByField.InvoiceNumber },
+    { header: 'Due Date', field: 'dueDate', orderBy: Mercoa.InvoiceOrderByField.DueDate },
+    { header: 'Invoice Date', field: 'invoiceDate', orderBy: Mercoa.InvoiceOrderByField.InvoiceDate },
+    { header: 'Deduction Date', field: 'deductionDate', orderBy: Mercoa.InvoiceOrderByField.DeductionDate },
+    { header: 'Amount', field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount },
+    { header: 'Status', field: 'status' },
+    { header: 'Approvers', field: 'approvers' },
   ])
 
   const {
@@ -213,10 +213,9 @@ export function usePayablesInternal(payableProps: PayablesProps) {
       invoice: invoice,
       invoiceNumber: invoice.invoiceNumber,
       currencyCode: invoice.currency,
-      vendorName: invoice.vendor?.name,
-      vendorEmail: invoice.vendor?.email,
-      amount: invoice.amount,
+      vendor: invoice.vendor,
       status: invoice.status,
+      amount: invoice.amount,
       invoiceId: invoice.id,
       dueDate: invoice.dueDate,
       invoiceDate: invoice.invoiceDate,
@@ -230,7 +229,6 @@ export function usePayablesInternal(payableProps: PayablesProps) {
       payerId: invoice.payerId,
       paymentDestinationId: invoice.paymentDestinationId,
       paymentSourceId: invoice.paymentSourceId,
-      approvers: invoice.approvers,
     }))
   }, [currentPageData])
 
@@ -281,7 +279,7 @@ export function usePayablesInternal(payableProps: PayablesProps) {
     setSelectedColumns((prevColumns) =>
       prevColumns.some((column) => column.field === field)
         ? prevColumns.filter((column) => column.field !== field)
-        : [...prevColumns, { field: field as keyof Mercoa.InvoiceResponse, title: '' }],
+        : [...prevColumns, { field: field as keyof Mercoa.InvoiceResponse, header: '' }],
     )
   }
 
