@@ -80,7 +80,102 @@ type ToastClient = {
 
 ## Examples
 
-### Create New Invoice
+### Default Usage
+
+<ComponentContainer>
+  <ReceivableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <ReceivableDetails
+    queryOptions={{
+      invoiceId: 'inv_123',
+      invoiceType: 'invoice',
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### With Event Handlers
+
+<ComponentContainer>
+  <ReceivableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <ReceivableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    handlers={{
+      onInvoiceUpdate: (invoice) => {
+        console.log('Invoice updated:', invoice)
+        if (invoice) {
+          router.push(`/invoices/${invoice.id}`)
+        }
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### With Query Options
+
+<ComponentContainer>
+  <ReceivableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <ReceivableDetails
+    queryOptions={{
+      invoiceId: 'inv_123',
+      invoiceType: 'invoice',
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### With Config Options
+
+<ComponentContainer>
+  <ReceivableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <ReceivableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    config={{
+      supportedCurrencies: ['USD', 'EUR'],
+      disableCustomerCreation: true,
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### With Display Options
+
+<ComponentContainer>
+  <ReceivableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <ReceivableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    displayOptions={{
+      heightOffset: 80,
+      documentPosition: 'right',
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### With Custom Rendering Options
+
+<ComponentContainer>
+  <ReceivableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <ReceivableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    renderCustom={{
+      toast: {
+        success: (msg) => customToast.show({ type: 'success', message: msg }),
+        error: (msg) => customToast.show({ type: 'error', message: msg }),
+        info: (msg) => customToast.show({ type: 'info', message: msg }),
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Use Case 1: Create New Invoice
 
 <ComponentContainer>
   <ReceivableDetails queryOptions={{ invoiceId: '', invoiceType: 'invoice' }} />
@@ -94,10 +189,90 @@ type ToastClient = {
     handlers={{
       onInvoiceUpdate: (invoice) => {
         if (!invoice) {
-          router.push(`/dashboard/vendors/${entityId}`)
+          router.push(`/dashboard/customers/${entityId}`)
           return
         }
+        router.push(`/dashboard/customers/${entityId}/invoices/${invoice.id}`)
       },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Use Case 2: Edit Existing Invoice
+
+<ComponentContainer>
+  <ReceivableDetails
+    queryOptions={{
+      invoiceId: 'inv_123',
+      invoiceType: 'invoice',
+    }}
+  />
+  ```jsx
+  <ReceivableDetails
+    queryOptions={{
+      invoiceId: 'inv_123',
+      invoiceType: 'invoice',
+    }}
+    handlers={{
+      onInvoiceUpdate: (invoice) => console.log('Invoice updated:', invoice),
+    }}
+    displayOptions={{
+      heightOffset: 100,
+      documentPosition: 'right',
+    }}
+    config={{
+      disableCustomerCreation: true,
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Use Case 3: Document Position Variations
+
+<ComponentContainer>
+  <ReceivableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    displayOptions={{ documentPosition: 'right' }}
+  />
+  ```jsx
+  <ReceivableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    displayOptions={{ documentPosition: 'right' }}
+  />
+  ```
+</ComponentContainer>
+
+<ComponentContainer>
+  <ReceivableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    displayOptions={{ documentPosition: 'right' }}
+  />
+  ```jsx
+  {/* Document on left (default) */}
+  <ReceivableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    displayOptions={{ documentPosition: 'left' }}
+  />
+  ```
+</ComponentContainer>
+
+### Use Case 4: Custom Toast Notifications
+
+<ComponentContainer>
+  <ReceivableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <ReceivableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    renderCustom={{
+      toast: {
+        success: (msg) => alert.success(msg),
+        error: (msg) => alert.error(msg),
+        info: (msg) => alert.info(msg),
+      },
+    }}
+    config={{
+      supportedCurrencies: ['USD', 'EUR', 'GBP'],
     }}
   />
   ```

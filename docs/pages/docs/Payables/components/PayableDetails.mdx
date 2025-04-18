@@ -1,4 +1,22 @@
-import { PayableDetailsV1, PayableDetails } from '@mercoa/react'
+import {
+  PayableDetailsV1,
+  PayableDetails,
+  PayableFormHeader,
+  PayableDocument,
+  PayableForm,
+  PayableCounterpartySearch,
+  PayableOverview,
+  PayableLineItems,
+  PayableTaxAndShipping,
+  PayableMetadata,
+  PayablePaymentSource,
+  PayablePaymentDestination,
+  PaymentDestinationProcessingTime,
+  PayableFees,
+  PayableApprovers,
+  PayableComments,
+  PayableActions,
+} from '@mercoa/react'
 import { ComponentContainer } from '../../../../components/helpers'
 import { inv_new_ready, inv_scheduled, payerEntity, vendorEntities } from '../../../../mockData'
 
@@ -85,7 +103,116 @@ type ToastClient = {
 }
 ```
 
-## Examples
+## Main Props Examples
+
+### Default Usage
+
+<ComponentContainer>
+  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <PayableDetails
+    queryOptions={{
+      invoiceId: 'inv_123',
+      invoiceType: 'invoice',
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### With Event Handlers
+
+<ComponentContainer>
+  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <PayableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    handlers={{
+      onInvoicePreSubmit: async (invoice) => {
+        // Modify or validate invoice before submission
+        return invoice
+      },
+      onInvoiceUpdate: (invoice) => {
+        if (invoice) {
+          router.push(`/invoices/${invoice.id}`)
+        }
+      },
+      onInvoiceSubmit: (invoice) => {
+        console.log('Invoice submitted:', invoice)
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### With Query Options
+
+<ComponentContainer>
+  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <PayableDetails
+    queryOptions={{
+      invoiceId: 'inv_123',
+      invoiceType: 'invoice',
+      invoice: {
+        // Pre-loaded invoice data for faster rendering
+        id: 'inv_123',
+        amount: 1000,
+        currency: 'USD',
+        // ... other invoice fields
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### With Display Options
+
+<ComponentContainer>
+  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <PayableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    displayOptions={{
+      heightOffset: 100, // Adjust component height
+      documentPosition: 'right', // Position document viewer
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### With Configuration Options
+
+<ComponentContainer>
+  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <PayableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    config={{
+      supportedCurrencies: ['USD', 'EUR', 'GBP'],
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### With Custom Rendering
+
+<ComponentContainer>
+  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <PayableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    renderCustom={{
+      toast: {
+        success: (msg) => customToast.success(msg),
+        error: (msg) => customToast.error(msg),
+        info: (msg) => customToast.info(msg),
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+## Common Use Case Examples
 
 ### Create New Invoice
 
@@ -94,6 +221,9 @@ type ToastClient = {
   ```jsx
   <PayableDetails
     queryOptions={{ invoiceId: '', invoiceType: 'invoice' }}
+    config={{
+      supportedCurrencies: ['USD'],
+    }}
     handlers={{
       onInvoiceUpdate: (invoice) => {
         if (!invoice) {
@@ -103,6 +233,210 @@ type ToastClient = {
         router.push(`/dashboard/payers/${entityId}/invoices/${invoice.id}`)
       },
     }}
+  />
+  ```
+</ComponentContainer>
+
+### Edit Existing Invoice
+
+<ComponentContainer>
+  <PayableDetails
+    queryOptions={{
+      invoiceId: 'inv_123',
+      invoiceType: 'invoice',
+    }}
+  />
+  ```jsx
+  <PayableDetails
+    queryOptions={{
+      invoiceId: 'inv_123',
+      invoiceType: 'invoice',
+    }}
+    handlers={{
+      onInvoiceUpdate: (invoice) => console.log('Invoice updated:', invoice),
+      onInvoiceSubmit: (invoice) => console.log('Invoice submitted:', invoice),
+      onOcrComplete: (ocrData) => console.log('OCR completed:', ocrData),
+    }}
+    displayOptions={{
+      heightOffset: 100,
+      documentPosition: 'right',
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Document Position Variations
+
+<ComponentContainer>
+  <PayableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    displayOptions={{ documentPosition: 'right' }}
+  />
+  ```jsx
+  <PayableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    displayOptions={{ documentPosition: 'right' }}
+  />
+  ```
+</ComponentContainer>
+
+<ComponentContainer>
+  <PayableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    displayOptions={{ documentPosition: 'left' }}
+  />
+  ```jsx
+  {/* Document on left (default) */}
+  <PayableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    displayOptions={{ documentPosition: 'left' }}
+  />
+  ```
+</ComponentContainer>
+
+### Custom Toast Notifications
+
+<ComponentContainer>
+  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  ```jsx
+  <PayableDetails
+    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+    renderCustom={{
+      toast: {
+        success: (msg) => alert.success(msg),
+        error: (msg) => alert.error(msg),
+        info: (msg) => alert.info(msg),
+      },
+    }}
+    config={{
+      supportedCurrencies: ['USD', 'EUR', 'GBP'],
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Custom Children
+
+<ComponentContainer>
+  <PayableDetails
+    queryOptions={{
+      invoiceId: 'inv-123',
+      invoiceType: 'invoice',
+    }}
+    handlers={{
+      onInvoiceUpdate: (invoice) => {
+        if (!invoice) {
+          router.push(`/dashboard/payers/${entityId}`)
+          return
+        }
+      },
+      onCounterpartyPreSubmit: async (counterparty, counterpartyId) => {
+        console.log('counterparty', counterparty)
+        return counterparty
+      },
+      onInvoicePreSubmit: async (invoice) => {
+        console.log('invoice', invoice)
+        return invoice
+      },
+      onOcrComplete: (ocr) => {
+        console.log('ocr', ocr)
+        return ocr
+      },
+    }}
+    config={{
+      supportedCurrencies: ['USD'],
+      disableCounterpartyCreation: false,
+    }}
+    displayOptions={{
+      heightOffset: 250,
+      documentPosition: 'left',
+    }}
+    children={[
+      <PayableDocument key="document" />,
+      <PayableForm key="form">
+        <div className="border-b border-gray-900/10 col-span-full" />
+        <PayableFormHeader /> <div className="border-b border-gray-900/10 col-span-full" />
+        <PayableCounterpartySearch />
+        <PayableOverview />
+        <PayableLineItems />
+        <PayableTaxAndShipping />
+        <PayableMetadata /> <div className="border-b border-gray-900/10 col-span-full" />
+        <PayablePaymentSource />
+        <div className="border-b border-gray-900/10 col-span-full" />
+        <PayablePaymentDestination />
+        <PaymentDestinationProcessingTime />
+        <div className="border-b border-gray-900/10 col-span-full" />
+        <PayableFees />
+        <div className="border-b border-gray-900/10 col-span-full" />
+        <PayableApprovers />
+        <div className="border-b border-gray-900/10 col-span-full" />
+        <PayableComments />
+        <PayableActions /> // additional actions can be added
+      </PayableForm>,
+    ]}
+  />
+  ```jsx
+  <PayableDetails
+    queryOptions={{
+      invoiceId: 'inv-123',
+      invoiceType: 'invoice',
+    }}
+    handlers={{
+      onInvoiceUpdate: (invoice) => {
+        if (!invoice) {
+          router.push(`/dashboard/payers/${entityId}`)
+          return
+        }
+      },
+      onCounterpartyPreSubmit: async (counterparty, counterpartyId) => {
+        console.log('counterparty', counterparty)
+        return counterparty
+      },
+      onInvoicePreSubmit: async (invoice) => {
+        console.log('invoice', invoice)
+        return invoice
+      },
+      onOcrComplete: (ocr) => {
+        console.log('ocr', ocr)
+        return ocr
+      },
+    }}
+    config={{
+      supportedCurrencies: ['USD'],
+      disableCounterpartyCreation: false,
+    }}
+    displayOptions={{
+      heightOffset: 250,
+      documentPosition: 'left',
+    }}
+    children={[
+      <PayableDocument key="document" />,
+      <PayableForm key="form">
+        <div className="border-b border-gray-900/10 col-span-full" />
+        <PayableFormHeader /> <div className="border-b border-gray-900/10 col-span-full" />
+        <PayableCounterpartySearch />
+        <PayableOverview />
+        <PayableLineItems />
+        {mercoaSession.entityCustomizations?.ocr &&
+          !mercoaSession.entityCustomizations?.ocr.taxAndShippingAsLineItems && <PayableTaxAndShipping />}
+        <PayableMetadata /> <div className="border-b border-gray-900/10 col-span-full" />
+        {mercoaSession.entity?.id && (
+          <>
+            <PayablePaymentSource />
+            <div className="border-b border-gray-900/10 col-span-full" />
+            <PayablePaymentDestination />
+            <PaymentDestinationProcessingTime />
+            <div className="border-b border-gray-900/10 col-span-full" />
+            <PayableFees />
+            <div className="border-b border-gray-900/10 col-span-full" />
+            <PayableApprovers />
+            <div className="border-b border-gray-900/10 col-span-full" />
+          </>
+        )}
+        <PayableComments />
+        <PayableActions /> // additional actions can be added
+      </PayableForm>,
+    ]}
   />
   ```
 </ComponentContainer>
