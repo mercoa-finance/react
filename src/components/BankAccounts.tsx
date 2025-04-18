@@ -78,6 +78,13 @@ export function BankAccounts({
     }
   }, [entityIdFinal, mercoaSession.token, mercoaSession.refreshId])
 
+  let entityConfirmation: 'view' | 'edit' | 'none' = 'none'
+  if (showEntityConfirmation) {
+    entityConfirmation = 'view'
+  } else if (showEdit) {
+    entityConfirmation = 'edit'
+  }
+
   if (!mercoaSession.client) return <NoSession componentName="BankAccounts" />
 
   if (children) return children({ bankAccounts })
@@ -93,7 +100,7 @@ export function BankAccounts({
             <PaymentMethodList
               accounts={bankAccounts}
               showDelete={showDelete || showEdit} // NOTE: For backwards compatibility, showEdit implies showDelete
-              showEntityConfirmation={showEntityConfirmation}
+              showEntityConfirmation={entityConfirmation}
               addAccount={
                 bankAccounts && showAdd ? (
                   <AddBankAccountButton

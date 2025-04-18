@@ -1680,6 +1680,32 @@ export function CounterpartyDetails({
     }
   }, [mercoaSession.client, mercoaSession.entityId, mercoaSession.refreshId, counterpartyLocal, type])
 
+  function refreshCounterparty() {
+    if (counterpartyLocal && mercoaSession.client && mercoaSession.entityId) {
+      if (type === 'payee') {
+        mercoaSession.client.entity.counterparty
+          .findPayees(mercoaSession.entityId, {
+            counterpartyId: counterpartyLocal.id,
+          })
+          .then((resp) => {
+            if (resp && resp.data[0]) {
+              setCounterpartyLocal(resp.data[0])
+            }
+          })
+      } else {
+        mercoaSession.client.entity.counterparty
+          .findPayors(mercoaSession.entityId, {
+            counterpartyId: counterpartyLocal.id,
+          })
+          .then((resp) => {
+            if (resp && resp.data[0]) {
+              setCounterpartyLocal(resp.data[0])
+            }
+          })
+      }
+    }
+  }
+
   if (children) {
     return children({ counterparty: counterpartyLocal, invoices: invoiceHistory ?? [] })
   }
@@ -1701,6 +1727,7 @@ export function CounterpartyDetails({
         onboardingLinkOptions={onboardingLinkOptions}
         onboardingEmailOptions={onboardingEmailOptions}
         counterpartyDetailsButtons={counterpartyDetailsButtons}
+        refreshCounterparty={refreshCounterparty}
       />
 
       {!hideCounterpartyPaymentMethods && (
@@ -1729,6 +1756,7 @@ function CounterpartyDetailsCard({
   onboardingLinkOptions,
   onboardingEmailOptions,
   counterpartyDetailsButtons,
+  refreshCounterparty,
 }: {
   type: 'payor' | 'payee'
   counterparty: Mercoa.EntityResponse
@@ -1740,6 +1768,7 @@ function CounterpartyDetailsCard({
   onboardingLinkOptions?: Mercoa.entity.GenerateOnboardingLink
   onboardingEmailOptions?: Mercoa.entity.SendOnboardingLink
   counterpartyDetailsButtons?: CounterpartyDetailsButtons
+  refreshCounterparty?: () => void
 }) {
   const mercoaSession = useMercoaSession()
   const [editModalOpen, setEditModalOpen] = useState<boolean>(false)
@@ -2075,9 +2104,11 @@ function CounterpartyDetailsCard({
                         type={type}
                         onCancel={() => {
                           setEditModalOpen(false)
+                          refreshCounterparty?.()
                         }}
                         onOnboardingSubmit={() => {
                           setEditModalOpen(false)
+                          refreshCounterparty?.()
                         }}
                       />
                     </div>
@@ -2127,6 +2158,7 @@ function CounterpartyPaymentMethodsCard({
               setEditingPaymentMethod(method)
               setIsPaymentMethodModalOpen(true)
             }}
+            showEntityConfirmation={true}
           />
         </div>
       </div>

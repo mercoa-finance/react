@@ -77,6 +77,13 @@ export function Cards({
     if (onSelect && account) onSelect(account)
   }
 
+  let entityConfirmation: 'view' | 'edit' | 'none' = 'none'
+  if (showEntityConfirmation) {
+    entityConfirmation = 'view'
+  } else if (showEdit) {
+    entityConfirmation = 'edit'
+  }
+
   if (!mercoaSession.client) return <NoSession componentName="CreditCards" />
 
   if (children) return children({ bankAccounts: cards })
@@ -91,7 +98,7 @@ export function Cards({
           <PaymentMethodList
             accounts={cards}
             showDelete={showDelete || showEdit}
-            showEntityConfirmation={showEntityConfirmation}
+            showEntityConfirmation={entityConfirmation}
             addAccount={
               cards && showAdd ? (
                 <div>

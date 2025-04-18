@@ -135,13 +135,21 @@ function CustomPaymentMethodsPerSchema({
     setShowDialog(false)
     if (onSelect && account) onSelect(account)
   }
+
+  let entityConfirmation: 'view' | 'edit' | 'none' = 'none'
+  if (showEntityConfirmation) {
+    entityConfirmation = 'view'
+  } else if (showEdit) {
+    entityConfirmation = 'edit'
+  }
+
   return (
     <div key={schema.id}>
       <h3>{schema.name}</h3>
       <PaymentMethodList
         accounts={paymentMethods}
         showDelete={showDelete || showEdit}
-        showEntityConfirmation={showEntityConfirmation}
+        showEntityConfirmation={entityConfirmation}
         addAccount={
           paymentMethods && showAdd ? (
             <div>

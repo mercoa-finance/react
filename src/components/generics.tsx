@@ -735,7 +735,7 @@ export function PaymentMethodList({
   showDelete?: boolean
   addAccount?: ReactNode
   formatAccount: (account: any) => JSX.Element | JSX.Element[] | null
-  showEntityConfirmation?: boolean
+  showEntityConfirmation?: 'view' | 'edit' | 'none'
 }) {
   const mercoaSession = useMercoaSession()
   const hasAccounts = accounts && accounts.length > 0
@@ -758,20 +758,24 @@ export function PaymentMethodList({
                     </Tooltip>
                   </button>
                 ) : (
-                  <div className="mercoa-flex mercoa-items-center mercoa-justify-center">
-                    <MercoaButton
-                      isEmphasized={false}
-                      size="sm"
-                      onClick={() => {
-                        setSelectedAccount(account)
-                        setShowConfirmationDialog(true)
-                      }}
-                      className="mercoa-ml-2"
-                    >
-                      <p>Confirm </p>
-                      <p>Details</p>
-                    </MercoaButton>
-                  </div>
+                  <>
+                    {showEntityConfirmation === 'edit' && (
+                      <div className="mercoa-flex mercoa-items-center mercoa-justify-center">
+                        <MercoaButton
+                          isEmphasized={false}
+                          size="sm"
+                          onClick={() => {
+                            setSelectedAccount(account)
+                            setShowConfirmationDialog(true)
+                          }}
+                          className="mercoa-ml-2"
+                        >
+                          <p>Confirm </p>
+                          <p>Details</p>
+                        </MercoaButton>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}

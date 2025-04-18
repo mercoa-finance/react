@@ -63,6 +63,13 @@ export function Checks({
     if (onSelect && account) onSelect(account)
   }
 
+  let entityConfirmation: 'view' | 'edit' | 'none' = 'none'
+  if (showEntityConfirmation) {
+    entityConfirmation = 'view'
+  } else if (showEdit) {
+    entityConfirmation = 'edit'
+  }
+
   if (!mercoaSession.client) return <NoSession componentName="Checks" />
 
   if (children) return children({ checks })
@@ -77,7 +84,7 @@ export function Checks({
           <PaymentMethodList
             accounts={checks}
             showDelete={showDelete || showEdit}
-            showEntityConfirmation={showEntityConfirmation}
+            showEntityConfirmation={entityConfirmation}
             addAccount={
               checks && showAdd ? (
                 <div>
