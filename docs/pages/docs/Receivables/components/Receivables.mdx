@@ -179,6 +179,10 @@ type ToastClient = {
 <ComponentContainer>
   <Receivables
     queryOptions={{
+      currentStatuses: ['PENDING', 'APPROVED'],
+      search: 'Invoice #123',
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-12-31'),
       resultsPerPage: 10,
       orderBy: 'dueDate',
       orderDirection: 'desc',
@@ -186,9 +190,9 @@ type ToastClient = {
     }}
     renderCustom={{
       toast: {
-        success: (msg) => customToast.success(msg),
-        error: (msg) => customToast.error(msg),
-        info: (msg) => customToast.info(msg),
+        success: (msg) => alert(msg),
+        error: (msg) => alert(msg),
+        info: (msg) => alert(msg),
       },
     }}
   />
@@ -206,9 +210,9 @@ type ToastClient = {
     }}
     renderCustom={{
       toast: {
-        success: (msg) => customToast.success(msg),
-        error: (msg) => customToast.error(msg),
-        info: (msg) => customToast.info(msg),
+        success: (msg) => alert(msg),
+        error: (msg) => alert(msg),
+        info: (msg) => alert(msg),
       },
     }}
   />

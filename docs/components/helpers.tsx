@@ -42,7 +42,7 @@ export function ComponentContainer({
         </div>
       </Tabs.Tab>
       {arrayChildren[1] && !showCodeTabFirst && <Tabs.Tab>{arrayChildren[1]}</Tabs.Tab>}
-      <Tabs.Tab>{arrayChildren[2]}</Tabs.Tab>
+      {arrayChildren[2] && <Tabs.Tab>{arrayChildren[2]}</Tabs.Tab>}
     </Tabs>
   )
 }

@@ -83,34 +83,30 @@ type ToastClient = {
 ### Default Usage
 
 <ComponentContainer>
-  <ReceivableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+  <ReceivableDetails />
   ```jsx
-  <ReceivableDetails
-    queryOptions={{
-      invoiceId: 'inv_123',
-      invoiceType: 'invoice',
-    }}
-  />
-  ```
+  <ReceivableDetails />
+  ````
 </ComponentContainer>
 
 ### With Event Handlers
 
 <ComponentContainer>
-  <ReceivableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
-  ```jsx
-  <ReceivableDetails
-    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
-    handlers={{
-      onInvoiceUpdate: (invoice) => {
-        console.log('Invoice updated:', invoice)
-        if (invoice) {
-          router.push(`/invoices/${invoice.id}`)
-        }
-      },
-    }}
-  />
-  ```
+<ReceivableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+```jsx
+<ReceivableDetails
+  queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+  handlers={{
+    onInvoiceUpdate: (invoice) => {
+      console.log('Invoice updated:', invoice)
+      if (invoice) {
+        router.push(`/dashboard/customers/${entityId}/invoices/${invoice.id}`)
+      }
+    },
+  }}
+/>
+````
+
 </ComponentContainer>
 
 ### With Query Options
@@ -122,24 +118,28 @@ type ToastClient = {
     queryOptions={{
       invoiceId: 'inv_123',
       invoiceType: 'invoice',
+
     }}
-  />
-  ```
+
+/>
+
+````
 </ComponentContainer>
 
 ### With Config Options
 
 <ComponentContainer>
-  <ReceivableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
-  ```jsx
-  <ReceivableDetails
-    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
-    config={{
-      supportedCurrencies: ['USD', 'EUR'],
-      disableCustomerCreation: true,
-    }}
-  />
-  ```
+<ReceivableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
+```jsx
+<ReceivableDetails
+  queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
+  config={{
+    supportedCurrencies: ['USD', 'EUR'],
+    disableCustomerCreation: true,
+  }}
+/>
+````
+
 </ComponentContainer>
 
 ### With Display Options
@@ -246,7 +246,7 @@ type ToastClient = {
 <ComponentContainer>
   <ReceivableDetails
     queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
-    displayOptions={{ documentPosition: 'right' }}
+    displayOptions={{ documentPosition: 'left' }}
   />
   ```jsx
   {/* Document on left (default) */}
