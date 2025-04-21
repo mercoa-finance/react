@@ -109,7 +109,8 @@ type ToastClient = {
   <Payables />
   ```
 </ComponentContainer>
-### With Event Handlers
+
+### Event Handlers
 
 <ComponentContainer>
   <Payables
@@ -129,32 +130,20 @@ type ToastClient = {
   <Payables
     handlers={{
       onSelectInvoice: (invoice) => {
-        alert('Invoice selected')
+        router.push(`/dashboard/payers/${entityId}/invoices/${invoice.id}`)
       },
       onCreateInvoice: () => {
-        alert('Invoice created')
+        router.push(`/dashboard/payers/${entityId}/invoices/create`)
       },
       onCreateInvoiceTemplate: () => {
-        alert('Invoice template created')
+        router.push(`/dashboard/payers/${entityId}/invoice-templates/create`)
       },
     }}
   />
   ```
-<<<<<<< Updated upstream
-  <iframe
-    width="640"
-    height="414"
-    src="https://www.loom.com/embed/d66519333509432f8b09789ca6876e7a?sid=017338a2-67be-4f00-a21d-81cd496b50a2"
-    frameBorder="0"
-    webkitAllowFullScreen
-    mozallowfullscreen
-    allowfullscreen
-  />
-=======
->>>>>>> Stashed changes
 </ComponentContainer>
 
-### With Display Options
+### Display Options
 
 <ComponentContainer>
   <Payables
@@ -183,7 +172,7 @@ type ToastClient = {
   ```
 </ComponentContainer>
 
-### With Query Options
+### Query Options
 
 <ComponentContainer>
   <Payables
@@ -212,7 +201,7 @@ type ToastClient = {
   ```
 </ComponentContainer>
 
-### With Config Options
+### Config Options
 
 <ComponentContainer>
   <Payables
@@ -224,12 +213,68 @@ type ToastClient = {
   <Payables
     config={{
       readOnly: true,
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Custom Rendering
+
+<ComponentContainer>
+  <Payables
+    renderCustom={{
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+      ],
+      toast: {
+        success: (msg) => alert(msg),
+        error: (msg) => alert(msg),
+        info: (msg) => alert(msg),
+      },
+    }}
+  />
+  ```jsx
+  <Payables
+    renderCustom={{
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+      ],
+      toast: {
+        success: (msg) => alert(msg),
+        error: (msg) => alert(msg),
+        info: (msg) => alert(msg),
+      },
     }}
   />
   ```
 </ComponentContainer>
 
 ## Common Use Cases Examples
+
+### Read-Only Mode
+
+<ComponentContainer>
+  <Payables
+    config={{
+      readOnly: true,
+    }}
+  />
+  ```jsx
+  <Payables
+    config={{
+      readOnly: true,
+    }}
+  />
+  ```
+</ComponentContainer>
 
 ### Custom Columns
 

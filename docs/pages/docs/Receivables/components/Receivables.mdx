@@ -99,7 +99,7 @@ type ToastClient = {
 
 ---
 
-## Examples
+## Main Props Examples
 
 ### Default Usage
 
@@ -110,7 +110,7 @@ type ToastClient = {
   ```
 </ComponentContainer>
 
-### With Event Handlers
+### Event Handlers
 
 <ComponentContainer>
   <Receivables
@@ -137,7 +137,7 @@ type ToastClient = {
   ```
 </ComponentContainer>
 
-### With Display Options
+### Display Options
 
 <ComponentContainer>
   <Receivables
@@ -174,7 +174,7 @@ type ToastClient = {
   ```
 </ComponentContainer>
 
-### With Query Options
+### Query Options
 
 <ComponentContainer>
   <Receivables
@@ -194,6 +194,13 @@ type ToastClient = {
         error: (msg) => alert(msg),
         info: (msg) => alert(msg),
       },
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+      ],
     }}
   />
   ```jsx
@@ -214,12 +221,19 @@ type ToastClient = {
         error: (msg) => alert(msg),
         info: (msg) => alert(msg),
       },
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+      ],
     }}
   />
   ```
 </ComponentContainer>
 
-### With Custom Toast
+### Custom Rendering
 
 <ComponentContainer>
   <Receivables
@@ -243,6 +257,8 @@ type ToastClient = {
   />
   ```
 </ComponentContainer>
+
+## Common Use Case Examples
 
 ### Read-Only Mode
 
@@ -256,6 +272,45 @@ type ToastClient = {
   <Receivables
     config={{
       readOnly: true,
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Custom Columns
+
+<ComponentContainer>
+  <Receivables
+    renderCustom={{
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+        {
+          title: 'Status',
+          field: 'status',
+          render: (invoice) => invoice.status,
+        },
+      ],
+    }}
+  />
+  ```jsx
+  <Receivables
+    renderCustom={{
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+        {
+          title: 'Status',
+          field: 'status',
+          render: (invoice) => invoice.status,
+        },
+      ],
     }}
   />
   ```
