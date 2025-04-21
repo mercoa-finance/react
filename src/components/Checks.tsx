@@ -13,6 +13,7 @@ import {
   MercoaInput,
   NoSession,
   PaymentMethodButton,
+  PaymentMethodConfirmationPill,
   PaymentMethodList,
   StateDropdown,
   useMercoaSession,
@@ -25,6 +26,7 @@ export function Checks({
   showEdit,
   showDelete,
   showEntityConfirmation,
+  editEntityConfirmation,
   hideIndicators,
   entityId,
 }: {
@@ -34,6 +36,7 @@ export function Checks({
   showEdit?: boolean
   showDelete?: boolean
   showEntityConfirmation?: boolean
+  editEntityConfirmation?: boolean
   hideIndicators?: boolean
   entityId?: string
 }) {
@@ -63,13 +66,6 @@ export function Checks({
     if (onSelect && account) onSelect(account)
   }
 
-  let entityConfirmation: 'view' | 'edit' | 'none' = 'none'
-  if (showEntityConfirmation) {
-    entityConfirmation = 'view'
-  } else if (showEdit) {
-    entityConfirmation = 'edit'
-  }
-
   if (!mercoaSession.client) return <NoSession componentName="Checks" />
 
   if (children) return children({ checks })
@@ -84,7 +80,6 @@ export function Checks({
           <PaymentMethodList
             accounts={checks}
             showDelete={showDelete || showEdit}
-            showEntityConfirmation={entityConfirmation}
             addAccount={
               checks && showAdd ? (
                 <div>
@@ -105,7 +100,14 @@ export function Checks({
               ) : undefined
             }
             formatAccount={(account: Mercoa.PaymentMethodResponse.Check) => (
-              <Check account={account} onSelect={onSelect} showEdit={showEdit} hideDefaultIndicator={hideIndicators} />
+              <Check
+                account={account}
+                onSelect={onSelect}
+                showEdit={showEdit}
+                hideDefaultIndicator={hideIndicators}
+                showEntityConfirmation={showEntityConfirmation}
+                editEntityConfirmation={editEntityConfirmation}
+              />
             )}
           />
         )}
@@ -120,6 +122,8 @@ export function Check({
   showEdit,
   selected,
   hideDefaultIndicator,
+  showEntityConfirmation,
+  editEntityConfirmation,
 }: {
   children?: Function
   account?: Mercoa.PaymentMethodResponse.Check
@@ -127,6 +131,8 @@ export function Check({
   showEdit?: boolean
   selected?: boolean
   hideDefaultIndicator?: boolean
+  showEntityConfirmation?: boolean
+  editEntityConfirmation?: boolean
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -155,7 +161,6 @@ export function Check({
             <EnvelopeIcon className="mercoa-size-5" />
           </div>
           <div className="mercoa-min-w-0 mercoa-flex-1">
-            {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
             <p
               className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}
             >{`${account?.payToTheOrderOf}`}</p>
@@ -166,6 +171,13 @@ export function Check({
               className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}
             >{`${account?.city} ${account?.stateOrProvince}, ${account?.postalCode}`}</p>
           </div>
+          {(showEntityConfirmation || editEntityConfirmation) && (
+            <PaymentMethodConfirmationPill
+              showEntityConfirmation={showEntityConfirmation}
+              editEntityConfirmation={editEntityConfirmation}
+              account={account}
+            />
+          )}
           {showEdit && (
             <>
               {!hideDefaultIndicator && (

@@ -1842,7 +1842,7 @@ function CounterpartyDetailsCard({
         connectedEntityId: mercoaSession.entityId,
       })
     }
-    toast.info('Link Sent')
+    toast.info('Email Sent')
   }
 
   return (
@@ -1878,7 +1878,7 @@ function CounterpartyDetailsCard({
                     counterparty,
                   })
                 ) : (
-                  <Tooltip title="Edit counterparty details">
+                  <Tooltip title={`Edit ${type === 'payor' ? 'Customer' : 'Vendor'} details`}>
                     <MercoaButton size="sm" isEmphasized={false} onClick={onEdit}>
                       Edit Details
                     </MercoaButton>

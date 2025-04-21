@@ -29,7 +29,8 @@ const PaymentMethodList = ({
   type,
   schemaId,
   Component,
-  showVerification = false,
+  showEntityConfirmation = false,
+  showVerificationStatus = false,
 }: {
   paymentMethods: Array<Mercoa.PaymentMethodResponse>
   paymentId: string | undefined
@@ -38,7 +39,8 @@ const PaymentMethodList = ({
   type?: Mercoa.PaymentMethodType
   schemaId?: string
   Component: React.ComponentType<any>
-  showVerification?: boolean
+  showEntityConfirmation?: boolean
+  showVerificationStatus?: boolean
 }) => {
   const filteredPaymentMethods = (paymentMethods ?? [])
     ?.filter(
@@ -58,8 +60,10 @@ const PaymentMethodList = ({
           <Component
             account={paymentMethod}
             selected={paymentId === paymentMethod.id}
-            showVerification={showVerification}
-            hideVerificationButton={showVerification}
+            hideVerificationButton={true}
+            hideVerificationStatus={!showVerificationStatus}
+            showVerification={showVerificationStatus}
+            showEntityConfirmation={showEntityConfirmation}
             onSelect={() => {
               if (readOnly) return
               setPaymentId(paymentMethod.id)
@@ -206,6 +210,7 @@ export function PayableSelectPaymentMethod({
     destinationPaymentMethods,
     selectedSourcePaymentMethodId,
     selectedDestinationPaymentMethodId,
+    showDestinationPaymentMethodConfirmation,
     setSelectedSourcePaymentMethodId,
     setSelectedDestinationPaymentMethodId,
     availableSourceTypes,
@@ -272,7 +277,8 @@ export function PayableSelectPaymentMethod({
             setPaymentId={setPaymentId}
             type={Mercoa.PaymentMethodType.BankAccount}
             Component={BankAccount}
-            showVerification
+            showEntityConfirmation={showDestinationPaymentMethodConfirmation && isDestination}
+            showVerificationStatus={!!isSource}
           />
           {isSource && enableBNPL && (
             <>
@@ -313,6 +319,7 @@ export function PayableSelectPaymentMethod({
             setPaymentId={setPaymentId}
             type={Mercoa.PaymentMethodType.Check}
             Component={Check}
+            showEntityConfirmation={showDestinationPaymentMethodConfirmation && isDestination}
           />
           {isDestination &&
             !disableCreation &&
@@ -339,6 +346,7 @@ export function PayableSelectPaymentMethod({
           setPaymentId={setPaymentId}
           type={Mercoa.PaymentMethodType.Card}
           Component={Card}
+          showEntityConfirmation={showDestinationPaymentMethodConfirmation && isDestination}
         />
       )}
 
@@ -398,6 +406,7 @@ export function PayableSelectPaymentMethod({
             setPaymentId={setPaymentId}
             schemaId={selectedType}
             Component={CustomPaymentMethod}
+            showEntityConfirmation={showDestinationPaymentMethodConfirmation && isDestination}
           />
           {isDestination &&
             !disableCreation &&

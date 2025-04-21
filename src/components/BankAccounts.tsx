@@ -28,6 +28,7 @@ import {
   MercoaInput,
   NoSession,
   PaymentMethodButton,
+  PaymentMethodConfirmationPill,
   PaymentMethodList,
   Tooltip,
   inputClassName,
@@ -42,6 +43,7 @@ export function BankAccounts({
   showDelete,
   showVerification,
   showEntityConfirmation,
+  editEntityConfirmation,
   verifiedOnly,
   hideIndicators,
   entityId,
@@ -53,6 +55,7 @@ export function BankAccounts({
   showDelete?: boolean
   showVerification?: boolean
   showEntityConfirmation?: boolean
+  editEntityConfirmation?: boolean
   verifiedOnly?: boolean
   hideIndicators?: boolean
   entityId?: string
@@ -78,13 +81,6 @@ export function BankAccounts({
     }
   }, [entityIdFinal, mercoaSession.token, mercoaSession.refreshId])
 
-  let entityConfirmation: 'view' | 'edit' | 'none' = 'none'
-  if (showEntityConfirmation) {
-    entityConfirmation = 'view'
-  } else if (showEdit) {
-    entityConfirmation = 'edit'
-  }
-
   if (!mercoaSession.client) return <NoSession componentName="BankAccounts" />
 
   if (children) return children({ bankAccounts })
@@ -100,7 +96,6 @@ export function BankAccounts({
             <PaymentMethodList
               accounts={bankAccounts}
               showDelete={showDelete || showEdit} // NOTE: For backwards compatibility, showEdit implies showDelete
-              showEntityConfirmation={entityConfirmation}
               addAccount={
                 bankAccounts && showAdd ? (
                   <AddBankAccountButton
@@ -128,6 +123,8 @@ export function BankAccounts({
                   hideVerificationButton={hideIndicators}
                   hideVerificationStatus={hideIndicators}
                   hideCheckSendStatus={hideIndicators}
+                  showEntityConfirmation={showEntityConfirmation}
+                  editEntityConfirmation={editEntityConfirmation}
                 />
               )}
             />
@@ -149,6 +146,8 @@ export function BankAccount({
   onSelect,
   showEdit,
   showVerification,
+  showEntityConfirmation,
+  editEntityConfirmation,
   selected,
   hideDefaultIndicator,
   hideVerificationButton,
@@ -160,6 +159,8 @@ export function BankAccount({
   onSelect?: (value?: Mercoa.PaymentMethodResponse.BankAccount) => void
   showEdit?: boolean
   showVerification?: boolean
+  showEntityConfirmation?: boolean
+  editEntityConfirmation?: boolean
   selected?: boolean
   hideDefaultIndicator?: boolean
   hideVerificationButton?: boolean
@@ -243,7 +244,7 @@ export function BankAccount({
               </div>
             </div>
           </div>
-          {(showEdit || showVerification) && (
+          {(showEdit || showVerification || showEntityConfirmation || editEntityConfirmation) && (
             <div className="mercoa-flex mercoa-items-center mercoa-gap-x-1">
               {/* Default Payment Method Indicator */}
               {showEdit && !hideDefaultIndicator && <DefaultPaymentMethodIndicator paymentMethod={account} />}
@@ -269,6 +270,14 @@ export function BankAccount({
 
               {/* Verification Status Indicator */}
               {!hideVerificationStatus && <BankAccountStatus status={account?.status} />}
+
+              {(showEntityConfirmation || editEntityConfirmation) && (
+                <PaymentMethodConfirmationPill
+                  showEntityConfirmation={showEntityConfirmation}
+                  editEntityConfirmation={editEntityConfirmation}
+                  account={account}
+                />
+              )}
 
               {/* Check Send Status Indicator */}
               {showEdit && !hideCheckSendStatus && (

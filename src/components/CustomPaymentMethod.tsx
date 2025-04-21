@@ -16,6 +16,7 @@ import {
   MercoaInputLabel,
   NoSession,
   PaymentMethodButton,
+  PaymentMethodConfirmationPill,
   PaymentMethodList,
   Tooltip,
   inputClassName,
@@ -28,6 +29,7 @@ export function CustomPaymentMethods({
   showEdit,
   showDelete,
   showEntityConfirmation,
+  editEntityConfirmation,
   hideIndicators,
   entityId,
   isPayor,
@@ -38,6 +40,7 @@ export function CustomPaymentMethods({
   showEdit?: boolean
   showDelete?: boolean
   showEntityConfirmation?: boolean
+  editEntityConfirmation?: boolean
   hideIndicators?: boolean
   entityId?: string
   isPayor: boolean
@@ -92,6 +95,7 @@ export function CustomPaymentMethods({
                   showDelete={showDelete}
                   showEdit={showEdit}
                   showEntityConfirmation={showEntityConfirmation}
+                  editEntityConfirmation={editEntityConfirmation}
                   showAdd={showAdd}
                   onSelect={async (e) => {
                     await mercoaSession.refresh()
@@ -116,6 +120,7 @@ function CustomPaymentMethodsPerSchema({
   showDelete,
   showEdit,
   showEntityConfirmation,
+  editEntityConfirmation,
   showAdd,
   onSelect,
   hideIndicators,
@@ -126,6 +131,7 @@ function CustomPaymentMethodsPerSchema({
   showDelete?: boolean
   showEdit?: boolean
   showEntityConfirmation?: boolean
+  editEntityConfirmation?: boolean
   showAdd?: boolean
   onSelect?: (value?: Mercoa.PaymentMethodResponse.Custom) => void
   hideIndicators?: boolean
@@ -136,20 +142,12 @@ function CustomPaymentMethodsPerSchema({
     if (onSelect && account) onSelect(account)
   }
 
-  let entityConfirmation: 'view' | 'edit' | 'none' = 'none'
-  if (showEntityConfirmation) {
-    entityConfirmation = 'view'
-  } else if (showEdit) {
-    entityConfirmation = 'edit'
-  }
-
   return (
     <div key={schema.id}>
       <h3>{schema.name}</h3>
       <PaymentMethodList
         accounts={paymentMethods}
         showDelete={showDelete || showEdit}
-        showEntityConfirmation={entityConfirmation}
         addAccount={
           paymentMethods && showAdd ? (
             <div>
@@ -177,6 +175,8 @@ function CustomPaymentMethodsPerSchema({
             schema={schema}
             showEdit={showEdit}
             hideDefaultIndicator={hideIndicators}
+            showEntityConfirmation={showEntityConfirmation}
+            editEntityConfirmation={editEntityConfirmation}
           />
         )}
       />
@@ -191,6 +191,8 @@ export function CustomPaymentMethod({
   selected,
   showEdit,
   hideDefaultIndicator,
+  showEntityConfirmation,
+  editEntityConfirmation,
   schema,
 }: {
   account?: Mercoa.PaymentMethodResponse.Custom
@@ -198,6 +200,8 @@ export function CustomPaymentMethod({
   selected?: boolean
   showEdit?: boolean
   hideDefaultIndicator?: boolean
+  showEntityConfirmation?: boolean
+  editEntityConfirmation?: boolean
   schema?: Mercoa.CustomPaymentMethodSchemaResponse
 }) {
   const mercoaSession = useMercoaSession()
@@ -231,7 +235,6 @@ export function CustomPaymentMethod({
           </div>
           <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
             <div>
-              {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
               <AddDialog
                 component={<EditCustomPaymentMethod account={account} onSubmit={() => setShowNameEdit(false)} />}
                 onClose={() => setShowNameEdit(false)}
@@ -245,13 +248,20 @@ export function CustomPaymentMethod({
             </div>
           </div>
           <div className="mercoa-flex">
-            {showEdit ? (
+            {showEdit || showEntityConfirmation || editEntityConfirmation ? (
               <>
+                {(showEntityConfirmation || editEntityConfirmation) && (
+                  <PaymentMethodConfirmationPill
+                    showEntityConfirmation={showEntityConfirmation}
+                    editEntityConfirmation={editEntityConfirmation}
+                    account={account}
+                  />
+                )}
                 {!hideDefaultIndicator && <DefaultPaymentMethodIndicator paymentMethod={account} />}
                 <MercoaButton
                   size="sm"
                   isEmphasized={false}
-                  className="mercoa-mr-2 mercoa-px-[4px] mercoa-py-[4px]"
+                  className="mercoa-m-2 mercoa-px-[4px] mercoa-py-[4px]"
                   onClick={() => setShowNameEdit(true)}
                 >
                   <Tooltip title="Edit">

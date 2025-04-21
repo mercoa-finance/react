@@ -3609,6 +3609,8 @@ export function PayableSelectPaymentMethodV1({
                       setValue(sourceOrDestination, paymentMethod.id)
                       clearErrors(sourceOrDestination)
                     }}
+                    showEntityConfirmation={isDestination}
+                    showVerification={isSource}
                   />
                 </div>
               ))}
@@ -3682,6 +3684,7 @@ export function PayableSelectPaymentMethodV1({
                       setValue(sourceOrDestination, paymentMethod.id)
                       clearErrors(sourceOrDestination)
                     }}
+                    showEntityConfirmation={isDestination}
                   />
                 </div>
               ))}
@@ -3832,6 +3835,7 @@ mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-rin
                   addNewButton={
                     <CustomPaymentMethod
                       schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
+                      showEntityConfirmation={isDestination}
                     />
                   }
                   saveAsStatus="CREATE_CUSTOM"

@@ -28,7 +28,7 @@ export function PayableDetails({
 }: PayableDetailsProps) {
   const mercoaSession = useMercoaSession()
   let { invoiceId, invoiceType, invoice } = queryOptions ?? {}
-  const { heightOffset = 0, documentPosition = 'left' , formLayout} = displayOptions ?? {}
+  const { heightOffset = 0, documentPosition = 'left', formLayout } = displayOptions ?? {}
   const { supportedCurrencies } = config ?? {}
 
   if (!mercoaSession.client) return <NoSession componentName="PayableDetails" />

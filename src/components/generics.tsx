@@ -1,6 +1,5 @@
 import { Combobox, Dialog, Listbox, Transition } from '@headlessui/react'
 import {
-  CheckCircleIcon,
   CheckIcon,
   ChevronDownIcon,
   ChevronUpDownIcon,
@@ -724,23 +723,78 @@ export function PaymentMethodConfirmationDialog({
   )
 }
 
+export function PaymentMethodConfirmationPill({
+  showEntityConfirmation,
+  editEntityConfirmation,
+  account,
+}: {
+  showEntityConfirmation?: boolean
+  editEntityConfirmation?: boolean
+  account: Mercoa.PaymentMethodResponse
+}) {
+  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false)
+  const [selectedAccount, setSelectedAccount] = useState<Mercoa.PaymentMethodResponse | null>(null)
+
+  let content = null
+  if (showEntityConfirmation && account.confirmedByEntity) {
+    content = (
+      <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-green-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-green-800">
+        Confirmed
+      </span>
+    )
+  } else if (editEntityConfirmation && !account.confirmedByEntity) {
+    content = (
+      <div className="mercoa-flex mercoa-items-center mercoa-justify-center">
+        <MercoaButton
+          isEmphasized={false}
+          size="sm"
+          onClick={() => {
+            setSelectedAccount(account)
+            setShowConfirmationDialog(true)
+          }}
+        >
+          <p>Confirm </p>
+          <p>Details</p>
+        </MercoaButton>
+      </div>
+    )
+  } else if (showEntityConfirmation && !account.confirmedByEntity) {
+    content = (
+      <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-indigo-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-indigo-800">
+        Unconfirmed
+      </span>
+    )
+  }
+  return (
+    <>
+      {content}
+      {selectedAccount && (
+        <PaymentMethodConfirmationDialog
+          show={showConfirmationDialog}
+          onClose={() => {
+            setShowConfirmationDialog(false)
+            setSelectedAccount(null)
+          }}
+          account={selectedAccount}
+        />
+      )}
+    </>
+  )
+}
+
 export function PaymentMethodList({
   accounts,
   showDelete,
   addAccount,
   formatAccount,
-  showEntityConfirmation,
 }: {
   accounts?: Mercoa.PaymentMethodResponse[]
   showDelete?: boolean
   addAccount?: ReactNode
   formatAccount: (account: any) => JSX.Element | JSX.Element[] | null
-  showEntityConfirmation?: 'view' | 'edit' | 'none'
 }) {
   const mercoaSession = useMercoaSession()
   const hasAccounts = accounts && accounts.length > 0
-  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false)
-  const [selectedAccount, setSelectedAccount] = useState<Mercoa.PaymentMethodResponse | null>(null)
 
   return (
     <>
@@ -749,36 +803,6 @@ export function PaymentMethodList({
         accounts.map((account) => (
           <div className="mercoa-mt-2 mercoa-flex" key={account.id}>
             <div className="mercoa-flex-grow">{formatAccount(account)}</div>
-            {showEntityConfirmation && (
-              <>
-                {account.confirmedByEntity ? (
-                  <button className="mercoa-ml-2 mercoa-cursor-default">
-                    <Tooltip title="Details Confirmed" position="left">
-                      <CheckCircleIcon className="mercoa-size-5 mercoa-text-mercoa-primary" />
-                    </Tooltip>
-                  </button>
-                ) : (
-                  <>
-                    {showEntityConfirmation === 'edit' && (
-                      <div className="mercoa-flex mercoa-items-center mercoa-justify-center">
-                        <MercoaButton
-                          isEmphasized={false}
-                          size="sm"
-                          onClick={() => {
-                            setSelectedAccount(account)
-                            setShowConfirmationDialog(true)
-                          }}
-                          className="mercoa-ml-2"
-                        >
-                          <p>Confirm </p>
-                          <p>Details</p>
-                        </MercoaButton>
-                      </div>
-                    )}
-                  </>
-                )}
-              </>
-            )}
             {showDelete && (
               <button
                 onClick={async () => {
@@ -820,16 +844,6 @@ export function PaymentMethodList({
             />
           </div>
         </div>
-      )}
-      {selectedAccount && (
-        <PaymentMethodConfirmationDialog
-          show={showConfirmationDialog}
-          onClose={() => {
-            setShowConfirmationDialog(false)
-            setSelectedAccount(null)
-          }}
-          account={selectedAccount}
-        />
       )}
     </>
   )

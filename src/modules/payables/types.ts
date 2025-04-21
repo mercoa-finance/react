@@ -46,6 +46,9 @@ export type PayableDetailsDisplayOptions = {
   heightOffset?: number
   documentPosition?: 'right' | 'left' | 'none'
   formLayout?: 'fullWidth' | 'grid'
+  paymentMethods?: {
+    showDestinationPaymentMethodConfirmation?: boolean
+  }
 }
 
 export type PayableDetailsRenderCustom = {
@@ -185,6 +188,7 @@ export type PayablePaymentMethodContext = {
   destinationPaymentMethods?: Mercoa.PaymentMethodResponse[]
   selectedSourcePaymentMethodId?: string
   selectedDestinationPaymentMethodId?: string
+  showDestinationPaymentMethodConfirmation?: boolean
   setSelectedSourcePaymentMethodId: (paymentMethodId: string) => void
   setSelectedDestinationPaymentMethodId: (paymentMethodId: string) => void
   availableSourceTypes: Array<{ key: string; value: string }>
