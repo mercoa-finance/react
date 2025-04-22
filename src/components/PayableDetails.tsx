@@ -24,6 +24,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { PhotoIcon } from '@heroicons/react/24/solid'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { Mercoa } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import accounting from 'accounting'
 import Big from 'big.js'
@@ -48,7 +49,6 @@ import {
 } from 'react-hook-form'
 import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { blobToDataUrl, classNames, removeThousands } from '../lib/lib'
@@ -515,8 +515,6 @@ export function PayableFormV1({
           invoice?.vendor?.accountType === 'business'
             ? invoice?.vendor?.profile?.business?.email
             : invoice?.vendor?.profile?.individual?.email,
-        website: invoice?.vendor?.profile?.business?.website,
-        description: invoice?.vendor?.profile?.business?.description,
         accounts: [] as Mercoa.CounterpartyCustomizationAccount[],
       },
     },

@@ -89,8 +89,6 @@ export function createCounterpartyRequest({
   } else {
     profile.business = {
       email: data.email,
-      description: data.description,
-      website: data.website,
       legalBusinessName: data.name,
       ...(data.addressLine1 && {
         address: {
@@ -182,18 +180,6 @@ export const counterpartyYupValidation = {
   lastName: yup.string(),
   middleName: yup.string(),
   suffix: yup.string(),
-  website: yup
-    .string()
-    .url('Website must be a valid URL')
-    .transform((currentValue) => {
-      const doesNotStartWithHttp =
-        currentValue && !currentValue.startsWith('http://') && !currentValue.startsWith('https://')
-      if (doesNotStartWithHttp) {
-        return `http://${currentValue}`
-      }
-      return currentValue
-    }),
-  description: yup.string(),
   accounts: yup.array().of(
     yup.object().shape({
       accountId: yup.string(),
@@ -248,9 +234,7 @@ export function CounterpartySearch({
           counterparty?.accountType === 'business'
             ? counterparty?.profile?.business?.email
             : counterparty?.profile?.individual?.email,
-        website: counterparty?.profile?.business?.website,
         formAction: '',
-        description: counterparty?.profile?.business?.description,
       },
     },
   })
@@ -416,8 +400,6 @@ export function AddCounterpartyModal({
         middleName: '',
         suffix: '',
         email: '',
-        website: '',
-        description: '',
       },
     },
   })
@@ -888,8 +870,6 @@ function CounterpartyAddOrEditForm({
         ? counterparty?.profile?.business?.email
         : counterparty?.profile?.individual?.email,
     )
-    setValue('vendor.website', counterparty?.profile?.business?.website)
-    setValue('vendor.description', counterparty?.profile?.business?.description)
     setValue('vendor.add', counterparty?.accountType)
     setValue('vendor.addressLine1', address?.addressLine1)
     setValue('vendor.addressLine2', address?.addressLine2)
@@ -975,26 +955,6 @@ function CounterpartyAddOrEditForm({
           Business
         </button>
       </div>
-
-      {accountType === 'business' && (
-        <>
-          <MercoaInput
-            label="Business Website"
-            name="vendor.website"
-            register={register}
-            placeholder="https://www.example.com"
-            errors={errors}
-            className="mercoa-mt-1"
-          />
-          <MercoaInput
-            label="Business Description"
-            name="vendor.description"
-            register={register}
-            errors={errors}
-            className="mercoa-mt-1"
-          />
-        </>
-      )}
 
       {accountType === 'individual' && (
         <div className="mercoa-mt-1">
