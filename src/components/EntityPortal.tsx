@@ -36,6 +36,66 @@ import {
   useMercoaSession,
 } from './index'
 
+function EntityGroupSelector({
+  entityGroup,
+  organization,
+  onSelectEntity,
+}: {
+  entityGroup: Mercoa.EntityGroupResponse
+  organization: Mercoa.OrganizationResponse
+  onSelectEntity: (entity: Mercoa.EntityResponse) => void
+}) {
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredEntities = entityGroup.entities.filter((entity) => {
+    const searchLower = searchQuery.toLowerCase()
+    return (
+      entity.name.toLowerCase().includes(searchLower) ||
+      entity.email.toLowerCase().includes(searchLower) ||
+      (entity.foreignId?.toLowerCase().includes(searchLower) ?? false)
+    )
+  })
+
+  return (
+    <div className="mercoa-mx-auto mercoa-px-4">
+      <div className="mercoa-mb-8">
+        <div className="mercoa-text-lg mercoa-font-bold mercoa-text-gray-800">{entityGroup.name}</div>
+        <div className="mercoa-text-sm mercoa-text-gray-700">
+          {entityGroup.emailToName}@{organization?.emailProvider?.inboxDomain}
+        </div>
+        <div className="mercoa-text-xs mercoa-font-bold mercoa-text-gray-500">{entityGroup.foreignId}</div>
+      </div>
+
+      <div className="mercoa-mb-4">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="mercoa-w-full mercoa-p-2 mercoa-border mercoa-border-gray-300 mercoa-rounded-lg mercoa-focus:mercoa-outline-none mercoa-focus:mercoa-ring-2 mercoa-focus:mercoa-ring-blue-500"
+        />
+      </div>
+
+      <div className="mercoa-grid mercoa-grid-cols-1 md:mercoa-grid-cols-2 lg:mercoa-grid-cols-3 mercoa-gap-4">
+        {filteredEntities.map((e) => (
+          <div
+            key={e.id}
+            onClick={() => onSelectEntity(e)}
+            className="mercoa-cursor-pointer mercoa-rounded-lg mercoa-border mercoa-border-gray-200 mercoa-p-4 mercoa-shadow-sm hover:mercoa-shadow-md mercoa-transition-all"
+          >
+            <div className="mercoa-flex mercoa-flex-col mercoa-gap-2">
+              <div className="mercoa-text-lg mercoa-font-semibold mercoa-text-gray-900">{e.name}</div>
+              <div className="mercoa-text-sm mercoa-text-gray-600">{e.email}</div>
+              {e.foreignId && <div className="mercoa-text-xs mercoa-text-gray-500">Foreign ID: {e.foreignId}</div>}
+              <div className="mercoa-text-xs mercoa-text-gray-500">ID: {e.id}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export function EntityPortal({ token }: { token: string }) {
   const mercoaSession = useMercoaSession()
 
@@ -52,6 +112,7 @@ export function EntityPortal({ token }: { token: string }) {
 
   const entity = mercoaSession.entity
   const user = mercoaSession.user
+  const entityGroup = mercoaSession.entityGroup
   const organization = mercoaSession.organization
 
   let tokenOptions: Mercoa.TokenGenerationOptions | undefined = undefined
@@ -79,9 +140,21 @@ export function EntityPortal({ token }: { token: string }) {
       })
     }
   }, [invoiceId])
-
   if (!mercoaSession.client) return <NoSession componentName="EntityPortal" />
-  if (!entity || !mercoaSession.organization) return <LoadingSpinner />
+  if ((!entity && !entityGroup) || !mercoaSession.organization) return <LoadingSpinner />
+
+  if (entityGroup && !entity) {
+    return (
+      <EntityGroupSelector
+        entityGroup={entityGroup}
+        organization={mercoaSession.organization!}
+        onSelectEntity={(e) => {
+          setScreen('inbox')
+          mercoaSession.setEntity(e)
+        }}
+      />
+    )
+  }
 
   if (
     entity &&
@@ -176,6 +249,21 @@ export function EntityPortal({ token }: { token: string }) {
               <>
                 Forward invoices to: <br />
                 <EntityInboxEmail />
+              </>
+            )}
+            {screen === 'inbox' && entityGroup && (
+              <>
+                <MercoaButton
+                  onClick={() => {
+                    mercoaSession.setEntity(undefined)
+                  }}
+                  type="button"
+                  isEmphasized={false}
+                  className="mercoa-ml-2 mercoa-inline-flex mercoa-text-sm"
+                >
+                  <ArrowLeftIcon className="-mercoa-ml-1 mercoa-inline-flex mercoa-size-5 md:mercoa-mr-2" />{' '}
+                  <span className="mercoa-hidden md:mercoa-inline-block">Back</span>
+                </MercoaButton>
               </>
             )}
             {screen !== 'inbox' && (
@@ -352,7 +440,7 @@ export function EntityPortal({ token }: { token: string }) {
       {user && screen === 'notifications' && (
         <div>
           <h3 className="mercoa-mt-8">Notifications</h3>
-          <EntityUserNotificationTable entityId={entity.id} userId={user.id} />
+          <EntityUserNotificationTable entityId={entity?.id ?? ''} userId={user.id} />
         </div>
       )}
       {screen === 'approvals' && (

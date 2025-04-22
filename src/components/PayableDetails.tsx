@@ -24,7 +24,6 @@ import {
 } from '@heroicons/react/24/outline'
 import { PhotoIcon } from '@heroicons/react/24/solid'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { Mercoa } from '@mercoa/javascript'
 import useResizeObserver from '@react-hook/resize-observer'
 import accounting from 'accounting'
 import Big from 'big.js'
@@ -49,6 +48,7 @@ import {
 } from 'react-hook-form'
 import { Document, Page, pdfjs } from 'react-pdf'
 import { toast } from 'react-toastify'
+import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
 import { blobToDataUrl, classNames, removeThousands } from '../lib/lib'
@@ -1490,28 +1490,28 @@ export function PayableFormV1({
         }
       } catch (e: any) {
         console.log('error', e)
-        // if the previous state was draft, we might need to refresh to get new approval rules
-        if (invoiceDataFinal.status === Mercoa.InvoiceStatus.New && !postAction) {
-          invoiceDataFinal.status = Mercoa.InvoiceStatus.Draft
-          const resp = await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, invoiceDataFinal)
-          if (resp) {
-            setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
-            refreshInvoice(resp.id)
-          } else {
-            console.error(e)
+        // // if the previous state was draft, we might need to refresh to get new approval rules
+        // if (invoiceDataFinal.status === Mercoa.InvoiceStatus.New && !postAction) {
+        //   invoiceDataFinal.status = Mercoa.InvoiceStatus.Draft
+        //   const resp = await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, invoiceDataFinal)
+        //   if (resp) {
+        //     setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
+        //     refreshInvoice(resp.id)
+        //   } else {
+        //     console.error(e)
 
-            console.error(e.body)
-            renderCustom?.toast
-              ? renderCustom?.toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
-              : toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
-          }
-        } else {
-          console.error(e)
-          console.error(e.body)
-          renderCustom?.toast
-            ? renderCustom?.toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
-            : toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
-        }
+        //     console.error(e.body)
+        //     renderCustom?.toast
+        //       ? renderCustom?.toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+        //       : toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+        //   }
+        // } else {
+        console.error(e)
+        console.error(e.body)
+        renderCustom?.toast
+          ? renderCustom?.toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+          : toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+        // }
       }
     } else {
       try {

@@ -1733,13 +1733,31 @@ export function CountPill({ count, selected }: { count: number; selected: boolea
   )
 }
 
-export async function getAllUsers(client: MercoaClient, entityId: string) {
+export async function getAllEntityUsers(client: MercoaClient, entityId: string) {
   const userResp: Mercoa.EntityUserResponse[] = []
   let hasMore = true
   while (hasMore) {
     const resp = await client?.entity.user.find(entityId, {
       limit: 100,
       startingAfter: userResp.length > 0 ? userResp[userResp.length - 1].id : undefined,
+    })
+    if (resp) {
+      userResp.push(...resp.data)
+      hasMore = resp.hasMore
+    } else {
+      hasMore = false
+    }
+  }
+  return userResp
+}
+
+export async function getAllEntityGroupUsers(client: MercoaClient, entityGroupId: string) {
+  const userResp: Mercoa.EntityGroupUserResponse[] = []
+  let hasMore = true
+  while (hasMore) {
+    const resp = await client?.entityGroup.user.find(entityGroupId, {
+      limit: 100,
+      startingAfter: userResp.length > 0 ? userResp[userResp.length - 1].foreignId : undefined,
     })
     if (resp) {
       userResp.push(...resp.data)
