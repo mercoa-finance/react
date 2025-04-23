@@ -515,8 +515,6 @@ export function PayableFormV1({
           invoice?.vendor?.accountType === 'business'
             ? invoice?.vendor?.profile?.business?.email
             : invoice?.vendor?.profile?.individual?.email,
-        website: invoice?.vendor?.profile?.business?.website,
-        description: invoice?.vendor?.profile?.business?.description,
         accounts: [] as Mercoa.CounterpartyCustomizationAccount[],
       },
     },
@@ -1492,28 +1490,28 @@ export function PayableFormV1({
         }
       } catch (e: any) {
         console.log('error', e)
-        // if the previous state was draft, we might need to refresh to get new approval rules
-        if (invoiceDataFinal.status === Mercoa.InvoiceStatus.New && !postAction) {
-          invoiceDataFinal.status = Mercoa.InvoiceStatus.Draft
-          const resp = await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, invoiceDataFinal)
-          if (resp) {
-            setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
-            refreshInvoice(resp.id)
-          } else {
-            console.error(e)
+        // // if the previous state was draft, we might need to refresh to get new approval rules
+        // if (invoiceDataFinal.status === Mercoa.InvoiceStatus.New && !postAction) {
+        //   invoiceDataFinal.status = Mercoa.InvoiceStatus.Draft
+        //   const resp = await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, invoiceDataFinal)
+        //   if (resp) {
+        //     setUploadedDocument(undefined) // reset uploadedImage state so it is not repeatedly uploaded on subsequent saves that occur w/o a page refresh
+        //     refreshInvoice(resp.id)
+        //   } else {
+        //     console.error(e)
 
-            console.error(e.body)
-            renderCustom?.toast
-              ? renderCustom?.toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
-              : toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
-          }
-        } else {
-          console.error(e)
-          console.error(e.body)
-          renderCustom?.toast
-            ? renderCustom?.toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
-            : toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
-        }
+        //     console.error(e.body)
+        //     renderCustom?.toast
+        //       ? renderCustom?.toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+        //       : toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+        //   }
+        // } else {
+        console.error(e)
+        console.error(e.body)
+        renderCustom?.toast
+          ? renderCustom?.toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+          : toast.error(`There was an error updating the invoice.\n Error: ${e.body}`)
+        // }
       }
     } else {
       try {
@@ -3609,6 +3607,8 @@ export function PayableSelectPaymentMethodV1({
                       setValue(sourceOrDestination, paymentMethod.id)
                       clearErrors(sourceOrDestination)
                     }}
+                    showEntityConfirmation={isDestination}
+                    showVerification={isSource}
                   />
                 </div>
               ))}
@@ -3682,6 +3682,7 @@ export function PayableSelectPaymentMethodV1({
                       setValue(sourceOrDestination, paymentMethod.id)
                       clearErrors(sourceOrDestination)
                     }}
+                    showEntityConfirmation={isDestination}
                   />
                 </div>
               ))}
@@ -3832,6 +3833,7 @@ mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-rin
                   addNewButton={
                     <CustomPaymentMethod
                       schema={mercoaSession.customPaymentMethodSchemas.find((e) => e.id === selectedType)}
+                      showEntityConfirmation={isDestination}
                     />
                   }
                   saveAsStatus="CREATE_CUSTOM"

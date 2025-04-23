@@ -52,10 +52,14 @@ export function PayablesInlineForm({
               size="md"
               className="mercoa-mt-2 mercoa-whitespace-nowrap"
               isEmphasized
-              onClick={() => {
+              onClick={(e: any) => {
+                if (status === formAction) {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  return
+                }
                 setValue('formAction', formAction)
               }}
-              disabled={status === formAction}
             >
               <ButtonLoadingSpinner isLoading={status === formAction}>Add {name}</ButtonLoadingSpinner>
             </MercoaButton>

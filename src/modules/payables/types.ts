@@ -46,6 +46,9 @@ export type PayableDetailsDisplayOptions = {
   heightOffset?: number
   documentPosition?: 'right' | 'left' | 'none'
   formLayout?: 'fullWidth' | 'grid'
+  paymentMethods?: {
+    showDestinationPaymentMethodConfirmation?: boolean
+  }
 }
 
 export type PayableDetailsRenderCustom = {
@@ -185,6 +188,7 @@ export type PayablePaymentMethodContext = {
   destinationPaymentMethods?: Mercoa.PaymentMethodResponse[]
   selectedSourcePaymentMethodId?: string
   selectedDestinationPaymentMethodId?: string
+  showDestinationPaymentMethodConfirmation?: boolean
   setSelectedSourcePaymentMethodId: (paymentMethodId: string) => void
   setSelectedDestinationPaymentMethodId: (paymentMethodId: string) => void
   availableSourceTypes: Array<{ key: string; value: string }>
@@ -236,10 +240,10 @@ export type PayablesProps = {
 }
 
 export type InvoiceTableColumn = {
-  title: string
   field: keyof Mercoa.InvoiceResponse | `${'metadata.'}${string}`
   orderBy?: Mercoa.InvoiceOrderByField
-  format?: (value: string | number | Date | any, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
+  header?: string | ReactElement | null
+  cell?: (value: string | number | Date | any, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
 }
 
 type PayablesQueryOptions = {
@@ -316,8 +320,7 @@ export type PayablesDataContext = {
     invoice?: Mercoa.InvoiceResponse
     invoiceNumber?: string
     currencyCode?: string
-    vendorName?: string
-    vendorEmail?: string
+    vendor?: Mercoa.CounterpartyResponse
     amount?: number
     status: Mercoa.InvoiceStatus
     invoiceId: string

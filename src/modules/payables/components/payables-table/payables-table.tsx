@@ -9,7 +9,7 @@ import {
 } from '@tanstack/react-table'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
-import React, { FC, memo, useMemo, useState } from 'react'
+import React, { FC, memo, useCallback, useMemo, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { InvoiceStatusPill } from '../../../../components/Payables'
 import { cn } from '../../../../lib/style'
@@ -121,8 +121,8 @@ export const PayablesTable: FC = memo(() => {
 
   const mercoaSession = useMercoaSession()
 
-  const defaultTableColumns = useMemo<ColumnDef<(typeof data)[0]>[]>(() => {
-    const getSortIcon = (field: Mercoa.InvoiceOrderByField) => {
+  const getSortIcon = useCallback(
+    (field: Mercoa.InvoiceOrderByField) => {
       if (orderBy === field) {
         return orderDirection === Mercoa.OrderDirection.Asc ? (
           <SortAscending className="mercoa-h-4 mercoa-w-4" />
@@ -131,8 +131,11 @@ export const PayablesTable: FC = memo(() => {
         )
       }
       return <ArrowUpDown className="mercoa-h-4 mercoa-w-4" />
-    }
+    },
+    [orderBy, orderDirection],
+  )
 
+  const defaultTableColumns = useMemo<ColumnDef<(typeof data)[0]>[]>(() => {
     const cols: ColumnDef<(typeof data)[0]>[] = [
       ...(readOnly
         ? []
@@ -245,12 +248,12 @@ export const PayablesTable: FC = memo(() => {
             <div className="mercoa-flex mercoa-items-center mercoa-gap-2 mercoa-py-[8px]">
               <div
                 className="mercoa-w-6 mercoa-h-6 mercoa-rounded-full mercoa-flex mercoa-items-center mercoa-justify-center mercoa-text-[11px]"
-                style={{ backgroundColor: generateColor(row.original.vendorName ?? '') }}
+                style={{ backgroundColor: generateColor(row.original.vendor?.name ?? '') }}
               >
-                {getInitials(row.original.vendorName ?? '')}
+                {getInitials(row.original.vendor?.name ?? '')}
               </div>
               <div className="mercoa-flex-col mercoa-gap-1">
-                <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-800">{row.original.vendorName}</p>
+                <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-800">{row.original.vendor?.name}</p>
               </div>
             </div>
           )
@@ -353,7 +356,6 @@ export const PayablesTable: FC = memo(() => {
         ),
         enableResizing: true,
       },
-
       {
         accessorKey: 'approvers',
         header: 'Approvers',
@@ -569,23 +571,115 @@ export const PayablesTable: FC = memo(() => {
     orderBy,
     orderDirection,
     setOrderBy,
+    columns,
   ])
 
   const tableColumns = useMemo<ColumnDef<(typeof data)[0]>[]>(() => {
-    return (
-      columns?.map((ele) => {
+    const cols: ColumnDef<(typeof data)[0]>[] = [
+      ...(readOnly
+        ? []
+        : [
+            {
+              id: 'select',
+              accessorKey: 'select',
+              header: () => (
+                <div
+                  className="mercoa-flex mercoa-p-1 mercoa-justify-center mercoa-items-center mercoa-cursor-pointer"
+                  onClick={(e: React.MouseEvent) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleSelectAll()
+                  }}
+                >
+                  <input
+                    onClick={(e: React.MouseEvent) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                    }}
+                    type="checkbox"
+                    className={cn(
+                      'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-transparent mercoa-cursor-pointer',
+                      classNames?.checkbox,
+                    )}
+                    checked={isAllSelected}
+                    onChange={(e) => {
+                      handleSelectAll()
+                      e.stopPropagation()
+                    }}
+                  />
+                </div>
+              ),
+              cell: ({
+                row,
+              }: {
+                row: any & {
+                  original: Mercoa.InvoiceResponse
+                }
+              }) => (
+                <div
+                  className="mercoa-flex mercoa-p-1 mercoa-justify-center mercoa-items-center"
+                  onClick={(e: React.MouseEvent) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleSelectRow(row.original)
+                  }}
+                >
+                  <input
+                    onClick={(e: React.MouseEvent) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                    }}
+                    type="checkbox"
+                    className={cn(
+                      'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-transparent mercoa-cursor-pointer',
+                      classNames?.checkbox,
+                    )}
+                    checked={selectedInvoices.some((e) => e.id === row.original.id)}
+                    onChange={(e) => {
+                      handleSelectRow(row.original)
+                      e.stopPropagation()
+                    }}
+                  />
+                </div>
+              ),
+              size: 10,
+              maxSize: 10,
+              meta: { align: 'center' },
+              enableResizing: false,
+            },
+          ]),
+      ...(columns?.map((ele) => {
         return {
+          id: ele.field,
           accessorKey: ele.field,
-          header: ele.title,
-          cell: ({ row }) => {
+          header: () => {
+            return (
+              <>
+                {ele.orderBy ? (
+                  <div
+                    className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
+                    onClick={() => handleOrderByChange(ele.orderBy as Mercoa.InvoiceOrderByField)}
+                  >
+                    <span>{ele.header}</span>
+                    <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
+                      {getSortIcon(ele.orderBy)}
+                    </div>
+                  </div>
+                ) : (
+                  <>{ele.header}</>
+                )}
+              </>
+            )
+          },
+          cell: ({ row }: { row: any }) => {
             let toDisplay: any = ''
             if (ele.field.startsWith('metadata.')) {
               toDisplay = JSON.stringify(row.original.invoice?.metadata?.[ele.field.split('.')[1]])
             } else {
               toDisplay = row.original.invoice?.[ele.field as keyof Mercoa.InvoiceResponse]
             }
-            if (ele.format && row.original.invoice) {
-              toDisplay = ele.format(toDisplay, row.original.invoice)
+            if (ele.cell && row.original.invoice) {
+              toDisplay = ele.cell(toDisplay, row.original.invoice)
             } else {
               if (ele.field === 'amount') {
                 toDisplay = accounting.formatMoney(
@@ -603,13 +697,213 @@ export const PayablesTable: FC = memo(() => {
               } else {
                 toDisplay = toDisplay?.toString() ?? ''
               }
+              if (ele.field === 'approvers') {
+                return (
+                  <div className="mercoa-gap-1 mercoa-grid mercoa-my-1">
+                    {row.original.approvers?.map((approver: any, index: number) => {
+                      if (!approver.assignedUserId) {
+                        const eligibleApprovers = filterApproverOptions({
+                          approverSlotIndex: index,
+                          eligibleRoles: approver.eligibleRoles,
+                          eligibleUserIds: approver.eligibleUserIds,
+                          users: mercoaSession.users,
+                          selectedApprovers: [],
+                        })
+                        return (
+                          <Tooltip
+                            title={eligibleApprovers.map((e) => e.user.email).join(', ')}
+                            key={approver.approvalSlotId}
+                          >
+                            <div
+                              key={approver.approvalSlotId}
+                              className={`mercoa-flex mercoa-items-center mercoa-rounded-mercoa mercoa-text-xs mercoa-bg-gray-50 mercoa-text-gray-800 mercoa-py-1 mercoa-px-2`}
+                            >
+                              Any Eligible Approver
+                            </div>
+                          </Tooltip>
+                        )
+                      }
+                      const user = mercoaSession.users.find((e) => e.id === approver.assignedUserId)
+                      return (
+                        <Tooltip title={user?.email} key={approver.approvalSlotId}>
+                          <div
+                            key={approver.approvalSlotId}
+                            className={`mercoa-flex mercoa-items-center mercoa-rounded-mercoa mercoa-text-xs ${
+                              approver.action === Mercoa.ApproverAction.Approve
+                                ? 'mercoa-bg-green-100 mercoa-text-green-800'
+                                : ''
+                            } ${
+                              approver.action === Mercoa.ApproverAction.Reject
+                                ? 'mercoa-bg-red-100 mercoa-text-red-800'
+                                : ''
+                            } ${
+                              approver.action === Mercoa.ApproverAction.None
+                                ? 'mercoa-bg-gray-50 mercoa-text-gray-800'
+                                : ''
+                            } mercoa-py-1 mercoa-px-2`}
+                          >
+                            {user?.name}
+                          </div>
+                        </Tooltip>
+                      )
+                    })}
+                  </div>
+                )
+              }
+              if (ele.field === 'status') {
+                return (
+                  <InvoiceStatusPill
+                    failureType={row.original.failureType}
+                    status={row.original.status}
+                    vendorId={row.original.vendorId}
+                    payerId={row.original.payerId}
+                    paymentDestinationId={row.original.paymentDestinationId}
+                    paymentSourceId={row.original.paymentSourceId}
+                    dueDate={row.original.dueDate}
+                    amount={row.original.amount}
+                    type="payable"
+                  />
+                )
+              }
+              if (ele.field === 'paymentDestination' || ele.field === 'paymentSource') {
+                const pm = row.original.invoice[
+                  ele.field as keyof Mercoa.InvoiceResponse
+                ] as Mercoa.PaymentMethodResponse
+                if (!pm || !pm.type) return null
+
+                switch (pm.type) {
+                  case Mercoa.PaymentMethodType.BankAccount:
+                    return (
+                      <span>
+                        {pm.bankName} ••••{String(pm.accountNumber).slice(-4)}
+                      </span>
+                    )
+
+                  case Mercoa.PaymentMethodType.Check:
+                    return <span>Check • {String(pm.addressLine1).slice(0, 15)}</span>
+
+                  case Mercoa.PaymentMethodType.Custom:
+                    return (
+                      <span>
+                        {pm.accountName} ••••{String(pm.accountNumber).slice(-4)}
+                      </span>
+                    )
+
+                  default:
+                    return null
+                }
+              }
             }
+
             return <span className="mercoa-text-sm">{toDisplay}</span>
           },
         }
-      }, []) ?? []
-    )
-  }, [columns])
+      }, []) ?? []),
+      ...(readOnly
+        ? []
+        : [
+            {
+              id: 'action',
+              accessorKey: 'action',
+              header: 'Actions',
+              size: 10,
+              maxSize: 10,
+              meta: { align: 'center' },
+              cell: ({ row }: { row: any }) => {
+                return (
+                  <TableActionDropdown
+                    isDisabled={selectedInvoices.length > 0}
+                    validActions={getAvailableActions({
+                      rolePermissions: mercoaSession.userPermissionConfig,
+                      selectedInvoices: [row.original.invoice],
+                      currentStatuses: [row.original.status],
+                      currentUserId: mercoaSession.user?.id,
+                      users: mercoaSession.users,
+                    })}
+                    onAction={(actionKey) => {
+                      if (actionKey === PayablesTableAction.Delete) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.Delete,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.Approve) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.Approve,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.SchedulePayment) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.SchedulePayment,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.SetPaymentDate) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.SetPaymentDate,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.SubmitForApproval) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.SubmitForApproval,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.AddApprover) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.AddApprover,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.Archive) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.Archive,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.Cancel) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.Cancel,
+                          mode: 'single',
+                        })
+                      } else if (actionKey === PayablesTableAction.Reject) {
+                        setActiveInvoiceAction({
+                          invoiceId: row.original.invoiceId,
+                          action: PayablesTableAction.Reject,
+                          mode: 'single',
+                        })
+                      }
+                    }}
+                  />
+                )
+              },
+              enableResizing: false,
+            },
+          ]),
+    ]
+
+    return cols.filter((col: any) => {
+      return (
+        selectedColumns.map((scol) => scol.field).includes(col.accessorKey) ||
+        ['select', 'action'].includes(col.accessorKey)
+      )
+    })
+  }, [
+    classNames?.checkbox,
+    deletePayable,
+    handleSelectAll,
+    handleSelectRow,
+    isAllSelected,
+    selectedColumns,
+    selectedInvoices,
+    orderBy,
+    orderDirection,
+    setOrderBy,
+    columns,
+  ])
 
   const table = useReactTable({
     data: data,

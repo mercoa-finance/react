@@ -5,7 +5,7 @@ import { ToastContainer } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import { RBACPermissions, buildRbacPermissions, setStyle } from '../lib/lib'
 import { MercoaQueryClientProvider } from '../lib/react-query/query-client-provider'
-import { EntityPortal, TokenOptions, getAllUsers } from './index'
+import { EntityPortal, TokenOptions, getAllEntityUsers } from './index'
 
 export interface MercoaContext {
   token?: string
@@ -387,7 +387,7 @@ function useProvideSession({
 
     // get user data
     try {
-      const allUsers = await getAllUsers(client, entityId)
+      const allUsers = await getAllEntityUsers(client, entityId)
       setUsers(allUsers)
       if (entityUserId) {
         setUser(allUsers.find((u) => u.id === entityUserId || u.foreignId === entityUserId))

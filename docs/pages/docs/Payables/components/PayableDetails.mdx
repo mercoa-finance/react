@@ -85,6 +85,13 @@ The `<PayableDetails>` component is used to let users create and manage payable 
 | ------------------ | ----------------------------- | -------- | ----------------------------------------------------------------------------- |
 | `heightOffset`     | `number`                      |          | Adjusts the height of the component relative to the screen size.              |
 | `documentPosition` | `'right' \| 'left' \| 'none'` |          | Defines where to position the invoice document or hide it. Default is `left`. |
+| `paymentMethods`   | `PaymentMethodOptions`        |          | Configuration options for payment methods.                                    |
+
+#### Payment Method Options Object
+
+| Name                                       | Type      | Required | Description                                                                   |
+| ------------------------------------------ | --------- | -------- | ----------------------------------------------------------------------------- |
+| `showDestinationPaymentMethodConfirmation` | `boolean` |          | Whether to show confirmation for destination payment method. Default is true. |
 
 ---
 

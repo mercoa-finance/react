@@ -123,11 +123,11 @@ export type ReceivablesProps = {
   config?: ReceivablesConfig
 }
 
-type InvoiceTableColumn = {
-  title: string
+export type InvoiceTableColumn = {
   field: keyof Mercoa.InvoiceResponse | `${'metadata.'}${string}`
   orderBy?: Mercoa.InvoiceOrderByField
-  format?: (value: string | number | Date | any, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
+  header?: string | ReactElement | null
+  cell?: (value: string | number | Date | any, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
 }
 
 type ReceivablesQueryOptions = {
@@ -197,7 +197,7 @@ export type ReceivablesContextValue = {
   actionsContextValue: ReceivablesActions
 }
 
-type ReceivablesTableRow = {
+export type ReceivablesTableRow = {
   select: string
   id: string
   invoice?: Mercoa.InvoiceResponse
@@ -220,7 +220,7 @@ type ReceivablesTableRow = {
   paymentSourceId?: string
 }
 
-type ReceivablesData = {
+export type ReceivablesData = {
   tableData: ReceivablesTableRow[]
   infiniteData: any
   allFetchedInvoices: Mercoa.InvoiceResponse[]

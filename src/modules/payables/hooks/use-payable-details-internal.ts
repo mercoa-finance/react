@@ -77,7 +77,11 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     queryOptions = { invoiceId: '', invoiceType: 'invoice' },
     handlers = {},
     config = {},
-    displayOptions = { documentPosition: 'left', heightOffset: 0 },
+    displayOptions = {
+      documentPosition: 'left',
+      heightOffset: 0,
+      paymentMethods: { showDestinationPaymentMethodConfirmation: true },
+    },
     renderCustom,
   } = props
   const { toast } = renderCustom ?? {}
@@ -86,6 +90,8 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const { invoiceType, invoiceId, invoice: invoiceExternal } = queryOptions
   const [vendorSearch, setVendorSearch] = useState('')
   const { heightOffset } = displayOptions
+  const showDestinationPaymentMethodConfirmation =
+    displayOptions.paymentMethods?.showDestinationPaymentMethodConfirmation ?? true
   const [height, setHeight] = useState<number>(
     typeof window !== 'undefined' ? window.innerHeight - (heightOffset ?? 0) : 0,
   )
@@ -904,7 +910,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       const policy = (approvalPolicy as Mercoa.ApprovalPolicyResponse[]).find(
         (e) => e.id === approverSlot.approvalPolicyId,
       )
-      if (policy?.rule.autoAssign) {
+      if (policy?.rule.autoAssign && !approverSlot.assignedUserId) {
         setValue(`approvers.${index}.assignedUserId`, 'ANY')
       }
     })
@@ -1745,6 +1751,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     destinationPaymentMethods: paymentMethodsDestination,
     selectedSourcePaymentMethodId: selectedSourcePaymentMethodId,
     selectedDestinationPaymentMethodId: selectedDestinationPaymentMethodId,
+    showDestinationPaymentMethodConfirmation: showDestinationPaymentMethodConfirmation,
     setSelectedSourcePaymentMethodId: (paymentMethodId: string) => {
       setValue('paymentSourceId', paymentMethodId)
       clearErrors('paymentSourceId')

@@ -81,6 +81,17 @@ The `<Payables>` component displays all payables for an entity. It includes buil
 | `toast`   | `ToastClient`          |          | Custom toast client.                  |
 
 ```typescript
+type InvoiceTableColumn = {
+  // The field to display in the column
+  field: keyof Mercoa.InvoiceResponse | `${'metadata.'}${string}`
+  // The field to order the column by
+  orderBy?: Mercoa.InvoiceOrderByField
+  // The header text for the column. Will default to the field name or a Mercoa default if not provided.
+  header?: string | ReactElement | null
+  // The cell content for the column. Will default to the field value or a Mercoa default if not provided.
+  cell?: (value: string | number | Date | any, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
+}
+
 type ToastClient = {
   success: (message: string) => void
   error: (message: string) => void

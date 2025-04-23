@@ -2,9 +2,10 @@ import dayjs from 'dayjs'
 import Papa from 'papaparse'
 import { useEffect, useMemo, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
-import { InvoiceTableColumn, useMercoaSession } from '../../../components'
+import { useMercoaSession } from '../../../components'
 import { queryClient } from '../../../lib/react-query/query-client-provider'
 import { invoicePaymentTypeMapper } from '../../common/invoice-payment-type'
+import { InvoiceTableColumn } from '../../payables/types'
 import {
   useArchiveReceivable,
   useBulkArchiveReceivables,
@@ -55,12 +56,12 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   const [selectedInvoices, setSelectedInvoices] = useState<Mercoa.InvoiceResponse[]>([])
 
   const [selectedColumns, setSelectedColumns] = useState<InvoiceTableColumn[]>([
-    { title: 'Payer Name', field: 'payer', orderBy: Mercoa.InvoiceOrderByField.PayerName },
-    { title: 'Invoice Number', field: 'invoiceNumber', orderBy: Mercoa.InvoiceOrderByField.InvoiceNumber },
-    { title: 'Due Date', field: 'dueDate', orderBy: Mercoa.InvoiceOrderByField.DueDate },
-    { title: 'Invoice Date', field: 'invoiceDate', orderBy: Mercoa.InvoiceOrderByField.InvoiceDate },
-    { title: 'Amount', field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount },
-    { title: 'Status', field: 'status' },
+    { header: 'Payer Name', field: 'payer', orderBy: Mercoa.InvoiceOrderByField.PayerName },
+    { header: 'Invoice Number', field: 'invoiceNumber', orderBy: Mercoa.InvoiceOrderByField.InvoiceNumber },
+    { header: 'Due Date', field: 'dueDate', orderBy: Mercoa.InvoiceOrderByField.DueDate },
+    { header: 'Invoice Date', field: 'invoiceDate', orderBy: Mercoa.InvoiceOrderByField.InvoiceDate },
+    { header: 'Amount', field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount },
+    { header: 'Status', field: 'status' },
   ])
 
   const {
@@ -177,13 +178,14 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
       select: '',
       id: invoice.id,
       invoice: invoice,
+      status: invoice.status,
       payer: invoice.payer?.name,
       invoiceNumber: invoice.invoiceNumber,
       currencyCode: invoice.currency,
       payerName: invoice.payer?.name,
       payerEmail: invoice.payer?.email,
       amount: invoice.amount,
-      status: invoice.status,
+
       invoiceId: invoice.id,
       dueDate: invoice.dueDate,
       invoiceDate: invoice.invoiceDate,

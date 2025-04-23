@@ -9,6 +9,7 @@ import {
   MercoaButton,
   NoSession,
   PaymentMethodButton,
+  PaymentMethodConfirmationPill,
   PaymentMethodList,
   useMercoaSession,
 } from './index'
@@ -39,6 +40,7 @@ export function Cards({
   showEdit,
   showDelete,
   showEntityConfirmation,
+  editEntityConfirmation,
   hideIndicators,
   entityId,
 }: {
@@ -48,6 +50,7 @@ export function Cards({
   showEdit?: boolean
   showDelete?: boolean
   showEntityConfirmation?: boolean
+  editEntityConfirmation?: boolean
   hideIndicators?: boolean
   entityId?: string
 }) {
@@ -77,13 +80,6 @@ export function Cards({
     if (onSelect && account) onSelect(account)
   }
 
-  let entityConfirmation: 'view' | 'edit' | 'none' = 'none'
-  if (showEntityConfirmation) {
-    entityConfirmation = 'view'
-  } else if (showEdit) {
-    entityConfirmation = 'edit'
-  }
-
   if (!mercoaSession.client) return <NoSession componentName="CreditCards" />
 
   if (children) return children({ bankAccounts: cards })
@@ -98,7 +94,6 @@ export function Cards({
           <PaymentMethodList
             accounts={cards}
             showDelete={showDelete || showEdit}
-            showEntityConfirmation={entityConfirmation}
             addAccount={
               cards && showAdd ? (
                 <div>
@@ -119,7 +114,14 @@ export function Cards({
               ) : undefined
             }
             formatAccount={(account: Mercoa.PaymentMethodResponse.Card) => (
-              <Card account={account} onSelect={onSelect} showEdit={showEdit} hideDefaultIndicator={hideIndicators} />
+              <Card
+                account={account}
+                onSelect={onSelect}
+                showEdit={showEdit}
+                hideDefaultIndicator={hideIndicators}
+                showEntityConfirmation={showEntityConfirmation}
+                editEntityConfirmation={editEntityConfirmation}
+              />
             )}
           />
         )}
@@ -244,6 +246,8 @@ export function Card({
   showEdit,
   selected,
   hideDefaultIndicator,
+  showEntityConfirmation,
+  editEntityConfirmation,
 }: {
   children?: Function
   account?: Mercoa.PaymentMethodResponse.Card
@@ -251,6 +255,8 @@ export function Card({
   selected?: boolean
   showEdit?: boolean
   hideDefaultIndicator?: boolean
+  showEntityConfirmation?: boolean
+  editEntityConfirmation?: boolean
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -287,7 +293,6 @@ export function Card({
           </div>
           <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between">
             <div>
-              {!showEdit && <span className="mercoa-absolute mercoa-inset-0" aria-hidden="true" />}
               <p
                 className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
                   selected ? 'mercoa-underline' : ''
@@ -295,6 +300,13 @@ export function Card({
               >{`${capitalize(brand)} ••••${account?.lastFour}`}</p>
             </div>
           </div>
+          {(showEntityConfirmation || editEntityConfirmation) && (
+            <PaymentMethodConfirmationPill
+              showEntityConfirmation={showEntityConfirmation}
+              editEntityConfirmation={editEntityConfirmation}
+              account={account}
+            />
+          )}
           {showEdit && (
             <>
               {!hideDefaultIndicator && (

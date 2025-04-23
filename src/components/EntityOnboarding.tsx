@@ -3288,7 +3288,7 @@ export function EntityOnboarding({
               setFormState('complete')
             }}
           >
-            Submit and Complete
+            Submit
           </MercoaButton>
         </div>
       </div>

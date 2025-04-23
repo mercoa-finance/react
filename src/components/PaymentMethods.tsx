@@ -8,6 +8,7 @@ export function PaymentMethods({
   showEdit = true,
   showDelete = true,
   showEntityConfirmation = false,
+  editEntityConfirmation = false,
   hideIndicators,
   entityId,
   onSelect,
@@ -18,6 +19,7 @@ export function PaymentMethods({
   showEdit?: boolean
   showDelete?: boolean
   showEntityConfirmation?: boolean
+  editEntityConfirmation?: boolean
   hideIndicators?: boolean
   entityId?: string
   onSelect?: (value?: Mercoa.PaymentMethodResponse) => void
@@ -60,6 +62,7 @@ export function PaymentMethods({
             showEdit={showEdit}
             showDelete={showDelete}
             showEntityConfirmation={showEntityConfirmation}
+            editEntityConfirmation={editEntityConfirmation}
             hideIndicators={hideIndicators}
             entityId={entityId}
             onSelect={onSelect}
@@ -74,6 +77,7 @@ export function PaymentMethods({
             showEdit={showEdit}
             showDelete={showDelete}
             showEntityConfirmation={showEntityConfirmation}
+            editEntityConfirmation={editEntityConfirmation}
             hideIndicators={hideIndicators}
             entityId={entityId}
             onSelect={onSelect}
@@ -88,6 +92,7 @@ export function PaymentMethods({
             showEdit={showEdit}
             showDelete={showDelete}
             showEntityConfirmation={showEntityConfirmation}
+            editEntityConfirmation={editEntityConfirmation}
             hideIndicators={hideIndicators}
             entityId={entityId}
             onSelect={onSelect}
@@ -102,6 +107,7 @@ export function PaymentMethods({
         showEdit={showEdit}
         showDelete={showDelete}
         showEntityConfirmation={showEntityConfirmation}
+        editEntityConfirmation={editEntityConfirmation}
         hideIndicators={hideIndicators}
         entityId={entityId}
         onSelect={onSelect}
