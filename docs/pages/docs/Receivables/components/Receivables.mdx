@@ -99,7 +99,7 @@ type ToastClient = {
 
 ---
 
-## Examples
+## Main Props Examples
 
 ### Default Usage
 
@@ -110,12 +110,14 @@ type ToastClient = {
   ```
 </ComponentContainer>
 
-### Select Invoice Handler
+### Event Handlers
 
 <ComponentContainer>
   <Receivables
     handlers={{
       onSelectInvoice: (invoice) => router.push(`/dashboard/vendors/${mercoaSession.entityId}/invoices/${invoice.id}`),
+      onCreateInvoice: () => router.push('/create-invoice'),
+      onCreateRecurringInvoice: () => router.push('/create-recurring-invoice'),
     }}
   />
   ```jsx
@@ -124,6 +126,191 @@ type ToastClient = {
       onSelectInvoice: (invoice) => {
         router.push(`/dashboard/vendors/${mercoaSession.entityId}/invoices/${invoice.id}`)
       },
+      onCreateInvoice: () => {
+        router.push('/create-invoice')
+      },
+      onCreateRecurringInvoice: () => {
+        router.push('/create-recurring-invoice')
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Display Options
+
+<ComponentContainer>
+  <Receivables
+    displayOptions={{
+      tableOnly: true,
+      showCumulativeFilter: false,
+      statusTabsOptions: {
+        isVisible: true,
+        statuses: ['DRAFT', 'PENDING', 'APPROVED'],
+      },
+      showInvoiceMetrics: true,
+      classNames: {
+        table: 'custom-table-class',
+        container: 'custom-container-class',
+      },
+    }}
+  />
+  ```jsx
+  <Receivables
+    displayOptions={{
+      tableOnly: true,
+      showCumulativeFilter: false,
+      statusTabsOptions: {
+        isVisible: true,
+        statuses: ['DRAFT', 'PENDING', 'APPROVED'],
+      },
+      showInvoiceMetrics: true,
+      classNames: {
+        table: 'custom-table-class',
+        container: 'custom-container-class',
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Query Options
+
+<ComponentContainer>
+  <Receivables
+    queryOptions={{
+      currentStatuses: ['PENDING', 'APPROVED'],
+      search: 'Invoice #123',
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-12-31'),
+      resultsPerPage: 10,
+      orderBy: 'dueDate',
+      orderDirection: 'desc',
+      dateType: 'dueDate',
+    }}
+    renderCustom={{
+      toast: {
+        success: (msg) => alert(msg),
+        error: (msg) => alert(msg),
+        info: (msg) => alert(msg),
+      },
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+      ],
+    }}
+  />
+  ```jsx
+  <Receivables
+    queryOptions={{
+      currentStatuses: ['PENDING', 'APPROVED'],
+      search: 'Invoice #123',
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-12-31'),
+      resultsPerPage: 10,
+      orderBy: 'dueDate',
+      orderDirection: 'desc',
+      dateType: 'dueDate',
+    }}
+    renderCustom={{
+      toast: {
+        success: (msg) => alert(msg),
+        error: (msg) => alert(msg),
+        info: (msg) => alert(msg),
+      },
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+      ],
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Custom Rendering
+
+<ComponentContainer>
+  <Receivables
+    renderCustom={{
+      toast: {
+        success: (msg) => customToast.success(msg),
+        error: (msg) => customToast.error(msg),
+        info: (msg) => customToast.info(msg),
+      },
+    }}
+  />
+  ```jsx
+  <Receivables
+    renderCustom={{
+      toast: {
+        success: (msg) => customToast.success(msg),
+        error: (msg) => customToast.error(msg),
+        info: (msg) => customToast.info(msg),
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+## Common Use Case Examples
+
+### Read-Only Mode
+
+<ComponentContainer>
+  <Receivables
+    config={{
+      readOnly: true,
+    }}
+  />
+  ```jsx
+  <Receivables
+    config={{
+      readOnly: true,
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Custom Columns
+
+<ComponentContainer>
+  <Receivables
+    renderCustom={{
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+        {
+          title: 'Status',
+          field: 'status',
+          render: (invoice) => invoice.status,
+        },
+      ],
+    }}
+  />
+  ```jsx
+  <Receivables
+    renderCustom={{
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+        {
+          title: 'Status',
+          field: 'status',
+          render: (invoice) => invoice.status,
+        },
+      ],
     }}
   />
   ```

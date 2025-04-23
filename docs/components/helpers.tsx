@@ -6,7 +6,7 @@ export function ComponentContainer({
   children,
   minHeight,
   display,
-  showCodeTabFirst = false,
+  showCodeTabFirst = true,
 }: {
   children: React.ReactNode
   minHeight?: string
@@ -42,6 +42,7 @@ export function ComponentContainer({
         </div>
       </Tabs.Tab>
       {arrayChildren[1] && !showCodeTabFirst && <Tabs.Tab>{arrayChildren[1]}</Tabs.Tab>}
+      {arrayChildren[2] && <Tabs.Tab>{arrayChildren[2]}</Tabs.Tab>}
     </Tabs>
   )
 }

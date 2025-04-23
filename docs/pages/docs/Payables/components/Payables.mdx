@@ -80,7 +80,6 @@ The `<Payables>` component displays all payables for an entity. It includes buil
 | `columns` | `InvoiceTableColumn[]` |          | Custom columns for the invoice table. |
 | `toast`   | `ToastClient`          |          | Custom toast client.                  |
 
-
 ```typescript
 type InvoiceTableColumn = {
   // The field to display in the column
@@ -99,6 +98,7 @@ type ToastClient = {
   info: (message: string) => void
 }
 ```
+
 ---
 
 <a id="functional-options"></a>
@@ -110,7 +110,7 @@ type ToastClient = {
 
 ---
 
-## Examples
+## Main Props Examples
 
 ### Default Usage
 
@@ -121,20 +121,206 @@ type ToastClient = {
   ```
 </ComponentContainer>
 
-### Select Invoice Handler
+### Event Handlers
 
 <ComponentContainer>
   <Payables
     handlers={{
-      onSelectInvoice: (invoice) => router.push(`/dashboard/vendors/${mercoaSession.entityId}/invoices/${invoice.id}`),
+      onSelectInvoice: (invoice) => {
+        alert('Invoice selected')
+      },
+      onCreateInvoice: () => {
+        alert('Invoice created')
+      },
+      onCreateInvoiceTemplate: () => {
+        alert('Invoice template created')
+      },
     }}
   />
   ```jsx
   <Payables
     handlers={{
       onSelectInvoice: (invoice) => {
-        router.push(`/dashboard/vendors/${mercoaSession.entityId}/invoices/${invoice.id}`)
+        router.push(`/dashboard/payers/${entityId}/invoices/${invoice.id}`)
       },
+      onCreateInvoice: () => {
+        router.push(`/dashboard/payers/${entityId}/invoices/create`)
+      },
+      onCreateInvoiceTemplate: () => {
+        router.push(`/dashboard/payers/${entityId}/invoice-templates/create`)
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Display Options
+
+<ComponentContainer>
+  <Payables
+    displayOptions={{
+      tableOnly: true,
+      showCumulativeFilter: false,
+      statusTabsOptions: {
+        isVisible: true,
+        statuses: ['DRAFT', 'PENDING', 'APPROVED'],
+      },
+      showInvoiceMetrics: true,
+    }}
+  />
+  ```jsx
+  <Payables
+    displayOptions={{
+      tableOnly: true,
+      showCumulativeFilter: false,
+      statusTabsOptions: {
+        isVisible: true,
+        statuses: ['DRAFT', 'PENDING', 'APPROVED'],
+      },
+      showInvoiceMetrics: true,
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Query Options
+
+<ComponentContainer>
+  <Payables
+    queryOptions={{
+      currentStatuses: ['PENDING', 'APPROVED'],
+      search: 'Invoice #123',
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-12-31'),
+      resultsPerPage: 10,
+      orderBy: 'dueDate',
+      orderDirection: 'desc',
+    }}
+  />
+  ```jsx
+  <Payables
+    queryOptions={{
+      currentStatuses: ['PENDING', 'APPROVED'],
+      search: 'Invoice #123',
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-12-31'),
+      resultsPerPage: 10,
+      orderBy: 'dueDate',
+      orderDirection: 'desc',
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Config Options
+
+<ComponentContainer>
+  <Payables
+    config={{
+      readOnly: true,
+    }}
+  />
+  ```jsx
+  <Payables
+    config={{
+      readOnly: true,
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Custom Rendering
+
+<ComponentContainer>
+  <Payables
+    renderCustom={{
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+      ],
+      toast: {
+        success: (msg) => alert(msg),
+        error: (msg) => alert(msg),
+        info: (msg) => alert(msg),
+      },
+    }}
+  />
+  ```jsx
+  <Payables
+    renderCustom={{
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+      ],
+      toast: {
+        success: (msg) => alert(msg),
+        error: (msg) => alert(msg),
+        info: (msg) => alert(msg),
+      },
+    }}
+  />
+  ```
+</ComponentContainer>
+
+## Common Use Cases Examples
+
+### Read-Only Mode
+
+<ComponentContainer>
+  <Payables
+    config={{
+      readOnly: true,
+    }}
+  />
+  ```jsx
+  <Payables
+    config={{
+      readOnly: true,
+    }}
+  />
+  ```
+</ComponentContainer>
+
+### Custom Columns
+
+<ComponentContainer>
+  <Payables
+    renderCustom={{
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+        {
+          title: 'Status',
+          field: 'status',
+          render: (invoice) => invoice.status,
+        },
+      ],
+    }}
+  />
+  ```jsx
+  <Payables
+    renderCustom={{
+      columns: [
+        {
+          title: 'Invoice Number',
+          field: 'invoiceNumber',
+          render: (invoice) => invoice.invoiceNumber,
+        },
+        {
+          title: 'Status',
+          field: 'status',
+          render: (invoice) => invoice.status,
+        },
+      ],
     }}
   />
   ```
