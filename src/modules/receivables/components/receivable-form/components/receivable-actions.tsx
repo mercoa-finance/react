@@ -171,21 +171,22 @@ export function ReceivableActions() {
     </MercoaButton>
   )
 
+  const markAsPaidStatuses: Mercoa.InvoiceStatus[] = [Mercoa.InvoiceStatus.Approved, Mercoa.InvoiceStatus.Scheduled]
   const showMarkAsPaidButton =
-    invoice?.status === Mercoa.InvoiceStatus.Approved &&
-    (paymentDestinationType === 'offPlatform' || paymentSourceType === 'offPlatform') &&
-    invoiceType === 'invoice'
+    invoice?.status && markAsPaidStatuses.includes(invoice?.status) && invoiceType === 'invoice'
   const markAsPaidButton = (
-    <MercoaButton
-      isEmphasized={true}
-      onClick={() => handleActionClick(ReceivableFormAction.MARK_AS_PAID)}
-      type="button"
-      className="mercoa-whitespace-nowrap"
-    >
-      <ButtonLoadingSpinner isLoading={formAction === ReceivableFormAction.MARK_AS_PAID}>
-        Mark as Paid
-      </ButtonLoadingSpinner>
-    </MercoaButton>
+    <Menu.Item>
+      {({ active }) => (
+        <a
+          onClick={() => handleActionClick(ReceivableFormAction.MARK_AS_PAID)}
+          className={`${
+            active ? 'mercoa-bg-gray-100 mercoa-text-gray-900' : 'mercoa-text-gray-700'
+          } mercoa-block mercoa-px-4 mercoa-py-2 mercoa-text-sm`}
+        >
+          Mark as Paid
+        </a>
+      )}
+    </Menu.Item>
   )
 
   const showRestoreAsDraftButton = invoice?.status === Mercoa.InvoiceStatus.Canceled
@@ -223,6 +224,7 @@ export function ReceivableActions() {
           <div className="mercoa-py-1">
             {showPreviewButton && previewButton}
             {showPaymentLinkButton && paymentLinkButton}
+            {showMarkAsPaidButton && markAsPaidButton}
           </div>
         </Menu.Items>
       </Transition>
@@ -241,7 +243,6 @@ export function ReceivableActions() {
             {showSaveDraftButton && saveDraftButton}
             {showSendEmailButton && sendEmailButton}
             {showScheduleRecurringInvoiceButton && scheduleRecurringInvoiceButton}
-            {showMarkAsPaidButton && markAsPaidButton}
             {showRestoreAsDraftButton && restoreAsDraftButton}
             {menu}
           </>
