@@ -8,12 +8,12 @@ import {
   XCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
+import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import debounce from 'lodash/debounce'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
-import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
 import {
   LoadingSpinnerIcon,
@@ -46,16 +46,20 @@ function ArrowDownLeftIcon({ className }: { className?: string }) {
 
 export function ApprovalPolicies({
   onSave,
+  resourceLabel = 'invoice',
   additionalRoles,
   restrictedRoles,
   maxRules,
+  maxNestedLevels,
   supportedCurrencies,
   allowAutoAssign = true,
 }: {
   onSave?: () => void
+  resourceLabel?: string
   additionalRoles?: string[]
   restrictedRoles?: string[]
   maxRules?: number
+  maxNestedLevels?: number
   supportedCurrencies?: Mercoa.CurrencyCode[]
   allowAutoAssign?: boolean
 }) {
@@ -113,7 +117,7 @@ export function ApprovalPolicies({
     const toasts: { id: string; success: boolean }[] = []
 
     const validRules = data.policies.every((policy, index) => {
-      if (policy.rule.identifierList.value.filter((e) => e).length < 1) {
+      if (policy.rule.identifierList.value.filter((e: string) => !!e).length < 1) {
         toast(`Error With Rule ${index + 1}: Number of approvers cannot be less than 1`, {
           type: 'error',
         })
@@ -163,7 +167,7 @@ export function ApprovalPolicies({
     await Promise.all(
       data.policies.map(async (data, index) => {
         if (!mercoaSession.entity?.id) return
-        const trigger: Mercoa.Trigger[] = data.trigger.map((t) => {
+        const trigger: Mercoa.Trigger[] = data.trigger.map((t: Mercoa.Trigger) => {
           if (t.type == 'amount') {
             return {
               type: t.type,
@@ -261,7 +265,9 @@ export function ApprovalPolicies({
           upstreamPolicyId="root"
           allowAutoAssign={allowAutoAssign}
           maxRules={maxRules}
+          resourceLabel={resourceLabel}
           supportedCurrencies={supportedCurrencies}
+          maxNestedLevels={maxNestedLevels}
         />
         <MercoaButton isEmphasized size="md" className="mercoa-mt-5" disabled={isSaving}>
           Save Rules
@@ -287,6 +293,8 @@ function Level({
   allowAutoAssign,
   maxRules,
   supportedCurrencies,
+  resourceLabel = 'invoice',
+  maxNestedLevels,
 }: {
   level: number
   upstreamPolicyId: string
@@ -303,6 +311,8 @@ function Level({
   allowAutoAssign?: boolean
   maxRules?: number
   supportedCurrencies?: Mercoa.CurrencyCode[]
+  resourceLabel?: string
+  maxNestedLevels?: number
 }) {
   const [collapsedPolicyIds, setCollapsedPolicyIds] = useState<string[]>([])
   const policies = formPolicies.filter((e) => e.upstreamPolicyId === upstreamPolicyId)
@@ -316,7 +326,7 @@ function Level({
       >
         <p className="mercoa-text-sm mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600">
           {policy.trigger.length > 0 ? 'If' : 'Always require'}
-          {policy.trigger.map((t, index) => {
+          {policy.trigger.map((t: Mercoa.Trigger, index: number) => {
             let displayText = <></>
 
             if (t.type === 'amount') {
@@ -351,7 +361,7 @@ function Level({
                 {policy.rule.identifierList.type === 'rolesList'
                   ? policy.rule.identifierList.value.join(', ')
                   : policy.rule.identifierList.type === 'userList' &&
-                    policy.rule.identifierList.value.map((e) => users.find((u) => u.id === e)?.name).join(', ')}
+                    policy.rule.identifierList.value.map((e: string) => users.find((u) => u.id === e)?.name).join(', ')}
               </span>
             </>
           )}
@@ -371,7 +381,9 @@ function Level({
           isFullyCollapsed={isFullyCollapsed || collapsedPolicyIds.includes(policy.id)}
           allowAutoAssign={allowAutoAssign}
           maxRules={maxRules}
+          resourceLabel={resourceLabel}
           supportedCurrencies={supportedCurrencies}
+          maxNestedLevels={maxNestedLevels}
         />
       </div>
     )
@@ -402,7 +414,9 @@ function Level({
         )}
         <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
           <span className="mercoa-font-medium mercoa-text-gray-900">
-            {upstreamPolicyId === 'root' ? 'When an invoice is sent for approval:' : ''}
+            {upstreamPolicyId === 'root'
+              ? `When a${/^[aeiou]/i.test(resourceLabel) ? 'n' : ''} ${resourceLabel} is sent for approval:`
+              : ''}
           </span>
         </p>
       </li>
@@ -476,6 +490,7 @@ function Level({
                       />
                     </div>
                     <Rule
+                      resourceLabel={resourceLabel}
                       watch={watch}
                       register={register}
                       setValue={setValue}
@@ -501,7 +516,9 @@ function Level({
                         isFullyCollapsed={isFullyCollapsed || collapsedPolicyIds.includes(policy.id)}
                         allowAutoAssign={allowAutoAssign}
                         maxRules={maxRules}
+                        resourceLabel={resourceLabel}
                         supportedCurrencies={supportedCurrencies}
+                        maxNestedLevels={maxNestedLevels}
                       />
                     </div>
                   </>
@@ -511,31 +528,31 @@ function Level({
           </li>
         )
       })}
-
-      {!collapsedPolicyIds.includes(upstreamPolicyId) && (
-        <li className="mercoa-relative mercoa-flex mercoa-gap-x-4">
-          {upstreamPolicyId === 'root' && (
-            <div className="-mercoa-bottom-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center">
-              <div className="mercoa-w-px mercoa-bg-gray-200" />
+      {!collapsedPolicyIds.includes(upstreamPolicyId) &&
+        (maxNestedLevels !== undefined ? level < maxNestedLevels + 1 : true) && (
+          <li className="mercoa-relative mercoa-flex mercoa-gap-x-4">
+            {upstreamPolicyId === 'root' && (
+              <div className="-mercoa-bottom-6 mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center">
+                <div className="mercoa-w-px mercoa-bg-gray-200" />
+              </div>
+            )}
+            <div
+              className={`mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center ${nestedBg[level]}`}
+            >
+              <div className="mercoa-h-1.5 mercoa-w-1.5 mercoa-rounded-full mercoa-bg-gray-100 mercoa-ring-1 mercoa-ring-gray-300" />
             </div>
-          )}
-          <div
-            className={`mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center ${nestedBg[level]}`}
-          >
-            <div className="mercoa-h-1.5 mercoa-w-1.5 mercoa-rounded-full mercoa-bg-gray-100 mercoa-ring-1 mercoa-ring-gray-300" />
-          </div>
-          <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
-            <AddRule
-              id={upstreamPolicyId + '~' + policies.length}
-              upstreamPolicyId={upstreamPolicyId}
-              append={append}
-              trigger={[]}
-              watch={watch}
-              maxRules={maxRules}
-            />
-          </p>
-        </li>
-      )}
+            <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
+              <AddRule
+                id={upstreamPolicyId + '~' + policies.length}
+                upstreamPolicyId={upstreamPolicyId}
+                append={append}
+                trigger={[]}
+                watch={watch}
+                maxRules={maxRules}
+              />
+            </p>
+          </li>
+        )}
 
       {upstreamPolicyId === 'root' && (
         <li className="mercoa-relative mercoa-flex mercoa-gap-x-4">
@@ -548,7 +565,7 @@ function Level({
             <CheckCircleIcon className="mercoa-size-5 mercoa-text-green-400" aria-hidden="true" />
           </div>
           <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
-            <span className="mercoa-font-medium mercoa-text-gray-900"> Approve Invoice</span>
+            <span className="mercoa-font-medium mercoa-text-gray-900"> Approve {resourceLabel}</span>
           </p>
         </li>
       )}
@@ -758,41 +775,73 @@ function Trigger({
         )
       })}
 
-      <div className="mercoa-col-span-4">
-        <MercoaButton
-          isEmphasized={false}
-          size="sm"
-          type="button"
-          className="mercoa-flex"
-          onClick={() => {
-            mercoaSession.debug({ onClick: true, triggerWatch })
-            if (
-              triggerWatch &&
-              Array.isArray(triggerWatch) &&
-              (triggerWatch as Mercoa.Trigger[]).filter((e) => e).every((e) => e?.type != 'amount')
-            ) {
-              append({
-                type: 'amount',
-                amount: 100,
-                currency: Mercoa.CurrencyCode.Usd,
-              })
-            } else if (
-              triggerWatch &&
-              Array.isArray(triggerWatch) &&
-              (triggerWatch as Mercoa.Trigger[]).filter((e) => e).every((e) => e?.type != 'vendor')
-            ) {
-              append({
-                type: 'vendor',
-                vendorIds: [],
-              })
-            } else {
-              append({})
-            }
-          }}
-        >
-          <PlusIcon className="mercoa-size-4 mercoa-mr-1" /> Add Condition
-        </MercoaButton>
-      </div>
+      {(() => {
+        const hasAmount =
+          triggerWatch &&
+          Array.isArray(triggerWatch) &&
+          (triggerWatch as Mercoa.Trigger[]).filter((e) => e).some((e) => e?.type === 'amount')
+
+        const hasVendor =
+          triggerWatch &&
+          Array.isArray(triggerWatch) &&
+          (triggerWatch as Mercoa.Trigger[]).filter((e) => e).some((e) => e?.type === 'vendor')
+
+        const metadataSchemas = mercoaSession.organization?.metadataSchema?.filter((e) => !e.lineItem) || []
+        const hasAllMetadata = metadataSchemas.every(
+          (schema) =>
+            triggerWatch &&
+            Array.isArray(triggerWatch) &&
+            (triggerWatch as Mercoa.Trigger[]).some(
+              (trigger) => trigger?.type === 'metadata' && trigger?.key === schema.key,
+            ),
+        )
+
+        if (hasAmount && hasVendor && hasAllMetadata) {
+          return null
+        }
+
+        return (
+          <div className="mercoa-col-span-4">
+            <MercoaButton
+              isEmphasized={false}
+              size="sm"
+              type="button"
+              className="mercoa-flex"
+              onClick={() => {
+                mercoaSession.debug({ onClick: true, triggerWatch })
+                if (!hasAmount) {
+                  append({
+                    type: 'amount',
+                    amount: 100,
+                    currency: Mercoa.CurrencyCode.Usd,
+                  })
+                } else if (!hasVendor) {
+                  append({
+                    type: 'vendor',
+                    vendorIds: [],
+                  })
+                } else {
+                  const unusedMetadataSchema = metadataSchemas.find(
+                    (schema) =>
+                      !(triggerWatch as Mercoa.Trigger[])?.some(
+                        (trigger) => trigger?.type === 'metadata' && trigger?.key === schema.key,
+                      ),
+                  )
+                  if (unusedMetadataSchema) {
+                    append({
+                      type: 'metadata',
+                      key: unusedMetadataSchema.key,
+                      value: '',
+                    })
+                  }
+                }
+              }}
+            >
+              <PlusIcon className="mercoa-size-4 mercoa-mr-1" /> Add Condition
+            </MercoaButton>
+          </div>
+        )
+      })()}
     </>
   )
 }
@@ -805,6 +854,7 @@ function Rule({
   roles,
   index,
   noTrigger,
+  resourceLabel = 'invoice',
   allowAutoAssign,
 }: {
   watch: any
@@ -815,6 +865,7 @@ function Rule({
   index: number
   noTrigger?: boolean
   allowAutoAssign?: boolean
+  resourceLabel?: string
 }) {
   const [ruleIdType, setRuleIdType] = useState('rolesList')
 
@@ -917,7 +968,8 @@ function Rule({
             <span>
               If enabled, the policy will automatically assign approvers.
               <br />
-              If more than one approver is eligible, the policy will assign all eligible approvers to the invoice.
+              If more than one approver is eligible, the policy will assign all eligible approvers to the{' '}
+              {resourceLabel}.
               <br />
               If disabled, approvers must be manually selected from the list of eligible approvers.
             </span>
