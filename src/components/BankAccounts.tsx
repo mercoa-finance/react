@@ -7,7 +7,6 @@ import {
   PencilIcon,
   PencilSquareIcon,
   PlusIcon,
-  WalletIcon,
 } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Fragment, ReactNode, useEffect, useRef, useState } from 'react'
@@ -17,8 +16,7 @@ import SignatureCanvas from 'react-signature-canvas'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
-import { currencyCodeToSymbol } from '../lib/currency'
-import { blobToDataUrl, capitalize, removeThousands } from '../lib/lib'
+import { blobToDataUrl, capitalize } from '../lib/lib'
 import {
   AddDialog,
   DefaultPaymentMethodIndicator,
@@ -83,61 +81,62 @@ export function BankAccounts({
 
   if (!mercoaSession.client) return <NoSession componentName="BankAccounts" />
 
-  if (children) return children({ bankAccounts })
-  else {
+  if (children) {
+    return children({ bankAccounts })
+  }
+
+  if (!bankAccounts) {
     return (
-      <>
-        {!bankAccounts ? (
-          <div className="mercoa-p-9 mercoa-text-center">
-            <LoadingSpinnerIcon />
-          </div>
-        ) : (
-          <>
-            <PaymentMethodList
-              accounts={bankAccounts}
-              showDelete={showDelete || showEdit} // NOTE: For backwards compatibility, showEdit implies showDelete
-              addAccount={
-                bankAccounts && showAdd ? (
-                  <AddBankAccountButton
-                    onSelect={(account: Mercoa.PaymentMethodResponse.BankAccount) => {
-                      if (
-                        !bankAccounts.find(
-                          (e) => e.accountNumber === account.accountNumber && e.routingNumber === account.routingNumber,
-                        )
-                      ) {
-                        setBankAccounts([...bankAccounts, account])
-                      }
-                      if (onSelect) onSelect(account)
-                    }}
-                    entityId={entityId}
-                  />
-                ) : undefined
-              }
-              formatAccount={(account: Mercoa.PaymentMethodResponse.BankAccount) => (
-                <BankAccount
-                  account={account}
-                  onSelect={onSelect}
-                  showEdit={showEdit}
-                  showVerification={showVerification}
-                  hideDefaultIndicator={hideIndicators}
-                  hideVerificationButton={hideIndicators}
-                  hideVerificationStatus={hideIndicators}
-                  hideCheckSendStatus={hideIndicators}
-                  showEntityConfirmation={showEntityConfirmation}
-                  editEntityConfirmation={editEntityConfirmation}
-                />
-              )}
-            />
-            {bankAccounts.length == 0 && verifiedOnly && (
-              <div className="mercoa-mt-2 mercoa-text-left mercoa-text-gray-700">
-                No verified bank accounts found. Please add and verify at least one bank account.
-              </div>
-            )}
-          </>
-        )}
-      </>
+      <div className="mercoa-p-9 mercoa-text-center">
+        <LoadingSpinnerIcon />
+      </div>
     )
   }
+
+  return (
+    <>
+      <PaymentMethodList
+        accounts={bankAccounts}
+        showDelete={showDelete || showEdit} // NOTE: For backwards compatibility, showEdit implies showDelete
+        addAccount={
+          bankAccounts && showAdd ? (
+            <AddBankAccountButton
+              onSelect={(account: Mercoa.PaymentMethodResponse.BankAccount) => {
+                if (
+                  !bankAccounts.find(
+                    (e) => e.accountNumber === account.accountNumber && e.routingNumber === account.routingNumber,
+                  )
+                ) {
+                  setBankAccounts([...bankAccounts, account])
+                }
+                if (onSelect) onSelect(account)
+              }}
+              entityId={entityId}
+            />
+          ) : undefined
+        }
+        formatAccount={(account: Mercoa.PaymentMethodResponse.BankAccount) => (
+          <BankAccount
+            account={account}
+            onSelect={onSelect}
+            showEdit={showEdit}
+            showVerification={showVerification}
+            hideDefaultIndicator={hideIndicators}
+            hideVerificationButton={hideIndicators}
+            hideVerificationStatus={hideIndicators}
+            hideCheckSendStatus={hideIndicators}
+            showEntityConfirmation={showEntityConfirmation}
+            editEntityConfirmation={editEntityConfirmation}
+          />
+        )}
+      />
+      {bankAccounts.length == 0 && verifiedOnly && (
+        <div className="mercoa-mt-2 mercoa-text-left mercoa-text-gray-700">
+          No verified bank accounts found. Please add and verify at least one bank account.
+        </div>
+      )}
+    </>
+  )
 }
 
 export function BankAccount({
@@ -176,292 +175,7 @@ export function BankAccount({
 
   if (!mercoaSession.client) return <NoSession componentName="BankAccountComponent" />
 
-  if (account) {
-    return (
-      <div className={account.frozen ? 'mercoa-line-through pointer-events-none' : ''}>
-        <div
-          onClick={() => {
-            if (onSelect) onSelect(account)
-          }}
-          key={`${account?.routingNumber} ${account?.accountNumber}`}
-          className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
-            selected ? 'mercoa-border-mercoa-primary' : 'mercoa-border-gray-300'
-          } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 ${
-            onSelect ? 'mercoa-cursor-pointer hover:mercoa-border-mercoa-primary-dark' : ''
-          }`}
-        >
-          <div
-            className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
-              selected
-                ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
-                : 'mercoa-bg-gray-200 mercoa-text-gray-600'
-            }`}
-          >
-            <BuildingLibraryIcon className="mercoa-size-5" />
-          </div>
-          <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between mercoa-group">
-            <div className="mercoa-flex">
-              <div>
-                <AddDialog
-                  component={<EditBankAccount account={account} onSubmit={() => setShowNameEdit(false)} />}
-                  onClose={() => setShowNameEdit(false)}
-                  show={showNameEdit}
-                />
-                {account?.accountName ? (
-                  <>
-                    <p
-                      className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
-                        selected ? 'mercoa-underline' : ''
-                      }`}
-                    >
-                      {account.accountName}
-                    </p>
-                    <p
-                      className={`mercoa-text-xs mercoa-font-medium mercoa-text-gray-800 ${
-                        selected ? 'mercoa-underline' : ''
-                      }`}
-                    >
-                      {account?.bankName}
-                      {` ••••${String(account?.accountNumber).slice(-4)}`}
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <p
-                      className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
-                        selected ? 'mercoa-underline' : ''
-                      }`}
-                    >{`${capitalize(account?.accountType)} ••••${String(account?.accountNumber).slice(-4)}`}</p>
-                    <p
-                      className={`mercoa-text-xs mercoa-font-medium mercoa-text-gray-800 ${
-                        selected ? 'mercoa-underline' : ''
-                      }`}
-                    >
-                      {account?.bankName}
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-          {(showEdit || showVerification || showEntityConfirmation || editEntityConfirmation) && (
-            <div className="mercoa-flex mercoa-items-center mercoa-gap-x-1">
-              {/* Default Payment Method Indicator */}
-              {showEdit && !hideDefaultIndicator && <DefaultPaymentMethodIndicator paymentMethod={account} />}
-
-              {/* Verification Button */}
-              {(account?.status === Mercoa.BankStatus.New ||
-                account?.status === Mercoa.BankStatus.Pending ||
-                account?.status === Mercoa.BankStatus.VerificationFailed) &&
-                !hideVerificationButton && (
-                  <MercoaButton
-                    isEmphasized
-                    size="sm"
-                    className="mercoa-mr-2"
-                    onClick={() => {
-                      setVerify(true)
-                    }}
-                  >
-                    {account?.status === Mercoa.BankStatus.New && 'Start Verification'}
-                    {account?.status === Mercoa.BankStatus.VerificationFailed && 'Retry Verification'}
-                    {account?.status === Mercoa.BankStatus.Pending && 'Complete Verification'}
-                  </MercoaButton>
-                )}
-
-              {/* Verification Status Indicator */}
-              {!hideVerificationStatus && <BankAccountStatus status={account?.status} />}
-
-              {(showEntityConfirmation || editEntityConfirmation) && (
-                <PaymentMethodConfirmationPill
-                  showEntityConfirmation={showEntityConfirmation}
-                  editEntityConfirmation={editEntityConfirmation}
-                  account={account}
-                />
-              )}
-
-              {/* Check Send Status Indicator */}
-              {showEdit && !hideCheckSendStatus && (
-                <div>
-                  {account.checkOptions?.enabled ? (
-                    <Tooltip title="Can send checks">
-                      <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-green-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-green-800">
-                        _<EnvelopeIcon className="mercoa-size-4" />
-                      </span>
-                    </Tooltip>
-                  ) : (
-                    <Tooltip title="Check send disabled">
-                      <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-gray-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-gray-800">
-                        _<EnvelopeIcon className="mercoa-size-4" />
-                      </span>
-                    </Tooltip>
-                  )}
-                </div>
-              )}
-
-              {/* Edit Button */}
-              {showEdit && (
-                <MercoaButton
-                  size="sm"
-                  isEmphasized={false}
-                  className="mercoa-mr-2 mercoa-px-[4px] mercoa-py-[4px]"
-                  onClick={() => setShowNameEdit(true)}
-                >
-                  <Tooltip title="Edit">
-                    <PencilIcon className="mercoa-size-4" />
-                  </Tooltip>
-                </MercoaButton>
-              )}
-
-              <Transition.Root show={!!verify} as={Fragment}>
-                <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={() => setVerify(false)}>
-                  <Transition.Child
-                    as={Fragment}
-                    enter="mercoa-ease-out mercoa-duration-300"
-                    enterFrom="mercoa-opacity-0"
-                    enterTo="mercoa-opacity-100"
-                    leave="mercoa-ease-in mercoa-duration-200"
-                    leaveFrom="mercoa-opacity-100"
-                    leaveTo="mercoa-opacity-0"
-                  >
-                    <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75 mercoa-transition-opacity" />
-                  </Transition.Child>
-
-                  <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
-                    <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
-                      <Transition.Child
-                        as={Fragment}
-                        enter="mercoa-ease-out mercoa-duration-300"
-                        enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
-                        enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
-                        leave="mercoa-ease-in mercoa-duration-200"
-                        leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
-                        leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
-                      >
-                        <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-lg sm:mercoa-p-6">
-                          <Dialog.Title
-                            as="h3"
-                            className="mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
-                          >
-                            Verify Account
-                          </Dialog.Title>
-
-                          {(account?.status === Mercoa.BankStatus.New ||
-                            account?.status === Mercoa.BankStatus.VerificationFailed) && (
-                            <>
-                              <p className="mercoa-mt-5 mercoa-text-sm">
-                                Mercoa will send two small deposits to verify this account. These deposits may take up
-                                to 1-2 days to appear.
-                              </p>
-                              <p className="mercoa-mt-3 mercoa-text-sm">
-                                Once transactions have been sent, you&apos;ll have 14 days to verify their values.
-                              </p>
-                              {mercoaSession.organization?.sandbox && (
-                                <p className="mercoa-mt-3 mercoa-rounded-mercoa mercoa-bg-orange-200 mercoa-p-1 mercoa-text-sm">
-                                  <b>Test Mode:</b> actual deposits will not be sent. Use 0 and 0 as the values to
-                                  instantly verify the account in the next step. Any other values will set the account
-                                  to verification failed.
-                                </p>
-                              )}
-                              <MercoaButton
-                                isEmphasized
-                                onClick={async () => {
-                                  if (mercoaSession.entity?.id && account?.id) {
-                                    await mercoaSession.client?.entity.paymentMethod.bankAccount.initiateMicroDeposits(
-                                      mercoaSession.entity?.id,
-                                      account?.id,
-                                    )
-                                    setVerify(false)
-                                    toast.info('Micro-deposits sent')
-                                    mercoaSession.refresh()
-                                  }
-                                }}
-                                className="mercoa-mt-5 mercoa-inline-flex mercoa-w-full mercoa-justify-center"
-                              >
-                                Send deposits
-                              </MercoaButton>
-                            </>
-                          )}
-
-                          {account?.status === Mercoa.BankStatus.Pending && (
-                            <form
-                              onSubmit={handleSubmit(async (data) => {
-                                if (mercoaSession.entity?.id && account?.id) {
-                                  try {
-                                    const bankAccount =
-                                      await mercoaSession.client?.entity.paymentMethod.bankAccount.completeMicroDeposits(
-                                        mercoaSession.entity?.id,
-                                        account?.id,
-                                        {
-                                          amounts: [Number(data.md1), Number(data.md2)],
-                                        },
-                                      )
-                                    if (
-                                      bankAccount &&
-                                      bankAccount.type === Mercoa.PaymentMethodType.BankAccount &&
-                                      bankAccount.status === Mercoa.BankStatus.Verified
-                                    ) {
-                                      toast.info('Micro-deposits verified.')
-                                    } else {
-                                      toast.error('Micro-deposit verification failed.')
-                                    }
-                                  } catch (e) {
-                                    toast.error('Micro-deposit verification failed.')
-                                  }
-                                  setVerify(false)
-                                  await mercoaSession.refresh()
-                                  setTimeout(() => mercoaSession.refresh(), 5000)
-                                }
-                              })}
-                            >
-                              <p className="mercoa-mt-5 mercoa-text-sm">
-                                Micro-deposits may take up to 2 days to appear on your statement. Once you have both
-                                values please enter the amounts to verify this account.
-                              </p>
-                              {mercoaSession.organization?.sandbox && (
-                                <p className="mercoa-mt-3 mercoa-rounded-mercoa mercoa-bg-orange-200 mercoa-p-1 mercoa-text-sm">
-                                  <b>Test Mode:</b> use 0 and 0 to instantly verify this account. Any other values will
-                                  set the account to verification failed.
-                                </p>
-                              )}
-                              <MercoaInput
-                                name="md1"
-                                label="Amount"
-                                type="number"
-                                placeholder="0.00"
-                                step={0.01}
-                                min={0}
-                                max={0.99}
-                                register={register}
-                                className="mercoa-mt-2"
-                              />
-                              <MercoaInput
-                                name="md2"
-                                label="Amount"
-                                type="number"
-                                placeholder="0.00"
-                                step={0.01}
-                                min={0}
-                                max={0.99}
-                                register={register}
-                                className="mercoa-mt-2"
-                              />
-                              <MercoaButton isEmphasized className="mercoa-mt-5">
-                                Verify Account
-                              </MercoaButton>
-                            </form>
-                          )}
-                        </Dialog.Panel>
-                      </Transition.Child>
-                    </div>
-                  </div>
-                </Dialog>
-              </Transition.Root>
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  } else {
+  if (!account) {
     return (
       <PaymentMethodButton
         onSelect={onSelect}
@@ -472,6 +186,292 @@ export function BankAccount({
       />
     )
   }
+
+  return (
+    <div className={account.frozen ? 'mercoa-line-through pointer-events-none' : ''}>
+      <div
+        onClick={() => {
+          if (onSelect) onSelect(account)
+        }}
+        key={`${account?.routingNumber} ${account?.accountNumber}`}
+        className={`mercoa-relative mercoa-flex mercoa-items-center mercoa-space-x-3 mercoa-rounded-mercoa mercoa-border ${
+          selected ? 'mercoa-border-mercoa-primary' : 'mercoa-border-gray-300'
+        } mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-ring-2 focus-within:mercoa-ring-mercoa-primary focus-within:mercoa-ring-offset-2 ${
+          onSelect ? 'mercoa-cursor-pointer hover:mercoa-border-mercoa-primary-dark' : ''
+        }`}
+      >
+        <div
+          className={`mercoa-flex-shrink-0 mercoa-rounded-full mercoa-p-1 ${
+            selected
+              ? 'mercoa-text-mercoa-primary-text-invert mercoa-bg-mercoa-primary-light'
+              : 'mercoa-bg-gray-200 mercoa-text-gray-600'
+          }`}
+        >
+          <BuildingLibraryIcon className="mercoa-size-5" />
+        </div>
+        <div className="mercoa-flex mercoa-min-w-0 mercoa-flex-1 mercoa-justify-between mercoa-group">
+          <div className="mercoa-flex">
+            <div>
+              <AddDialog
+                component={<EditBankAccount account={account} onSubmit={() => setShowNameEdit(false)} />}
+                onClose={() => setShowNameEdit(false)}
+                show={showNameEdit}
+              />
+              {account?.accountName ? (
+                <>
+                  <p
+                    className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
+                      selected ? 'mercoa-underline' : ''
+                    }`}
+                  >
+                    {account.accountName}
+                  </p>
+                  <p
+                    className={`mercoa-text-xs mercoa-font-medium mercoa-text-gray-800 ${
+                      selected ? 'mercoa-underline' : ''
+                    }`}
+                  >
+                    {account?.bankName}
+                    {` ••••${String(account?.accountNumber).slice(-4)}`}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p
+                    className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${
+                      selected ? 'mercoa-underline' : ''
+                    }`}
+                  >{`${capitalize(account?.accountType)} ••••${String(account?.accountNumber).slice(-4)}`}</p>
+                  <p
+                    className={`mercoa-text-xs mercoa-font-medium mercoa-text-gray-800 ${
+                      selected ? 'mercoa-underline' : ''
+                    }`}
+                  >
+                    {account?.bankName}
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+        {(showEdit || showVerification || showEntityConfirmation || editEntityConfirmation) && (
+          <div className="mercoa-flex mercoa-items-center mercoa-gap-x-1">
+            {/* Default Payment Method Indicator */}
+            {showEdit && !hideDefaultIndicator && <DefaultPaymentMethodIndicator paymentMethod={account} />}
+
+            {/* Verification Button */}
+            {(account?.status === Mercoa.BankStatus.New ||
+              account?.status === Mercoa.BankStatus.Pending ||
+              account?.status === Mercoa.BankStatus.VerificationFailed) &&
+              !hideVerificationButton && (
+                <MercoaButton
+                  isEmphasized
+                  size="sm"
+                  className="mercoa-mr-2"
+                  onClick={() => {
+                    setVerify(true)
+                  }}
+                >
+                  {account?.status === Mercoa.BankStatus.New && 'Start Verification'}
+                  {account?.status === Mercoa.BankStatus.VerificationFailed && 'Retry Verification'}
+                  {account?.status === Mercoa.BankStatus.Pending && 'Complete Verification'}
+                </MercoaButton>
+              )}
+
+            {/* Verification Status Indicator */}
+            {!hideVerificationStatus && <BankAccountStatus status={account?.status} />}
+
+            {/* Entity Confirmation Indicator */}
+            {(showEntityConfirmation || editEntityConfirmation) && (
+              <PaymentMethodConfirmationPill
+                showEntityConfirmation={showEntityConfirmation}
+                editEntityConfirmation={editEntityConfirmation}
+                account={account}
+              />
+            )}
+
+            {/* Check Send Status Indicator */}
+            {showEdit && !hideCheckSendStatus && (
+              <div>
+                {account.checkOptions?.enabled ? (
+                  <Tooltip title="Can send checks">
+                    <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-green-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-green-800">
+                      _<EnvelopeIcon className="mercoa-size-4" />
+                    </span>
+                  </Tooltip>
+                ) : (
+                  <Tooltip title="Check send disabled">
+                    <span className="mercoa-inline-flex mercoa-items-center mercoa-rounded-full mercoa-bg-gray-100 mercoa-px-2.5 mercoa-py-0.5 mercoa-text-xs mercoa-font-medium mercoa-text-gray-800">
+                      _<EnvelopeIcon className="mercoa-size-4" />
+                    </span>
+                  </Tooltip>
+                )}
+              </div>
+            )}
+
+            {/* Edit Button */}
+            {showEdit && (
+              <MercoaButton
+                size="sm"
+                isEmphasized={false}
+                className="mercoa-mr-2 mercoa-px-[4px] mercoa-py-[4px]"
+                onClick={() => setShowNameEdit(true)}
+              >
+                <Tooltip title="Edit">
+                  <PencilIcon className="mercoa-size-4" />
+                </Tooltip>
+              </MercoaButton>
+            )}
+
+            <Transition.Root show={!!verify} as={Fragment}>
+              <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={() => setVerify(false)}>
+                <Transition.Child
+                  as={Fragment}
+                  enter="mercoa-ease-out mercoa-duration-300"
+                  enterFrom="mercoa-opacity-0"
+                  enterTo="mercoa-opacity-100"
+                  leave="mercoa-ease-in mercoa-duration-200"
+                  leaveFrom="mercoa-opacity-100"
+                  leaveTo="mercoa-opacity-0"
+                >
+                  <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75 mercoa-transition-opacity" />
+                </Transition.Child>
+
+                <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
+                  <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
+                    <Transition.Child
+                      as={Fragment}
+                      enter="mercoa-ease-out mercoa-duration-300"
+                      enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+                      enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                      leave="mercoa-ease-in mercoa-duration-200"
+                      leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                      leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+                    >
+                      <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-lg sm:mercoa-p-6">
+                        <Dialog.Title
+                          as="h3"
+                          className="mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
+                        >
+                          Verify Account
+                        </Dialog.Title>
+
+                        {(account?.status === Mercoa.BankStatus.New ||
+                          account?.status === Mercoa.BankStatus.VerificationFailed) && (
+                          <>
+                            <p className="mercoa-mt-5 mercoa-text-sm">
+                              Mercoa will send two small deposits to verify this account. These deposits may take up to
+                              1-2 days to appear.
+                            </p>
+                            <p className="mercoa-mt-3 mercoa-text-sm">
+                              Once transactions have been sent, you&apos;ll have 14 days to verify their values.
+                            </p>
+                            {mercoaSession.organization?.sandbox && (
+                              <p className="mercoa-mt-3 mercoa-rounded-mercoa mercoa-bg-orange-200 mercoa-p-1 mercoa-text-sm">
+                                <b>Test Mode:</b> actual deposits will not be sent. Use 0 and 0 as the values to
+                                instantly verify the account in the next step. Any other values will set the account to
+                                verification failed.
+                              </p>
+                            )}
+                            <MercoaButton
+                              isEmphasized
+                              onClick={async () => {
+                                if (mercoaSession.entity?.id && account?.id) {
+                                  await mercoaSession.client?.entity.paymentMethod.bankAccount.initiateMicroDeposits(
+                                    mercoaSession.entity?.id,
+                                    account?.id,
+                                  )
+                                  setVerify(false)
+                                  toast.info('Micro-deposits sent')
+                                  mercoaSession.refresh()
+                                }
+                              }}
+                              className="mercoa-mt-5 mercoa-inline-flex mercoa-w-full mercoa-justify-center"
+                            >
+                              Send deposits
+                            </MercoaButton>
+                          </>
+                        )}
+
+                        {account?.status === Mercoa.BankStatus.Pending && (
+                          <form
+                            onSubmit={handleSubmit(async (data) => {
+                              if (mercoaSession.entity?.id && account?.id) {
+                                try {
+                                  const bankAccount =
+                                    await mercoaSession.client?.entity.paymentMethod.bankAccount.completeMicroDeposits(
+                                      mercoaSession.entity?.id,
+                                      account?.id,
+                                      {
+                                        amounts: [Number(data.md1), Number(data.md2)],
+                                      },
+                                    )
+                                  if (
+                                    bankAccount &&
+                                    bankAccount.type === Mercoa.PaymentMethodType.BankAccount &&
+                                    bankAccount.status === Mercoa.BankStatus.Verified
+                                  ) {
+                                    toast.info('Micro-deposits verified.')
+                                  } else {
+                                    toast.error('Micro-deposit verification failed.')
+                                  }
+                                } catch (e) {
+                                  toast.error('Micro-deposit verification failed.')
+                                }
+                                setVerify(false)
+                                await mercoaSession.refresh()
+                                setTimeout(() => mercoaSession.refresh(), 5000)
+                              }
+                            })}
+                          >
+                            <p className="mercoa-mt-5 mercoa-text-sm">
+                              Micro-deposits may take up to 2 days to appear on your statement. Once you have both
+                              values please enter the amounts to verify this account.
+                            </p>
+                            {mercoaSession.organization?.sandbox && (
+                              <p className="mercoa-mt-3 mercoa-rounded-mercoa mercoa-bg-orange-200 mercoa-p-1 mercoa-text-sm">
+                                <b>Test Mode:</b> use 0 and 0 to instantly verify this account. Any other values will
+                                set the account to verification failed.
+                              </p>
+                            )}
+                            <MercoaInput
+                              name="md1"
+                              label="Amount"
+                              type="number"
+                              placeholder="0.00"
+                              step={0.01}
+                              min={0}
+                              max={0.99}
+                              register={register}
+                              className="mercoa-mt-2"
+                            />
+                            <MercoaInput
+                              name="md2"
+                              label="Amount"
+                              type="number"
+                              placeholder="0.00"
+                              step={0.01}
+                              min={0}
+                              max={0.99}
+                              register={register}
+                              className="mercoa-mt-2"
+                            />
+                            <MercoaButton isEmphasized className="mercoa-mt-5">
+                              Verify Account
+                            </MercoaButton>
+                          </form>
+                        )}
+                      </Dialog.Panel>
+                    </Transition.Child>
+                  </div>
+                </div>
+              </Dialog>
+            </Transition.Root>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export function BankAccountStatus({ status }: { status: Mercoa.BankStatus }) {
@@ -1152,333 +1152,5 @@ function SignatureImage({
         </MercoaButton>
       </div>
     </>
-  )
-}
-
-export function MercoaWallet({
-  global,
-  entityId: passedEntityId,
-  title,
-}: {
-  global?: boolean
-  entityId?: Mercoa.EntityId
-  title?: string
-}) {
-  const mercoaSession = useMercoaSession()
-  const [balanceIsResolved, setBalanceIsResolved] = useState(false)
-  const [availableBalance, setAvailableBalance] = useState<number>(0)
-  const [pendingBalance, setPendingBalance] = useState<number>(0)
-  const [bankAccounts, setBankAccounts] = useState<Array<Mercoa.PaymentMethodResponse.BankAccount>>([])
-  const [selectedBankAccount, setSelectedBankAccount] = useState<Mercoa.PaymentMethodResponse.BankAccount>()
-  const [showDialog, setShowDialog] = useState<'add' | 'remove' | ''>('')
-
-  const entityId = passedEntityId ?? mercoaSession.entity?.id ?? mercoaSession.organization?.organizationEntityId
-
-  const schema = yup
-    .object({
-      amount: yup.number().transform(removeThousands).positive().typeError('Please enter a valid number'),
-    })
-    .required()
-
-  const addMethods = useForm({
-    resolver: yupResolver(schema),
-    defaultValues: {
-      amount: 0,
-    },
-  })
-
-  const removeMethods = useForm({
-    resolver: yupResolver(schema),
-    defaultValues: {
-      amount: 0,
-    },
-  })
-
-  // Consolidated useEffect for fetching bank accounts and wallet funds
-  useEffect(() => {
-    const fetchBankAccountsAndFunds = async () => {
-      if (!mercoaSession.token || !entityId || !mercoaSession.client) return
-      try {
-        // Fetch bank accounts
-        const resp = await mercoaSession.client.entity.paymentMethod.getAll(entityId, { type: 'bankAccount' })
-        const bankAccountPms = resp.filter(
-          (e) => e.type === 'bankAccount' && e.status === 'VERIFIED',
-        ) as Array<Mercoa.PaymentMethodResponse.BankAccount>
-        const firstBankAccount = bankAccountPms[0]
-        setBankAccounts(bankAccountPms)
-        setSelectedBankAccount(firstBankAccount)
-
-        // Fetch wallet funds if a bank account exists
-        if (firstBankAccount) {
-          const fundsResp = await mercoaSession.client.entity.paymentMethod.bankAccount.getAccelerationFunds(
-            entityId,
-            firstBankAccount.id,
-          )
-          setAvailableBalance(fundsResp.availableBalance.amount)
-          setPendingBalance(fundsResp.pendingBalance.amount)
-          setBalanceIsResolved(true)
-        }
-      } catch (error) {
-        console.error('Error fetching bank accounts or wallet:', error)
-      }
-    }
-
-    fetchBankAccountsAndFunds()
-  }, [mercoaSession.client, entityId, mercoaSession.token])
-
-  // Add wallet funds
-  const handleAddFunds = async (data: { amount?: number }) => {
-    if (!data.amount) return
-    if (!confirm('Are you sure you want to add funds?')) return
-    if (!mercoaSession.token || !entityId || !mercoaSession.client || !balanceIsResolved) {
-      toast.error('Failed to resolve wallet funds')
-      return
-    }
-    if (!selectedBankAccount?.id) {
-      toast.error('No bank account selected')
-      return
-    }
-    try {
-      await mercoaSession.client.entity.paymentMethod.bankAccount.addAccelerationFunds(
-        entityId,
-        selectedBankAccount.id,
-        { amount: data.amount, currency: Mercoa.CurrencyCode.Usd },
-      )
-    } catch (e) {
-      toast.error('Failed to add funds to wallet')
-      return
-    }
-    // Keep local state in sync with wallet funds
-    setPendingBalance((prevBalance) => prevBalance + (data?.amount ?? 0))
-    addMethods.setValue('amount', 0)
-  }
-
-  // Remove wallet funds
-  const handleRemoveFunds = async (data: { amount?: number }) => {
-    if (!data.amount) return
-    if (!confirm('Are you sure you want to remove funds?')) return
-    if (!mercoaSession.token || !entityId || !mercoaSession.client || !balanceIsResolved) {
-      toast.error('Failed to resolve wallet funds')
-      return
-    }
-    if (!selectedBankAccount?.id) {
-      toast.error('No bank account selected')
-      return
-    }
-    try {
-      await mercoaSession.client.entity.paymentMethod.bankAccount.removeAccelerationFunds(
-        entityId,
-        selectedBankAccount.id,
-        { amount: data.amount, currency: Mercoa.CurrencyCode.Usd },
-      )
-    } catch (e) {
-      toast.error('Failed to remove funds from wallet')
-      return
-    }
-    // Keep local state in sync with wallet funds
-    setAvailableBalance((prevBalance) => prevBalance - (data?.amount ?? 0))
-    removeMethods.setValue('amount', 0)
-  }
-
-  if (!entityId) {
-    return (
-      <div className="mercoa-px-4 sm:mercoa-px-6 lg:mercoa-px-8 mercoa-pb-8">
-        <div className="sm:mercoa-flex sm:mercoa-items-center">
-          <div className="sm:mercoa-flex-auto">
-            <h1 className="mercoa-text-xl mercoa-font-semibold mercoa-text-gray-900">
-              {title ?? `${global ? 'Global ' : ''}${mercoaSession.organization?.name || ''} Wallet`} - Disabled
-            </h1>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <div className="mercoa-px-4 sm:mercoa-px-6 lg:mercoa-px-8 mercoa-pb-8">
-      <div className="sm:mercoa-flex sm:mercoa-items-center">
-        <div className="sm:mercoa-flex-auto">
-          <h1 className="mercoa-text-xl mercoa-font-semibold mercoa-text-gray-900">
-            {title ?? `${global ? 'Global ' : ''}${mercoaSession.organization?.name} Wallet`}
-          </h1>
-
-          {/* Current Wallet Balance */}
-          <div className="mercoa-mt-8">
-            <div className="mercoa-grid mercoa-grid-cols-4 mercoa-gap-2">
-              <div className="mercoa-flex mercoa-flex-col mercoa-items-center mercoa-justify-center">
-                <h2 className="mercoa-block mercoa-text-left mercoa-text-2xl mercoa-font-medium mercoa-text-gray-700">
-                  {balanceIsResolved ? `$${availableBalance.toFixed(2)}` : '--'}
-                </h2>
-                <div className="mercoa-text-sm">Available Funds</div>
-              </div>
-              <div className="mercoa-flex mercoa-flex-col mercoa-items-center mercoa-justify-center">
-                <h2 className="mercoa-block mercoa-text-left mercoa-text-2xl mercoa-font-medium mercoa-text-gray-700">
-                  {balanceIsResolved ? `$${pendingBalance.toFixed(2)}` : '--'}
-                </h2>
-                <div className="mercoa-text-sm">Pending Funds</div>
-              </div>
-              <MercoaButton color="indigo" isEmphasized={false} onClick={() => setShowDialog('add')}>
-                Add Funds
-              </MercoaButton>
-              <MercoaButton color="red" isEmphasized={false} onClick={() => setShowDialog('remove')}>
-                Withdraw Funds
-              </MercoaButton>
-              <Transition.Root show={!!showDialog} as={Fragment}>
-                <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={() => setShowDialog('')}>
-                  <Transition.Child
-                    as={Fragment}
-                    enter="mercoa-ease-out mercoa-duration-300"
-                    enterFrom="mercoa-opacity-0"
-                    enterTo="mercoa-opacity-100"
-                    leave="mercoa-ease-in mercoa-duration-200"
-                    leaveFrom="mercoa-opacity-100"
-                    leaveTo="mercoa-opacity-0"
-                  >
-                    <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75 mercoa-transition-opacity" />
-                  </Transition.Child>
-
-                  <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
-                    <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
-                      <Transition.Child
-                        as={Fragment}
-                        enter="mercoa-ease-out mercoa-duration-300"
-                        enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
-                        enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
-                        leave="mercoa-ease-in mercoa-duration-200"
-                        leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
-                        leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
-                      >
-                        <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-lg sm:mercoa-p-6">
-                          <Dialog.Title
-                            as="h3"
-                            className="mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
-                          >
-                            Transfer Funds
-                          </Dialog.Title>
-
-                          {showDialog === 'remove' && (
-                            <>
-                              <h2 className="mercoa-block mercoa-text-left mercoa-font-medium mercoa-text-gray-900 mercoa-mt-4">
-                                Transfer From
-                              </h2>
-                              <div className="mercoa-mt-1">
-                                <PaymentMethodButton
-                                  selected
-                                  icon={<WalletIcon className="mercoa-size-5" />}
-                                  text={title ?? `${mercoaSession.organization?.name} Wallet`}
-                                />
-                              </div>
-                            </>
-                          )}
-
-                          {/* Select Source Bank Account */}
-                          <div className="mercoa-my-4">
-                            <h2 className="mercoa-block mercoa-text-left mercoa-font-medium mercoa-text-gray-900">
-                              {showDialog === 'add' ? 'Transfer From' : 'To'}
-                            </h2>
-                            <div className="mercoa-mt-1 mercoa-overflow-y-auto mercoa-h-48 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-md">
-                              {bankAccounts.map((bankAccount) => (
-                                <div key={bankAccount.id} className="mercoa-mt-1">
-                                  <BankAccount
-                                    account={bankAccount}
-                                    selected={bankAccount.id === selectedBankAccount?.id}
-                                    onSelect={() => {
-                                      setSelectedBankAccount(bankAccount)
-                                    }}
-                                  />
-                                </div>
-                              ))}
-                            </div>
-
-                            {bankAccounts.length === 0 && (
-                              <div className="mercoa-mt-2 mercoa-text-left mercoa-text-gray-700">
-                                No verified bank accounts found. Please add and verify at least one bank account.
-                              </div>
-                            )}
-
-                            {showDialog === 'add' && (
-                              <>
-                                <h2 className="mercoa-block mercoa-text-left mercoa-font-medium mercoa-text-gray-900 mercoa-mt-4">
-                                  To
-                                </h2>
-                                <div className="mercoa-mt-1">
-                                  <PaymentMethodButton
-                                    selected
-                                    icon={<WalletIcon className="mercoa-size-5" />}
-                                    text={title ?? `${mercoaSession.organization?.name} Wallet`}
-                                  />
-                                </div>
-                              </>
-                            )}
-                          </div>
-
-                          {showDialog === 'add' ? (
-                            <form
-                              className="mercoa-p-3 mercoa-rounded-md mercoa-bg-gray-200 mercoa-flex mercoa-items-end mercoa-gap-x-4"
-                              onSubmit={addMethods.handleSubmit(handleAddFunds)}
-                            >
-                              <MercoaInput
-                                control={addMethods.control}
-                                name="amount"
-                                label="Amount"
-                                type="currency"
-                                className="md:mercoa-col-span-1 mercoa-col-span-full"
-                                leadingIcon={
-                                  <span className="mercoa-text-gray-500 sm:mercoa-text-sm">
-                                    {currencyCodeToSymbol(Mercoa.CurrencyCode.Usd)}
-                                  </span>
-                                }
-                                errors={addMethods.formState.errors}
-                              />
-
-                              <MercoaButton
-                                isEmphasized
-                                type="submit"
-                                className="mercoa-mt-4"
-                                disabled={!balanceIsResolved}
-                              >
-                                Transfer
-                              </MercoaButton>
-                            </form>
-                          ) : (
-                            <form
-                              className="mercoa-p-3 mercoa-rounded-md mercoa-bg-gray-200 mercoa-flex mercoa-items-end mercoa-gap-x-4"
-                              onSubmit={removeMethods.handleSubmit(handleRemoveFunds)}
-                            >
-                              <MercoaInput
-                                control={removeMethods.control}
-                                name="amount"
-                                label="Amount"
-                                type="currency"
-                                className="md:mercoa-col-span-1 mercoa-col-span-full"
-                                leadingIcon={
-                                  <span className="mercoa-text-gray-500 sm:mercoa-text-sm">
-                                    {currencyCodeToSymbol(Mercoa.CurrencyCode.Usd)}
-                                  </span>
-                                }
-                                errors={removeMethods.formState.errors}
-                              />
-
-                              <MercoaButton
-                                isEmphasized
-                                type="submit"
-                                className="mercoa-mt-4"
-                                disabled={!balanceIsResolved}
-                              >
-                                Transfer
-                              </MercoaButton>
-                            </form>
-                          )}
-                        </Dialog.Panel>
-                      </Transition.Child>
-                    </div>
-                  </div>
-                </Dialog>
-              </Transition.Root>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   )
 }

@@ -77,6 +77,7 @@ export const prettyPaymentMethodTypes = {
   virtualCard: 'Virtual Card',
   offPlatform: 'Off Platform',
   utility: 'Utility',
+  wallet: 'Wallet',
 }
 
 export const prettyBusinessTypes = {

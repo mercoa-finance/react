@@ -16,6 +16,7 @@ import {
   NoSession,
   useMercoaSession,
   usePayableDetails,
+  Wallet,
 } from '../../../../../../components'
 import { FinanceWithOatfi } from '../../../../../../components/Oatfi'
 import { PayableFormAction } from '../../constants'
@@ -394,6 +395,19 @@ export function PayableSelectPaymentMethod({
               <div className="mercoa-mt-2" />
             </>
           )}
+        </>
+      )}
+
+      {selectedType === Mercoa.PaymentMethodType.Wallet && (
+        <>
+          <PaymentMethodList
+            paymentMethods={paymentMethods}
+            paymentId={paymentId}
+            readOnly={readOnly}
+            setPaymentId={setPaymentId}
+            type={Mercoa.PaymentMethodType.Wallet}
+            Component={Wallet}
+          />
         </>
       )}
 

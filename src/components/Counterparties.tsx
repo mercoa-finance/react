@@ -1132,6 +1132,7 @@ export function Counterparties({
   counterpartyPreSubmit,
   admin,
   counterpartyDetailsButtons,
+  showEntityConfirmation = true,
   children,
 }: {
   type: 'payor' | 'payee'
@@ -1151,6 +1152,7 @@ export function Counterparties({
   network?: Mercoa.CounterpartyNetworkType[]
   admin?: boolean
   counterpartyDetailsButtons?: CounterpartyDetailsButtons
+  showEntityConfirmation?: boolean
   children?: ({
     setSearch,
     dataLoaded,
@@ -1431,6 +1433,7 @@ export function Counterparties({
                 onboardingLinkOptions={onboardingLinkOptions}
                 onboardingEmailOptions={onboardingEmailOptions}
                 type={type}
+                showEntityConfirmation={showEntityConfirmation}
               />
             </div>
           </div>
@@ -1521,6 +1524,7 @@ export function CounterpartyDetails({
   onboardingEmailOptions,
   counterpartyDetailsButtons,
   type,
+  showEntityConfirmation = true,
   children,
 }: {
   counterparty?: Mercoa.CounterpartyResponse
@@ -1536,6 +1540,7 @@ export function CounterpartyDetails({
   onboardingEmailOptions?: Mercoa.entity.SendOnboardingLink
   type: 'payor' | 'payee'
   counterpartyDetailsButtons?: CounterpartyDetailsButtons
+  showEntityConfirmation?: boolean
   children?: ({
     counterparty,
     invoices,
@@ -1691,7 +1696,11 @@ export function CounterpartyDetails({
       />
 
       {!hideCounterpartyPaymentMethods && (
-        <CounterpartyPaymentMethodsCard type={type} counterparty={counterpartyLocal} />
+        <CounterpartyPaymentMethodsCard
+          type={type}
+          counterparty={counterpartyLocal}
+          showEntityConfirmation={showEntityConfirmation}
+        />
       )}
 
       {!hideCounterpartyInvoices && (
@@ -2086,9 +2095,11 @@ function CounterpartyDetailsCard({
 function CounterpartyPaymentMethodsCard({
   type,
   counterparty,
+  showEntityConfirmation = true,
 }: {
   type: 'payor' | 'payee'
   counterparty: Mercoa.EntityResponse
+  showEntityConfirmation?: boolean
 }) {
   const [editingPaymentMethod, setEditingPaymentMethod] = useState<Mercoa.PaymentMethodResponse | undefined>()
   const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] = useState<boolean>(false)
@@ -2118,7 +2129,7 @@ function CounterpartyPaymentMethodsCard({
               setEditingPaymentMethod(method)
               setIsPaymentMethodModalOpen(true)
             }}
-            showEntityConfirmation={true}
+            showEntityConfirmation={showEntityConfirmation}
           />
         </div>
       </div>

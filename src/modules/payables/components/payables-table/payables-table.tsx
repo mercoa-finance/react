@@ -172,8 +172,10 @@ export const PayablesTable: FC = memo(() => {
               cell: ({
                 row,
               }: {
-                row: any & {
-                  original: Mercoa.InvoiceResponse
+                row: {
+                  original: {
+                    invoice?: Mercoa.InvoiceResponse
+                  }
                 }
               }) => (
                 <div
@@ -181,7 +183,9 @@ export const PayablesTable: FC = memo(() => {
                   onClick={(e: React.MouseEvent) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    handleSelectRow(row.original)
+                    if (row.original.invoice) {
+                      handleSelectRow(row.original.invoice)
+                    }
                   }}
                 >
                   <input
@@ -194,9 +198,11 @@ export const PayablesTable: FC = memo(() => {
                       'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-transparent mercoa-cursor-pointer',
                       classNames?.checkbox,
                     )}
-                    checked={selectedInvoices.some((e) => e.id === row.original.id)}
+                    checked={selectedInvoices.some((e) => row.original.invoice && e.id === row.original.invoice.id)}
                     onChange={(e) => {
-                      handleSelectRow(row.original)
+                      if (row.original.invoice) {
+                        handleSelectRow(row.original.invoice)
+                      }
                       e.stopPropagation()
                     }}
                   />
@@ -612,8 +618,10 @@ export const PayablesTable: FC = memo(() => {
               cell: ({
                 row,
               }: {
-                row: any & {
-                  original: Mercoa.InvoiceResponse
+                row: {
+                  original: {
+                    invoice?: Mercoa.InvoiceResponse
+                  }
                 }
               }) => (
                 <div
@@ -621,7 +629,9 @@ export const PayablesTable: FC = memo(() => {
                   onClick={(e: React.MouseEvent) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    handleSelectRow(row.original)
+                    if (row.original.invoice) {
+                      handleSelectRow(row.original.invoice)
+                    }
                   }}
                 >
                   <input
@@ -634,9 +644,11 @@ export const PayablesTable: FC = memo(() => {
                       'mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-transparent mercoa-cursor-pointer',
                       classNames?.checkbox,
                     )}
-                    checked={selectedInvoices.some((e) => e.id === row.original.id)}
+                    checked={selectedInvoices.some((e) => row.original.invoice && e.id === row.original.invoice.id)}
                     onChange={(e) => {
-                      handleSelectRow(row.original)
+                      if (row.original.invoice) {
+                        handleSelectRow(row.original.invoice)
+                      }
                       e.stopPropagation()
                     }}
                   />

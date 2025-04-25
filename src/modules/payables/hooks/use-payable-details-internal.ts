@@ -91,7 +91,9 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const [vendorSearch, setVendorSearch] = useState('')
   const { heightOffset } = displayOptions
   const showDestinationPaymentMethodConfirmation =
-    displayOptions.paymentMethods?.showDestinationPaymentMethodConfirmation ?? true
+    displayOptions.paymentMethods?.showDestinationPaymentMethodConfirmation === undefined
+      ? true
+      : displayOptions.paymentMethods?.showDestinationPaymentMethodConfirmation
   const [height, setHeight] = useState<number>(
     typeof window !== 'undefined' ? window.innerHeight - (heightOffset ?? 0) : 0,
   )
@@ -1526,6 +1528,9 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     }
     if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'utility')) {
       availableTypes.push({ key: 'utility', value: 'Utility' })
+    }
+    if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'wallet')) {
+      availableTypes.push({ key: 'wallet', value: 'Wallet' })
     }
 
     paymentMethods?.forEach((paymentMethod) => {

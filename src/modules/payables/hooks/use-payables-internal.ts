@@ -220,6 +220,7 @@ export function usePayablesInternal(payableProps: PayablesProps) {
       dueDate: invoice.dueDate,
       invoiceDate: invoice.invoiceDate,
       deductionDate: invoice.deductionDate,
+      approvers: invoice.approvers,
       paymentDestination: invoice.paymentDestination,
       invoiceType: (invoice.paymentSchedule?.type === Mercoa.PaymentType.OneTime ? 'invoice' : 'invoiceTemplate') as
         | 'invoice'

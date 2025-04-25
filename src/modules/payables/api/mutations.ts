@@ -649,12 +649,12 @@ export function useRunOcr() {
   return useMutation<Mercoa.OcrAsyncResponse, any>({
     mutationKey: ['runOcr'],
     mutationFn: async ({ fileReaderObj, mimeType }: { fileReaderObj: string; mimeType: string }) => {
-      if (!mercoaSession.client || !mercoaSession.entityId) {
-        throw new Error('Client or entity ID not found')
+      if (!mercoaSession.client) {
+        throw new Error('Client not found')
       }
       try {
         const response = await mercoaSession.client.ocr.runAsyncOcr({
-          entityId: mercoaSession.entityId,
+          ...(mercoaSession.entityId && { entityId: mercoaSession.entityId }),
           image: fileReaderObj,
           mimeType,
         })

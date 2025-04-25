@@ -1,5 +1,5 @@
 import { Mercoa } from '@mercoa/javascript'
-import { BankAccounts, Cards, Checks, CustomPaymentMethods, NoSession, useMercoaSession } from './index'
+import { BankAccounts, Cards, Checks, CustomPaymentMethods, NoSession, useMercoaSession, Wallets } from './index'
 
 export function PaymentMethods({
   isPayor,
@@ -51,6 +51,16 @@ export function PaymentMethods({
     mercoaSession.organization?.paymentMethods?.vendorDisbursements?.find(
       (e) => e.type === Mercoa.PaymentMethodType.Check && e.active,
     )
+
+  const showWallet =
+    (isPayor &&
+      mercoaSession.organization?.paymentMethods?.payerPayments?.find(
+        (e) => e.type === Mercoa.PaymentMethodType.Wallet && e.active,
+      )) ||
+    (isPayee &&
+      mercoaSession.organization?.paymentMethods?.vendorDisbursements?.find(
+        (e) => e.type === Mercoa.PaymentMethodType.Wallet && e.active,
+      ))
 
   return (
     <div className="mercoa-flex mercoa-flex-col mercoa-gap-y-4">
@@ -112,6 +122,19 @@ export function PaymentMethods({
         entityId={entityId}
         onSelect={onSelect}
       />
+
+      {showWallet && (
+        <div>
+          <h3>Wallet</h3>
+          <Wallets
+            showAdd={showAdd}
+            showEdit={showEdit}
+            showDelete={showDelete}
+            entityId={entityId}
+            onSelect={onSelect}
+          />
+        </div>
+      )}
     </div>
   )
 }

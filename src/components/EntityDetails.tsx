@@ -184,7 +184,7 @@ export function EntityEmailLogs({
       <table className="mercoa-min-w-full mercoa-divide-y mercoa-divide-gray-300 mercoa-mt-5">
         <thead>
           <tr>
-            {['From', 'Subject', 'Date'].map((column, index) => {
+            {['From', 'Subject', 'Date', 'Status'].map((column, index) => {
               return (
                 <th
                   key={index}
@@ -226,6 +226,13 @@ export function EntityEmailLogs({
                 }`}
               >
                 {dayjs(log.createdAt).format('MMM DD')}
+              </td>
+              <td
+                className={`mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900 ${
+                  onClick && log.invoiceId ? 'mercoa-cursor-pointer' : ''
+                }`}
+              >
+                {log.status.toLowerCase()}
               </td>
             </tr>
           ))}
