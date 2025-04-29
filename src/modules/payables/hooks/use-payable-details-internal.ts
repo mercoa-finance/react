@@ -749,15 +749,13 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     ],
   )
 
-  // set payment type defaults, and method defaults based on the type, should not run when source and destination payment types are already set
+  // Handle source payment method defaults
   useEffect(() => {
-    if (!paymentMethodsSource && !paymentMethodsDestination) return
-    if (paymentSourceType && paymentDestinationType) return
-    // Check for default payment methods
-    const defaultSourcePm = paymentMethodsSource?.find((e) => e.isDefaultSource)
-    const defaultDestPm = paymentMethodsDestination?.find((e) => e.isDefaultDestination)
+    if (!paymentMethodsSource || paymentSourceType) return
 
-    // Handle source defaults
+    // Check for default source payment method
+    const defaultSourcePm = paymentMethodsSource?.find((e) => e.isDefaultSource)
+
     if (defaultSourcePm) {
       if (defaultSourcePm.type === 'custom') {
         setValue('paymentSourceType', defaultSourcePm.schemaId)
@@ -788,8 +786,15 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
         }
       }
     }
+  }, [paymentMethodsSource, paymentSourceType, setValue, clearErrors, setMethodOnTypeChange])
 
-    // Handle destination defaults
+  // Handle destination payment method defaults
+  useEffect(() => {
+    if (!paymentMethodsDestination || paymentDestinationType) return
+
+    // Check for default destination payment method
+    const defaultDestPm = paymentMethodsDestination?.find((e) => e.isDefaultDestination)
+
     if (defaultDestPm) {
       if (defaultDestPm.type === 'custom') {
         setValue('paymentDestinationType', defaultDestPm.schemaId)
@@ -820,15 +825,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
         }
       }
     }
-  }, [
-    paymentMethodsSource,
-    paymentMethodsDestination,
-    paymentSourceType,
-    paymentDestinationType,
-    setValue,
-    clearErrors,
-    setMethodOnTypeChange,
-  ])
+  }, [paymentMethodsDestination, paymentDestinationType, setValue, clearErrors, setMethodOnTypeChange])
 
   // If selected type is custom, find the schema for both source and destination
   useEffect(() => {
