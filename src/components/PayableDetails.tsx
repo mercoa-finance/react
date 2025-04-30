@@ -4044,7 +4044,17 @@ export function PaymentDestinationProcessingTimeV1({
 
 // Approvers
 
-export function PayableApproversV1({ readOnly }: { readOnly?: boolean }) {
+export function PayableApproversV1({
+  readOnly,
+  allowAnyApprover,
+  title,
+  selectorLabel,
+}: {
+  readOnly?: boolean
+  allowAnyApprover?: boolean
+  title?: string
+  selectorLabel?: string
+}) {
   const mercoaSession = useMercoaSession()
   const {
     watch,
@@ -4071,9 +4081,13 @@ export function PayableApproversV1({ readOnly }: { readOnly?: boolean }) {
       {approvers?.length > 0 && (
         <>
           <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900 mercoa-mt-5">
-            Approvals
+            {title || 'Approvals'}
           </h2>
-          {status === Mercoa.InvoiceStatus.Draft && !readOnly ? <ApproversSelectionV1 /> : <ApproverWellsV1 />}
+          {status === Mercoa.InvoiceStatus.Draft && !readOnly ? (
+            <ApproversSelectionV1 allowAnyApprover={allowAnyApprover} label={selectorLabel} />
+          ) : (
+            <ApproverWellsV1 />
+          )}
           {errors.approvers && <p className="mercoa-text-sm mercoa-text-red-500">Please select all approvers</p>}
         </>
       )}
@@ -4081,7 +4095,7 @@ export function PayableApproversV1({ readOnly }: { readOnly?: boolean }) {
   )
 }
 
-function ApproversSelectionV1() {
+function ApproversSelectionV1({ allowAnyApprover = true, label }: { allowAnyApprover?: boolean; label?: string }) {
   const mercoaSession = useMercoaSession()
 
   const { watch, setValue } = useFormContext()
@@ -4102,7 +4116,7 @@ function ApproversSelectionV1() {
             selectedApprovers: approvers,
           }) && (
             <MercoaCombobox
-              label={'Assigned to'}
+              label={label || 'Assigned to'}
               showAllOptions
               onChange={(e) => {
                 setValue(`approvers.${index}.assignedUserId`, e.id)
@@ -4117,13 +4131,18 @@ function ApproversSelectionV1() {
                 })
               }}
               value={
-                [...mercoaSession.users, { id: 'ANY', name: 'Any Approver', email: '' }].find((user) => {
+                [
+                  ...mercoaSession.users,
+                  ...(allowAnyApprover ? [{ id: 'ANY', name: 'Any Approver', email: '' }] : []),
+                ].find((user) => {
                   const approverSlot = approvers.find((e) => e?.approvalSlotId === slot.approvalSlotId)
                   if (user.id === approverSlot?.assignedUserId) return true
                 }) ?? ''
               }
               options={[
-                { disabled: false, value: { id: 'ANY', name: 'Any Approver', email: '' } },
+                ...(allowAnyApprover
+                  ? [{ disabled: false, value: { id: 'ANY', name: 'Any Approver', email: '' } }]
+                  : []),
                 ...filterApproverOptions({
                   approverSlotIndex: index,
                   eligibleRoles: slot.eligibleRoles,
