@@ -3607,8 +3607,6 @@ export function PayableSelectPaymentMethodV1({
                       setValue(sourceOrDestination, paymentMethod.id)
                       clearErrors(sourceOrDestination)
                     }}
-                    showEntityConfirmation={isDestination}
-                    showVerification={isSource}
                   />
                 </div>
               ))}
@@ -3682,7 +3680,6 @@ export function PayableSelectPaymentMethodV1({
                       setValue(sourceOrDestination, paymentMethod.id)
                       clearErrors(sourceOrDestination)
                     }}
-                    showEntityConfirmation={isDestination}
                   />
                 </div>
               ))}
