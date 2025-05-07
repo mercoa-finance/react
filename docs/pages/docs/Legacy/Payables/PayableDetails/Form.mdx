@@ -15,7 +15,7 @@ import {
   PayablePaymentSourceV1,
   PaymentDestinationProcessingTimeV1,
   PaymentOptionsV1,
-} from '@mercoa/react'
+} from '@Mercoa/react'
 import { Callout } from 'nextra/components'
 import { useEffect } from 'react'
 import { ComponentContainer } from '../../../../../components/helpers'
@@ -39,7 +39,7 @@ The `<PayableForm>` component should be used as a child of the [`<PayableDetails
 | ocrResponse           | `Mercoa.OcrResponse`                                                                                                                                          |          | Results of OCR                                                                                                                   |
 | onUpdate              | `(invoice: InvoiceResponse \| undefined) => void`                                                                                                             |          | When the invoice is created, updated, or deleted, this callback is triggered                                                     |
 | height                | `number`                                                                                                                                                      | ✅       | Height of the component in pixels                                                                                                |
-| uploadedDocument      | `string`                                                                                                                                                      |          | base64 encoded invoice document                                                                                                  |
+| uploadedDocument      | `string`                                                                                                                                                      |          | Base64-encoded invoice document                                                                                                  |
 | setUploadedDocument   | `(e?: string) => void`                                                                                                                                        |          | Overrides for buttons                                                                                                            |
 | invoicePreSubmit      | `(invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>`                                                                          |          | This function is called after frontend validations are complete, and before the API call to create/update the invoice is sent.   |
 | counterpartyPreSubmit | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined, counterPartyId: string \| undefined) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Function to call before an entity is submitted to Mercoa. Useful for adding custom fields to the entity or preventing submission |
@@ -70,7 +70,7 @@ type PayableFormChildrenProps = {
 
 ## Customization
 
-The `PayableFormV1` component consists of multiple subcomponents that can all be customized. Additionally, you can mix in your own custom components to further control the UX.
+The `PayableFormV1` component consists of multiple sub-components that can all be customized. Additionally, you can mix in your own custom components to further control the UX.
 
 <Callout>All of the subcomponents must be children of a `PayableFormV1` component</Callout>
 
@@ -116,7 +116,7 @@ The default children is the following:
 
 | Name   | Type      | Required | Description                  |
 | :----- | :-------- | :------- | :--------------------------- |
-| hideId | `boolean` |          | Hide the internal invoice id |
+| hideID | `boolean` |          | Hide the internal invoice id |
 
 <ComponentContainer>
   <PayableFormV1>{() => <PayableFormHeaderV1 />}</PayableFormV1>
@@ -135,11 +135,11 @@ The default children is the following:
 
 | Name            | Type                                                    | Required | Description                                                |
 | :-------------- | :------------------------------------------------------ | :------- | :--------------------------------------------------------- |
-| onSelect        | `(counterparty?: Mercoa.CounterpartyResponse ) => any`  | ✅       | Callback when a vendor is selected or created.             |
+| onSelect | `(counterparty?: Mercoa.CounterpartyResponse ) => any` | ✅ | Callback when a vendor is selected or created. |
 | counterparty    | `Mercoa.CounterpartyResponse`                           |          | Pre-selected vendor counterparty (C3)                      |
 | disableCreation | `boolean`                                               |          | Disable new vendor creation                                |
 | network         | `Mercoa.CounterpartyNetworkType[]`                      |          | Mercoa counterparty network to search. Default is `ENTITY` |
-| saveButton      | `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.                                       |
+| saveBtn         | `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.                                       |
 
 <ComponentContainer display="block">
   <PayableFormV1>

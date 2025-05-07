@@ -5,7 +5,7 @@ import { ComponentContainer } from '../../../../components/helpers'
 
 # Payable Table
 
-The `<PayablesTableV1>` renders a list of invoices that can be selected or actioned on. The component supports multiple filtering options to let you get the data you need, and provides out of the box pagination support.
+The `<PayablesTableV1>` renders a list of invoices that can be selected or acted on. The component supports multiple filtering options to let you get the data you need, and provides out-of-the-box pagination support.
 
 If you want to render `UNASSIGNED` invoices for an entity group, you can use the `<GroupPayablesTable>` component, which takes the same props as `<PayablesTable>` aside from `statuses`.
 
@@ -20,10 +20,10 @@ If you want to render `UNASSIGNED` invoices for an entity group, you can use the
 | Name            | Type                                                           | Required | Description                                                                                                      |
 | :---------------| :--------------------------------------------------------------| :--------| :----------------------------------------------------------------------------------------------------------------|
 | statuses        | `Mercoa.InvoiceStatus[]`                                       | ✅       | List of invoice statuses to filter on                                                                            |
-| search          | `string`                                                       |          | Search filter. Searches for C3 name (fulltext), invoice number (exact), or amount (exact)                        |
+| search          | `string`                                                       |          | Search filter. Searches for C3 name (full-text), invoice number (exact), or amount (exact)                        |
 | metadata        | `Mercoa.InvoiceMetadataFilter[]`                               |          | List of metadata values to filter on                                                                             |
 | startDate       | `Date`                                                         |          | Start date filter                                                                                                |
-| endDate         | `Date`                                                         |          | End date filter                                                                                                  |
+| end date         | `Date`                                                         |          | End date filter                                                                                                  |
 | onSelectInvoice | `((invoice: InvoiceResponse) => any)`                          |          | Function to call when an invoice is clicked                                                                      |
 | columns         | `InvoiceTableColumn[]`                                         |          | List of columns to display, including metadata columns. See InvoiceTableColumn type for details                  |
 | children        | `((props: PayablesTableChildrenProps) => ReactElement \| null)`|          | Fully customize the UI with the help of these hooks and helper functions. See [example](#custom-design).         |
@@ -193,7 +193,7 @@ type PayablesTableChildrenProps = {
       title: 'Amount'
     },
     {
-      field: 'metadata.projectId',
+      field: 'metadata.projectID',
       format: (value) => {
           const v = JSON.parse(value)
           return (
@@ -239,7 +239,7 @@ type PayablesTableChildrenProps = {
       title: 'Amount'
     },
     {
-      field: 'metadata.projectId',
+      field: 'metadata.projectID',
       format: (value) => {
           const v = JSON.parse(value)
           return (
@@ -327,7 +327,7 @@ type PayablesTableChildrenProps = {
   ]}
     children={({ invoices, hasNext, getNext, hasPrevious, getPrevious, setResultsPerPage }) => {
     return (
-      <div style={{ maxWidth: '800px', margin: 'auto' }}>
+      <div style={{ max-width: '800px', margin: 'auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '5px' }}>
           {invoices.map((invoice) => (
             <div key={invoice.id} style={{ padding: '5px', border: '1px solid #eee' }}>
@@ -338,16 +338,16 @@ type PayablesTableChildrenProps = {
             </div>
           ))}
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
+        <div style={{ display: 'flex', justify-content: 'space-between', margin-top: '5px' }}>
           <button
-            style={{ padding: '5px', border: '1px solid #eee', color: hasPrevious ? '#000' : '#ccc' }}
+            style={{ padding: '5px', border: '1px solid #eee', color: hasPrev ? '#000' : '#ccc' }}
             disabled={!hasPrevious}
             onClick={getPrevious}
           >
             Previous
           </button>
           <button
-            style={{ padding: '5px', border: '1px solid #eee', color: hasNext ? '#000' : '#ccc' }}
+            style={{ padding: '5px', border: '1px solid #eee', color: hasNextPage ? '#000' : '#ccc' }}
             disabled={!hasNext}
             onClick={getNext}
           >
