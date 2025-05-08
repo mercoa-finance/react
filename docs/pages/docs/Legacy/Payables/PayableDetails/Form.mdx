@@ -15,7 +15,7 @@ import {
   PayablePaymentSourceV1,
   PaymentDestinationProcessingTimeV1,
   PaymentOptionsV1,
-} from '@mercoa/react'
+} from '@Mercoa/react'
 import { Callout } from 'nextra/components'
 import { useEffect } from 'react'
 import { ComponentContainer } from '../../../../../components/helpers'
@@ -38,7 +38,7 @@ The `<PayableForm>` component should be used as a child of the [`<PayableDetails
 | invoice               | `Mercoa.InvoiceResponse`                                                                                                                                      |          | The invoice object                                                                                                               |
 | ocrResponse           | `Mercoa.OcrResponse`                                                                                                                                          |          | Results of OCR                                                                                                                   |
 | onUpdate              | `(invoice: InvoiceResponse \| undefined) => void`                                                                                                             |          | When the invoice is created, updated, or deleted, this callback is triggered                                                     |
-| height                | `number`                                                                                                                                                      | ✅       | Height of the component in pixels                                                                                                |
+| height                | `number`                                                                                                                                                      | ✅       | Height of the component in px                                                                                                |
 | uploadedDocument      | `string`                                                                                                                                                      |          | base64 encoded invoice document                                                                                                  |
 | setUploadedDocument   | `(e?: string) => void`                                                                                                                                        |          | Overrides for buttons                                                                                                            |
 | invoicePreSubmit      | `(invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>`                                                                          |          | This function is called after frontend validations are complete, and before the API call to create/update the invoice is sent.   |

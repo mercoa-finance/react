@@ -2,7 +2,7 @@ import {
   OcrProgressBarV1,
   PayableDocumentDisplayV1,
   DocumentUploadBoxV1
-} from '@mercoa/react'
+} from '@Mercoa/react'
 import { payerEntity, vendorEntities, inv_new_ready, inv_scheduled } from '../../../../../mockData'
 import { ComponentContainer } from '../../../../../components/helpers'
 import { Callout } from 'nextra/components'
@@ -25,7 +25,7 @@ The `<PayableDocument>` component should be used as a child of the [`<PayableDet
 | invoice               | `Mercoa.InvoiceResponse`                                                             |          | The ID of the invoice to edit. Leave blank if creating a new invoice                                                                                  |
 | onOcrComplete         | `(ocrResponse?: Mercoa.OcrResponse) => void`                                         |          | Callback when OCR is completed
 | setUploadedDocument   | `(document: string) => void`                                                         |          | Callback of base64 docuemnt when the document is uploaded                                                                          |
-| height                | `number`                                                                             |   ✅     | Height of the component in pixels |
+| height                | `number`                                                                             |   ✅     | Height of the component in px |
 | theme                 | `'light' \| 'dark'`                                                                  |          |                                                                            |
 | downloadButton        | `({ onClick }: { onClick: () => void }) => JSX.Element`                              |          | Override for download invoice button                                                                                                                                 |
 | viewEmailButton       | `({ onClick }: { onClick: () => void }) => JSX.Element`                              |          | Override for view email invoice button                              |
