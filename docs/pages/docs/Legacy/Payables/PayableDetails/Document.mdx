@@ -2,7 +2,7 @@ import {
   OcrProgressBarV1,
   PayableDocumentDisplayV1,
   DocumentUploadBoxV1
-} from '@Mercoa/react'
+} from '@mercoa/react'
 import { payerEntity, vendorEntities, inv_new_ready, inv_scheduled } from '../../../../../mockData'
 import { ComponentContainer } from '../../../../../components/helpers'
 import { Callout } from 'nextra/components'
@@ -27,7 +27,7 @@ The `<PayableDocument>` component should be used as a child of the [`<PayableDet
 | setUploadedDocument   | `(document: string) => void`                                                         |          | Callback of base64 document when the document is uploaded                                                                          |
 | height                | `number`                                                                             |   ✅     | Height of the component in pixels |
 | theme                 | `'light' \| 'dark'`                                                                  |          |                                                                            |
-| downloadButton        | `({ onClick }: { onClick: () => void }) => JSX.Element`                              |          | Override for download button                                                                                                                                 |
+| downloadButton        | `({ onClick }: { onClick: () => void }) => JSX.Element`                              |          | Override for download invoice button                                                                                                                                 |
 | viewEmailButton       | `({ onClick }: { onClick: () => void }) => JSX.Element`                              |          | Override for view email invoice button                              |
 | children              | `(methods: PayableDocumentChildrenProps) => JSX.Element`                             |          | See [customization](#customization) for details on how to use the children prop.                                                                      |
 
@@ -50,7 +50,7 @@ type PayableDocumentChildrenProps = {
 The `PayableDocument` component consists of multiple sub-components that can all be customized. Additionally, you can mix in your own custom components to further control the UX.
 
 <Callout>
-All of the sub-components must be children of a `PayableDocument` component
+All of the subcomponents must be children of a `PayableDocument` component
 </Callout>
 
 

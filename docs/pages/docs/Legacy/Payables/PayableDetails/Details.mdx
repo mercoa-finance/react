@@ -14,7 +14,7 @@ import {
   PayablePaymentDestination,
   PayablePaymentSource,
   PaymentDestinationProcessingTime
-} from '@Mercoa/react'
+} from '@mercoa/react'
 import { Callout } from 'nextra/components'
 import { useEffect } from 'react'
 import { ComponentContainer } from '../../../../../components/helpers'
@@ -35,9 +35,9 @@ The `<PayableDetailsV1>` component is used to let users create and manage payabl
 | Name                  | Type                                                                                 | Required | Description                                                                                                                                           |
 | :---------------------| :------------------------------------------------------------------------------------| :--------| :-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | invoiceId             | `string`                                                                             |          | The ID of the invoice to edit. Leave blank if creating a new invoice                                                                                  |
-| onUpdate              | `(invoice: InvoiceResponse | undefined) => void`                                    |          | When the invoice is created, updated, or deleted, this callback is triggered                                                                          |
+| onUpdate              | `(invoice: InvoiceResponse \| undefined) => void`                                    |          | When the invoice is created, updated, or deleted, this callback is triggered                                                                          |
 | heightOffset          | `number`                                                                             |          | This component uses the screen size to set its height. If you have other elements on the screen, increase the height offset to reduce the size of this component. |
-| documentPosition      | 'right' | 'left' | 'none'                                                        |          | Control where to place the invoice document (or hide it). Default is `left`                                                                           |
+| documentPosition      | `'right' \| 'left' \| 'none'`                                                        |          | Control where to place the invoice document (or hide it). Default is `left`                                                                           |
 | invoicePreSubmit      | `(invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>` |          | This function is called after frontend validations are complete, and before the API call to create/update the invoice is sent.                        |
 | counterpartyPreSubmit | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined, counterPartyId: string \| undefined) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Function to call before an entity is submitted to Mercoa. Useful for adding custom fields to the entity or preventing submission |
 | children              | `(methods: PayableDetailsChildrenProps) => JSX.Element[]`                            |          | See [customization](#customization) for details on how to use the children prop.                                                                      |

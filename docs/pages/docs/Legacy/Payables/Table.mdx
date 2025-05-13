@@ -23,7 +23,7 @@ If you want to render `UNASSIGNED` invoices for an entity group, you can use the
 | search          | `string`                                                       |          | Search filter. Searches for C3 name (full-text), invoice number (exact), or amount (exact)                        |
 | metadata        | `Mercoa.InvoiceMetadataFilter[]`                               |          | List of metadata values to filter on                                                                             |
 | startDate       | `Date`                                                         |          | Start date filter                                                                                                |
-| end date         | `Date`                                                         |          | End date filter                                                                                                  |
+| endDate         | `Date`                                                         |          | End date filter                                                                                                  |
 | onSelectInvoice | `((invoice: InvoiceResponse) => any)`                          |          | Function to call when an invoice is clicked                                                                      |
 | columns         | `InvoiceTableColumn[]`                                         |          | List of columns to display, including metadata columns. See InvoiceTableColumn type for details                  |
 | children        | `((props: PayablesTableChildrenProps) => ReactElement \| null)`|          | Fully customize the UI with the help of these hooks and helper functions. See [example](#custom-design).         |
@@ -340,14 +340,14 @@ type PayablesTableChildrenProps = {
         </div>
         <div style={{ display: 'flex', justify-content: 'space-between', margin-top: '5px' }}>
           <button
-            style={{ padding: '5px', border: '1px solid #eee', color: hasPrev ? '#000' : '#ccc' }}
+            style={{ padding: '5px', border: '1px solid #eee', color: hasPrevious ? '#000' : '#ccc' }}
             disabled={!hasPrevious}
             onClick={getPrevious}
           >
             Previous
           </button>
           <button
-            style={{ padding: '5px', border: '1px solid #eee', color: hasNextPage ? '#000' : '#ccc' }}
+            style={{ padding: '5px', border: '1px solid #eee', color: hasNext ? '#000' : '#ccc' }}
             disabled={!hasNext}
             onClick={getNext}
           >
