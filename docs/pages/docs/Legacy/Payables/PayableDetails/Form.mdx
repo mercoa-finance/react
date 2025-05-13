@@ -15,7 +15,7 @@ import {
   PayablePaymentSourceV1,
   PaymentDestinationProcessingTimeV1,
   PaymentOptionsV1,
-} from '@Mercoa/react'
+} from '@mercoa/react'
 import { Callout } from 'nextra/components'
 import { useEffect } from 'react'
 import { ComponentContainer } from '../../../../../components/helpers'
@@ -70,7 +70,7 @@ type PayableFormChildrenProps = {
 
 ## Customization
 
-The `PayableFormV1` component consists of multiple sub-components that can all be customized. Additionally, you can mix in your own custom components to further control the UX.
+The `PayableFormV1` component consists of multiple subcomponents that can all be customized. Additionally, you can mix in your own custom components to further control the UX.
 
 <Callout>All of the subcomponents must be children of a `PayableFormV1` component</Callout>
 
@@ -135,7 +135,7 @@ The default children is the following:
 
 | Name            | Type                                                    | Required | Description                                                |
 | :-------------- | :------------------------------------------------------ | :------- | :--------------------------------------------------------- |
-| onSelect | `(counterparty?: Mercoa.CounterpartyResponse ) => any` | ✅ | Callback when a vendor is selected or created. |
+| onSelect        | `(counterparty?: Mercoa.CounterpartyResponse ) => any`  | ✅       | Callback when a vendor is selected or created.             |
 | counterparty    | `Mercoa.CounterpartyResponse`                           |          | Pre-selected vendor counterparty (C3)                      |
 | disableCreation | `boolean`                                               |          | Disable new vendor creation                                |
 | network         | `Mercoa.CounterpartyNetworkType[]`                      |          | Mercoa counterparty network to search. Default is `ENTITY` |

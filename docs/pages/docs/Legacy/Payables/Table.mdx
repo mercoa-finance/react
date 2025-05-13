@@ -193,7 +193,7 @@ type PayablesTableChildrenProps = {
       title: 'Amount'
     },
     {
-      field: 'metadata.projectID',
+      field: 'metadata.projectId',
       format: (value) => {
           const v = JSON.parse(value)
           return (
@@ -239,7 +239,7 @@ type PayablesTableChildrenProps = {
       title: 'Amount'
     },
     {
-      field: 'metadata.projectID',
+      field: 'metadata.projectId',
       format: (value) => {
           const v = JSON.parse(value)
           return (
@@ -327,7 +327,7 @@ type PayablesTableChildrenProps = {
   ]}
     children={({ invoices, hasNext, getNext, hasPrevious, getPrevious, setResultsPerPage }) => {
     return (
-      <div style={{ max-width: '800px', margin: 'auto' }}>
+<div style={{ maxWidth: '800px', margin: 'auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '5px' }}>
           {invoices.map((invoice) => (
             <div key={invoice.id} style={{ padding: '5px', border: '1px solid #eee' }}>
@@ -338,7 +338,7 @@ type PayablesTableChildrenProps = {
             </div>
           ))}
         </div>
-        <div style={{ display: 'flex', justify-content: 'space-between', margin-top: '5px' }}>
+<div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
           <button
             style={{ padding: '5px', border: '1px solid #eee', color: hasPrevious ? '#000' : '#ccc' }}
             disabled={!hasPrevious}
