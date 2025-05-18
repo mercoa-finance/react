@@ -10,7 +10,7 @@ export function PayableCounterpartySearch() {
   const { vendorContextValue } = formContextValue
   const { selectedVendor, setSelectedVendor } = vendorContextValue
   const { config } = propsContextValue
-  const { disableCounterpartyCreation, counterpartyNetwork } = config ?? {}
+  const { disableCreation, network, enableOnboardingLinkOnCreate } = config?.counterparty ?? {}
 
   const {
     formState: { errors },
@@ -39,13 +39,14 @@ export function PayableCounterpartySearch() {
         <div className="mercoa-p-3 mercoa-bg-gray-100 mercoa-rounded-mercoa mercoa-relative mercoa-w-full">
           <CounterpartySearchBase
             counterparty={selectedVendor}
-            disableCreation={disableCounterpartyCreation}
+            disableCreation={disableCreation}
             onSelect={setSelectedVendor}
             type={'payee'}
-            network={counterpartyNetwork}
+            network={network}
             edit={edit}
             setEdit={setEdit}
             readOnly={!!status && status !== Mercoa.InvoiceStatus.Draft}
+            enableOnboardingLinkOnCreate={enableOnboardingLinkOnCreate}
           />
         </div>
       </div>

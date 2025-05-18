@@ -1543,7 +1543,7 @@ export function MercoaInput({
   }
   min?: string | number
   max?: string | number
-  step?: number
+  step?: string | number
   noBorder?: boolean
   inputMask?: string
 }) {

@@ -87,6 +87,7 @@ export function PayableDetails({
         handlers,
         renderCustom,
         config: {
+          ...config,
           supportedCurrencies: supportedCurrencies,
         },
         displayOptions: {

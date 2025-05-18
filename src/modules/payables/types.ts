@@ -38,8 +38,11 @@ export type PayableDetailsQueryOptions = {
 
 export type PayableDetailsConfig = {
   supportedCurrencies?: Mercoa.CurrencyCode[]
-  disableCounterpartyCreation?: boolean
-  counterpartyNetwork?: Mercoa.CounterpartyNetworkType[]
+  counterparty?: {
+    network?: Mercoa.CounterpartyNetworkType[]
+    disableCreation?: boolean
+    enableOnboardingLinkOnCreate?: boolean
+  }
 }
 
 export type PayableDetailsDisplayOptions = {

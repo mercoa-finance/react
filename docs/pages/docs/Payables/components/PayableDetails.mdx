@@ -72,9 +72,18 @@ The `<PayableDetails>` component is used to let users create and manage payable 
 <a id="functional-options"></a>
 ### Functional Options (`config`)
 
-| Name                  | Type                    | Required | Description                                     |
-| --------------------- | ----------------------- | -------- | ----------------------------------------------- |
-| `supportedCurrencies` | `Mercoa.CurrencyCode[]` |          | List of currencies supported in this component. |
+| Name                  | Type                                                                  | Required | Description                                     |
+| --------------------- | --------------------------------------------------------------------- | -------- | ----------------------------------------------- |
+| `supportedCurrencies` | `Mercoa.CurrencyCode[]`                                               |          | List of currencies supported in this component. |
+| `counterparty`        | [`Counterparty Options Object`](#counterparty-options)                |          | Configuration options for counterparty handling. |
+
+#### Counterparty Options
+
+| Name                           | Type                                | Required | Description                                                                                |
+| ------------------------------ | ----------------------------------- | -------- | ------------------------------------------------------------------------------------------ |
+| `network`                      | `Mercoa.CounterpartyNetworkType[]`  |          | List of network types allowed for counterparties.                                          |
+| `disableCreation`              | `boolean`                           |          | Whether to disable the creation of new counterparties. Default is false.                   |
+| `enableOnboardingLinkOnCreate` | `boolean`                           |          | Whether to show an onboarding link when creating new counterparties. Default is false.     |
 
 ---
 

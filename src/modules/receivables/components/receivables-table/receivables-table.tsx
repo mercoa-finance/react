@@ -237,6 +237,26 @@ export const ReceivablesTable = () => {
         enableResizing: true,
       },
       {
+        accessorKey: 'amount',
+        header: () => (
+          <div
+            className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
+            onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.Amount)}
+          >
+            <span>Amount</span>
+            <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
+              {getSortIcon(Mercoa.InvoiceOrderByField.Amount)}
+            </div>
+          </div>
+        ),
+        cell: ({ row }) => (
+          <span className="mercoa-text-sm">
+            {accounting.formatMoney(row.original.amount ?? '', currencyCodeToSymbol(row.original.currencyCode))}
+          </span>
+        ),
+        enableResizing: true,
+      },
+      {
         accessorKey: 'dueDate',
         header: () => (
           <div
@@ -277,21 +297,11 @@ export const ReceivablesTable = () => {
         enableResizing: true,
       },
       {
-        accessorKey: 'amount',
-        header: () => (
-          <div
-            className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
-            onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.Amount)}
-          >
-            <span>Amount</span>
-            <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
-              {getSortIcon(Mercoa.InvoiceOrderByField.Amount)}
-            </div>
-          </div>
-        ),
+        accessorKey: 'processedAt',
+        header: 'Payment Initiated',
         cell: ({ row }) => (
           <span className="mercoa-text-sm">
-            {accounting.formatMoney(row.original.amount ?? '', currencyCodeToSymbol(row.original.currencyCode))}
+            {row.original.invoice?.processedAt ? dayjs(row.original.invoice.processedAt).format('MMM DD, YYYY') : '-'}
           </span>
         ),
         enableResizing: true,

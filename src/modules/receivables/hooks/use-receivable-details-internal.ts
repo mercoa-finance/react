@@ -286,56 +286,90 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
 
     setFormLoading(true)
 
-    const newInvoice: Mercoa.InvoiceCreationRequest | false = receivableFormUtils.validateAndConstructPayload({
-      formData: data,
-      mercoaSession,
-      toast,
-    })
-
-    if (!newInvoice) {
-      setFormLoading(false)
-      setValue('formAction', '')
-      return
-    }
-
-    if (newInvoice.payerId && mercoaSession.entityId) {
-      await mercoaSession.client?.entity.counterparty.addPayors(mercoaSession.entityId, {
-        payors: [newInvoice.payerId],
+    try {
+      const newInvoice: Mercoa.InvoiceCreationRequest | false = receivableFormUtils.validateAndConstructPayload({
+        formData: data,
+        mercoaSession,
+        toast,
       })
-    }
 
-    if (
-      receivableData &&
-      [ReceivableFormAction.SEND_EMAIL, ReceivableFormAction.SAVE_DRAFT].includes(data.formAction)
-    ) {
-      const response = await invoiceClient.update(
-        receivableData.id,
-        data.formAction === ReceivableFormAction.SEND_EMAIL ? { ...newInvoice, status: 'APPROVED' } : newInvoice,
-      )
-      mercoaSession.debug(response)
-      setFormLoading(false)
-      if (response?.id) {
-        toast?.success('Invoice updated')
-        refreshInvoice(receivableData.id, response)
-        if (data.formAction === ReceivableFormAction.SAVE_DRAFT) {
+      if (!newInvoice) {
+        setFormLoading(false)
+        setValue('formAction', '')
+        return
+      }
+
+      if (newInvoice.payerId && mercoaSession.entityId) {
+        try {
+          await mercoaSession.client?.entity.counterparty.addPayors(mercoaSession.entityId, {
+            payors: [newInvoice.payerId],
+          })
+        } catch (error: any) {
+          // Non-critical error, log but continue
+          console.error('Failed to add counterparty:', error)
+        }
+      }
+
+      if (
+        receivableData &&
+        [ReceivableFormAction.SEND_EMAIL, ReceivableFormAction.SAVE_DRAFT].includes(data.formAction)
+      ) {
+        try {
+          const response = await invoiceClient.update(
+            receivableData.id,
+            data.formAction === ReceivableFormAction.SEND_EMAIL ? { ...newInvoice, status: 'APPROVED' } : newInvoice,
+          )
+          mercoaSession.debug(response)
+
+          if (!response?.id) {
+            toast?.error('Invoice failed to update')
+            setValue('formAction', '')
+          } else {
+            // If it's a SEND_EMAIL action, send the email after successful update
+            if (data.formAction === ReceivableFormAction.SEND_EMAIL) {
+              try {
+                // Send the email only after successful update
+                await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(response.id, { attachInvoice: true })
+                toast?.success('Email sent')
+              } catch (emailError: any) {
+                const errorMessage = emailError.body?.message || emailError.message || 'Unknown error'
+                toast?.error(`Email failed to send: ${errorMessage}`)
+              }
+            } else {
+              toast?.success('Invoice updated')
+            }
+
+            refreshInvoice(receivableData.id, response)
+            setValue('formAction', '')
+          }
+        } catch (error: any) {
+          toast?.error(`Failed to update invoice: ${error.message}`)
+          console.log('Failed to update invoice', error)
           setValue('formAction', '')
         }
-      } else {
-        toast?.error('Invoice failed to update')
-        setValue('formAction', '')
+      } else if (data.formAction === ReceivableFormAction.CREATE) {
+        try {
+          const response = await invoiceClient.create(newInvoice)
+          mercoaSession.debug(response)
+
+          if (response?.id) {
+            toast?.success('Invoice created')
+            refreshInvoice(response.id, response)
+            setValue('formAction', '')
+          } else {
+            toast?.error('Invoice failed to create')
+            setValue('formAction', '')
+          }
+        } catch (error: any) {
+          toast?.error(`Failed to create invoice: ${error.message}`)
+          setValue('formAction', '')
+        }
       }
-    } else if (data.formAction === ReceivableFormAction.CREATE) {
-      const response = await invoiceClient.create(newInvoice)
-      mercoaSession.debug(response)
+    } catch (error: any) {
+      toast?.error(`An error occurred: ${error.message}`)
+      setValue('formAction', '')
+    } finally {
       setFormLoading(false)
-      if (response?.id) {
-        toast?.success('Invoice created')
-        refreshInvoice(response.id, response)
-        setValue('formAction', '')
-      } else {
-        toast?.error('Invoice failed to create')
-        setValue('formAction', '')
-      }
     }
   }
 
@@ -400,7 +434,6 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
           }
           break
 
-        case ReceivableFormAction.SEND_EMAIL:
         case ReceivableFormAction.RESEND_EMAIL:
           if (invoiceType === 'invoiceTemplate') {
             toast?.error('Email sending is not available for invoice templates.')
@@ -409,6 +442,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
           }
           if (!receivableData?.id || !receivableData.payer) {
             toast?.error('There is no payer associated with this invoice. Please select a payer and save draft.')
+            setValue('formAction', '')
             return
           }
           if (!receivableData.payer.email) {
@@ -418,9 +452,16 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
             setValue('formAction', '')
             return
           }
-          await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(receivableData.id, { attachInvoice: true })
-          toast?.info('Email Sent')
-          setValue('formAction', '')
+
+          try {
+            await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(receivableData.id, { attachInvoice: true })
+            toast?.info('Email Sent')
+          } catch (error: any) {
+            const errorMessage = error.body?.message || error.message || 'Unknown error'
+            toast?.error(`Failed to send email: ${errorMessage}`)
+          } finally {
+            setValue('formAction', '')
+          }
           break
 
         case ReceivableFormAction.MARK_AS_PAID:

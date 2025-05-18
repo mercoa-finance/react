@@ -17,14 +17,18 @@ export const useCounterpartiesTable = (
   const [search, setSearch] = useState(initialRequestOptions?.search || '')
   const [debouncedSearch, setDebouncedSearch] = useState(search)
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useCounterpartiesQuery(entityId, type, {
-    limit: currentRequestOptions?.limit ?? resultsPerPage,
-    search: currentRequestOptions?.search ?? debouncedSearch,
-    paymentMethods: currentRequestOptions?.paymentMethods ?? initialRequestOptions?.paymentMethods ?? true,
-    invoiceMetrics: currentRequestOptions?.invoiceMetrics ?? initialRequestOptions?.invoiceMetrics ?? true,
-    networkType: currentRequestOptions?.networkType ??
-      initialRequestOptions?.networkType ?? [Mercoa.CounterpartyNetworkType.Entity],
-  })
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, refetch } = useCounterpartiesQuery(
+    entityId,
+    type,
+    {
+      limit: currentRequestOptions?.limit ?? resultsPerPage,
+      search: currentRequestOptions?.search ?? debouncedSearch,
+      paymentMethods: currentRequestOptions?.paymentMethods ?? initialRequestOptions?.paymentMethods ?? true,
+      invoiceMetrics: currentRequestOptions?.invoiceMetrics ?? initialRequestOptions?.invoiceMetrics ?? true,
+      networkType: currentRequestOptions?.networkType ??
+        initialRequestOptions?.networkType ?? [Mercoa.CounterpartyNetworkType.Entity],
+    },
+  )
 
   const currentPageData = useMemo(() => {
     return data?.pages[page]?.counterparties || []
@@ -88,5 +92,6 @@ export const useCounterpartiesTable = (
     isNextDisabled,
     isPrevDisabled,
     isFetchingNextPage,
+    refetch,
   }
 }

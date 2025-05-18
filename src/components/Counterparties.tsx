@@ -498,6 +498,7 @@ export function CounterpartySearchBase({
   edit,
   setEdit,
   readOnly,
+  enableOnboardingLinkOnCreate,
   renderCustom,
 }: {
   counterparty?: Mercoa.CounterpartyResponse
@@ -508,6 +509,7 @@ export function CounterpartySearchBase({
   edit: boolean
   setEdit: (edit: boolean) => any
   readOnly?: boolean
+  enableOnboardingLinkOnCreate?: boolean
   renderCustom?: {
     counterPartySearchBase?: (props: {
       counterparties: Mercoa.CounterpartyResponse[] | undefined
@@ -676,18 +678,31 @@ export function CounterpartySearchBase({
             setTimeout(() => setEdit(true), 100)
           }}
           onExit={onSelect}
+          enableOnboardingLinkOnCreate={enableOnboardingLinkOnCreate}
         />
       )
     } else if (selectedCounterparty) {
       return (
-        <CounterpartyAddOrEditForm counterparty={selectedCounterparty} onComplete={setSelection} onExit={onSelect} />
+        <CounterpartyAddOrEditForm
+          counterparty={selectedCounterparty}
+          onComplete={setSelection}
+          onExit={onSelect}
+          enableOnboardingLinkOnCreate={enableOnboardingLinkOnCreate}
+        />
       )
     }
   }
 
   // Editing a counterparty
   else if (selectedCounterparty?.id && edit) {
-    return <CounterpartyAddOrEditForm counterparty={selectedCounterparty} onComplete={setSelection} onExit={onSelect} />
+    return (
+      <CounterpartyAddOrEditForm
+        counterparty={selectedCounterparty}
+        onComplete={setSelection}
+        onExit={onSelect}
+        enableOnboardingLinkOnCreate={enableOnboardingLinkOnCreate}
+      />
+    )
   }
 
   // if no counterparties, show loading
@@ -816,11 +831,13 @@ function CounterpartyAddOrEditForm({
   name,
   onComplete,
   onExit,
+  enableOnboardingLinkOnCreate = false,
 }: {
   counterparty?: Mercoa.CounterpartyResponse
   name?: string
   onComplete: (counterparty?: Mercoa.CounterpartyResponse) => any
   onExit?: (counterparty?: any) => any
+  enableOnboardingLinkOnCreate?: boolean
 }) {
   const [addMore, setAddMore] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -829,7 +846,7 @@ function CounterpartyAddOrEditForm({
     register,
     watch,
     setValue,
-    formState: { errors, isSubmitting, isSubmitted },
+    formState: { errors, isSubmitted },
   } = useFormContext()
   const formAction = watch('formAction')
 
@@ -1053,11 +1070,39 @@ function CounterpartyAddOrEditForm({
         </a>
       )}
 
-      {accountType && (
+      <div className="mercoa-flex mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-end mercoa-space-x-2">
+        {accountType && enableOnboardingLinkOnCreate && (
+          <MercoaButton
+            isEmphasized={false}
+            type="submit"
+            className=""
+            onClick={() => {
+              setValue('saveAsStatus', 'COUNTERPARTY')
+              if (accountType === 'individual' ? watch('vendor.firstName') && watch('vendor.lastName') : true) {
+                setValue('formAction', PayableFormAction.CREATE_UPDATE_COUNTERPARTY_AND_SEND_ONBOARDING_LINK)
+              }
+              setTimeout(() => {
+                setIsSaving(true)
+              }, 100)
+              setTimeout(() => {
+                setIsSaving(false)
+              }, 2000)
+            }}
+            disabled={!accountType}
+          >
+            <ButtonLoadingSpinner
+              isLoading={
+                formAction === PayableFormAction.CREATE_UPDATE_COUNTERPARTY_AND_SEND_ONBOARDING_LINK && isSaving
+              }
+            >
+              Save and Send Onboarding Link
+            </ButtonLoadingSpinner>
+          </MercoaButton>
+        )}
         <MercoaButton
           isEmphasized
           type="submit"
-          className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-center"
+          className=""
           onClick={() => {
             setValue('saveAsStatus', 'COUNTERPARTY')
             if (accountType === 'individual' ? watch('vendor.firstName') && watch('vendor.lastName') : true) {
@@ -1070,12 +1115,19 @@ function CounterpartyAddOrEditForm({
               setIsSaving(false)
             }, 2000)
           }}
+          disabled={!accountType}
         >
           <ButtonLoadingSpinner isLoading={formAction === PayableFormAction.CREATE_UPDATE_COUNTERPARTY && isSaving}>
-            Save
+            {accountType ? (
+              'Save'
+            ) : (
+              <Tooltip position="left" title="Select Business or Individual">
+                Save
+              </Tooltip>
+            )}
           </ButtonLoadingSpinner>
         </MercoaButton>
-      )}
+      </div>
     </>
   )
 }
@@ -1174,6 +1226,7 @@ export function Counterparties({
   const [hasMore, setHasMore] = useState<boolean>(true)
   const [resultsPerPage, setResultsPerPage] = useState<number>(10)
   const [count, setCount] = useState<number>(0)
+  const [refetch, setRefetch] = useState<number>(0)
 
   const [name, setName] = useState<string>()
   const [selected, setSelected] = useState<Mercoa.CounterpartyResponse | null>(null)
@@ -1219,7 +1272,16 @@ export function Counterparties({
     return () => {
       isCurrent = false
     }
-  }, [mercoaSession.client, mercoaSession.entityId, mercoaSession.refreshId, type, startingAfter, name, resultsPerPage])
+  }, [
+    mercoaSession.client,
+    mercoaSession.entityId,
+    mercoaSession.refreshId,
+    type,
+    startingAfter,
+    name,
+    resultsPerPage,
+    refetch,
+  ])
 
   if (children) {
     return children({
@@ -1434,6 +1496,7 @@ export function Counterparties({
                 onboardingEmailOptions={onboardingEmailOptions}
                 type={type}
                 showEntityConfirmation={showEntityConfirmation}
+                refetch={() => setRefetch(refetch + 1)}
               />
             </div>
           </div>
@@ -1526,6 +1589,7 @@ export function CounterpartyDetails({
   type,
   showEntityConfirmation = true,
   children,
+  refetch,
 }: {
   counterparty?: Mercoa.CounterpartyResponse
   counterpartyId?: Mercoa.EntityId
@@ -1548,6 +1612,7 @@ export function CounterpartyDetails({
     counterparty?: Mercoa.CounterpartyResponse
     invoices?: Mercoa.InvoiceResponse[]
   }) => JSX.Element
+  refetch?: () => void
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1655,6 +1720,7 @@ export function CounterpartyDetails({
           .then((resp) => {
             if (resp && resp.data[0]) {
               setCounterpartyLocal(resp.data[0])
+              refetch?.()
             }
           })
       } else {
@@ -1665,6 +1731,7 @@ export function CounterpartyDetails({
           .then((resp) => {
             if (resp && resp.data[0]) {
               setCounterpartyLocal(resp.data[0])
+              refetch?.()
             }
           })
       }

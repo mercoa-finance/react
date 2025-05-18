@@ -937,6 +937,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
         PayableFormAction.COMMENT,
         PayableFormAction.CREATE_COUNTERPARTY_ACCOUNT,
         PayableFormAction.CREATE_UPDATE_COUNTERPARTY,
+        PayableFormAction.CREATE_UPDATE_COUNTERPARTY_AND_SEND_ONBOARDING_LINK,
         PayableFormAction.CREATE_BANK_ACCOUNT,
         PayableFormAction.CREATE_CHECK,
         PayableFormAction.CREATE_CUSTOM,
@@ -1130,7 +1131,10 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       setValue('formAction', '')
       refreshInvoice(data?.id ?? '')
       return
-    } else if (action === PayableFormAction.CREATE_UPDATE_COUNTERPARTY) {
+    } else if (
+      action === PayableFormAction.CREATE_UPDATE_COUNTERPARTY ||
+      action === PayableFormAction.CREATE_UPDATE_COUNTERPARTY_AND_SEND_ONBOARDING_LINK
+    ) {
       mercoaSession.debug('create update counterparty', data)
       let profile = createCounterpartyRequest({ data: data.vendor, setError, type: 'payee' })
       if (onCounterpartyPreSubmit) {
@@ -1148,6 +1152,11 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
               setTimeout(() => {
                 mercoaSession.debug('counterparty', counterparty)
                 setSelectedVendor(counterparty)
+                if (action === PayableFormAction.CREATE_UPDATE_COUNTERPARTY_AND_SEND_ONBOARDING_LINK && counterparty) {
+                  mercoaSession.client?.entity.sendOnboardingLink(counterparty.id, {
+                    type: 'PAYEE',
+                  })
+                }
                 setValue('formAction', PayableFormAction.CLOSE_INLINE_FORM)
               }, 100)
             },

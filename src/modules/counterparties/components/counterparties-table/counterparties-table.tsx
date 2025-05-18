@@ -58,6 +58,7 @@ export const CounterpartiesTable: FC<CounterpartiesTableProps> = ({
     setResultsPerPage,
     search,
     setSearch,
+    refetch,
   } = useCounterpartiesTable(entityId!, type, { networkType: network })
 
   const defaultTableColumns = useMemo<ColumnDef<(typeof data)[0]>[]>(() => {
@@ -277,7 +278,7 @@ export const CounterpartiesTable: FC<CounterpartiesTableProps> = ({
               setActiveCounterpartyId('')
             }}
           >
-            <CounterpartyDetails type={'payee'} counterpartyId={activeCounterpartyId} />
+            <CounterpartyDetails type={'payee'} counterpartyId={activeCounterpartyId} refetch={refetch} />
           </FullPageModal>
         </>
       )}

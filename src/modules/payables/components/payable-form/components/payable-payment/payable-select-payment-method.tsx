@@ -31,7 +31,6 @@ const PaymentMethodList = ({
   schemaId,
   Component,
   showEntityConfirmation = false,
-  showVerificationStatus = false,
 }: {
   paymentMethods: Array<Mercoa.PaymentMethodResponse>
   paymentId: string | undefined
@@ -41,7 +40,6 @@ const PaymentMethodList = ({
   schemaId?: string
   Component: React.ComponentType<any>
   showEntityConfirmation?: boolean
-  showVerificationStatus?: boolean
 }) => {
   const filteredPaymentMethods = (paymentMethods ?? [])
     ?.filter(
@@ -62,8 +60,8 @@ const PaymentMethodList = ({
             account={paymentMethod}
             selected={paymentId === paymentMethod.id}
             hideVerificationButton={true}
-            hideVerificationStatus={!showVerificationStatus}
-            showVerification={showVerificationStatus}
+            hideVerificationStatus={true}
+            showVerification={false}
             showEntityConfirmation={showEntityConfirmation}
             onSelect={() => {
               if (readOnly) return
@@ -279,7 +277,6 @@ export function PayableSelectPaymentMethod({
             type={Mercoa.PaymentMethodType.BankAccount}
             Component={BankAccount}
             showEntityConfirmation={showDestinationPaymentMethodConfirmation && isDestination}
-            showVerificationStatus={!!isSource}
           />
           {isSource && enableBNPL && (
             <>

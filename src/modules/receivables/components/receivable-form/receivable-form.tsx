@@ -177,6 +177,7 @@ export function ReceivableForm({ children }: { children?: ReactNode }) {
                           register={register}
                           placeholder="Quantity"
                           type="number"
+                          step="any"
                           readOnly={notDraft}
                         />
                       </div>

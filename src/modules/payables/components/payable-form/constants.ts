@@ -140,6 +140,7 @@ export enum PayableFormAction {
   REJECT = 'reject',
   APPROVE = 'approve',
   CREATE_UPDATE_COUNTERPARTY = 'createUpdateCounterparty',
+  CREATE_UPDATE_COUNTERPARTY_AND_SEND_ONBOARDING_LINK = 'createUpdateCounterpartyAndSendOnboardingLink',
   CREATE_COUNTERPARTY_ACCOUNT = 'createCounterpartyAccount',
   CREATE_BANK_ACCOUNT = 'createBankAccount',
   CREATE_CHECK = 'createCheck',

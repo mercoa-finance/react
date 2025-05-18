@@ -69,10 +69,10 @@ export function usePayablesInternal(payableProps: PayablesProps) {
   const [selectedColumns, setSelectedColumns] = useState<InvoiceTableColumn[]>([
     { header: 'Vendor Name', field: 'vendor', orderBy: Mercoa.InvoiceOrderByField.VendorName },
     { header: 'Invoice Number', field: 'invoiceNumber', orderBy: Mercoa.InvoiceOrderByField.InvoiceNumber },
+    { header: 'Amount', field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount },
     { header: 'Due Date', field: 'dueDate', orderBy: Mercoa.InvoiceOrderByField.DueDate },
     { header: 'Invoice Date', field: 'invoiceDate', orderBy: Mercoa.InvoiceOrderByField.InvoiceDate },
     { header: 'Deduction Date', field: 'deductionDate', orderBy: Mercoa.InvoiceOrderByField.DeductionDate },
-    { header: 'Amount', field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount },
     { header: 'Status', field: 'status' },
     { header: 'Approvers', field: 'approvers' },
   ])

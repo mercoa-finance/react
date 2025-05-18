@@ -58,9 +58,10 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   const [selectedColumns, setSelectedColumns] = useState<InvoiceTableColumn[]>([
     { header: 'Payer Name', field: 'payer', orderBy: Mercoa.InvoiceOrderByField.PayerName },
     { header: 'Invoice Number', field: 'invoiceNumber', orderBy: Mercoa.InvoiceOrderByField.InvoiceNumber },
+    { header: 'Amount', field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount },
     { header: 'Due Date', field: 'dueDate', orderBy: Mercoa.InvoiceOrderByField.DueDate },
     { header: 'Invoice Date', field: 'invoiceDate', orderBy: Mercoa.InvoiceOrderByField.InvoiceDate },
-    { header: 'Amount', field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount },
+    { header: 'Payment Initiated', field: 'processedAt' },
     { header: 'Status', field: 'status' },
   ])
 
@@ -189,6 +190,7 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
       invoiceId: invoice.id,
       dueDate: invoice.dueDate,
       invoiceDate: invoice.invoiceDate,
+      processedAt: invoice.processedAt,
       paymentDestination: invoice.paymentDestination,
       invoiceType: (invoice.paymentSchedule?.type === Mercoa.PaymentType.OneTime ? 'invoice' : 'invoiceTemplate') as
         | 'invoice'
