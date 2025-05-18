@@ -664,15 +664,14 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   }, [ocrJob, toast, activeOcrJobId])
 
   useEffect(() => {
-    if (!!invoiceOcrJob) {
-      if (onOcrComplete && invoiceOcrJob.data) {
-        onOcrComplete(invoiceOcrJob.data).then((response) => {
-          setOcrResponse(response)
-        })
-      } else {
-        setOcrResponse(invoiceOcrJob.data)
-      }
-    }
+    if (!invoiceOcrJob?.data) return
+    setOcrResponse({
+      jobId: invoiceOcrJob.data?.jobId ?? '',
+      vendor: invoiceOcrJob.data?.vendor,
+      check: invoiceOcrJob.data?.check,
+      bankAccount: invoiceOcrJob.data?.bankAccount,
+      invoice: {} as any,
+    })
   }, [invoiceOcrJob])
 
   const setMethodOnTypeChange = useCallback(
