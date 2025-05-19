@@ -987,9 +987,20 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       return
     }
 
-    const requestPayload: Mercoa.InvoiceCreationRequest = (
-      onInvoicePreSubmit ? await onInvoicePreSubmit?.(request) : request
-    ) as Mercoa.InvoiceCreationRequest
+    const requestPayload: Mercoa.InvoiceCreationRequest | false = await (async () => {
+      try {
+        return onInvoicePreSubmit ? await onInvoicePreSubmit(request) : request
+      } catch (error) {
+        console.error(error)
+        return false
+      }
+    })()
+
+    if (!requestPayload) {
+      setIsLoading(false)
+      setValue('formAction', '')
+      return
+    }
 
     invoiceData
       ? updatePayable(
