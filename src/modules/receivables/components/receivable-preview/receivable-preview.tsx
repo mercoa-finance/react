@@ -9,9 +9,10 @@ type PreviewType = 'pdf' | 'email' | 'paymentPage'
 
 export default function InvoicePreview() {
   const mercoaSession = useMercoaSession()
-  const { formContextValue } = useReceivableDetails()
+  const { formContextValue, displayContextValue } = useReceivableDetails()
   const { formMethods, payerContextValue } = formContextValue
   const { selectedPayer } = payerContextValue
+  const { height } = displayContextValue
 
   const { watch } = formMethods
   const fieldValues: ReceivableFormValues = watch()
@@ -102,6 +103,7 @@ export default function InvoicePreview() {
     <div
       ref={containerRef}
       className="mercoa-h-full mercoa-w-full mercoa-flex mercoa-flex-col mercoa-justify-center mercoa-items-center"
+      style={{ height: `${height}px` }}
     >
       <nav className="-mercoa-mb-px mercoa-flex mercoa-space-x-8">
         {tabs.map((tab) => (

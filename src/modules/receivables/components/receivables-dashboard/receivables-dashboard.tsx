@@ -10,6 +10,7 @@ import { ExportsDropdown } from '../../../common/components/exports-dropdown'
 import { StatusTabs } from '../../../common/components/status-tabs'
 import { useReceivables } from '../../hooks/use-receivables'
 import { ReceivablesTable } from '../receivables-table'
+import { ColumnFilterDropdown } from './components/column-filter-dropdown'
 import { RecurringReceivablesList } from './components/recurring-receivables-list'
 
 export const ReceivablesDashboard = () => {
@@ -27,25 +28,19 @@ export const ReceivablesDashboard = () => {
   } = dataContextValue
 
   const { setSearch, currentStatuses, setCurrentStatuses } = filtersContextValue
-  // TODO: Use this to implement "Filter by column"
-  // const { toggleSelectedColumn, setSelectedColumns, selectedColumns } = selectionContextValue
+  const { toggleSelectedColumn, setSelectedColumns, selectedColumns, selectedInvoices } = selectionContextValue
   const { downloadInvoicesAsCSV } = actionsContextValue
 
   const { renderCustom, displayOptions, handlers } = propsContextValue
 
-  // TODO: Use this to implement "Filter by column"
-  // const { columns } = renderCustom ?? {}
+  const { columns } = renderCustom ?? {}
 
   // TODO: Use this to implement cumulative filtering
   // const { setFilters, getFilters } = useReceivablesFilterStore()
   // const { selectedStatusFilters } = getFilters('receivables')
 
-  const { statusTabsOptions, showInvoiceMetrics = true, classNames } = displayOptions ?? {}
-  const {
-    onCreateInvoice,
-    onCreateInvoiceTemplate,
-    onSelectInvoiceTemplate,
-  } = handlers ?? {}
+  const { statusTabsOptions, invoiceMetrics = { isVisible: true }, classNames } = displayOptions ?? {}
+  const { onCreateInvoice, onCreateInvoiceTemplate, onSelectInvoiceTemplate } = handlers ?? {}
 
   // const [showCumulativeFilter, setShowCumulativeFilter] = useState(true)
   const [showRecurringInvoices, setShowRecurringInvoices] = useState(false)
@@ -95,9 +90,13 @@ export const ReceivablesDashboard = () => {
             )}
           </DebouncedSearch>
         </div>
-        {showInvoiceMetrics && (
+        {invoiceMetrics?.isVisible && (
           <div className="mercoa-w-[60%]">
-            <InvoiceMetrics metrics={metricsData} isLoading={isMetricsLoading} />
+            <InvoiceMetrics
+              metrics={metricsData}
+              isLoading={isMetricsLoading}
+              selectedInvoices={invoiceMetrics?.showSelectedMetrics ? selectedInvoices : undefined}
+            />
           </div>
         )}
         <div className="mercoa-flex mercoa-justify-end mercoa-gap-2 ">
@@ -132,6 +131,12 @@ export const ReceivablesDashboard = () => {
           </Tooltip> */}
 
           <DateTimeFilterDropdown tableId="receivables" />
+          <ColumnFilterDropdown
+            allColumns={columns}
+            selectedColumns={selectedColumns}
+            handleToggleSelectedColumn={toggleSelectedColumn}
+            setSelectedColumns={setSelectedColumns}
+          />
           <div className="mercoa-flex mercoa-gap-2" onClick={downloadInvoicesAsCSV}>
             <ExportsDropdown />
           </div>

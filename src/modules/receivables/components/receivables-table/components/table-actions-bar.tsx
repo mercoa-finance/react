@@ -70,6 +70,21 @@ export const TableActionsBar = ({
               Send Invoice
             </MercoaButton>
           )} */}
+          {validActions.includes(ReceivablesTableAction.Edit) && (
+            <MercoaButton
+              isEmphasized
+              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+              onClick={() => {
+                setActiveInvoiceAction({
+                  invoiceId: selectedInvoices.map((e) => e.id),
+                  action: ReceivablesTableAction.Edit,
+                  mode: 'multiple',
+                })
+              }}
+            >
+              Edit
+            </MercoaButton>
+          )}
           {validActions.includes(ReceivablesTableAction.Archive) && (
             <MercoaButton
               isEmphasized

@@ -1,5 +1,5 @@
 import { UseMutateFunction } from '@tanstack/react-query'
-import { ReactElement, ReactNode } from 'react'
+import { Dispatch, ReactElement, ReactNode, SetStateAction } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import { ErrorResponse } from '../../lib/react-query/types'
@@ -49,8 +49,14 @@ export type ReceivableDetailsRenderCustom = {
 // Receivable Details Context
 export type ReceivableDetailsContextValue = {
   propsContextValue: ReceivableDetailsProps
+  displayContextValue: ReceivableDetailsDisplayContext
   formContextValue: ReceivableFormContext
   dataContextValue: ReceivableDataContext
+}
+
+export type ReceivableDetailsDisplayContext = {
+  heightOffset: number
+  height: number
 }
 
 export type ReceivablePaymentMethodContext = {
@@ -150,6 +156,12 @@ type ReceivablesQueryOptions = {
 type ReceivablesRenderCustom = {
   columns?: InvoiceTableColumn[]
   toast?: ToastClient
+  editInvoicesDialog?: (
+    open: boolean,
+    setOpen: (open: boolean) => void,
+    selectedInvoices: Mercoa.InvoiceResponse[],
+    setSelectedInvoices: (invoices: Mercoa.InvoiceResponse[]) => void,
+  ) => ReactNode
 }
 
 type ReceivablesDisplayOptions = {
@@ -159,7 +171,10 @@ type ReceivablesDisplayOptions = {
     isVisible: boolean
     statuses: Mercoa.InvoiceStatus[]
   }
-  showInvoiceMetrics?: boolean
+  invoiceMetrics?: {
+    isVisible: boolean
+    showSelectedMetrics?: boolean
+  }
   classNames?: {
     table?: {
       root?: string
@@ -283,8 +298,8 @@ type ReceivablesSelection = {
   handleSelectAll: () => void
   handleSelectRow: (invoice: Mercoa.InvoiceResponse) => void
   selectedColumns: InvoiceTableColumn[]
-  setSelectedColumns: (columns: InvoiceTableColumn[]) => void
-  toggleSelectedColumn: (column: InvoiceTableColumn) => void
+  setSelectedColumns: Dispatch<SetStateAction<InvoiceTableColumn[]>>
+  toggleSelectedColumn: (field: string) => void
 }
 
 type ReceivablesActions = {

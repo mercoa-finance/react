@@ -28,7 +28,8 @@ import { ReceivablesContextValue, ReceivablesProps } from '../types'
 
 export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   const mercoaSession = useMercoaSession()
-  const { queryOptions } = receivableProps
+  const { queryOptions, renderCustom } = receivableProps
+  const { columns } = renderCustom ?? {}
   const initialQueryOptions = queryOptions?.isInitial ? queryOptions : undefined
   const currentQueryOptions = queryOptions?.isInitial ? undefined : queryOptions
   const { getFilters, setFilters } = useReceivablesFilterStore()
@@ -55,15 +56,17 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   const [page, setPage] = useState(0)
   const [selectedInvoices, setSelectedInvoices] = useState<Mercoa.InvoiceResponse[]>([])
 
-  const [selectedColumns, setSelectedColumns] = useState<InvoiceTableColumn[]>([
-    { header: 'Payer Name', field: 'payer', orderBy: Mercoa.InvoiceOrderByField.PayerName },
-    { header: 'Invoice Number', field: 'invoiceNumber', orderBy: Mercoa.InvoiceOrderByField.InvoiceNumber },
-    { header: 'Amount', field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount },
-    { header: 'Due Date', field: 'dueDate', orderBy: Mercoa.InvoiceOrderByField.DueDate },
-    { header: 'Invoice Date', field: 'invoiceDate', orderBy: Mercoa.InvoiceOrderByField.InvoiceDate },
-    { header: 'Payment Initiated', field: 'processedAt' },
-    { header: 'Status', field: 'status' },
-  ])
+  const [selectedColumns, setSelectedColumns] = useState<InvoiceTableColumn[]>(
+    columns ?? [
+      { header: 'Payer Name', field: 'payer' },
+      { header: 'Invoice Number', field: 'invoiceNumber' },
+      { header: 'Amount', field: 'amount' },
+      { header: 'Due Date', field: 'dueDate' },
+      { header: 'Invoice Date', field: 'invoiceDate' },
+      { header: 'Payment Initiated', field: 'processedAt' },
+      { header: 'Status', field: 'status' },
+    ],
+  )
 
   const {
     data,

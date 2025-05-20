@@ -33,6 +33,7 @@ import { ArchiveInvoiceDialog } from './components/archive-action-dialog'
 import { AssignApproverDialog } from './components/assign-approver-dialog'
 import { CancelInvoiceDialog } from './components/cancel-action-dialog'
 import { DeleteInvoiceDialog } from './components/delete-action-dialog'
+import { EditInvoicesDialog } from './components/edit-invoices-dialog'
 import { RejectBillsDialog } from './components/reject-action-dialog'
 import { RestoreAsDraftDialog } from './components/restore-as-draft-action-dialog'
 import { SchedulePaymentDialog } from './components/schedule-action-dialog'
@@ -111,7 +112,7 @@ export const PayablesTable: FC = memo(() => {
   } = actionsContextValue
 
   const { readOnly } = config ?? {}
-  const { columns, toast: customToast } = renderCustom ?? {}
+  const { columns, toast: customToast, editInvoicesDialog: editInvoicesDialogCustom } = renderCustom ?? {}
   const { classNames } = displayOptions ?? {}
 
   const toast = customToast ?? reactToast
@@ -1272,6 +1273,33 @@ export const PayablesTable: FC = memo(() => {
             : 1
         }
       />
+      {activeInvoiceAction?.action === PayablesTableAction.Edit && (
+        <>
+          {editInvoicesDialogCustom ? (
+            editInvoicesDialogCustom(
+              activeInvoiceAction?.action === PayablesTableAction.Edit,
+              (_open) => {
+                if (!_open) {
+                  setActiveInvoiceAction(null)
+                }
+              },
+              selectedInvoices,
+              setSelectedInvoices,
+            )
+          ) : (
+            <EditInvoicesDialog
+              open={activeInvoiceAction?.action === PayablesTableAction.Edit}
+              setOpen={(_open) => {
+                if (!_open) {
+                  setActiveInvoiceAction(null)
+                }
+              }}
+              selectedInvoices={selectedInvoices}
+              setSelectedInvoices={setSelectedInvoices}
+            />
+          )}
+        </>
+      )}
       <SchedulePaymentDialog
         open={activeInvoiceAction?.action === PayablesTableAction.SchedulePayment}
         setOpen={(_open) => {

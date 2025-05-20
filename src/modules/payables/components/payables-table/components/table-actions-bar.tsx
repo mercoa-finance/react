@@ -54,6 +54,21 @@ export const TableActionsBar = ({
               No Actions Available
             </MercoaButton>
           )}
+          {validActions.includes(PayablesTableAction.Edit) && (
+            <MercoaButton
+              isEmphasized
+              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+              onClick={() => {
+                setActiveInvoiceAction({
+                  invoiceId: selectedInvoices.map((e) => e.id),
+                  action: PayablesTableAction.Edit,
+                  mode: 'multiple',
+                })
+              }}
+            >
+              Edit
+            </MercoaButton>
+          )}
           {validActions.includes(PayablesTableAction.AddApprover) && (
             <MercoaButton
               isEmphasized

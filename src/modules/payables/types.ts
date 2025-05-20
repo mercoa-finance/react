@@ -1,5 +1,5 @@
 import { UseMutateFunction } from '@tanstack/react-query'
-import { Dispatch, ReactElement, SetStateAction } from 'react'
+import { Dispatch, ReactElement, ReactNode, SetStateAction } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import { ErrorResponse } from '../../lib/react-query/types'
@@ -269,6 +269,12 @@ type PayablesQueryOptions = {
 type PayablesRenderCustom = {
   columns?: InvoiceTableColumn[]
   toast?: ToastClient
+  editInvoicesDialog?: (
+    open: boolean,
+    setOpen: (open: boolean) => void,
+    selectedInvoices: Mercoa.InvoiceResponse[],
+    setSelectedInvoices: (invoices: Mercoa.InvoiceResponse[]) => void,
+  ) => ReactNode
 }
 
 type PayablesDisplayOptions = {
@@ -278,7 +284,10 @@ type PayablesDisplayOptions = {
     isVisible: boolean
     statuses: Mercoa.InvoiceStatus[]
   }
-  showInvoiceMetrics?: boolean
+  invoiceMetrics?: {
+    isVisible: boolean,
+    showSelectedMetrics?: boolean
+  }
   classNames?: {
     table?: {
       root?: string

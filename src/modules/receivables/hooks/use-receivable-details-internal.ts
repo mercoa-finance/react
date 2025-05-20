@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup'
 import dayjs from 'dayjs'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
@@ -23,8 +23,16 @@ import {
 } from '../types'
 
 export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
-  const { queryOptions = { invoiceId: '', invoiceType: 'invoice' }, handlers = {}, config = {}, renderCustom } = props
+  const {
+    queryOptions = { invoiceId: '', invoiceType: 'invoice' },
+    handlers = {},
+    config = {},
+    renderCustom,
+    displayOptions,
+  } = props
   const { toast } = renderCustom ?? {}
+  const { heightOffset } = displayOptions ?? {}
+  const [height, setHeight] = useState(0)
   const mercoaSession = useMercoaSession()
   const { onInvoiceUpdate } = handlers ?? {}
   const { supportedCurrencies } = config ?? {}
@@ -174,6 +182,18 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
   const { data: destinationPaymentMethods } = usePaymentMethodsQuery({
     entityId: mercoaSession.entityId,
   })
+
+  const handleResize = useCallback(() => {
+    setHeight(window.innerHeight - (heightOffset ?? 0))
+  }, [heightOffset])
+
+  useEffect(() => {
+    handleResize()
+    window.addEventListener('resize', handleResize, false)
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [heightOffset, handleResize])
 
   useEffect(() => {
     if (
@@ -596,6 +616,11 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
 
   const out: ReceivableDetailsContextValue = {
     propsContextValue: props,
+
+    displayContextValue: {
+      heightOffset: heightOffset ?? 0,
+      height,
+    },
 
     formContextValue: {
       formMethods,

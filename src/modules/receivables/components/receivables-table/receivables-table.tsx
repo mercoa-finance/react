@@ -28,6 +28,7 @@ import { useReceivables } from '../../hooks/use-receivables'
 import { ArchiveInvoiceDialog } from './components/archive-action-dialog'
 import { CancelInvoiceDialog } from './components/cancel-action-dialog'
 import { DeleteInvoiceDialog } from './components/delete-action-dialog'
+import { EditInvoicesDialog } from './components/edit-invoices-dialog'
 import { RestoreAsDraftDialog } from './components/restore-as-draft-action-dialog'
 import { TableActionsBar } from './components/table-actions-bar'
 import { TableActionDropdown } from './components/table-actions-dropdown'
@@ -82,7 +83,7 @@ export const ReceivablesTable = () => {
   } = actionsContextValue
 
   const { readOnly } = config ?? {}
-  const { columns, toast: customToast } = renderCustom ?? {}
+  const { columns, toast: customToast, editInvoicesDialog: editInvoicesDialogCustom } = renderCustom ?? {}
   const { classNames } = displayOptions ?? {}
 
   const toast = customToast ?? reactToast
@@ -143,7 +144,7 @@ export const ReceivablesTable = () => {
                   onClick={(e: React.MouseEvent) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    handleSelectRow(row.original)
+                    handleSelectRow(row.original.invoice)
                   }}
                 >
                   <input
@@ -158,7 +159,7 @@ export const ReceivablesTable = () => {
                     )}
                     checked={selectedInvoices.some((e) => e.id === row.original.id)}
                     onChange={(e) => {
-                      handleSelectRow(row.original)
+                      handleSelectRow(row.original.invoice)
                       e.stopPropagation()
                     }}
                   />
@@ -418,7 +419,7 @@ export const ReceivablesTable = () => {
                   onClick={(e: React.MouseEvent) => {
                     e.preventDefault()
                     e.stopPropagation()
-                    handleSelectRow(row.original)
+                    handleSelectRow(row.original.invoice)
                   }}
                 >
                   <input
@@ -433,7 +434,7 @@ export const ReceivablesTable = () => {
                     )}
                     checked={selectedInvoices.some((e) => e.id === row.original.id)}
                     onChange={(e) => {
-                      handleSelectRow(row.original)
+                      handleSelectRow(row.original.invoice)
                       e.stopPropagation()
                     }}
                   />
@@ -890,6 +891,33 @@ export const ReceivablesTable = () => {
               : 1
           }
         />
+        {activeInvoiceAction?.action === ReceivablesTableAction.Edit && (
+          <>
+            {editInvoicesDialogCustom ? (
+              editInvoicesDialogCustom(
+                activeInvoiceAction?.action === ReceivablesTableAction.Edit,
+                (_open) => {
+                  if (!_open) {
+                    setActiveInvoiceAction(null)
+                  }
+                },
+                selectedInvoices,
+                setSelectedInvoices,
+              )
+            ) : (
+              <EditInvoicesDialog
+                open={activeInvoiceAction?.action === ReceivablesTableAction.Edit}
+                setOpen={(_open) => {
+                  if (!_open) {
+                    setActiveInvoiceAction(null)
+                  }
+                }}
+                selectedInvoices={selectedInvoices}
+                setSelectedInvoices={setSelectedInvoices}
+              />
+            )}
+          </>
+        )}
 
         <RestoreAsDraftDialog
           open={activeInvoiceAction?.action === ReceivablesTableAction.RestoreAsDraft}

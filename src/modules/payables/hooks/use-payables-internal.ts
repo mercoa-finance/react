@@ -36,7 +36,8 @@ import { usePayablesFilterStore } from '../stores/payables-filter-store'
 import { InvoiceTableColumn, PayablesContextValue, PayablesProps, PayablesTableActionProps } from '../types'
 
 export function usePayablesInternal(payableProps: PayablesProps) {
-  const { queryOptions } = payableProps
+  const { queryOptions, renderCustom } = payableProps
+  const { columns } = renderCustom ?? {}
   const initialQueryOptions = queryOptions?.isInitial ? queryOptions : undefined
   const currentQueryOptions = queryOptions?.isInitial ? undefined : queryOptions
   const mercoaSession = useMercoaSession()
@@ -66,16 +67,18 @@ export function usePayablesInternal(payableProps: PayablesProps) {
   const [page, setPage] = useState(0)
   const [selectedInvoices, setSelectedInvoices] = useState<Mercoa.InvoiceResponse[]>([])
 
-  const [selectedColumns, setSelectedColumns] = useState<InvoiceTableColumn[]>([
-    { header: 'Vendor Name', field: 'vendor', orderBy: Mercoa.InvoiceOrderByField.VendorName },
-    { header: 'Invoice Number', field: 'invoiceNumber', orderBy: Mercoa.InvoiceOrderByField.InvoiceNumber },
-    { header: 'Amount', field: 'amount', orderBy: Mercoa.InvoiceOrderByField.Amount },
-    { header: 'Due Date', field: 'dueDate', orderBy: Mercoa.InvoiceOrderByField.DueDate },
-    { header: 'Invoice Date', field: 'invoiceDate', orderBy: Mercoa.InvoiceOrderByField.InvoiceDate },
-    { header: 'Deduction Date', field: 'deductionDate', orderBy: Mercoa.InvoiceOrderByField.DeductionDate },
-    { header: 'Status', field: 'status' },
-    { header: 'Approvers', field: 'approvers' },
-  ])
+  const [selectedColumns, setSelectedColumns] = useState<InvoiceTableColumn[]>(
+    columns ?? [
+      { header: 'Vendor Name', field: 'vendor' },
+      { header: 'Invoice Number', field: 'invoiceNumber' },
+      { header: 'Amount', field: 'amount' },
+      { header: 'Due Date', field: 'dueDate' },
+      { header: 'Invoice Date', field: 'invoiceDate' },
+      { header: 'Deduction Date', field: 'deductionDate' },
+      { header: 'Status', field: 'status' },
+      { header: 'Approvers', field: 'approvers' },
+    ]
+  )
 
   const {
     data,

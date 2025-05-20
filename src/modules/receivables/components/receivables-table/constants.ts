@@ -4,4 +4,5 @@ export enum ReceivablesTableAction {
   Cancel = 'cancel',
   RestoreAsDraft = 'restoreAsDraft',
   Archive = 'archive',
+  Edit = 'edit',
 }

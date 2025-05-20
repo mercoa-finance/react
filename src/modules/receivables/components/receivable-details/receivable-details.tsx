@@ -56,6 +56,7 @@ export const ReceivableDetails: FC<PropsWithChildren<ReceivableDetailsProps>> = 
         config,
         handlers,
         renderCustom,
+        displayOptions,
       }}
     >
       <Container>

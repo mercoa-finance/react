@@ -1,4 +1,5 @@
 export enum PayablesTableAction {
+  Edit = 'edit',
   Delete = 'delete',
   Approve = 'approve',
   Reject = 'reject',

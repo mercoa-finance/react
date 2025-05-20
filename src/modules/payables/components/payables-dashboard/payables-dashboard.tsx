@@ -32,7 +32,7 @@ export const PayablesDashboard: FC = memo(() => {
   } = dataContextValue
 
   const { setSearch } = filtersContextValue
-  const { toggleSelectedColumn, setSelectedColumns, selectedColumns } = selectionContextValue
+  const { toggleSelectedColumn, setSelectedColumns, selectedColumns, selectedInvoices } = selectionContextValue
   const { downloadInvoicesAsCSV } = actionsContextValue
 
   const { renderCustom, displayOptions, handlers } = propsContextValue
@@ -55,7 +55,9 @@ export const PayablesDashboard: FC = memo(() => {
         Mercoa.InvoiceStatus.Archived,
       ],
     },
-    showInvoiceMetrics = true,
+    invoiceMetrics = {
+      isVisible: true,
+    },
     classNames,
   } = displayOptions ?? {}
   const { onCreateInvoice, onCreateInvoiceTemplate, onSelectInvoiceTemplate } = handlers ?? {}
@@ -139,9 +141,13 @@ export const PayablesDashboard: FC = memo(() => {
             )}
           </DebouncedSearch>
         </div>
-        {showInvoiceMetrics && (
+        {invoiceMetrics?.isVisible && (
           <div className="mercoa-w-[60%]">
-            <InvoiceMetrics metrics={metricsData} isLoading={isMetricsLoading} />
+            <InvoiceMetrics
+              metrics={metricsData}
+              isLoading={isMetricsLoading}
+              selectedInvoices={invoiceMetrics?.showSelectedMetrics ? selectedInvoices : undefined}
+            />
           </div>
         )}
         <div className="mercoa-flex mercoa-justify-end mercoa-gap-2 ">

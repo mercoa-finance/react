@@ -1,18 +1,17 @@
 import { Dispatch, FC, useState } from 'react'
-import { Mercoa } from '@mercoa/javascript'
 import { MercoaButton, Tooltip } from '../../../../../components'
 import { Popover } from '../../../../../lib/components'
 import { ColumnIcon } from '../../../../common/assets/icons'
 import { InvoiceTableColumn } from '../../../types'
 
 const allColumnsDefault: InvoiceTableColumn[] = [
-  { field: 'vendor', header: 'Vendor Name' },
-  { field: 'invoiceNumber', header: 'Invoice Number' },
-  { field: 'dueDate', header: 'Due Date' },
-  { field: 'invoiceDate', header: 'Invoice Date' },
-  { field: 'amount', header: 'Amount' },
-  { field: 'approvers', header: 'Approvers' },
-  { field: 'status', header: 'Status' },
+  { header: 'Payer Name', field: 'payer' },
+  { header: 'Invoice Number', field: 'invoiceNumber' },
+  { header: 'Amount', field: 'amount' },
+  { header: 'Due Date', field: 'dueDate' },
+  { header: 'Invoice Date', field: 'invoiceDate' },
+  { header: 'Payment Initiated', field: 'processedAt' },
+  { header: 'Status', field: 'status' },
 ]
 
 interface SelectedColumnsDropdownProps {

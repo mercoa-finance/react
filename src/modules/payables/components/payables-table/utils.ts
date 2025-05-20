@@ -15,6 +15,10 @@ export function getAvailableActions(params: {
 
   const actions: PayablesTableAction[] = []
 
+  if (selectedInvoices.length > 1) {
+    actions.push(PayablesTableAction.Edit)
+  }
+
   // Add Approver & Submit/Approve for Draft status
   if (currentStatuses.includes(Mercoa.InvoiceStatus.Draft)) {
     if (selectedInvoices.some((e) => e.approvers?.length > 0)) {

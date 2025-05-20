@@ -15,6 +15,10 @@ export function getAvailableActions(params: {
 
   const actions: ReceivablesTableAction[] = []
 
+  if (selectedInvoices.length > 1) {
+    actions.push(ReceivablesTableAction.Edit)
+  }
+
   // Send Invoice
   if (currentStatuses.includes(Mercoa.InvoiceStatus.Draft)) {
     actions.push(ReceivablesTableAction.SendInvoice)
