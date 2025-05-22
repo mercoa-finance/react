@@ -9,12 +9,13 @@ export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
   const { formMethods, lineItemsContextValue, overviewContextValue } = formContextValue
   const { filteredMetadata, lineItems, removeItem } = lineItemsContextValue
   const { currency } = overviewContextValue
-  const { register, control } = formMethods
+  const { register, control, watch } = formMethods
+  const invoiceId = watch('id')
 
   return (
     <>
       {lineItems.map((lineItem, lineItemIndex) => (
-        <Fragment key={`${lineItem.id}`}>
+        <Fragment key={`${lineItem.id}-${invoiceId}`}>
           <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-my-4" />
           <div className="mercoa-flex mercoa-items-start">
             {/*  INVOICE NUMBER */}

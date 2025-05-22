@@ -16,6 +16,7 @@ export function PayableLineItems({ readOnly, children }: { readOnly?: boolean; c
   const { watch } = formMethods
 
   const status = watch('status')
+  const invoiceId = watch('id')
 
   readOnly = readOnly || (!!status && status !== Mercoa.InvoiceStatus.Draft)
 
@@ -68,7 +69,7 @@ export function PayableLineItems({ readOnly, children }: { readOnly?: boolean; c
       </div>
 
       {/* ROWS */}
-      {!isHidden && <LineItemRows readOnly={readOnly} />}
+      {!isHidden && <LineItemRows key={invoiceId} readOnly={readOnly} />}
       {!isHidden && !readOnly && (lineItems?.length ?? 0) > 0 && (
         <div className="mercoa-col-span-full mercoa-gap-2 mercoa-flex">
           <div className="mercoa-flex-1" />

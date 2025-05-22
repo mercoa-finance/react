@@ -134,6 +134,7 @@ export const EditInvoicesDialog: React.FC<EditInvoicesDialogProps> = ({
             </div>
             <div className="mercoa-flex-1 mercoa-overflow-auto mercoa-py-4 mercoa-pl-4 mercoa-border mercoa-border-gray-100">
               <PayableDetails
+                key={activeInvoice?.id}
                 queryOptions={{
                   invoiceId: activeInvoice?.id,
                   invoiceType: 'invoice',
