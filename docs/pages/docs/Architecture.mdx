@@ -7,13 +7,13 @@ description: 'Documentation for the Provider + Context model used for handling s
 
 ## Overview
 
-The **New Component Architecture** follows a **Provider + Context model**, where components receive props, pass them into a **custom hook**, and expose processed state, asynchronous data, and event handlers via **React Context**. This ensures **centralized state management, prevents prop drilling, and optimizes re-renders** across the component tree.
+The **New Part Architecture** follows a **Provider + Context model**, where parts receive props, pass them into a **custom hook**, and expose processed state, asynchronous data, and event handlers via **React Context**. This ensures **centralized state management, prevents prop drilling, and optimizes re-renders** across the part tree.
 
-This architecture is applicable to multiple components, providing a consistent approach to handling **data fetching, state management, and event-driven updates**.
+This architecture is applicable to many components, providing a consistent approach to handling **data fetching, state management, and event-driven updates**.
 
 ## Architectural Flow
 
-1. **Parent Component** (e.g., `PayableDetails`)
+1. **Parent Part** (e.g., `PayableDetails`)
 
    - Accepts **query options, configuration, display settings, event handlers, and UI overrides** as props.
    - Passes these to a **custom hook (`usePayableDetails`)** for processing.
@@ -49,13 +49,13 @@ export type PayablesProps = {
 
 - **Query Options (`queryOptions`)**: Specifies parameters required for fetching and filtering data.
 - **Render Customization (`renderCustom`)**: Allows overriding default UI components and behaviors.
-- **Display Options (`displayOptions`)**: Defines structural and positional settings of the component.
+- **Display Options (`displayOptions`)**: Defines structural and positional settings of the part.
 - **Handlers (`handlers`)**: Includes event callbacks for user interactions and lifecycle events.
 - **Configuration (`config`)**: Controls internal logic and functional behaviors.
 
-## Example Component Breakdown
+## Example Part Breakdown
 
-### Parent Component (`PayableDetails`)
+### Parent Part (`PayableDetails`)
 
 Responsible for initializing the provider and rendering child components.
 
@@ -114,7 +114,7 @@ export const usePayableDetailsContext = () => {
 }
 ```
 
-### Child Component (`PayableForm`)
+### Child Part (`PayableForm`)
 
 Consumes data from context and uses it in the UI.
 
@@ -155,4 +155,4 @@ export const PayableForm = () => {
 - **Optimized re-renders**, ensuring components only update when necessary.
 - **Consistent API design** across different components.
 
-This **New Component Architecture** provides a **scalable and maintainable pattern** for managing data and UI logic across components. It ensures a **consistent and efficient approach** to state management while keeping components decoupled from data-fetching logic.
+This **New Part Architecture** provides a **scalable and maintainable pattern** for managing data and UI logic across components. It ensures a **consistent and efficient approach** to state management while keeping components decoupled from data-fetching logic.
