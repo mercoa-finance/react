@@ -1,11 +1,10 @@
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { DialogTitle } from '@radix-ui/react-dialog'
-import { InvoiceStatusPill } from 'components/@mercoa/react/src/components/Payables'
 import dayjs from 'dayjs'
 import React from 'react'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
-import { MercoaButton } from '../../../../../components/generics'
+import { InvoiceStatusPill, MercoaButton } from '../../../../../components'
 import { Dialog } from '../../../../../lib/components'
 import { ReceivableDetails } from '../../receivable-details'
 
