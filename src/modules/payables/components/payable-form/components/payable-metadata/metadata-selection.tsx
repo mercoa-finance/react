@@ -77,6 +77,7 @@ export function MetadataSelection({
           <MercoaInput
             readOnly={readOnly}
             type={schema.type === Mercoa.MetadataType.Number ? 'number' : 'text'}
+            step={schema.type === Mercoa.MetadataType.Number ? 'any' : undefined}
             name={field}
             register={register}
           />
@@ -147,7 +148,6 @@ function MetadataCombobox({
   values: string[]
   readOnly: boolean
 }) {
-
   const options = useMemo(() => {
     if (schema.type === Mercoa.MetadataType.KeyValue) {
       return values.map((value) => {
@@ -188,7 +188,6 @@ function MetadataCombobox({
     }
   }, [values, schema.type])
 
-
   const valueState = useMemo(() => {
     if (!value) return undefined
 
@@ -214,7 +213,6 @@ function MetadataCombobox({
       return comboboxValue
     }
   }, [value, values, schema, options])
-
 
   if (schema.type === Mercoa.MetadataType.KeyValue) {
     return (

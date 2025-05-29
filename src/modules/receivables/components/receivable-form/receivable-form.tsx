@@ -53,23 +53,32 @@ export function ReceivableForm({ children }: { children?: ReactNode }) {
     <div style={{ height: `${height}px` }} className="mercoa-overflow-auto mercoa-px-0.5 mercoa-pb-32">
       <FormProvider {...formMethods}>
         <div className={`mercoa-p-2 mercoa-pb-32 mercoa-mx-4 mercoa-relative`}>
-          <h2 className="mercoa-text-lg mercoa-font-bold mercoa-leading-7 mercoa-text-gray-900">
+          <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full mercoa-my-4" />
+
+          {/* Receivable Form Header */}
+          <h2 className="mercoa-text-base mercoa-font-semibold mercoa-leading-7 mercoa-text-gray-900">
             Edit Invoice{' '}
-            {invoice && (
-              <InvoiceStatusPill
-                status={invoice.status ?? 'DRAFT'}
-                failureType={invoice.failureType}
-                amount={invoice.amount}
-                payerId={invoice.payerId}
-                vendorId={invoice.vendorId}
-                dueDate={invoice.dueDate}
-                paymentSourceId={invoice.paymentSourceId}
-                paymentDestinationId={invoice.paymentDestinationId}
-                type="receivable"
-              />
-            )}
+            <InvoiceStatusPill
+              status={invoice?.status ?? 'DRAFT'}
+              failureType={invoice?.failureType}
+              amount={invoice?.amount}
+              payerId={invoice?.payerId}
+              vendorId={invoice?.vendorId}
+              dueDate={invoice?.dueDate}
+              paymentSourceId={invoice?.paymentSourceId}
+              paymentDestinationId={invoice?.paymentDestinationId}
+              type="receivable"
+            />
           </h2>
-          <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-items-center mercoa-mt-10 mercoa-w-full">
+          {invoice && (
+            <p className="mercoa-col-span-full mercoa-text-xs mercoa-leading-6 mercoa-text-gray-400 mercoa-select-all mercoa-mt-4">
+              {invoice.id}
+            </p>
+          )}
+
+          <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full mercoa-my-4" />
+
+          <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-items-center mercoa-w-full">
             {/*  VENDOR SEARCH */}
             <div className="sm:mercoa-col-span-3">
               <label

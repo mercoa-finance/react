@@ -29,7 +29,7 @@ export const TableActionsBar = ({
       leaveFrom="mercoa-opacity-100 mercoa-translate-y-0"
       leaveTo="mercoa-opacity-0 mercoa-translate-y-4"
     >
-      <div className="mercoa-flex mercoa-gap-4 mercoa-items-center mercoa-justify-between mercoa-px-3 mercoa-h-[48px] mercoa-bg-white mercoa-rounded-lg mercoa-absolute -mercoa-top-14 mercoa-left-[50%] mercoa-translate-x-[-50%] mercoa-w-[800px] mercoa-shadow-[0_8px_24px_rgba(0,0,0,0.15)] mercoa-z-50 mercoa-border mercoa-border-2 mercoa-border-mercoa-primary-light">
+      <div className="mercoa-flex mercoa-gap-4 mercoa-items-center mercoa-justify-between mercoa-px-3 mercoa-h-[48px] mercoa-bg-white mercoa-rounded-lg mercoa-absolute -mercoa-top-14 mercoa-left-[50%] mercoa-translate-x-[-50%] mercoa-min-w-[800px] mercoa-shadow-[0_8px_24px_rgba(0,0,0,0.15)] mercoa-z-50 mercoa-border mercoa-border-2 mercoa-border-mercoa-primary-light">
         <div className="mercoa-flex mercoa-justify-start mercoa-gap-6 mercoa-items-center">
           <div
             onClick={(e: React.MouseEvent) => {

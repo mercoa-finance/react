@@ -18,7 +18,7 @@ export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
         <Fragment key={`${lineItem.id}-${invoiceId}`}>
           <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-my-4" />
           <div className="mercoa-flex mercoa-items-start">
-            {/*  INVOICE NUMBER */}
+            {/*  LINE ITEM DESCRIPTION */}
             <MercoaInput
               name={`lineItems.${lineItemIndex}.description`}
               placeholder="Description"
@@ -28,7 +28,7 @@ export function LineItemRows({ readOnly }: { readOnly?: boolean }) {
               readOnly={readOnly}
               className="mercoa-flex-1"
             />
-            {/*  INVOICE AMOUNT */}
+            {/*  LINE ITEM AMOUNT */}
             <MercoaInput
               control={control}
               name={`lineItems.${lineItemIndex}.amount`}

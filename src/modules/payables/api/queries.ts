@@ -25,6 +25,7 @@ export interface UsePayablesRequestOptions {
   dateType?: Mercoa.InvoiceDateFilter
   approverId?: string[]
   approverActions?: Mercoa.ApproverAction[]
+  returnPaymentTiming?: boolean
 }
 
 export function usePayablesQuery({
@@ -41,6 +42,7 @@ export function usePayablesQuery({
   dateType = Mercoa.InvoiceDateFilter.CreatedAt,
   approverId,
   approverActions,
+  returnPaymentTiming,
 }: UsePayablesRequestOptions) {
   const mercoaSession = useMercoaSession()
 
@@ -59,6 +61,7 @@ export function usePayablesQuery({
       dateType,
       approverId,
       approverActions,
+      returnPaymentTiming,
     ],
     queryFn: async ({ pageParam = undefined }) => {
       if (!mercoaSession || !mercoaSession.client || !mercoaSession.entityId) {
@@ -79,11 +82,12 @@ export function usePayablesQuery({
         limit: resultsPerPage,
         startingAfter: pageParam,
         excludeReceivables,
-        metadata: metadata,
-        paymentType: paymentType,
-        dateType: dateType,
-        approverId: approverId,
+        metadata,
+        paymentType,
+        dateType,
+        approverId,
         approverAction: approverActions,
+        returnPaymentTiming,
       }
 
       const response = await mercoaSession.client.entity.invoice.find(mercoaSession.entityId, filter)
