@@ -4,7 +4,7 @@ import { ComponentContainer } from '../../../components/helpers'
 
 # Entity Email Logs / Activity
 
-The `<EntityEmailLogs>` component displays emails that have been sent to the entity's email address
+The `<EntityEmailLogs>` component displays emails sent to the entity's email address
 
 ## Customization Options
 
@@ -17,7 +17,7 @@ The `<EntityEmailLogs>` component displays emails that have been sent to the ent
 | Name     | Type                                                   | Required | Description                                                                    |
 | :------- | :----------------------------------------------------- | :------- | :----------------------------------------------------------------------------- |
 | entity   | `Mercoa.EntityResponse`                                |          | The entity to display. Will pull from session if not specified                 |
-| onClick  | `(invoiceId: string) => void`                          |          | If the email created an invoice, this will be called when the email is clicked |
+| onClick  | `(invoiceId: string) => void`                          |          | If the email created an invoice, this calls when you click the email |
 | children | `(props: EntityEmailLogsChildrenProps) => JSX.Element` |          | Fully customize the UI with the help of these hooks and helper functions.      |
 
 ```ts
