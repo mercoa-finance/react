@@ -76,11 +76,13 @@ const PaymentMethodList = ({
 
 const BankAccountForm = ({
   readOnly,
+  paymentSourceType,
   backupDisbursement,
   destinationOptions,
   setValue,
 }: {
   readOnly: boolean | undefined
+  paymentSourceType: Mercoa.PaymentMethodType
   backupDisbursement: Mercoa.PaymentRailResponse.BankAccount | undefined
   destinationOptions: Mercoa.PaymentDestinationOptions.BankAccount | undefined
   setValue: (name: string, value: any) => void
@@ -105,7 +107,7 @@ const BankAccountForm = ({
         backupDisbursement?.availableDeliveryMethods?.map((e) => ({
           value: {
             key: e,
-            value: BankSpeedEnumToLabel(e),
+            value: BankSpeedEnumToLabel(e, paymentSourceType),
           },
           disabled: false,
         })) ?? []
@@ -119,7 +121,7 @@ const BankAccountForm = ({
       displayIndex="value"
       value={() => {
         const speed = destinationOptions?.delivery
-        return { key: speed, value: BankSpeedEnumToLabel(speed) }
+        return { key: speed, value: BankSpeedEnumToLabel(speed, paymentSourceType) }
       }}
     />
   </>
@@ -300,6 +302,7 @@ export function PayableSelectPaymentMethod({
             }) && (
               <BankAccountForm
                 readOnly={readOnly}
+                paymentSourceType={watch('paymentSourceType')}
                 backupDisbursement={backupDisbursement as Mercoa.PaymentRailResponse.BankAccount}
                 destinationOptions={destinationOptions as Mercoa.PaymentDestinationOptions.BankAccount}
                 setValue={setValue}
@@ -396,16 +399,14 @@ export function PayableSelectPaymentMethod({
       )}
 
       {selectedType === Mercoa.PaymentMethodType.Wallet && (
-        <>
-          <PaymentMethodList
-            paymentMethods={paymentMethods}
-            paymentId={paymentId}
-            readOnly={readOnly}
-            setPaymentId={setPaymentId}
-            type={Mercoa.PaymentMethodType.Wallet}
-            Component={Wallet}
-          />
-        </>
+        <PaymentMethodList
+          paymentMethods={paymentMethods}
+          paymentId={paymentId}
+          readOnly={readOnly}
+          setPaymentId={setPaymentId}
+          type={Mercoa.PaymentMethodType.Wallet}
+          Component={Wallet}
+        />
       )}
 
       {selectedType.startsWith('cpms_') && (
@@ -458,7 +459,13 @@ export function PayableSelectPaymentMethod({
   )
 }
 
-function BankSpeedEnumToLabel(speed?: Mercoa.BankDeliveryMethod) {
+function BankSpeedEnumToLabel(speed?: Mercoa.BankDeliveryMethod, sourceType?: Mercoa.PaymentMethodType) {
+  if (sourceType === Mercoa.PaymentMethodType.Wallet) {
+    if (speed === Mercoa.BankDeliveryMethod.AchAccelerated) return 'Accelerated ACH (Same Day)'
+    if (speed === Mercoa.BankDeliveryMethod.AchSameDay) return 'Fast ACH (Same Day)'
+    if (speed === Mercoa.BankDeliveryMethod.AchStandard) return 'Standard ACH (1-2 Days)'
+    return 'Fast ACH (Same Day)'
+  }
   if (speed === Mercoa.BankDeliveryMethod.AchAccelerated) return 'Accelerated ACH (Same Day)'
   if (speed === Mercoa.BankDeliveryMethod.AchSameDay) return 'Fast ACH (2 Days)'
   if (speed === Mercoa.BankDeliveryMethod.AchStandard) return 'Standard ACH (3-5 Days)'

@@ -100,6 +100,87 @@ export async function findExistingCounterparty({
     }
   }
 }
+export async function findExistingCounterparties({
+  entityId,
+  mercoaSession,
+  type,
+  entityRequest,
+}: {
+  entityId: Mercoa.EntityId
+  mercoaSession: MercoaContext
+  type: 'payee' | 'payor'
+  entityRequest: Mercoa.EntityRequest | Mercoa.EntityUpdateRequest
+}) {
+  // check if there is an existing counterparty with the same email / name
+  let name = ''
+  let email = ''
+  let existingCounterparties: Mercoa.CounterpartyResponse[] = []
+  let foundString = ''
+  let foundType = ''
+  if ('profile' in entityRequest && entityRequest.profile?.business) {
+    const business = entityRequest.profile?.business as Mercoa.BusinessProfileRequest
+    name = business.legalBusinessName
+    email = business.email ?? ''
+  } else if ('profile' in entityRequest && entityRequest.profile?.individual) {
+    const individual = entityRequest.profile?.individual as Mercoa.IndividualProfileRequest
+    name = `${individual.name.firstName}${individual.name.middleName ? ` ${individual.name.middleName} ` : ' '}${
+      individual.name.lastName
+    }`
+    email = individual.email ?? ''
+  }
+
+  if (type === 'payee') {
+    if (email) {
+      const existingCounterpartyEmail = await mercoaSession.client?.entity.counterparty.findPayees(entityId, {
+        search: email,
+      })
+      if (existingCounterpartyEmail) {
+        existingCounterparties = existingCounterpartyEmail.data
+        foundString = email
+        foundType = 'email'
+      }
+    }
+    if (existingCounterparties.length === 0 && name) {
+      const existingCounterpartyName = await mercoaSession.client?.entity.counterparty.findPayees(entityId, {
+        search: name,
+      })
+      if (existingCounterpartyName) {
+        existingCounterparties = existingCounterpartyName.data
+        foundString = name
+        foundType = 'name'
+      }
+    }
+  } else {
+    if (email) {
+      const existingCounterpartyEmail = await mercoaSession.client?.entity.counterparty.findPayors(entityId, {
+        search: email,
+      })
+      if (existingCounterpartyEmail) {
+        existingCounterparties = existingCounterpartyEmail.data
+        foundString = email
+        foundType = 'email'
+      }
+    }
+    if (existingCounterparties?.length === 0 && name) {
+      const existingCounterpartyName = await mercoaSession.client?.entity.counterparty.findPayors(entityId, {
+        search: name,
+      })
+      if (existingCounterpartyName) {
+        existingCounterparties = existingCounterpartyName.data
+        foundString = name
+        foundType = 'name'
+      }
+    }
+  }
+
+  if (existingCounterparties.length > 0) {
+    return {
+      duplicates: existingCounterparties,
+      foundType,
+      foundString,
+    }
+  }
+}
 
 export async function onSubmitCounterparty({
   data,
@@ -121,13 +202,6 @@ export async function onSubmitCounterparty({
   if (data?.id && data.id !== 'new') {
     counterparty = await mercoaSession.client?.entity.update(data.id, profile)
   } else {
-    counterparty = await findExistingCounterparty({
-      entityId: mercoaSession.entity.id,
-      mercoaSession,
-      type,
-      entityRequest: profile,
-    })
-
     if (!counterparty) {
       counterparty = await mercoaSession.client?.entity.create(profile as Mercoa.EntityRequest)
     }

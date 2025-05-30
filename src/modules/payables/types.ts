@@ -169,6 +169,14 @@ export type PayableVendorContext = {
   vendorsLoading: boolean
   vendorSearch: string
   setVendorSearch: (search: string) => void
+  duplicateVendorModalOpen: boolean
+  setDuplicateVendorModalOpen: (open: boolean) => void
+  duplicateVendorInfo?: {
+    duplicates: Mercoa.CounterpartyResponse[]
+    foundType: string
+    foundString: string
+    type: 'payee' | 'payor'
+  }
 }
 
 export type PayableCommentsContext = {
@@ -285,7 +293,7 @@ type PayablesDisplayOptions = {
     statuses: Mercoa.InvoiceStatus[]
   }
   invoiceMetrics?: {
-    isVisible: boolean,
+    isVisible: boolean
     showSelectedMetrics?: boolean
   }
   classNames?: {

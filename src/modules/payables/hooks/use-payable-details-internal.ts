@@ -23,7 +23,12 @@ import {
 import { filterMetadataValues } from '../components/payable-form/components/payable-metadata/utils'
 import { PayableFormAction } from '../components/payable-form/constants'
 import { PayableFormData } from '../components/payable-form/types'
-import { createCounterpartyRequest, onSubmitCounterparty, payableFormUtils } from '../components/payable-form/utils'
+import {
+  createCounterpartyRequest,
+  findExistingCounterparties,
+  onSubmitCounterparty,
+  payableFormUtils,
+} from '../components/payable-form/utils'
 import {
   PayableApproversContext,
   PayableCommentsContext,
@@ -89,6 +94,14 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const mercoaSession = useMercoaSession()
   const { invoiceType, invoiceId, invoice: invoiceExternal } = queryOptions
   const [vendorSearch, setVendorSearch] = useState('')
+  const [duplicateVendorModalOpen, setDuplicateVendorModalOpen] = useState(false)
+  const [duplicateVendorInfo, setDuplicateVendorInfo] = useState<{
+    duplicates: Mercoa.CounterpartyResponse[]
+    foundType: 'name' | 'email'
+    foundString: string
+    type: 'payee' | 'payor'
+  }>()
+
   const { heightOffset } = displayOptions
   const showDestinationPaymentMethodConfirmation =
     displayOptions.paymentMethods?.showDestinationPaymentMethodConfirmation === undefined
@@ -719,6 +732,11 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
           sourceOrDestination,
           paymentMethods.find((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Utility)?.id,
         )
+      } else if (selectedType === Mercoa.PaymentMethodType.Wallet) {
+        setValue(
+          sourceOrDestination,
+          paymentMethods.find((paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.Wallet)?.id,
+        )
       } else if (selectedType === Mercoa.PaymentMethodType.OffPlatform) {
         const offPlatformMethod = paymentMethods.find(
           (paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.OffPlatform,
@@ -1145,8 +1163,31 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       action === PayableFormAction.CREATE_UPDATE_COUNTERPARTY ||
       action === PayableFormAction.CREATE_UPDATE_COUNTERPARTY_AND_SEND_ONBOARDING_LINK
     ) {
-      mercoaSession.debug('create update counterparty', data)
+      if (!mercoaSession.entity?.id) return
       let profile = createCounterpartyRequest({ data: data.vendor, setError, type: 'payee' })
+      if (!duplicateVendorInfo && profile) {
+        const duplicateCheck = await findExistingCounterparties({
+          entityId: mercoaSession.entity?.id,
+          mercoaSession,
+          type: 'payee',
+          entityRequest: profile,
+        })
+
+        if (duplicateCheck?.duplicates) {
+          setDuplicateVendorInfo({
+            duplicates: duplicateCheck.duplicates,
+            foundType: duplicateCheck.foundType! as any,
+            foundString: duplicateCheck.foundString!,
+            type: 'payee',
+          })
+          setDuplicateVendorModalOpen(true)
+          setIsLoading(false)
+          setValue('formAction', '')
+          return
+        }
+      }
+      mercoaSession.debug(`create update counterparty ${data.vendor}`)
+
       if (onCounterpartyPreSubmit) {
         profile = await onCounterpartyPreSubmit(profile, data.vendor.id)
       }
@@ -1173,11 +1214,13 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
           })
           setValue('formAction', '')
           setIsLoading(false)
+          setDuplicateVendorInfo(undefined)
         } catch (e: any) {
           toast?.error(e.body ?? 'Error creating/updating counterparty')
           setError('vendor', { message: e.body ?? 'Error creating/updating counterparty' })
           setValue('formAction', '')
           setIsLoading(false)
+          setDuplicateVendorInfo(undefined)
         }
       } else {
         await mercoaSession.refresh()
@@ -1708,15 +1751,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     filteredMetadata,
   }
 
-  const vendorsContext: PayableVendorContext = {
-    selectedVendor,
-    setSelectedVendor,
-    vendors,
-    vendorsLoading,
-    vendorSearch,
-    setVendorSearch,
-  }
-
   const commentsContext: PayableCommentsContext = {
     comments: [initialCreationComment, ...filteredComments],
     commentText: watch('commentText'),
@@ -1856,6 +1890,18 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     },
   }
 
+  const vendorContextValue: PayableVendorContext = {
+    selectedVendor,
+    setSelectedVendor,
+    vendors,
+    vendorsLoading,
+    vendorSearch,
+    setVendorSearch,
+    duplicateVendorModalOpen,
+    setDuplicateVendorModalOpen,
+    duplicateVendorInfo,
+  }
+
   const out: PayableDetailsContextValue = {
     dataContextValue: {
       invoice: invoiceData,
@@ -1881,7 +1927,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       handleFormAction,
       formActionLoading:
         approvePayablePending || rejectPayablePending || createPayablePending || updatePayablePending || isLoading,
-      vendorContextValue: vendorsContext,
+      vendorContextValue,
       overviewContextValue: overviewContext,
       lineItemsContextValue: lineItemsContext,
       commentsContextValue: commentsContext,
