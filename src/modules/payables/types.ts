@@ -261,6 +261,7 @@ type PayablesQueryOptions = {
   currentStatuses?: Mercoa.InvoiceStatus[]
   search?: string
   startDate?: Date
+  payableDetails?: (props: PayableDetailsProps) => ReactNode
   endDate?: Date
   orderBy?: Mercoa.InvoiceOrderByField
   orderDirection?: Mercoa.OrderDirection
