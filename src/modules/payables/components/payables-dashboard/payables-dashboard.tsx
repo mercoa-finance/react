@@ -1,6 +1,6 @@
 import { ArrowPathIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { FC, memo, useEffect, useMemo, useRef, useState } from 'react'
-import { Mercoa } from '@mercoa/javascript'
+import { MercoaApi as Mercoa } from 'sdks/typescript'
 import { EntityInboxEmail, useMercoaSession, usePayables } from '../../../../components'
 import { DebouncedSearch, MercoaButton, Tooltip } from '../../../../components/generics'
 import { cn } from '../../../../lib/style'
@@ -37,7 +37,7 @@ export const PayablesDashboard: FC = memo(() => {
 
   const { renderCustom, displayOptions, handlers } = propsContextValue
 
-  const { columns } = renderCustom ?? {}
+  const { columns, searchBar: customSearchBar } = renderCustom ?? {}
 
   const {
     statusTabsOptions = {
@@ -122,8 +122,9 @@ export const PayablesDashboard: FC = memo(() => {
 
       <div className="mercoa-mt-2 mercoa-flex mercoa-justify-between mercoa-items-center mercoa-mb-4 mercoa-gap-5">
         <div className="mercoa-flex mercoa-w-[50%] mercoa-mr-2 mercoa-rounded-mercoa">
-          <DebouncedSearch onSettle={setSearch}>
-            {({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
+          {customSearchBar ? customSearchBar(setSearch) : (
+            <DebouncedSearch onSettle={setSearch}>
+              {({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
               <div className="mercoa-flex mercoa-items-center mercoa-w-full mercoa-bg-transparent mercoa-relative mercoa-rounded-mercoa">
                 <div className="mercoa-left-[8px] mercoa-top-[50%] mercoa-translate-y-[-50%] mercoa-absolute">
                   <SearchIcon />
@@ -138,8 +139,9 @@ export const PayablesDashboard: FC = memo(() => {
                   )}
                 />
               </div>
-            )}
-          </DebouncedSearch>
+              )}
+            </DebouncedSearch>
+          )}
         </div>
         {invoiceMetrics?.isVisible && (
           <div className="mercoa-w-[60%]">
