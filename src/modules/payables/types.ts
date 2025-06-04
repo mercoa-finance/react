@@ -277,6 +277,7 @@ type PayablesQueryOptions = {
 type PayablesRenderCustom = {
   columns?: InvoiceTableColumn[]
   toast?: ToastClient
+  searchBar?: (setSearch: (search: string) => void) => ReactNode
   editInvoicesDialog?: (
     open: boolean,
     setOpen: (open: boolean) => void,
