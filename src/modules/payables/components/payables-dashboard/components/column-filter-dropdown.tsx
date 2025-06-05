@@ -17,7 +17,7 @@ const allColumnsDefault: InvoiceTableColumn[] = [
 
 interface SelectedColumnsDropdownProps {
   selectedColumns: InvoiceTableColumn[]
-  setSelectedColumns: Dispatch<React.SetStateAction<InvoiceTableColumn[]>>
+  setSelectedColumns: (columns: InvoiceTableColumn[]) => void
   handleToggleSelectedColumn: (field: string) => void
   allColumns?: InvoiceTableColumn[]
 }

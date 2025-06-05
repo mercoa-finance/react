@@ -10,6 +10,7 @@ export interface ReceivablesFilters {
   selectedStatusFilters: Mercoa.InvoiceStatus[]
   dateRange: DateRange
   dateType: Mercoa.InvoiceDateFilter
+  dateRangeLabel: string
 }
 
 export interface ReceivablesFilterStoreState {
@@ -21,38 +22,41 @@ export interface ReceivablesFilterStoreActions {
   getFilters: (tableId: string, initialStatusFilters?: Mercoa.InvoiceStatus[]) => ReceivablesFilters
 }
 
-export const useReceivablesFilterStore = create<ReceivablesFilterStoreState & ReceivablesFilterStoreActions>((set, get) => ({
-  state: {},
+export const useReceivablesFilterStore = create<ReceivablesFilterStoreState & ReceivablesFilterStoreActions>(
+  (set, get) => ({
+    state: {},
 
-  setFilters: (tableId, filters) => {
-    set((state) => ({
-      state: {
-        ...state.state,
-        [tableId]: {
-          ...state.state[tableId],
-          ...filters,
+    setFilters: (tableId, filters) => {
+      set((state) => ({
+        state: {
+          ...state.state,
+          [tableId]: {
+            ...state.state[tableId],
+            ...filters,
+          },
         },
-      },
-    }))
-  },
+      }))
+    },
 
-  getFilters: (tableId, initialStatusFilters: Mercoa.InvoiceStatus[] = [Mercoa.InvoiceStatus.Draft]) => {
-    const existingState = get().state[tableId]
-    if (existingState) {
-      return existingState
-    }
+    getFilters: (tableId, initialStatusFilters: Mercoa.InvoiceStatus[] = [Mercoa.InvoiceStatus.Draft]) => {
+      const existingState = get().state[tableId]
+      if (existingState) {
+        return existingState
+      }
 
-    const defaultFilters: ReceivablesFilters = {
-      selectedStatusFilters: initialStatusFilters,
-      dateRange: { startDate: null, endDate: null },
-      dateType: Mercoa.InvoiceDateFilter.CreatedAt,
-    }
-    set((state) => ({
-      state: {
-        ...state.state,
-        [tableId]: defaultFilters,
-      },
-    }))
-    return defaultFilters
-  },
-}))
+      const defaultFilters: ReceivablesFilters = {
+        selectedStatusFilters: initialStatusFilters,
+        dateRange: { startDate: null, endDate: null },
+        dateType: Mercoa.InvoiceDateFilter.CreatedAt,
+        dateRangeLabel: '',
+      }
+      set((state) => ({
+        state: {
+          ...state.state,
+          [tableId]: defaultFilters,
+        },
+      }))
+      return defaultFilters
+    },
+  }),
+)

@@ -277,6 +277,8 @@ type PayablesQueryOptions = {
 type PayablesRenderCustom = {
   columns?: InvoiceTableColumn[]
   toast?: ToastClient
+  searchBar?: (setSearch: (search: string) => void) => ReactNode
+  payableDetails?: (props: PayableDetailsProps) => ReactNode
   editInvoicesDialog?: (
     open: boolean,
     setOpen: (open: boolean) => void,
@@ -416,7 +418,7 @@ export type PayablesSelectionContext = {
   handleSelectAll: () => void
   handleSelectRow: (invoice: Mercoa.InvoiceResponse) => void
   selectedColumns: InvoiceTableColumn[]
-  setSelectedColumns: Dispatch<SetStateAction<InvoiceTableColumn[]>>
+  setSelectedColumns: (columns: InvoiceTableColumn[]) => void
   toggleSelectedColumn: (field: string) => void
 }
 

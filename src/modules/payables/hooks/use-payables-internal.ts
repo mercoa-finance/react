@@ -41,12 +41,16 @@ export function usePayablesInternal(payableProps: PayablesProps) {
   const initialQueryOptions = queryOptions?.isInitial ? queryOptions : undefined
   const currentQueryOptions = queryOptions?.isInitial ? undefined : queryOptions
   const mercoaSession = useMercoaSession()
-  const { getFilters } = usePayablesFilterStore()
-  const { selectedStatusFilters, dateRange, dateType, selectedApprovers, selectedApproverActions } = getFilters(
-    'payables',
-    [Mercoa.InvoiceStatus.Draft],
-    mercoaSession.user,
-  )
+  const { getFilters, setFilters } = usePayablesFilterStore()
+  const {
+    selectedStatusFilters,
+    dateRange,
+    dateType,
+    selectedApprovers,
+    selectedApproverActions,
+    resultsPerPage,
+    selectedColumns,
+  } = getFilters('payables', [Mercoa.InvoiceStatus.Draft], mercoaSession.user, columns)
   const [activeInvoiceAction, setActiveInvoiceAction] = useState<PayablesTableActionProps | null>(null)
 
   const memoizedStatusFilters = useMemo(() => selectedStatusFilters || [], [selectedStatusFilters])
@@ -63,22 +67,8 @@ export function usePayablesInternal(payableProps: PayablesProps) {
   const [orderDirection, setOrderDirection] = useState(
     initialQueryOptions?.orderDirection || Mercoa.OrderDirection.Desc,
   )
-  const [resultsPerPage, setResultsPerPage] = useState(initialQueryOptions?.resultsPerPage || 10)
   const [page, setPage] = useState(0)
   const [selectedInvoices, setSelectedInvoices] = useState<Mercoa.InvoiceResponse[]>([])
-
-  const [selectedColumns, setSelectedColumns] = useState<InvoiceTableColumn[]>(
-    columns ?? [
-      { header: 'Vendor Name', field: 'vendor' },
-      { header: 'Invoice Number', field: 'invoiceNumber' },
-      { header: 'Amount', field: 'amount' },
-      { header: 'Due Date', field: 'dueDate' },
-      { header: 'Invoice Date', field: 'invoiceDate' },
-      { header: 'Deduction Date', field: 'deductionDate' },
-      { header: 'Status', field: 'status' },
-      { header: 'Approvers', field: 'approvers' },
-    ]
-  )
 
   const {
     data,
@@ -279,22 +269,8 @@ export function usePayablesInternal(payableProps: PayablesProps) {
   const isNextDisabled = isFetchingNextPage || !data?.pages || (page === data.pages.length - 1 && !hasNextPage)
   const isPrevDisabled = page === 0
 
-  const toggleSelectedColumn = (field: string) => {
-    setSelectedColumns((prevColumns) =>
-      prevColumns.some((column) => column.field === field)
-        ? prevColumns.filter((column) => column.field !== field)
-        : [...prevColumns, { field: field as keyof Mercoa.InvoiceResponse, header: '' }],
-    )
-  }
-
-  const toggleSelectedStatus = (status: Mercoa.InvoiceStatus) => {
-    setCurrentStatuses((prevStatuses) =>
-      prevStatuses.includes(status) ? prevStatuses.filter((s) => s !== status) : [...prevStatuses, status],
-    )
-  }
-
   const handleResultsPerPage = (rpp: number) => {
-    setResultsPerPage(rpp)
+    setFilters('payables', { resultsPerPage: rpp })
     setPage(0)
   }
 
@@ -352,6 +328,20 @@ export function usePayablesInternal(payableProps: PayablesProps) {
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
+  }
+
+  const toggleSelectedColumn = (field: string) => {
+    setFilters('payables', {
+      selectedColumns: selectedColumns.some((column) => column.field === field)
+        ? selectedColumns.filter((column) => column.field !== field)
+        : [...selectedColumns, { field: field as keyof Mercoa.InvoiceResponse, header: '' }],
+    })
+  }
+
+  const toggleSelectedStatus = (status: Mercoa.InvoiceStatus) => {
+    setCurrentStatuses((prevStatuses) =>
+      prevStatuses.includes(status) ? prevStatuses.filter((s) => s !== status) : [...prevStatuses, status],
+    )
   }
 
   const out: PayablesContextValue = {
@@ -415,7 +405,7 @@ export function usePayablesInternal(payableProps: PayablesProps) {
       handleSelectAll,
       handleSelectRow,
       selectedColumns,
-      setSelectedColumns,
+      setSelectedColumns: (columns: InvoiceTableColumn[]) => setFilters('payables', { selectedColumns: columns }),
       toggleSelectedColumn,
     },
 

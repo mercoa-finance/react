@@ -9,6 +9,7 @@ import {
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import accounting from 'accounting'
+import dayjs from 'dayjs'
 import debounce from 'lodash/debounce'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
@@ -185,6 +186,10 @@ export function ApprovalPolicies({
               key: t.key,
               value: t.value,
             }
+          } else if (t.type == 'catchall') {
+            return {
+              type: 'catchall',
+            }
           } else {
             return t
           }
@@ -315,7 +320,9 @@ function Level({
   maxNestedLevels?: number
 }) {
   const [collapsedPolicyIds, setCollapsedPolicyIds] = useState<string[]>([])
-  const policies = formPolicies.filter((e) => e.upstreamPolicyId === upstreamPolicyId)
+  const policies = formPolicies
+    .filter((e) => e.upstreamPolicyId === upstreamPolicyId)
+    .sort((a, b) => dayjs(a.createdAt).diff(dayjs(b.createdAt)))
 
   function CollapsedPolicy({ policy }: { policy: Mercoa.ApprovalPolicyResponse }) {
     return (
@@ -325,33 +332,42 @@ function Level({
         }`}
       >
         <p className="mercoa-text-sm mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-600">
-          {policy.trigger.length > 0 ? 'If' : 'Always require'}
-          {policy.trigger.map((t: Mercoa.Trigger, index: number) => {
-            let displayText = <></>
+          {policy.trigger.some((t) => t.type === 'catchall') ? (
+            <>
+              If <span className="mercoa-text-gray-800 mercoa-underline">no other policies</span> on this level match
+              then require
+            </>
+          ) : (
+            <>
+              {policy.trigger.length > 0 ? 'If' : 'Always require'}
+              {policy.trigger.map((t: Mercoa.Trigger, index: number) => {
+                let displayText = <></>
 
-            if (t.type === 'amount') {
-              displayText = <>{`Amount ≥ ${accounting.formatMoney(t.amount, currencyCodeToSymbol(t.currency))}`}</>
-            } else if (t.type === 'vendor') {
-              displayText = (
-                <>
-                  Vendor is <CounterpartyNames vendorIds={t.vendorIds} />
-                </>
-              )
-            } else if (t.type === 'metadata') {
-              displayText = <>{`${t.key} is ${t.value}`}</>
-            }
+                if (t.type === 'amount') {
+                  displayText = <>{`Amount ≥ ${accounting.formatMoney(t.amount, currencyCodeToSymbol(t.currency))}`}</>
+                } else if (t.type === 'vendor') {
+                  displayText = (
+                    <>
+                      Vendor is <CounterpartyNames vendorIds={t.vendorIds} />
+                    </>
+                  )
+                } else if (t.type === 'metadata') {
+                  displayText = <>{`${t.key} is ${t.value}`}</>
+                }
 
-            return (
-              <span key={index} className="mercoa-ml-1">
-                <span className="mercoa-text-gray-800 mercoa-underline">{displayText}</span>
-                {index === policy.trigger.length - 1 ? (
-                  <span className="mercoa-ml-1 mercoa-text-gray-600">then require</span>
-                ) : (
-                  <span className="mercoa-ml-1 mercoa-text-gray-600">and</span>
-                )}
-              </span>
-            )
-          })}
+                return (
+                  <span key={index} className="mercoa-ml-1">
+                    <span className="mercoa-text-gray-800 mercoa-underline">{displayText}</span>
+                    {index === policy.trigger.length - 1 ? (
+                      <span className="mercoa-ml-1 mercoa-text-gray-600">then require</span>
+                    ) : (
+                      <span className="mercoa-ml-1 mercoa-text-gray-600">and</span>
+                    )}
+                  </span>
+                )
+              })}
+            </>
+          )}
           {policy.rule.type === 'approver' && (
             <>
               <span className="mercoa-ml-1">
@@ -440,40 +456,43 @@ function Level({
                   nestedBg[level + 1]
                 }`}
               >
-                <div className="mercoa-absolute mercoa-top-2 mercoa-right-2 mercoa-flex mercoa-gap-2">
-                  {!collapsedPolicyIds.includes(policy.id) ? (
-                    <MercoaButton
-                      size="sm"
+                <div className="mercoa-absolute mercoa-top-2 mercoa-right-0 mercoa-flex mercoa-justify-between mercoa-w-full mercoa-px-2">
+                  <div className="mercoa-text-xs mercoa-select-all mercoa-opacity-0 mercoa-mt-1">{policy.id}</div>
+                  <div className="mercoa-flex mercoa-gap-2">
+                    {!collapsedPolicyIds.includes(policy.id) ? (
+                      <MercoaButton
+                        size="sm"
+                        type="button"
+                        hideOutline
+                        color="gray"
+                        onClick={() => setCollapsedPolicyIds([...collapsedPolicyIds, policy.id])}
+                      >
+                        Collapse Policy
+                      </MercoaButton>
+                    ) : (
+                      <MercoaButton
+                        size="sm"
+                        type="button"
+                        hideOutline
+                        color="gray"
+                        onClick={() => setCollapsedPolicyIds(collapsedPolicyIds.filter((e) => e !== policy.id))}
+                      >
+                        Edit Policy
+                      </MercoaButton>
+                    )}
+                    <button
+                      className="mercoa-text-gray-400 hover:mercoa-text-gray-500"
                       type="button"
-                      hideOutline
-                      color="gray"
-                      onClick={() => setCollapsedPolicyIds([...collapsedPolicyIds, policy.id])}
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to remove this policy?')) {
+                          remove(formPolicies.findIndex((e) => e.id == policy.id))
+                        }
+                      }}
                     >
-                      Collapse Policy
-                    </MercoaButton>
-                  ) : (
-                    <MercoaButton
-                      size="sm"
-                      type="button"
-                      hideOutline
-                      color="gray"
-                      onClick={() => setCollapsedPolicyIds(collapsedPolicyIds.filter((e) => e !== policy.id))}
-                    >
-                      Edit Policy
-                    </MercoaButton>
-                  )}
-                  <button
-                    className="mercoa-text-gray-400 hover:mercoa-text-gray-500"
-                    type="button"
-                    onClick={() => {
-                      if (window.confirm('Are you sure you want to remove this policy?')) {
-                        remove(formPolicies.findIndex((e) => e.id == policy.id))
-                      }
-                    }}
-                  >
-                    <span className="mercoa-sr-only">Remove</span>
-                    <XMarkIcon className="mercoa-size-5" />
-                  </button>
+                      <span className="mercoa-sr-only">Remove</span>
+                      <XMarkIcon className="mercoa-size-5" />
+                    </button>
+                  </div>
                 </div>
                 {collapsedPolicyIds.includes(policy.id) || isFullyCollapsed ? (
                   <CollapsedPolicy policy={policy} />
@@ -543,7 +562,7 @@ function Level({
             </div>
             <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
               <AddRule
-                id={upstreamPolicyId + '~' + policies.length}
+                id={upstreamPolicyId + '~' + Math.random().toString(36)}
                 upstreamPolicyId={upstreamPolicyId}
                 append={append}
                 trigger={[]}
@@ -611,6 +630,10 @@ function Trigger({
         )
         const previousTriggers: string[] = triggerWatch?.slice(0, triggerIndex).map((t) => t?.type ?? '') ?? []
         const triggerOptions = [
+          {
+            displayName: 'No other policies match',
+            key: '~mercoa~catchall',
+          },
           ...(previousTriggers.every((e) => e !== 'amount')
             ? [
                 {
@@ -644,29 +667,51 @@ function Trigger({
             <MercoaCombobox
               options={triggerOptions}
               onChange={(e: Mercoa.MetadataSchema) => {
-                setValue(`policies.${index}.trigger.${triggerIndex}`, undefined, {
-                  shouldDirty: true,
-                })
-                if (e.key == '~mercoa~amount') {
-                  setValue(`policies.${index}.trigger.${triggerIndex}.type`, 'amount', {
-                    shouldDirty: true,
+                if (e.key == '~mercoa~catchall') {
+                  // First, remove all existing triggers
+                  const currentTriggers = watch(`policies.${index}.trigger`) as Mercoa.Trigger[]
+                  currentTriggers.forEach((_, triggerIndex) => {
+                    remove(triggerIndex)
                   })
-                } else if (e.key == '~mercoa~vendor') {
-                  setValue(`policies.${index}.trigger.${triggerIndex}.type`, 'vendor', {
-                    shouldDirty: true,
-                  })
+
+                  // Then add the catchall trigger
+                  setValue(
+                    `policies.${index}.trigger`,
+                    [
+                      {
+                        type: 'catchall',
+                      },
+                    ],
+                    {
+                      shouldDirty: true,
+                    },
+                  )
                 } else {
-                  setValue(`policies.${index}.trigger.${triggerIndex}.type`, 'metadata', {
+                  setValue(`policies.${index}.trigger.${triggerIndex}`, undefined, {
                     shouldDirty: true,
                   })
-                  setValue(`policies.${index}.trigger.${triggerIndex}.key`, e.key, {
-                    shouldDirty: true,
-                  })
-                  setValue(`policies.${index}.trigger.${triggerIndex}.value`, '', {
-                    shouldDirty: true,
-                  })
+                  if (e.key == '~mercoa~amount') {
+                    setValue(`policies.${index}.trigger.${triggerIndex}.type`, 'amount', {
+                      shouldDirty: true,
+                    })
+                  } else if (e.key == '~mercoa~vendor') {
+                    setValue(`policies.${index}.trigger.${triggerIndex}.type`, 'vendor', {
+                      shouldDirty: true,
+                    })
+                  } else {
+                    setValue(`policies.${index}.trigger.${triggerIndex}.type`, 'metadata', {
+                      shouldDirty: true,
+                    })
+                    setValue(`policies.${index}.trigger.${triggerIndex}.key`, e.key, {
+                      shouldDirty: true,
+                    })
+                    setValue(`policies.${index}.trigger.${triggerIndex}.value`, '', {
+                      shouldDirty: true,
+                    })
+                  }
                 }
               }}
+              className={triggerWatch?.[triggerIndex]?.type === 'catchall' ? 'mercoa-w-[250px]' : ''}
               value={() => {
                 if (triggerWatch?.[triggerIndex]?.type === 'amount') {
                   return {
@@ -677,6 +722,11 @@ function Trigger({
                   return {
                     displayName: 'Vendor',
                     key: '~mercoa~vendor',
+                  }
+                } else if (triggerWatch?.[triggerIndex]?.type === 'catchall') {
+                  return {
+                    displayName: 'No other policies match',
+                    key: '~mercoa~catchall',
                   }
                 } else if (triggerWatch?.[triggerIndex]?.type === 'metadata') {
                   return mercoaSession.organization?.metadataSchema?.find(
@@ -776,6 +826,15 @@ function Trigger({
       })}
 
       {(() => {
+        const hasCatchall = triggerWatch?.some((t) => t?.type === 'catchall')
+        if (hasCatchall) {
+          return (
+            <div className="mercoa-col-span-4 mercoa-text-sm mercoa-text-gray-500">
+              If no other policies at this level trigger, this policy will be triggered.
+            </div>
+          )
+        }
+
         const hasAmount =
           triggerWatch &&
           Array.isArray(triggerWatch) &&
@@ -1022,6 +1081,8 @@ function AddRule({
               value: [''],
             },
           },
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
         })
       }}
     >

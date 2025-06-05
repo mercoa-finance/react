@@ -27,15 +27,27 @@ interface DateTimeFilterDropdownProps {
 export const DateTimeFilterDropdown: React.FC<DateTimeFilterDropdownProps> = ({ tableId }) => {
   const store = tableId === 'payables' ? usePayablesFilterStore : useReceivablesFilterStore
   const { getFilters, setFilters } = store()
-  const { dateRange: storeDateRange, dateType: storeDateType } = getFilters(tableId)
+  const {
+    dateRange: storeDateRange,
+    dateType: storeDateType,
+    dateRangeLabel: storeDateRangeLabel,
+  } = getFilters(tableId)
   const [view, setView] = useState<DateTimeFilterView>(DateTimeFilterView.PRESET)
-  const [dateRange, setDateRange] = useState<DateRange>(
-    storeDateRange ?? {
+
+  const [dateRange, setDateRange] = useState<DateRange>(() => {
+    // Parse stored dates if they exist
+    if (storeDateRange) {
+      return {
+        startDate: storeDateRange.startDate ? new Date(storeDateRange.startDate) : null,
+        endDate: storeDateRange.endDate ? new Date(storeDateRange.endDate) : null,
+      }
+    }
+    return {
       startDate: null,
       endDate: null,
-    },
-  )
-  const [dateRangeLabel, setDateRangeLabel] = useState('')
+    }
+  })
+  const [dateRangeLabel, setDateRangeLabel] = useState(storeDateRangeLabel ?? '')
   const [dateType, setDateType] = useState<Mercoa.InvoiceDateFilter>(
     storeDateType ?? Mercoa.InvoiceDateFilter.CreatedAt,
   )
@@ -281,6 +293,7 @@ export const DateTimeFilterDropdown: React.FC<DateTimeFilterDropdownProps> = ({ 
       setFilters(tableId, {
         dateRange: dateRange,
         dateType: dateType,
+        dateRangeLabel: dateRangeLabel,
       })
     }
   }, [dateRange, dateType, setFilters])
@@ -291,6 +304,8 @@ export const DateTimeFilterDropdown: React.FC<DateTimeFilterDropdownProps> = ({ 
         startDate: null,
         endDate: null,
       },
+      dateRangeLabel: '',
+      dateType: Mercoa.InvoiceDateFilter.CreatedAt,
     })
   }
 

@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import React from 'react'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
-import { InvoiceStatusPill, MercoaButton } from '../../../../../components'
+import { InvoiceStatusPill, MercoaButton, usePayables } from '../../../../../components'
 import { Dialog } from '../../../../../lib/components'
 import { PayableDetails } from '../../payable-details'
 
@@ -21,6 +21,9 @@ export const EditInvoicesDialog: React.FC<EditInvoicesDialogProps> = ({
   selectedInvoices,
   setSelectedInvoices,
 }) => {
+  const { propsContextValue } = usePayables()
+  const { renderCustom } = propsContextValue
+  const { payableDetails: customPayableDetails } = renderCustom ?? {}
   const [activeInvoiceIndex, setActiveInvoiceIndex] = React.useState(0)
   const activeInvoice = selectedInvoices[activeInvoiceIndex]
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true)
@@ -131,51 +134,100 @@ export const EditInvoicesDialog: React.FC<EditInvoicesDialogProps> = ({
                 )}
               </div>
             </div>
-            <div className="mercoa-flex-1 mercoa-overflow-auto mercoa-py-4 mercoa-pl-4 mercoa-border mercoa-border-gray-100">
-              <PayableDetails
-                key={activeInvoice?.id}
-                queryOptions={{
-                  invoiceId: activeInvoice?.id,
-                  invoiceType: 'invoice',
-                }}
-                handlers={{
-                  onInvoiceUpdate: (invoice) => {
-                    if (invoice) {
-                      setSelectedInvoices(
-                        selectedInvoices.map((inv, index) => (index === activeInvoiceIndex ? invoice : inv)),
-                      )
-                    }
+            <div
+              key={activeInvoice?.id}
+              className="mercoa-flex-1 mercoa-overflow-auto mercoa-py-4 mercoa-pl-4 mercoa-border mercoa-border-gray-100"
+            >
+              {customPayableDetails ? (
+                customPayableDetails({
+                  queryOptions: {
+                    invoiceId: activeInvoice?.id,
+                    invoiceType: 'invoice',
                   },
-                }}
-                displayOptions={{
-                  heightOffset: 280,
-                }}
-                renderCustom={{
-                  toast: {
-                    success: (message) => {
-                      toast.success(message)
-                      setToastMessage({ type: 'success', message })
-                      setTimeout(() => {
-                        setToastMessage(undefined)
-                      }, 3000)
-                    },
-                    error: (message) => {
-                      toast.error(message)
-                      setToastMessage({ type: 'error', message })
-                      setTimeout(() => {
-                        setToastMessage(undefined)
-                      }, 3000)
-                    },
-                    info: (message) => {
-                      toast.info(message)
-                      setToastMessage({ type: 'info', message })
-                      setTimeout(() => {
-                        setToastMessage(undefined)
-                      }, 3000)
+                  handlers: {
+                    onInvoiceUpdate: (invoice) => {
+                      if (invoice) {
+                        setSelectedInvoices(
+                          selectedInvoices.map((inv, index) => (index === activeInvoiceIndex ? invoice : inv)),
+                        )
+                      }
                     },
                   },
-                }}
-              />
+                  displayOptions: {
+                    heightOffset: 280,
+                  },
+                  renderCustom: {
+                    toast: {
+                      success: (message) => {
+                        toast.success(message)
+                        setToastMessage({ type: 'success', message })
+                        setTimeout(() => {
+                          setToastMessage(undefined)
+                        }, 3000)
+                      },
+                      error: (message) => {
+                        toast.error(message)
+                        setToastMessage({ type: 'error', message })
+                        setTimeout(() => {
+                          setToastMessage(undefined)
+                        }, 3000)
+                      },
+                      info: (message) => {
+                        toast.info(message)
+                        setToastMessage({ type: 'info', message })
+                        setTimeout(() => {
+                          setToastMessage(undefined)
+                        }, 3000)
+                      },
+                    },
+                  },
+                })
+              ) : (
+                <PayableDetails
+                  key={activeInvoice?.id}
+                  queryOptions={{
+                    invoiceId: activeInvoice?.id,
+                    invoiceType: 'invoice',
+                  }}
+                  handlers={{
+                    onInvoiceUpdate: (invoice) => {
+                      if (invoice) {
+                        setSelectedInvoices(
+                          selectedInvoices.map((inv, index) => (index === activeInvoiceIndex ? invoice : inv)),
+                        )
+                      }
+                    },
+                  }}
+                  displayOptions={{
+                    heightOffset: 280,
+                  }}
+                  renderCustom={{
+                    toast: {
+                      success: (message) => {
+                        toast.success(message)
+                        setToastMessage({ type: 'success', message })
+                        setTimeout(() => {
+                          setToastMessage(undefined)
+                        }, 3000)
+                      },
+                      error: (message) => {
+                        toast.error(message)
+                        setToastMessage({ type: 'error', message })
+                        setTimeout(() => {
+                          setToastMessage(undefined)
+                        }, 3000)
+                      },
+                      info: (message) => {
+                        toast.info(message)
+                        setToastMessage({ type: 'info', message })
+                        setTimeout(() => {
+                          setToastMessage(undefined)
+                        }, 3000)
+                      },
+                    },
+                  }}
+                />
+              )}
             </div>
 
             {/* Navigation Controls */}

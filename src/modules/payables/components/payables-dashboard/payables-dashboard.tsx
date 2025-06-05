@@ -37,7 +37,7 @@ export const PayablesDashboard: FC = memo(() => {
 
   const { renderCustom, displayOptions, handlers } = propsContextValue
 
-  const { columns } = renderCustom ?? {}
+  const { columns, searchBar: customSearchBar } = renderCustom ?? {}
 
   const {
     statusTabsOptions = {
@@ -84,13 +84,13 @@ export const PayablesDashboard: FC = memo(() => {
   }, [userPermissionConfig, statusTabsOptions])
 
   useEffect(() => {
-    if (userPermissionConfig && statusTabOptionsByUser.length > 0 && !useOnce.current) {
+    if (userPermissionConfig && statusTabOptionsByUser.length > 0 && !useOnce.current && !selectedStatusFilters.length) {
       setFilters('payables', {
         selectedStatusFilters: [statusTabOptionsByUser[0]],
       })
       useOnce.current = true
     }
-  }, [userPermissionConfig, statusTabOptionsByUser, setFilters])
+  }, [userPermissionConfig, statusTabOptionsByUser, setFilters, selectedStatusFilters])
 
   return (
     // NOTE: The pt-1 is to ensure the recurring invoices button is hidden by the recurring invoices panel
@@ -122,8 +122,9 @@ export const PayablesDashboard: FC = memo(() => {
 
       <div className="mercoa-mt-2 mercoa-flex mercoa-justify-between mercoa-items-center mercoa-mb-4 mercoa-gap-5">
         <div className="mercoa-flex mercoa-w-[50%] mercoa-mr-2 mercoa-rounded-mercoa">
-          <DebouncedSearch onSettle={setSearch}>
-            {({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
+          {customSearchBar ? customSearchBar(setSearch) : (
+            <DebouncedSearch onSettle={setSearch}>
+              {({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
               <div className="mercoa-flex mercoa-items-center mercoa-w-full mercoa-bg-transparent mercoa-relative mercoa-rounded-mercoa">
                 <div className="mercoa-left-[8px] mercoa-top-[50%] mercoa-translate-y-[-50%] mercoa-absolute">
                   <SearchIcon />
@@ -138,8 +139,9 @@ export const PayablesDashboard: FC = memo(() => {
                   )}
                 />
               </div>
-            )}
-          </DebouncedSearch>
+              )}
+            </DebouncedSearch>
+          )}
         </div>
         {invoiceMetrics?.isVisible && (
           <div className="mercoa-w-[60%]">
