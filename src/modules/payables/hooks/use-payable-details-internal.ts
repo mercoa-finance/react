@@ -115,7 +115,14 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     return typeof originalValue === 'string' ? Number(originalValue?.replace(/,/g, '')) : originalValue
   }
 
-  const { onInvoicePreSubmit, onInvoiceSubmit, onCounterpartyPreSubmit, onInvoiceUpdate, onOcrComplete } = handlers
+  const {
+    onInvoicePreSubmit,
+    onInvoiceSubmit,
+    onCounterpartyPreSubmit,
+    onInvoiceUpdate,
+    onOcrComplete,
+    onCounterpartySelect,
+  } = handlers
 
   const [ocrResponse, setOcrResponse] = useState<Mercoa.OcrResponse>()
 
@@ -148,7 +155,9 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
 
   const useDocumentOnce = useRef(true)
 
-  const [selectedVendor, setSelectedVendor] = useState<Mercoa.CounterpartyResponse | undefined>(invoiceData?.vendor)
+  const [selectedVendor, setSelectedVendor] = useState<Mercoa.CounterpartyResponse | undefined>(
+    invoiceData?.vendor ?? config?.counterparty?.defaultCounterparty,
+  )
 
   const [isLoading, setIsLoading] = useState<boolean>(false)
 
@@ -920,6 +929,12 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       setValue('currency', finalSupportedCurrencies[0])
     }
   }, [finalSupportedCurrencies, currency, setValue])
+
+  useEffect(() => {
+    if (selectedVendor && selectedVendor.id !== 'new') {
+      onCounterpartySelect?.(selectedVendor)
+    }
+  }, [selectedVendor])
 
   useEffect(() => {
     approvers.forEach((approverSlot, index) => {

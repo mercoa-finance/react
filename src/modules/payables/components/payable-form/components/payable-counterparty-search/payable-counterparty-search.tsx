@@ -18,7 +18,7 @@ export function PayableCounterpartySearch() {
     duplicateVendorInfo,
   } = vendorContextValue
   const { config } = propsContextValue
-  const { disableCreation, network, enableOnboardingLinkOnCreate } = config?.counterparty ?? {}
+  const { disableCreation, network, enableOnboardingLinkOnCreate, showLabel = true } = config?.counterparty ?? {}
   const { handleSubmit, setValue } = formMethods
 
   const {
@@ -39,12 +39,14 @@ export function PayableCounterpartySearch() {
   return (
     <>
       <div className="sm:mercoa-col-span-3">
-        <label
-          htmlFor="vendor-name"
-          className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700"
-        >
-          Vendor
-        </label>
+        {showLabel && (
+          <label
+            htmlFor="vendor-name"
+            className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700"
+          >
+            Vendor
+          </label>
+        )}
         <div className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-left">
           <div className="mercoa-p-3 mercoa-bg-gray-100 mercoa-rounded-mercoa mercoa-relative mercoa-w-full">
             <CounterpartySearchBase

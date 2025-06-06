@@ -77,7 +77,24 @@ export function PayableDetails({
   }
 
   if (documentPosition === 'none') {
-    return rightComponent ?? leftComponent ?? <></>
+    return (
+      <PayableDetailsProvider
+        payableDetailsProps={{
+          queryOptions: { invoiceId: invoiceId ?? '', invoiceType },
+          displayOptions: {
+            heightOffset: heightOffset ?? mercoaSession.heightOffset,
+            documentPosition: documentPosition,
+            formLayout: formLayout,
+            paymentMethods: paymentMethods,
+          },
+          handlers,
+          config,
+          renderCustom,
+        }}
+      >
+        {rightComponent ?? leftComponent ?? <></>}
+      </PayableDetailsProvider>
+    )
   }
 
   return (

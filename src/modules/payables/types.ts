@@ -16,7 +16,7 @@ export type PayableDetailsProps = {
   config?: PayableDetailsConfig
   displayOptions?: PayableDetailsDisplayOptions
   renderCustom?: PayableDetailsRenderCustom
-  children?: JSX.Element
+  children?: ReactNode
 }
 
 export type PayableDetailsHandlers = {
@@ -28,6 +28,7 @@ export type PayableDetailsHandlers = {
   onInvoiceUpdate?: (invoice?: Mercoa.InvoiceResponse) => void
   onInvoiceSubmit?: (resp: Mercoa.InvoiceResponse) => void
   onOcrComplete?: (ocr: Mercoa.OcrResponse) => Promise<Mercoa.OcrResponse>
+  onCounterpartySelect?: (counterparty: Mercoa.CounterpartyResponse) => void
 }
 
 export type PayableDetailsQueryOptions = {
@@ -39,6 +40,8 @@ export type PayableDetailsQueryOptions = {
 export type PayableDetailsConfig = {
   supportedCurrencies?: Mercoa.CurrencyCode[]
   counterparty?: {
+    showLabel?: boolean
+    defaultCounterparty?: Mercoa.CounterpartyResponse
     network?: Mercoa.CounterpartyNetworkType[]
     disableCreation?: boolean
     enableOnboardingLinkOnCreate?: boolean
