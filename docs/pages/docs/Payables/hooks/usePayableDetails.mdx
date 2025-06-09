@@ -89,7 +89,7 @@ The props for `usePayableDetails` are the same as [`PayableDetails`](./PayableDe
 | :------------------ | :------------------------------------------------------------------- | :---------------------------- |
 | `selectedVendor`    | `Mercoa.CounterpartyResponse \| undefined`                           | Currently selected vendor.    |
 | `setSelectedVendor` | `Dispatch<SetStateAction<Mercoa.CounterpartyResponse \| undefined>>` | Sets the selected vendor.     |
-| `vendors`           | `Mercoa.CounterpartyResponse[] \| undefined`                         | List of available vendors.    |
+| `vendors`           | `Mercoa.CounterpartyResponse[] | undefined`                         | List of available vendors. |
 | `vendorsLoading`    | `boolean`                                                            | Whether vendors are loading.  |
 | `vendorSearch`      | `string`                                                             | Vendor search query.          |
 | `setVendorSearch`   | `(search: string) => void`                                           | Sets the vendor search query. |
