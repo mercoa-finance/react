@@ -13,6 +13,7 @@ import {
   useOcrJobQuery,
   usePayableDetailQuery,
   usePayableDocumentsQuery,
+  usePayableEventsQuery,
   usePayableFeeQuery,
   usePayableSourceEmailQuery,
   usePayeesQuery,
@@ -34,6 +35,7 @@ import {
   PayableCommentsContext,
   PayableDetailsContextValue,
   PayableDetailsProps,
+  PayableEventsContext,
   PayableFeesContext,
   PayableLineItemsContext,
   PayableMetadataContext,
@@ -79,7 +81,7 @@ const counterpartyYupValidation = {
 
 export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const {
-    queryOptions = { invoiceId: '', invoiceType: 'invoice' },
+    queryOptions = { invoiceId: '', invoiceType: 'invoice', getInvoiceEvents: true },
     handlers = {},
     config = {},
     displayOptions = {
@@ -92,7 +94,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const { toast } = renderCustom ?? {}
   const { supportedCurrencies } = config
   const mercoaSession = useMercoaSession()
-  const { invoiceType, invoiceId, invoice: invoiceExternal } = queryOptions
+  const { invoiceType, invoiceId, invoice: invoiceExternal, getInvoiceEvents } = queryOptions
   const [vendorSearch, setVendorSearch] = useState('')
   const [duplicateVendorModalOpen, setDuplicateVendorModalOpen] = useState(false)
   const [duplicateVendorInfo, setDuplicateVendorInfo] = useState<{
@@ -441,6 +443,11 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
 
   const { data: paymentMethodsDestination, isLoading: paymentMethodsDestinationLoading } = usePaymentMethodsQuery({
     entityId: vendorId,
+  })
+
+  const { data: events, isLoading: eventsLoading } = usePayableEventsQuery({
+    invoiceId: invoiceId,
+    enabled: !!getInvoiceEvents,
   })
 
   useEffect(() => {
@@ -991,6 +998,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const refreshInvoice = useCallback(
     (invoiceId: string) => {
       queryClient.invalidateQueries({ queryKey: ['payableDetail', invoiceId, invoiceType] })
+      queryClient.invalidateQueries({ queryKey: ['payableEvents', invoiceId] })
       refreshPayables()
     },
     [invoiceType],
@@ -1774,10 +1782,9 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       setValue('formAction', PayableFormAction.COMMENT)
     },
     getCommentAuthor: (comment: Mercoa.CommentResponse) => {
-      return comment.user?.name ?? 'Unknown'
+      return comment.user?.name ?? 'System'
     },
   }
-
   const metadataContext: PayableMetadataContext = {
     metadataSchemas: mercoaSession.organization?.metadataSchema ?? [],
     getSchemaMetadataValues: async (schema: Mercoa.MetadataSchema) => {
@@ -1804,6 +1811,15 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const feesContext: PayableFeesContext = {
     fees,
     feesLoading,
+  }
+
+  const eventsContext: PayableEventsContext = {
+    events: events?.data ?? [],
+    eventsLoading,
+    getEventAuthor: (event: Mercoa.InvoiceEvent) => {
+      const user = mercoaSession.users.find((user) => user.id === event.userId)
+      return user?.name ?? 'System'
+    },
   }
 
   const vendorCreditContext: PayableVendorCreditContext = {
@@ -1955,6 +1971,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       paymentTimingContextValue: paymentTimingContext,
       recurringScheduleContextValue: recurringScheduleContext,
     },
+    eventsContextValue: eventsContext,
   }
   return out
 }

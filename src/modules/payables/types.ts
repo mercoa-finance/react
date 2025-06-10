@@ -35,6 +35,7 @@ export type PayableDetailsQueryOptions = {
   invoiceId?: string
   invoice?: Mercoa.InvoiceResponse
   invoiceType?: 'invoice' | 'invoiceTemplate'
+  getInvoiceEvents?: boolean
 }
 
 export type PayableDetailsConfig = {
@@ -68,6 +69,7 @@ export type PayableDetailsContextValue = {
   propsContextValue: PayableDetailsProps
   formContextValue: PayableFormContext
   documentContextValue: PayableDocumentContext
+  eventsContextValue: PayableEventsContext
 }
 
 export type PayableDataContext = {
@@ -190,6 +192,12 @@ export type PayableCommentsContext = {
   getCommentAuthor: (comment: Mercoa.CommentResponse) => string
 }
 
+export type PayableEventsContext = {
+  events: Mercoa.InvoiceEvent[]
+  eventsLoading: boolean
+  getEventAuthor: (event: Mercoa.InvoiceEvent) => string
+}
+
 export type PayableMetadataContext = {
   metadataSchemas: Mercoa.MetadataSchema[]
   getSchemaMetadataValues: (schema: Mercoa.MetadataSchema) => Promise<string[] | undefined>
@@ -296,6 +304,10 @@ type PayablesDisplayOptions = {
   statusTabsOptions?: {
     isVisible: boolean
     statuses: Mercoa.InvoiceStatus[]
+    customStatuses?: {
+      statuses: Mercoa.InvoiceStatus[]
+      label: string
+    }[]
   }
   invoiceMetrics?: {
     isVisible: boolean

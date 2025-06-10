@@ -158,6 +158,7 @@ export const ReceivablesDashboard = () => {
                 Mercoa.InvoiceStatus.Archived,
               ]
             }
+            customStatuses={statusTabsOptions?.customStatuses}
             onStatusChange={(status) => {
               setCurrentStatuses(status)
             }}

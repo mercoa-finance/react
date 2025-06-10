@@ -490,15 +490,32 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
             // if there is no payment source, or the source is not offPlatform, set it to offPlatform
             let paymentSourceId = receivableData.paymentSource?.id
             if (receivableData.paymentSource?.type !== Mercoa.PaymentMethodType.OffPlatform && receivableData.payerId) {
-              const paymentSource = await mercoaSession.client?.entity.paymentMethod.getAll(receivableData.payerId, {
-                type: Mercoa.PaymentMethodType.OffPlatform,
-              })
-              paymentSourceId = paymentSource[0].id
+              const offPlatformPaymentSource = await mercoaSession.client?.entity.paymentMethod.getAll(
+                receivableData.payerId,
+                {
+                  type: Mercoa.PaymentMethodType.OffPlatform,
+                },
+              )
+
+              if (offPlatformPaymentSource && offPlatformPaymentSource.length > 0) {
+                paymentSourceId = offPlatformPaymentSource[0].id
+              } else {
+                // Create offPlatform payment method if payer entity doesn't have one
+                const newPaymentMethod = await mercoaSession.client?.entity.paymentMethod.create(
+                  receivableData.payerId,
+                  {
+                    type: Mercoa.PaymentMethodType.OffPlatform,
+                  },
+                )
+                paymentSourceId = newPaymentMethod.id
+              }
             }
+
             const markedAsPaidInvoice = await invoiceClient.update(receivableData.id, {
               status: Mercoa.InvoiceStatus.Paid,
               paymentSourceId,
             })
+
             toast?.success('Invoice marked as paid')
             refreshInvoice(receivableData.id, markedAsPaidInvoice)
             setValue('formAction', '')

@@ -170,6 +170,10 @@ type ReceivablesDisplayOptions = {
   statusTabsOptions?: {
     isVisible: boolean
     statuses: Mercoa.InvoiceStatus[]
+    customStatuses?: {
+      statuses: Mercoa.InvoiceStatus[]
+      label: string
+    }[]
   }
   invoiceMetrics?: {
     isVisible: boolean

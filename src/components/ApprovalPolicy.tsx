@@ -2,12 +2,14 @@ import { Combobox } from '@headlessui/react'
 import {
   CheckCircleIcon,
   ChevronUpDownIcon,
+  ClockIcon,
   PlusIcon,
   RocketLaunchIcon,
   SparklesIcon,
   XCircleIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
+import { DialogTitle } from '@radix-ui/react-dialog'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import debounce from 'lodash/debounce'
@@ -15,8 +17,10 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { FormProvider, useFieldArray, useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
+import { Dialog } from '../lib/components'
 import { currencyCodeToSymbol } from '../lib/currency'
 import {
+  ButtonLoadingSpinner,
   LoadingSpinnerIcon,
   MercoaButton,
   MercoaCombobox,
@@ -45,6 +49,97 @@ function ArrowDownLeftIcon({ className }: { className?: string }) {
   )
 }
 
+function ApprovalPolicyHistoryDialog({
+  isOpen,
+  setIsOpen,
+  history,
+  readOnly,
+  onRestore,
+}: {
+  isOpen: boolean
+  setIsOpen: (isOpen: boolean) => void
+  history: Mercoa.ApprovalPolicyHistoryResponse[]
+  readOnly: boolean
+  onRestore: (approvalPolicyHistoryId: string) => Promise<void>
+}) {
+  const mercoaSession = useMercoaSession()
+  const [selectedHistory, setSelectedHistory] = useState<Mercoa.ApprovalPolicyHistoryResponse | null>(
+    history[0] ?? null,
+  )
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <div className="mercoa-w-[95vw] mercoa-h-[95vh] mercoa-flex mercoa-flex-col mercoa-bg-white mercoa-text-[#1A1919] mercoa-p-6 mercoa-rounded-lg mercoa-shadow-xl">
+        <div className="mercoa-flex mercoa-justify-between mercoa-items-center mercoa-border-b mercoa-border-gray-200 mercoa-pb-4 mercoa-relative">
+          <DialogTitle>
+            <h2 className="mercoa-text-2xl mercoa-font-semibold mercoa-text-[#1A1919]">Policy History</h2>
+          </DialogTitle>
+          <MercoaButton
+            isEmphasized={false}
+            hideOutline={true}
+            color="gray"
+            onClick={() => setIsOpen(false)}
+            className="mercoa-text-[14px] mercoa-font-medium mercoa-text-[#1A1919] hover:mercoa-underline"
+          >
+            Close
+          </MercoaButton>
+        </div>
+
+        <div className="mercoa-flex mercoa-flex-1 mercoa-relative mercoa-border mercoa-border-gray-100 mercoa-overflow-hidden">
+          <div className="mercoa-w-[30%] mercoa-border-r mercoa-overflow-y-auto mercoa-p-4">
+            <div className="mercoa-text-lg mercoa-font-semibold mercoa-mb-4">History</div>
+            <div className="mercoa-space-y-2">
+              {history.map((entry) => (
+                <div
+                  key={entry.id}
+                  className={`mercoa-p-3 mercoa-rounded-lg mercoa-cursor-pointer ${
+                    selectedHistory?.id === entry.id
+                      ? 'mercoa-bg-mercoa-primary mercoa-text-white'
+                      : 'mercoa-bg-gray-50 hover:mercoa-bg-gray-100'
+                  }`}
+                  onClick={() => setSelectedHistory(entry)}
+                >
+                  <div className="mercoa-flex mercoa-items-center mercoa-gap-2">
+                    <ClockIcon className="mercoa-w-5 mercoa-h-5" />
+                    <div>
+                      <div className="mercoa-font-medium">{dayjs(entry.createdAt).format('MMM D, YYYY h:mm A')}</div>
+                      <div className="mercoa-text-sm mercoa-opacity-80">
+                        By {mercoaSession.users.find((user) => user.id === entry.userId)?.email ?? 'admin'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mercoa-flex-1 mercoa-overflow-y-auto mercoa-p-4">
+            {selectedHistory ? (
+              <>
+                {!readOnly && (
+                  <div className="mercoa-mt-4 mercoa-flex mercoa-justify-end">
+                    <MercoaButton
+                      isEmphasized
+                      onClick={() => {
+                        onRestore(selectedHistory.id)
+                      }}
+                    >
+                      Restore This Version
+                    </MercoaButton>
+                  </div>
+                )}
+                <ApprovalPolicies approvalPolicies={selectedHistory.policies} readOnly={true} resourceLabel="invoice" />
+              </>
+            ) : (
+              <div className="mercoa-text-gray-500 mercoa-text-center mercoa-mt-8">Select a history entry to view</div>
+            )}
+          </div>
+        </div>
+      </div>
+    </Dialog>
+  )
+}
+
 export function ApprovalPolicies({
   onSave,
   resourceLabel = 'invoice',
@@ -54,6 +149,9 @@ export function ApprovalPolicies({
   maxNestedLevels,
   supportedCurrencies,
   allowAutoAssign = true,
+  showHistory = false,
+  approvalPolicies,
+  readOnly = false,
 }: {
   onSave?: () => void
   resourceLabel?: string
@@ -63,11 +161,16 @@ export function ApprovalPolicies({
   maxNestedLevels?: number
   supportedCurrencies?: Mercoa.CurrencyCode[]
   allowAutoAssign?: boolean
+  showHistory?: boolean
+  approvalPolicies?: Mercoa.ApprovalPolicyResponse[]
+  readOnly?: boolean
 }) {
   const mercoaSession = useMercoaSession()
 
   const [policies, setPolicies] = useState<Mercoa.ApprovalPolicyResponse[]>()
   const [isSaving, setIsSaving] = useState(false)
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
+  const [history, setHistory] = useState<Mercoa.ApprovalPolicyHistoryResponse[]>([])
 
   const roles = useMemo(
     () =>
@@ -109,8 +212,31 @@ export function ApprovalPolicies({
   }
 
   useEffect(() => {
-    getPolicies()
-  }, [mercoaSession.entity?.id, mercoaSession.token])
+    if (approvalPolicies) {
+      setPolicies(approvalPolicies)
+      reset({ policies: approvalPolicies })
+    } else {
+      getPolicies()
+    }
+  }, [approvalPolicies, mercoaSession.entity?.id, mercoaSession.token])
+
+  useEffect(() => {
+    if (showHistory && mercoaSession.entity?.id) {
+      fetchHistory()
+    }
+  }, [showHistory, mercoaSession.entity?.id])
+
+  const fetchHistory = async () => {
+    if (!mercoaSession.entity?.id) return
+    try {
+      const response = await mercoaSession.client?.entity.approvalPolicy.history(mercoaSession.entity.id)
+      if (response) {
+        setHistory(response)
+      }
+    } catch (error) {
+      console.error('Failed to fetch approval policy history:', error)
+    }
+  }
 
   async function onSubmit(data: { policies: Mercoa.ApprovalPolicyResponse[] }) {
     if (isSaving || !policies) return
@@ -149,6 +275,7 @@ export function ApprovalPolicies({
         if (!data.policies.find((e) => e.id === policy.id)) {
           try {
             await mercoaSession.client?.entity.approvalPolicy.delete(mercoaSession.entity.id, policy.id)
+            await new Promise((r) => setTimeout(r, 10))
             toasts.push({ id: policy.id, success: true })
           } catch (e: any) {
             toasts.push({ id: policy.id, success: false })
@@ -165,76 +292,76 @@ export function ApprovalPolicies({
       idMap[e.id] = e.id.includes('~') ? '' : e.id
     })
 
-    await Promise.all(
-      data.policies.map(async (data, index) => {
-        if (!mercoaSession.entity?.id) return
-        const trigger: Mercoa.Trigger[] = data.trigger.map((t: Mercoa.Trigger) => {
-          if (t.type == 'amount') {
-            return {
-              type: t.type,
-              amount: Number(t.amount),
-              currency: t.currency,
-            }
-          } else if (t.type == 'vendor') {
-            return {
-              type: t.type,
-              vendorIds: t.vendorIds,
-            }
-          } else if (t.type == 'metadata') {
-            return {
-              type: t.type,
-              key: t.key,
-              value: t.value,
-            }
-          } else if (t.type == 'catchall') {
-            return {
-              type: 'catchall',
-            }
-          } else {
-            return t
+    for (const currentPolicy of data.policies.sort((a, b) => dayjs(a.createdAt).diff(dayjs(b.createdAt)))) {
+      if (!mercoaSession.entity?.id) continue
+
+      const trigger: Mercoa.Trigger[] = currentPolicy.trigger.map((t: Mercoa.Trigger) => {
+        if (t.type === 'amount') {
+          return {
+            type: t.type,
+            amount: Number(t.amount),
+            currency: t.currency,
           }
-        })
-
-        // Wait for upstream policy to be created if it doesn't exist yet
-        let upstreamPolicyId = idMap[data.upstreamPolicyId]
-        while (!upstreamPolicyId) {
-          await new Promise((r) => setTimeout(r, 100))
-          upstreamPolicyId = idMap[data.upstreamPolicyId]
+        } else if (t.type === 'vendor') {
+          return {
+            type: t.type,
+            vendorIds: t.vendorIds,
+          }
+        } else if (t.type === 'metadata') {
+          return {
+            type: t.type,
+            key: t.key,
+            value: t.value,
+          }
+        } else if (t.type === 'catchall') {
+          return {
+            type: 'catchall',
+          }
+        } else {
+          return t
         }
+      })
 
-        const policy: Mercoa.ApprovalPolicyRequest = {
-          upstreamPolicyId,
-          trigger,
-          rule: {
-            type: data.rule.type,
-            numApprovers: Number(data.rule.numApprovers),
-            identifierList: {
-              type: data.rule.identifierList.type,
-              value: data.rule.identifierList.value,
-            },
-            autoAssign: data.rule.autoAssign,
+      const upstreamPolicyId = idMap[currentPolicy.upstreamPolicyId]
+
+      const policyRequest: Mercoa.ApprovalPolicyRequest = {
+        upstreamPolicyId,
+        trigger,
+        rule: {
+          type: currentPolicy.rule.type,
+          numApprovers: Number(currentPolicy.rule.numApprovers),
+          identifierList: {
+            type: currentPolicy.rule.identifierList.type,
+            value: currentPolicy.rule.identifierList.value,
           },
-        }
+          autoAssign: currentPolicy.rule.autoAssign,
+        },
+      }
 
-        try {
-          let updatedPolicy: Mercoa.ApprovalPolicyResponse | undefined
-          if (data?.id && data?.id.indexOf('~') < 0 && !data?.id.startsWith('fallback')) {
-            updatedPolicy = await mercoaSession.client?.entity.approvalPolicy.update(
-              mercoaSession.entity.id,
-              data.id,
-              policy,
-            )
-          } else {
-            updatedPolicy = await mercoaSession.client?.entity.approvalPolicy.create(mercoaSession.entity.id, policy)
-          }
-          idMap[data.id] = updatedPolicy?.id ?? ''
-          toasts.push({ id: data.id, success: true })
-        } catch (e: any) {
-          toasts.push({ id: data.id, success: false })
+      try {
+        let updatedPolicy: Mercoa.ApprovalPolicyResponse | undefined
+        if (currentPolicy.id && !currentPolicy.id.includes('~') && !currentPolicy.id.startsWith('fallback')) {
+          updatedPolicy = await mercoaSession.client?.entity.approvalPolicy.update(
+            mercoaSession.entity.id,
+            currentPolicy.id,
+            policyRequest,
+          )
+        } else {
+          updatedPolicy = await mercoaSession.client?.entity.approvalPolicy.create(
+            mercoaSession.entity.id,
+            policyRequest,
+          )
         }
-      }),
-    )
+        idMap[currentPolicy.id] = updatedPolicy?.id ?? ''
+        toasts.push({ id: currentPolicy.id, success: true })
+      } catch (e: any) {
+        toasts.push({ id: currentPolicy.id, success: false })
+      }
+      await new Promise((r) => setTimeout(r, 10))
+    }
+
     await getPolicies()
+    await fetchHistory()
     if (toasts.every((e) => e.success)) {
       toast('Approval Policies Saved', {
         type: 'success',
@@ -254,31 +381,67 @@ export function ApprovalPolicies({
   if (!policies || !formPolicies) return <LoadingSpinnerIcon />
 
   return (
-    <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <Level
-          level={0}
-          remove={remove}
-          append={append}
-          control={control}
-          watch={watch}
-          register={register}
-          setValue={setValue}
-          users={users}
-          roles={roles}
-          formPolicies={formPolicies}
-          upstreamPolicyId="root"
-          allowAutoAssign={allowAutoAssign}
-          maxRules={maxRules}
-          resourceLabel={resourceLabel}
-          supportedCurrencies={supportedCurrencies}
-          maxNestedLevels={maxNestedLevels}
+    <>
+      <FormProvider {...methods}>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <div className={readOnly || isSaving ? 'mercoa-pointer-events-none' : ''}>
+            <Level
+              level={0}
+              remove={remove}
+              append={append}
+              control={control}
+              watch={watch}
+              register={register}
+              setValue={setValue}
+              users={users}
+              roles={roles}
+              formPolicies={formPolicies}
+              upstreamPolicyId="root"
+              allowAutoAssign={allowAutoAssign}
+              maxRules={maxRules}
+              resourceLabel={resourceLabel}
+              supportedCurrencies={supportedCurrencies}
+              maxNestedLevels={maxNestedLevels}
+            />
+          </div>
+
+          {!readOnly && (
+            <div className="mercoa-flex mercoa-gap-2 mercoa-mt-5">
+              <MercoaButton isEmphasized size="md" disabled={isSaving}>
+                <ButtonLoadingSpinner isLoading={isSaving}>Save Rules</ButtonLoadingSpinner>
+              </MercoaButton>
+              {showHistory && (
+                <MercoaButton
+                  onClick={() => setIsHistoryModalOpen(true)}
+                  size="md"
+                  disabled={isSaving}
+                  className="mercoa-flex mercoa-items-center mercoa-gap-2"
+                >
+                  History
+                  <ClockIcon className="mercoa-size-5" />
+                </MercoaButton>
+              )}
+            </div>
+          )}
+        </form>
+      </FormProvider>
+      {showHistory && isHistoryModalOpen && history && (
+        <ApprovalPolicyHistoryDialog
+          isOpen={isHistoryModalOpen}
+          setIsOpen={setIsHistoryModalOpen}
+          history={history}
+          readOnly={readOnly}
+          onRestore={async (approvalPolicyHistoryId: string) => {
+            if (!mercoaSession.entity?.id) return
+            await mercoaSession.client?.entity.approvalPolicy.restore(mercoaSession.entity.id, approvalPolicyHistoryId)
+            await getPolicies()
+            await fetchHistory()
+            toast.success('Successfully restored approval policy')
+            setIsHistoryModalOpen(false)
+          }}
         />
-        <MercoaButton isEmphasized size="md" className="mercoa-mt-5" disabled={isSaving}>
-          Save Rules
-        </MercoaButton>
-      </form>
-    </FormProvider>
+      )}
+    </>
   )
 }
 
