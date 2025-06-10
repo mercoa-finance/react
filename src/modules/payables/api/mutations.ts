@@ -215,6 +215,7 @@ export const useSchedulePayment = () => {
     options: {
       onSuccess: (_, { invoice, invoiceType }) => {
         queryClient.invalidateQueries({ queryKey: ['payableDetail', invoice.id, invoiceType] })
+        queryClient.invalidateQueries({ queryKey: ['payableEvents', invoice.id] })
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })
@@ -344,6 +345,7 @@ export const useSetPaymentDate = () => {
     options: {
       onSuccess: (_, { invoice, invoiceType }) => {
         queryClient.invalidateQueries({ queryKey: ['payableDetail', invoice.id, invoiceType] })
+        queryClient.invalidateQueries({ queryKey: ['payableEvents', invoice.id] })
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })
@@ -472,6 +474,7 @@ export const useUpdatePayable = () => {
     options: {
       onSuccess: ({ id }, { invoiceType }) => {
         queryClient.invalidateQueries({ queryKey: ['payableDetail', id, invoiceType] })
+        queryClient.invalidateQueries({ queryKey: ['payableEvents', id] })
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })
@@ -515,6 +518,7 @@ export function useCreatePayable() {
     options: {
       onSuccess: ({ id }, { invoiceType }) => {
         queryClient.invalidateQueries({ queryKey: ['payableDetail', id, invoiceType] })
+        queryClient.invalidateQueries({ queryKey: ['payableEvents', id] })
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })
@@ -569,6 +573,7 @@ export function useApprovePayable() {
     options: {
       onSuccess: (_, { invoice, invoiceType }) => {
         queryClient.invalidateQueries({ queryKey: ['payableDetail', invoice.id, invoiceType] })
+        queryClient.invalidateQueries({ queryKey: ['payableEvents', invoice.id] })
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })
@@ -623,6 +628,7 @@ export function useRejectPayable() {
     options: {
       onSuccess: (_, { invoice, invoiceType }) => {
         queryClient.invalidateQueries({ queryKey: ['payableDetail', invoice.id, invoiceType] })
+        queryClient.invalidateQueries({ queryKey: ['payableEvents', invoice.id] })
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })
@@ -701,6 +707,7 @@ export const useRestoreAsDraft = () => {
     options: {
       onSuccess: (_, { invoice, invoiceType }) => {
         queryClient.invalidateQueries({ queryKey: ['payableDetail', invoice.id, invoiceType] })
+        queryClient.invalidateQueries({ queryKey: ['payableEvents', invoice.id] })
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })
@@ -811,6 +818,7 @@ export const useSubmitForApproval = () => {
     options: {
       onSuccess: (_, { invoice, invoiceType }) => {
         queryClient.invalidateQueries({ queryKey: ['payableDetail', invoice.id, invoiceType] })
+        queryClient.invalidateQueries({ queryKey: ['payableEvents', invoice.id] })
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })
@@ -904,6 +912,7 @@ export const useAssignApprover = () => {
     options: {
       onSuccess: (_, { invoice }) => {
         queryClient.invalidateQueries({ queryKey: ['payableDetail', invoice.id, 'invoice'] })
+        queryClient.invalidateQueries({ queryKey: ['payableEvents', invoice.id] })
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })
@@ -983,6 +992,7 @@ export const useArchivePayable = () => {
     options: {
       onSuccess: (_, { invoiceId }) => {
         queryClient.invalidateQueries({ queryKey: ['payableDetail', invoiceId, 'invoice'] })
+        queryClient.invalidateQueries({ queryKey: ['payableEvents', invoiceId] })
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })
@@ -1068,6 +1078,7 @@ export const useCancelPayable = () => {
     options: {
       onSuccess: (_, { invoiceId }) => {
         queryClient.invalidateQueries({ queryKey: ['payableDetail', invoiceId, 'invoice'] })
+        queryClient.invalidateQueries({ queryKey: ['payableEvents', invoiceId] })
         queryClient.invalidateQueries({
           queryKey: ['payables'],
         })

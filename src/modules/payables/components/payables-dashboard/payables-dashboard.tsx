@@ -84,7 +84,12 @@ export const PayablesDashboard: FC = memo(() => {
   }, [userPermissionConfig, statusTabsOptions])
 
   useEffect(() => {
-    if (userPermissionConfig && statusTabOptionsByUser.length > 0 && !useOnce.current && !selectedStatusFilters.length) {
+    if (
+      userPermissionConfig &&
+      statusTabOptionsByUser.length > 0 &&
+      !useOnce.current &&
+      !selectedStatusFilters.length
+    ) {
       setFilters('payables', {
         selectedStatusFilters: [statusTabOptionsByUser[0]],
       })
@@ -122,23 +127,25 @@ export const PayablesDashboard: FC = memo(() => {
 
       <div className="mercoa-mt-2 mercoa-flex mercoa-justify-between mercoa-items-center mercoa-mb-4 mercoa-gap-5">
         <div className="mercoa-flex mercoa-w-[50%] mercoa-mr-2 mercoa-rounded-mercoa">
-          {customSearchBar ? customSearchBar(setSearch) : (
+          {customSearchBar ? (
+            customSearchBar(setSearch)
+          ) : (
             <DebouncedSearch onSettle={setSearch}>
               {({ onChange }: { onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
-              <div className="mercoa-flex mercoa-items-center mercoa-w-full mercoa-bg-transparent mercoa-relative mercoa-rounded-mercoa">
-                <div className="mercoa-left-[8px] mercoa-top-[50%] mercoa-translate-y-[-50%] mercoa-absolute">
-                  <SearchIcon />
+                <div className="mercoa-flex mercoa-items-center mercoa-w-full mercoa-bg-transparent mercoa-relative mercoa-rounded-mercoa">
+                  <div className="mercoa-left-[8px] mercoa-top-[50%] mercoa-translate-y-[-50%] mercoa-absolute">
+                    <SearchIcon />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    onChange={onChange}
+                    className={cn(
+                      'mercoa-pl-8 mercoa-w-full mercoa-bg-transparent  mercoa-rounded-mercoa mercoa-outline-none mercoa-border-gray-200  focus:mercoa-ring-gray-200 focus:mercoa-border-transparent mercoa-text-sm mercoa-placeholder-gray-500 mercoa-text-[13px]',
+                      classNames?.searchbar,
+                    )}
+                  />
                 </div>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  onChange={onChange}
-                  className={cn(
-                    'mercoa-pl-8 mercoa-w-full mercoa-bg-transparent  mercoa-rounded-mercoa mercoa-outline-none mercoa-border-gray-200  focus:mercoa-ring-gray-200 focus:mercoa-border-transparent mercoa-text-sm mercoa-placeholder-gray-500 mercoa-text-[13px]',
-                    classNames?.searchbar,
-                  )}
-                />
-              </div>
               )}
             </DebouncedSearch>
           )}
@@ -198,6 +205,7 @@ export const PayablesDashboard: FC = memo(() => {
           <StatusTabs
             selectedStatuses={selectedStatusFilters.length ? selectedStatusFilters : [statusTabOptionsByUser[0]]}
             statuses={statusTabOptionsByUser}
+            customStatuses={statusTabsOptions?.customStatuses}
             onStatusChange={(status) => {
               setFilters('payables', {
                 selectedStatusFilters: Array.isArray(status) ? status : [status],

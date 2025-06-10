@@ -27,7 +27,7 @@ export function PayableDetails({
   children,
 }: PayableDetailsProps) {
   const mercoaSession = useMercoaSession()
-  let { invoiceId, invoiceType, invoice } = queryOptions ?? {}
+  let { invoiceId, invoiceType, invoice, getInvoiceEvents } = queryOptions ?? {}
   const { heightOffset = 0, documentPosition = 'left', formLayout, paymentMethods } = displayOptions ?? {}
   const { supportedCurrencies } = config ?? {}
 
@@ -55,7 +55,7 @@ export function PayableDetails({
       return (
         <PayableDetailsProvider
           payableDetailsProps={{
-            queryOptions: { invoiceId: invoiceId ?? '', invoiceType },
+            queryOptions: { invoiceId: invoiceId ?? '', invoiceType, getInvoiceEvents },
             displayOptions: {
               heightOffset: heightOffset ?? mercoaSession.heightOffset,
               documentPosition: documentPosition ?? 'left',
@@ -80,7 +80,7 @@ export function PayableDetails({
     return (
       <PayableDetailsProvider
         payableDetailsProps={{
-          queryOptions: { invoiceId: invoiceId ?? '', invoiceType },
+          queryOptions: { invoiceId: invoiceId ?? '', invoiceType, getInvoiceEvents },
           displayOptions: {
             heightOffset: heightOffset ?? mercoaSession.heightOffset,
             documentPosition: documentPosition,
@@ -100,7 +100,7 @@ export function PayableDetails({
   return (
     <PayableDetailsProvider
       payableDetailsProps={{
-        queryOptions: { invoiceId: invoice?.id ?? invoiceId ?? '', invoiceType },
+        queryOptions: { invoiceId: invoice?.id ?? invoiceId ?? '', invoiceType, getInvoiceEvents },
         handlers,
         renderCustom,
         config: {

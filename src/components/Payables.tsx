@@ -1820,6 +1820,7 @@ export function InvoiceStatusPill({
   paymentSourceId,
   paymentDestinationId,
   type,
+  skipValidation,
 }: {
   status: Mercoa.InvoiceStatus
   failureType?: Mercoa.InvoiceFailureType
@@ -1830,13 +1831,18 @@ export function InvoiceStatusPill({
   paymentSourceId?: string
   paymentDestinationId?: string
   type?: 'payable' | 'receivable'
+  skipValidation?: boolean
 }) {
   const counterparty = type === 'receivable' ? payerId : vendorId
   let backgroundColor = 'mercoa-bg-gray-100'
   let textColor = 'mercoa-text-black'
   let message = ''
   if (!status || status === Mercoa.InvoiceStatus.Draft) {
-    if (!counterparty || !amount || !dueDate) {
+    if (skipValidation) {
+      backgroundColor = 'mercoa-bg-gray-100'
+      textColor = 'mercoa-text-gray-800'
+      message = 'Draft'
+    } else if (!counterparty || !amount || !dueDate) {
       backgroundColor = 'mercoa-bg-yellow-100'
       textColor = 'mercoa-text-black'
       message = 'Draft Incomplete'
@@ -1846,7 +1852,11 @@ export function InvoiceStatusPill({
       message = 'Draft Ready'
     }
   } else if (status === Mercoa.InvoiceStatus.New) {
-    if (!paymentSourceId || !counterparty || !amount || !dueDate) {
+    if (skipValidation) {
+      backgroundColor = 'mercoa-bg-yellow-100'
+      textColor = 'mercoa-text-gray-800'
+      message = 'Ready for Review'
+    } else if (!paymentSourceId || !counterparty || !amount || !dueDate) {
       backgroundColor = 'mercoa-bg-yellow-100'
       textColor = 'mercoa-text-gray-800'
       message = 'Incomplete'
@@ -1856,16 +1866,24 @@ export function InvoiceStatusPill({
       message = 'Ready for Review'
     }
   } else if (status === Mercoa.InvoiceStatus.Approved) {
+    if (skipValidation) {
+      backgroundColor = 'mercoa-bg-green-100'
+      textColor = 'mercoa-text-green-800'
+      message = 'Approved'
+    }
     // AP Validation
-    if (type === 'payable' && (!paymentSourceId || !paymentDestinationId || !counterparty || !amount || !dueDate)) {
+    else if (
+      type === 'payable' &&
+      (!paymentSourceId || !paymentDestinationId || !counterparty || !amount || !dueDate)
+    ) {
       backgroundColor = 'mercoa-bg-yellow-100'
-      textColor = 'mercoa-text-black'
+      textColor = 'mercoa-text-gray-800'
       message = 'Incomplete'
     }
     // AR Validation (don't require paymentSourceId)
     else if (type === 'receivable' && (!paymentDestinationId || !counterparty || !amount || !dueDate)) {
       backgroundColor = 'mercoa-bg-yellow-100'
-      textColor = 'mercoa-text-black'
+      textColor = 'mercoa-text-gray-800'
       message = 'Incomplete'
     }
     // Fallthrough
@@ -1875,16 +1893,24 @@ export function InvoiceStatusPill({
       message = type === 'receivable' ? 'Out for Payment' : 'Ready for Payment'
     }
   } else if (status === Mercoa.InvoiceStatus.Scheduled) {
+    if (skipValidation) {
+      backgroundColor = 'mercoa-bg-green-100'
+      textColor = 'mercoa-text-green-800'
+      message = 'Payment Scheduled'
+    }
     // AP Validation
-    if (type === 'payable' && (!paymentSourceId || !paymentDestinationId || !counterparty || !amount || !dueDate)) {
+    else if (
+      type === 'payable' &&
+      (!paymentSourceId || !paymentDestinationId || !counterparty || !amount || !dueDate)
+    ) {
       backgroundColor = 'mercoa-bg-yellow-100'
-      textColor = 'mercoa-text-black'
+      textColor = 'mercoa-text-gray-800'
       message = 'Incomplete'
     }
     // AR Validation (don't require paymentSourceId)
     else if (type === 'receivable' && (!paymentDestinationId || !counterparty || !amount || !dueDate)) {
       backgroundColor = 'mercoa-bg-yellow-100'
-      textColor = 'mercoa-text-black'
+      textColor = 'mercoa-text-gray-800'
       message = 'Incomplete'
     }
     // Fallthrough
@@ -1895,7 +1921,7 @@ export function InvoiceStatusPill({
     }
   } else if (status === Mercoa.InvoiceStatus.Pending) {
     backgroundColor = 'mercoa-bg-yellow-100'
-    textColor = 'mercoa-text-black'
+    textColor = 'mercoa-text-gray-800'
     message = 'Payment Processing'
   } else if (status === Mercoa.InvoiceStatus.Paid) {
     backgroundColor = 'mercoa-bg-green-100'

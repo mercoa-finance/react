@@ -636,3 +636,19 @@ export const usePaymentMethodsQuery = ({ entityId, type }: { entityId?: string; 
     },
   })
 }
+export const usePayableEventsQuery = ({ invoiceId, enabled }: { invoiceId?: string; enabled?: boolean }) => {
+  const mercoaSession = useMercoaSession()
+
+  return useQuery<Mercoa.InvoiceEventsResponse | undefined>({
+    queryKey: ['payableEvents', invoiceId],
+    queryFn: async () => {
+      if (!mercoaSession?.client || !invoiceId) {
+        throw new Error('Missing required parameters')
+      }
+      return await mercoaSession.client.invoice.events(invoiceId, { limit: 100 })
+    },
+    options: {
+      enabled: !!mercoaSession?.client && !!invoiceId && enabled,
+    },
+  })
+}
