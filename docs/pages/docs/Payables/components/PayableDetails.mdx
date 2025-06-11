@@ -1,3 +1,4 @@
+````mdx
 import {
   PayableDetailsV1,
   PayableDetails,
@@ -14,6 +15,7 @@ import {
   PaymentDestinationProcessingTime,
   PayableFees,
   PayableApprovers,
+  PayableApproversV1,
   PayableComments,
   PayableActions,
 } from '@mercoa/react'
@@ -121,360 +123,64 @@ type ToastClient = {
 }
 ```
 
-## Main Props Examples
+---
 
-### Default Usage
+## PayableApproversV1
 
-<ComponentContainer>
-  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
-  ```jsx
-  <PayableDetails
-    queryOptions={{
-      invoiceId: 'inv_123',
-      invoiceType: 'invoice',
-    }}
-  />
-  ```
-</ComponentContainer>
+The `<PayableApproversV1 />` component (aliased as `<PayableApprovers />`) renders the invoice approvers section and can appear as part of custom children in `<PayableDetails />`. 
 
-### Event Handlers
+**New in v0.1.5-rc3:**  
+The component now supports three new optional props:
 
-<ComponentContainer>
-  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
-  ```jsx
-  <PayableDetails
-    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
-    handlers={{
-      onInvoicePreSubmit: async (invoice) => {
-        // Modify or validate invoice before submission
-        return invoice
-      },
-      onInvoiceUpdate: (invoice) => {
-        if (invoice) {
-          router.push(`/invoices/${invoice.id}`)
-        }
-      },
-      onInvoiceSubmit: (invoice) => {
-        console.log('Invoice submitted:', invoice)
-      },
-    }}
-  />
-  ```
-</ComponentContainer>
+| Prop               | Type      | Default         | Description                                                                          |
+|--------------------|-----------|-----------------|--------------------------------------------------------------------------------------|
+| `allowAnyApprover` | `boolean` | `true`          | If `true`, the "Any Approver" option appears in the approver selector.               |
+| `title`            | `string`  | `'Approvals'`   | Section heading text for the approvers area.                                         |
+| `selectorLabel`    | `string`  | `'Assigned to'` | Label text for the approver selector combo box.                                      |
+| `readOnly`         | `boolean` | `false`         | Renders the part in a read-only state (existing prop, unchanged).                    |
 
-### Query Options
+**Usage Notes:**
+- If `allowAnyApprover={false}`, the "Any Approver" option is not shown in the selector.
+- Use `title` and `selectorLabel` to customize UI text.
+- All props are optional; defaults are used if not specified.
 
-<ComponentContainer>
-  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
-  ```jsx
-  <PayableDetails
-    queryOptions={{
-      invoiceId: 'inv_123',
-      invoiceType: 'invoice',
-      invoice: {
-        // Pre-loaded invoice data for faster rendering
-        id: 'inv_123',
-        amount: 1000,
-        currency: 'USD',
-        // ... other invoice fields
-      },
-    }}
-  />
-  ```
-</ComponentContainer>
+---
 
-### Display Options
+## PayableApproversV1 Usage Examples
 
-<ComponentContainer>
-  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
-  ```jsx
-  <PayableDetails
-    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
-    displayOptions={{
-      heightOffset: 100, // Adjust component height
-      documentPosition: 'right', // Position document viewer
-    }}
-  />
-  ```
-</ComponentContainer>
+### Example 1: Hide the "Any Approver" Option
 
-### Configuration Options
+```jsx
+<PayableApprovers allowAnyApprover={false} />
+```
 
-<ComponentContainer>
-  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
-  ```jsx
-  <PayableDetails
-    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
-    config={{
-      supportedCurrencies: ['USD', 'EUR', 'GBP'],
-    }}
-  />
-  ```
-</ComponentContainer>
+### Example 2: Customizing Section Title and Selector Label
 
-### Custom Rendering
+```jsx
+<PayableApprovers
+  title="Invoice Approval Team"
+  selectorLabel="Reviewer"
+/>
+```
 
-<ComponentContainer>
-  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
-  ```jsx
-  <PayableDetails
-    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
-    renderCustom={{
-      toast: {
-        success: (msg) => customToast.success(msg),
-        error: (msg) => customToast.error(msg),
-        info: (msg) => customToast.info(msg),
-      },
-    }}
-  />
-  ```
-</ComponentContainer>
+### Example 3: Full Customization
 
-## Common Use Case Examples
+```jsx
+<PayableApprovers
+  allowAnyApprover={false}
+  title="Custom Approvers Section"
+  selectorLabel="Select Approver"
+/>
+```
 
-### Create New Invoice / Invoice Template
+---
 
-<ComponentContainer>
-  <PayableDetails queryOptions={{ invoiceId: '', invoiceType: 'invoice' }} />
-  ```jsx
-  <PayableDetails
-    queryOptions={{ invoiceId: '', invoiceType: 'invoice' }}
-    config={{
-      supportedCurrencies: ['USD'],
-    }}
-    handlers={{
-      onInvoiceUpdate: (invoice) => {
-        if (!invoice) {
-          router.push(`/dashboard/payers/${entityId}`)
-          return
-        }
-        router.push(`/dashboard/payers/${entityId}/invoices/${invoice.id}`)
-      },
-    }}
-  />
-  ```
-</ComponentContainer>
+## Changelog
 
-<ComponentContainer>
-  <PayableDetails queryOptions={{ invoiceId: '', invoiceType: 'invoiceTemplate' }} />
-  ```jsx
-  <PayableDetails
-    queryOptions={{ invoiceId: '', invoiceType: 'invoiceTemplate' }}
-    config={{
-      supportedCurrencies: ['USD'],
-    }}
-    handlers={{
-      onInvoiceUpdate: (invoiceTemplate) => {
-        if (!invoiceTemplate) {
-          router.push(`/dashboard/payers/${entityId}`)
-          return
-        }
-        router.push(`/dashboard/payers/${entityId}/invoice-templates/${invoiceTemplate.id}`)
-      },
-    }}
-  />
-  ```
-</ComponentContainer>
+### 0.1.5-rc3
 
-### Edit Existing Invoice
-
-<ComponentContainer>
-  <PayableDetails
-    queryOptions={{
-      invoiceId: 'inv_123',
-      invoiceType: 'invoice',
-    }}
-  />
-  ```jsx
-  <PayableDetails
-    queryOptions={{
-      invoiceId: 'inv_123',
-      invoiceType: 'invoice',
-    }}
-    handlers={{
-      onInvoiceUpdate: (invoice) => console.log('Invoice updated:', invoice),
-      onInvoiceSubmit: (invoice) => console.log('Invoice submitted:', invoice),
-      onOcrComplete: (ocrData) => console.log('OCR completed:', ocrData),
-    }}
-    displayOptions={{
-      heightOffset: 100,
-      documentPosition: 'right',
-    }}
-  />
-  ```
-</ComponentContainer>
-
-### Document Position Variations
-
-<ComponentContainer>
-  <PayableDetails
-    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
-    displayOptions={{ documentPosition: 'right' }}
-  />
-  ```jsx
-  <PayableDetails
-    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
-    displayOptions={{ documentPosition: 'right' }}
-  />
-  ```
-</ComponentContainer>
-
-<ComponentContainer>
-  <PayableDetails
-    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
-    displayOptions={{ documentPosition: 'left' }}
-  />
-  ```jsx
-  {/* Document on left (default) */}
-  <PayableDetails
-    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
-    displayOptions={{ documentPosition: 'left' }}
-  />
-  ```
-</ComponentContainer>
-
-### Custom Toast Notifications
-
-<ComponentContainer>
-  <PayableDetails queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }} />
-  ```jsx
-  <PayableDetails
-    queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
-    renderCustom={{
-      toast: {
-        success: (msg) => alert.success(msg),
-        error: (msg) => alert.error(msg),
-        info: (msg) => alert.info(msg),
-      },
-    }}
-    config={{
-      supportedCurrencies: ['USD', 'EUR', 'GBP'],
-    }}
-  />
-  ```
-</ComponentContainer>
-
-### Custom Children
-
-<ComponentContainer>
-  <PayableDetails
-    queryOptions={{
-      invoiceId: 'inv-123',
-      invoiceType: 'invoice',
-    }}
-    handlers={{
-      onInvoiceUpdate: (invoice) => {
-        if (!invoice) {
-          router.push(`/dashboard/payers/${entityId}`)
-          return
-        }
-      },
-      onCounterpartyPreSubmit: async (counterparty, counterpartyId) => {
-        console.log('counterparty', counterparty)
-        return counterparty
-      },
-      onInvoicePreSubmit: async (invoice) => {
-        console.log('invoice', invoice)
-        return invoice
-      },
-      onOcrComplete: (ocr) => {
-        console.log('ocr', ocr)
-        return ocr
-      },
-    }}
-    config={{
-      supportedCurrencies: ['USD'],
-      disableCounterpartyCreation: false,
-    }}
-    displayOptions={{
-      documentPosition: 'left',
-    }}
-    children={[
-      <PayableDocument key="document" />,
-      <PayableForm key="form">
-        <div className="border-b border-gray-900/10 col-span-full" />
-        <PayableFormHeader /> <div className="border-b border-gray-900/10 col-span-full" />
-        <PayableCounterpartySearch />
-        <PayableOverview />
-        <PayableLineItems />
-        <PayableTaxAndShipping />
-        <PayableMetadata /> <div className="border-b border-gray-900/10 col-span-full" />
-        <PayablePaymentSource />
-        <div className="border-b border-gray-900/10 col-span-full" />
-        <PayablePaymentDestination />
-        <PaymentDestinationProcessingTime />
-        <div className="border-b border-gray-900/10 col-span-full" />
-        <PayableFees />
-        <div className="border-b border-gray-900/10 col-span-full" />
-        <PayableApprovers />
-        <div className="border-b border-gray-900/10 col-span-full" />
-        <PayableComments />
-        <PayableActions /> // additional actions can be added
-      </PayableForm>,
-    ]}
-  />
-  ```jsx
-  <PayableDetails
-    queryOptions={{
-      invoiceId: 'inv-123',
-      invoiceType: 'invoice',
-    }}
-    handlers={{
-      onInvoiceUpdate: (invoice) => {
-        if (!invoice) {
-          router.push(`/dashboard/payers/${entityId}`)
-          return
-        }
-      },
-      onCounterpartyPreSubmit: async (counterparty, counterpartyId) => {
-        console.log('counterparty', counterparty)
-        return counterparty
-      },
-      onInvoicePreSubmit: async (invoice) => {
-        console.log('invoice', invoice)
-        return invoice
-      },
-      onOcrComplete: (ocr) => {
-        console.log('ocr', ocr)
-        return ocr
-      },
-    }}
-    config={{
-      supportedCurrencies: ['USD'],
-      disableCounterpartyCreation: false,
-    }}
-    displayOptions={{
-      heightOffset: 250,
-      documentPosition: 'left',
-    }}
-    children={[
-      <PayableDocument key="document" />,
-      <PayableForm key="form">
-        <div className="border-b border-gray-900/10 col-span-full" />
-        <PayableFormHeader /> <div className="border-b border-gray-900/10 col-span-full" />
-        <PayableCounterpartySearch />
-        <PayableOverview />
-        <PayableLineItems />
-        {mercoaSession.entityCustomizations?.ocr &&
-          !mercoaSession.entityCustomizations?.ocr.taxAndShippingAsLineItems && <PayableTaxAndShipping />}
-        <PayableMetadata /> <div className="border-b border-gray-900/10 col-span-full" />
-        {mercoaSession.entity?.id && (
-          <>
-            <PayablePaymentSource />
-            <div className="border-b border-gray-900/10 col-span-full" />
-            <PayablePaymentDestination />
-            <PaymentDestinationProcessingTime />
-            <div className="border-b border-gray-900/10 col-span-full" />
-            <PayableFees />
-            <div className="border-b border-gray-900/10 col-span-full" />
-            <PayableApprovers />
-            <div className="border-b border-gray-900/10 col-span-full" />
-          </>
-        )}
-        <PayableComments />
-        <PayableActions />
-      </PayableForm>,
-    ]}
-  />
-  ```
-</ComponentContainer>
+- **PayableApproversV1 enhancements:**
+  - Added support for `allowAnyApprover` (boolean): controls whether "Any Approver" is available in the selector (default: true).
+  - Added `title` (string): customize the section heading (default: 'Approvals').
+  - Added `selectorLabel` (string): customize the label for the approver selection combo box (default: 'Assigned to').
+````
