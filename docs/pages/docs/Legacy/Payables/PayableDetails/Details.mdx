@@ -1,4 +1,4 @@
-import {
+import { MercoaSession, PayableActions, PayableApprovers, PayableCounterpartySearch, PayableDetailsV1,
   InvoiceComments,
   MercoaSession,
   PayableActions,
@@ -15,18 +15,18 @@ import {
   PayablePaymentSource,
   PaymentDestinationProcessingTime
 } from '@mercoa/react'
-import { Callout } from 'nextra/components'
+import { Call_Out } from 'nextra/components'
 import { useEffect } from 'react'
 import { ComponentContainer } from '../../../../../components/helpers'
 import { inv_new_ready, inv_scheduled, payerEntity, vendorEntities } from '../../../../../mockData'
 
 # Payable Details
 
-The `<PayableDetailsV1>` component is used to let users create and manage payable invoices.
+The `<PayableDetailsV1>` part lets users create and manage payable invoices.
 
 ## Customization Options
 
-| Themeable | Variations | Custom Component |
+| Themeable | Variations | Custom Part |
 | :-------: | :--------: | :--------------: |
 |    ✅     |     ✅     |        ✅        |
 
@@ -34,12 +34,12 @@ The `<PayableDetailsV1>` component is used to let users create and manage payabl
 
 | Name                  | Type                                                                                 | Required | Description                                                                                                                                           |
 | :---------------------| :------------------------------------------------------------------------------------| :--------| :-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| invoiceId             | `string`                                                                             |          | The ID of the invoice to edit. Leave blank if creating a new invoice                                                                                  |
-| onUpdate              | `(invoice: InvoiceResponse \| undefined) => void`                                    |          | When the invoice is created, updated, or deleted, this callback is triggered                                                                          |
-| heightOffset          | `number`                                                                             |          | This component uses the screen size to set its height. If you have other elements on the screen, increase the height offset to reduce the size of this component. |
-| documentPosition      | `'right' \| 'left' \| 'none'`                                                        |          | Control where to place the invoice document (or hide it). Default is `left`                                                                           |
-| invoicePreSubmit      | `(invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>` |          | This function is called after frontend validations are complete, and before the API call to create/update the invoice is sent.                        |
-| counterpartyPreSubmit | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined, counterPartyId: string \| undefined) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Function to call before an entity is submitted to Mercoa. Useful for adding custom fields to the entity or preventing submission |
+| invoiceID             | `string`                                                                             |          | The ID of the invoice to edit. Leave blank if creating a new invoice                                                                                  |
+| onUpdate              | `(invoice: InvoiceResponse \| undefined) => void`                                    |          | This callback triggers when the user creates, updates, or deletes the invoice                                                                          |
+| heightOffset          | `number`                                                                             |          | This part uses the screen size to set its height. If you have other elements on the screen, increase the height offset to reduce the size of this component. |
+| documentPosition      | `'right' \| 'left' \| 'none'`                                                        |          | Control where to place the invoice document (or hide it). Default is `left`                                                                        |
+| invoicePreSubmit      | `(invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>` |          | This function runs after frontend validations finish, and before the API call to create/update the invoice.                        |
+| counterpartyPreSubmit | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined, counterPartyId: string \| undefined) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Function to call before submitting an entity to Mercoa. Useful for adding custom fields to the entity or preventing submission |
 | children              | `(methods: PayableDetailsChildrenProps) => JSX.Element[]`                            |          | See [customization](#customization) for details on how to use the children prop.                                                                      |
 
 ```typescript
@@ -55,6 +55,66 @@ type PayableDetailsV1ChildrenProps = {
   onOcrComplete: (ocrResponse?: Mercoa.OcrResponse) => void
 };
 ```
+
+---
+
+## PayableApproversV1
+
+The `<PayableApproversV1>` part manages and displays invoice approvers. As of version `0.1.5-rc3`, it supports extra customization props.
+
+### Props
+
+| Name            | Type                 | Default | Description |
+|-----------------|----------------------|---------|-------------|
+| readOnly        | `boolean`            |         | If true, disables editing of approvers. |
+| allowAnyApprover| `boolean`            | `true`  | If `true` (default), the selector shows the "Any Approver" option. If `false`, users can only select specific approvers. |
+| title           | `string`             | "Approvals" | Sets a custom section title. If not provided, defaults to "Approvals." |
+| selectorLabel   | `string`             | "Approver" | Sets a custom label for the approver selector combo box. If not provided, defaults to "Approver". |
+
+#### Behavior
+
+- If `allowAnyApprover` is missing or set to true, users can select the "Any Approver" option as an approver.
+- If `allowAnyApprover` is false, the "Any Approver" option is *not* presented in the selector, requiring explicit user selection.
+- If `title` is missing, the section heading is "Approvals."
+- If `selectorLabel` is missing, the selector label defaults to "Approver."
+
+#### Example: Default Behavior
+
+```jsx
+<PayableApproversV1 />
+```
+
+#### Example: Custom Section Title
+
+```jsx
+<PayableApproversV1 title="Required Signers" />
+```
+
+#### Example: Custom Selector Label
+
+```jsx
+<PayableApproversV1 selectorLabel="Reviewer" />
+```
+
+#### Example: Disabling "Any Approver" Option
+
+```jsx
+<PayableApproversV1 allowAnyApprover={false} />
+```
+
+#### Example: Overriding Many Props
+
+```jsx
+<PayableApproversV1
+  allowAnyApprover={false}
+  title="Invoice Sign-Off"
+  selectorLabel="Select Signer"
+/>
+```
+
+> **Note:** You may override any combination of these props. If you only override one, the other displays default behavior.
+
+---
 
 ## Examples
 
@@ -93,7 +153,7 @@ type PayableDetailsV1ChildrenProps = {
   ```
 </ComponentContainer>
 
-### Document on right
+### Document in the following section
 
 <ComponentContainer>
   <PayableDetailsV1 invoiceId={'inv_new_ready'} documentPosition="right" />
@@ -112,6 +172,24 @@ type PayableDetailsV1ChildrenProps = {
   ```
 </ComponentContainer>
 
+### Payable Approvers with Customization
+
+<ComponentContainer>
+  <PayableApproversV1
+    allowAnyApprover={false}
+    title="Payment Authorization"
+    selectorLabel="Select Approver"
+  />
+  ```jsx
+<PayableApproversV1
+  allowAnyApprover={false}
+  title="Payment Authorization"
+  selectorLabel="Select Approver"
+/>
+  ```
+</ComponentContainer>
+
+---
 
 ## Customization
 
@@ -127,3 +205,17 @@ The default children is the following:
   ]}
 </PayableDetailsV1>
 ```
+
+---
+
+## Migration Notes
+
+- If you use `<PayableApproversV1>` or its internal `<ApproversSelectionV1>` directly, note the updated prop signatures. All new props are optional and backwards compatible, but if you use positional arguments or destructure props, you may must update your usage.
+- The default value for `allowAnyApprover` is now `true` to preserve existing behavior.
+- If you before relied on the default section title or selector label, these remain unchanged unless overridden.
+
+---
+
+## Release Notes
+
+- **0.1.5-rc3**: `<PayableApproversV1>` and `ApproversSelectionV1` now support `allowAnyApprover`, `title`, and `selectorLabel` props for improved customization. Existing usage remains compatible unless you use the internal selection part with positional arguments.
