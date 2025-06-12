@@ -1,9 +1,10 @@
+---
 import { ApprovalPolicies, MercoaSession } from '@mercoa/react'
 import { ComponentContainer, ComponentCustomizationOptions } from '../../../components/helpers'
 
 # Approval Policy Editor
 
-The `<ApprovalPolicies>` component can be used to configure invoice approval policies for an Entity.
+The `<ApprovalPolicies>` component can be used to configure invoice approval policies for an Entity. It now also supports viewing and restoring approval policy history, external policy provisioning, and read-only display modes.
 
 ## Customization Options
 
@@ -13,15 +14,54 @@ The `<ApprovalPolicies>` component can be used to configure invoice approval pol
 
 ## Props
 
-| Name   | Type         | Required | Description                             |
-| :----- | :----------- | :------- | :-------------------------------------- |
-| onSave | `() => void` |          | Called when approval policies are saved |
+| Name              | Type                                        | Required | Description                                                                                                                                                                               |
+|-------------------|---------------------------------------------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| onSave            | `() => void`                                |    ❌    | Called when approval policies are saved.                                                                                                                                                  |
+| showHistory       | `boolean`                                   |    ❌    | If `true`, enables the "View History" button and modal for approval policy history viewing and restoration.                                                                               |
+| approvalPolicies  | `Mercoa.ApprovalPolicyResponse[]`           |    ❌    | If provided, policies are rendered from this array and **not** fetched internally. Component operates in display-only mode for these policies.                                            |
+| readOnly          | `boolean`                                   |    ❌    | If `true`, disables all editing actions, including restoration from history and policy changes.                                                                                           |
+
+---
 
 ## Examples
 
+**Basic Usage**
 <ComponentContainer>
   <ApprovalPolicies />
   ```jsx
   <ApprovalPolicies />
+  ```
+</ComponentContainer>
+
+**With History Feature**
+<ComponentContainer>
+  <ApprovalPolicies showHistory />
+  ```jsx
+  <ApprovalPolicies showHistory />
+  ```
+</ComponentContainer>
+
+**Read-only Mode**
+<ComponentContainer>
+  <ApprovalPolicies readOnly />
+  ```jsx
+  <ApprovalPolicies readOnly />
+  ```
+</ComponentContainer>
+
+**Externally Provided Approval Policies (Display Only)**
+<ComponentContainer>
+  {/* Assume `policies` is an array of Mercoa.ApprovalPolicyResponse objects */}
+  <ApprovalPolicies approvalPolicies={policies} />
+  ```jsx
+  <ApprovalPolicies approvalPolicies={policies} />
+  ```
+</ComponentContainer>
+
+**History Feature Disabled in Read-only Mode**
+<ComponentContainer>
+  <ApprovalPolicies showHistory readOnly />
+  ```jsx
+  <ApprovalPolicies showHistory readOnly />
   ```
 </ComponentContainer>
