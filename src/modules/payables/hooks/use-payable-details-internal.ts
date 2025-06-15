@@ -948,7 +948,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       const policy = (approvalPolicy as Mercoa.ApprovalPolicyResponse[]).find(
         (e) => e.id === approverSlot.approvalPolicyId,
       )
-      if (policy?.rule.autoAssign && !approverSlot.assignedUserId) {
+      if (policy?.rule.type === 'approver' && policy?.rule.autoAssign && !approverSlot.assignedUserId) {
         setValue(`approvers.${index}.assignedUserId`, 'ANY')
       }
     })

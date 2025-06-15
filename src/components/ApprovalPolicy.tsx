@@ -244,21 +244,23 @@ export function ApprovalPolicies({
     const toasts: { id: string; success: boolean }[] = []
 
     const validRules = data.policies.every((policy, index) => {
-      if (policy.rule.identifierList.value.filter((e: string) => !!e).length < 1) {
-        toast(`Error With Rule ${index + 1}: Number of approvers cannot be less than 1`, {
-          type: 'error',
-        })
-        return false
-      }
+      if (policy.rule.type === 'approver') {
+        if (policy.rule.identifierList.value.filter((e: string) => !!e).length < 1) {
+          toast(`Error With Rule ${index + 1}: Number of approvers cannot be less than 1`, {
+            type: 'error',
+          })
+          return false
+        }
 
-      if (
-        policy.rule.identifierList.type === 'userList' &&
-        policy.rule.numApprovers > policy.rule.identifierList.value.length
-      ) {
-        toast(`Error With Rule ${index + 1}: Number of approvers cannot be more than number of users`, {
-          type: 'error',
-        })
-        return false
+        if (
+          policy.rule.identifierList.type === 'userList' &&
+          policy.rule.numApprovers > policy.rule.identifierList.value.length
+        ) {
+          toast(`Error With Rule ${index + 1}: Number of approvers cannot be more than number of users`, {
+            type: 'error',
+          })
+          return false
+        }
       }
       return true
     })
@@ -328,13 +330,18 @@ export function ApprovalPolicies({
         upstreamPolicyId,
         trigger,
         rule: {
-          type: currentPolicy.rule.type,
-          numApprovers: Number(currentPolicy.rule.numApprovers),
-          identifierList: {
-            type: currentPolicy.rule.identifierList.type,
-            value: currentPolicy.rule.identifierList.value,
-          },
-          autoAssign: currentPolicy.rule.autoAssign,
+          ...(currentPolicy.rule.type === 'approver'
+            ? {
+                type: 'approver',
+                numApprovers: Number(currentPolicy.rule.numApprovers),
+                identifierList: {
+                  type: currentPolicy.rule.identifierList.type,
+                  value: currentPolicy.rule.identifierList.value,
+                },
+              }
+            : {
+                type: 'automatic',
+              }),
         },
       }
 
@@ -918,6 +925,9 @@ function Trigger({
                   }
                   name={`policies.${index}.trigger.${triggerIndex}.amount`}
                   register={register}
+                  min="0.01"
+                  type="number"
+                  step="0.01"
                   trailingIcon={
                     <>
                       <label htmlFor="currency" className="mercoa-sr-only">
@@ -1090,6 +1100,7 @@ function Rule({
   resourceLabel?: string
 }) {
   const [ruleIdType, setRuleIdType] = useState('rolesList')
+  const ruleType = watch(`policies.${index}.rule.type`)
 
   const ruleIdTypeWatch = watch(`policies.${index}.rule.identifierList.type`)
 
@@ -1110,96 +1121,116 @@ function Rule({
   return (
     <div className="mercoa-grid mercoa-grid-cols-1 mercoa-gap-2 mercoa-p-3 mercoa-border mercoa-border-gray-200 mercoa-rounded-mercoa mercoa-relative mercoa-mt-5 mercoa-ml-10 mercoa-bg-white">
       <ArrowDownLeftIcon className="mercoa-w-7 mercoa-h-7 mercoa-absolute -mercoa-top-2 -mercoa-left-10" />
-      {!noTrigger && <div className="mercoa-font-medium mercoa-text-gray-700">Then:</div>}
-      <div className="mercoa-flex mercoa-items-center">
-        <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-mr-2">
-          Require
-        </span>
-        <div className="mercoa-w-[50px]">
-          <input
-            {...register(`policies.${index}.rule.numApprovers`, { required: true })}
-            min="1"
-            type="number"
-            className={`${inputClassName({})}`}
-          />
+      {!noTrigger && (
+        <div className="mercoa-font-medium mercoa-text-gray-700 mercoa-flex mercoa-items-center mercoa-gap-2">
+          Then:
+          <div className="mercoa-flex mercoa-items-center">
+            <div className="mercoa-w-[200px]">
+              <select
+                {...register(`policies.${index}.rule.type`, { required: true })}
+                className={`${inputClassName({})}`}
+              >
+                <option value="approver">Require Approval From</option>
+                <option value="automatic">Automatically Approve</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2">
-          approvals from the following
-        </span>
-        <div className="mercoa-w-[100px]">
-          <select
-            {...register(`policies.${index}.rule.identifierList.type`, { required: true })}
-            className={`${inputClassName({})}`}
-          >
-            <option value={'rolesList'}>roles</option>
-            <option value={'userList'}>users</option>
-          </select>
-        </div>
-      </div>
+      )}
 
-      <div className="mercoa-mt-1">
-        {ruleIdType === 'rolesList' ? (
-          <MercoaCombobox
-            options={roles.map((e) => ({
-              disabled: false,
-              value: e,
-            }))}
-            onChange={(e: string[]) => {
-              if (e.length == 0) return
-              setValue(
-                listValueName,
-                e.filter((e) => e),
-                {
-                  shouldDirty: true,
-                },
-              )
-            }}
-            value={listValue}
-            multiple
-            displaySelectedAs="pill"
-          />
-        ) : (
-          <MercoaCombobox
-            options={users.map((e) => ({
-              disabled: false,
-              value: e,
-            }))}
-            onChange={(e: Mercoa.EntityUserResponse[]) => {
-              if (e.length == 0) return
-              setValue(
-                `policies.${index}.rule.identifierList.value`,
-                e.filter((e) => e).map((e) => e.id),
-                {
-                  shouldDirty: true,
-                },
-              )
-            }}
-            value={watch(`policies.${index}.rule.identifierList.value`)?.map((v: string) =>
-              users.find((u) => u.id == v.trim()),
-            )}
-            displayIndex="name"
-            secondaryDisplayIndex="email"
-            multiple
-            displaySelectedAs="pill"
-          />
-        )}
-      </div>
-      {allowAutoAssign && (
-        <MercoaSwitch
-          tooltip={
-            <span>
-              If enabled, the policy will automatically assign approvers.
-              <br />
-              If more than one approver is eligible, the policy will assign all eligible approvers to the{' '}
-              {resourceLabel}.
-              <br />
-              If disabled, approvers must be manually selected from the list of eligible approvers.
+      {ruleType === 'approver' && (
+        <>
+          <div className="mercoa-flex mercoa-items-center">
+            <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-mr-2">
+              Require
             </span>
-          }
-          label="Automatically Assign Approvers"
-          name={`policies.${index}.rule.autoAssign`}
-          register={register}
-        />
+            <div className="mercoa-w-[50px]">
+              <input
+                {...register(`policies.${index}.rule.numApprovers`, { required: true })}
+                min="1"
+                type="number"
+                className={`${inputClassName({})}`}
+              />
+            </div>
+            <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2">
+              approvals from the following
+            </span>
+            <div className="mercoa-w-[100px]">
+              <select
+                {...register(`policies.${index}.rule.identifierList.type`, { required: true })}
+                className={`${inputClassName({})}`}
+              >
+                <option value={'rolesList'}>roles</option>
+                <option value={'userList'}>users</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mercoa-mt-1">
+            {ruleIdType === 'rolesList' ? (
+              <MercoaCombobox
+                options={roles.map((e) => ({
+                  disabled: false,
+                  value: e,
+                }))}
+                onChange={(e: string[]) => {
+                  if (e.length == 0) return
+                  setValue(
+                    listValueName,
+                    e.filter((e) => e),
+                    {
+                      shouldDirty: true,
+                    },
+                  )
+                }}
+                value={listValue}
+                multiple
+                displaySelectedAs="pill"
+              />
+            ) : (
+              <MercoaCombobox
+                options={users.map((e) => ({
+                  disabled: false,
+                  value: e,
+                }))}
+                onChange={(e: Mercoa.EntityUserResponse[]) => {
+                  if (e.length == 0) return
+                  setValue(
+                    `policies.${index}.rule.identifierList.value`,
+                    e.filter((e) => e).map((e) => e.id),
+                    {
+                      shouldDirty: true,
+                    },
+                  )
+                }}
+                value={watch(`policies.${index}.rule.identifierList.value`)?.map((v: string) =>
+                  users.find((u) => u.id == v.trim()),
+                )}
+                displayIndex="name"
+                secondaryDisplayIndex="email"
+                multiple
+                displaySelectedAs="pill"
+              />
+            )}
+          </div>
+          {allowAutoAssign && (
+            <MercoaSwitch
+              tooltip={
+                <span>
+                  If enabled, the policy will automatically assign approvers.
+                  <br />
+                  If more than one approver is eligible, the policy will assign all eligible approvers to the{' '}
+                  {resourceLabel}.
+                  <br />
+                  If disabled, approvers must be manually selected from the list of eligible approvers.
+                </span>
+              }
+              label="Automatically Assign Approvers"
+              name={`policies.${index}.rule.autoAssign`}
+              register={register}
+            />
+          )}
+        </>
       )}
     </div>
   )
@@ -1243,6 +1274,7 @@ function AddRule({
               type: 'rolesList',
               value: [''],
             },
+            autoAssign: false,
           },
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
