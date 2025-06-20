@@ -1,15 +1,20 @@
+````mdx
 import { Payables } from '@mercoa/react'
 import { ComponentContainer } from '../../../../components/helpers'
 
 # Payables
 
-The `<Payables>` component displays all payables for an entity. It includes built-in filters, invoice metrics, and customizable table options. The entity is determined from the JWT token provided to `<MercoaSession>`.
+The `<Payables>` component displays all payables for an entity. It includes built-in filters, invoice metrics, and customizable table and status tab options. The entity is determined from the JWT token provided to `<MercoaSession>`.
+
+> **Note:** The `<Payables />` component replaces the previous `<InvoiceInbox />` and `<InvoiceTable />` components.
 
 ## Customization Options
 
 | Themeable | Variations | Custom Component |
 | :-------: | :--------: | :--------------: |
 |    ✅     |     ✅     |        ✅        |
+
+---
 
 ## Props
 
@@ -19,7 +24,7 @@ The `<Payables>` component displays all payables for an entity. It includes buil
 | ---------------- | -------------------------------------------- | -------- | --------------------------------------------------------------------------- |
 | `queryOptions`   | [`PayablesQueryOptions`](#query-options)     |          | Data-related options such as filtering invoices by status, date, or search. |
 | `renderCustom`   | [`PayablesRenderCustom`](#custom-rendering)  |          | Allows customization of table columns and formatting.                       |
-| `displayOptions` | [`PayablesDisplayOptions`](#display-options) |          | Options for displaying table, filters, and metrics.                         |
+| `displayOptions` | [`PayablesDisplayOptions`](#display-options) |          | Options for displaying table, filters, metrics, and status tabs.            |
 | `handlers`       | [`PayablesHandlers`](#event-handlers)        |          | Callback functions for handling invoice interactions.                       |
 | `config`         | [`PayablesConfig`](#functional-options)      |          | Configuration settings such as `readOnly`.                                  |
 
@@ -53,7 +58,7 @@ The `<Payables>` component displays all payables for an entity. It includes buil
 | `paymentType`        | `Mercoa.PaymentType[]`                             |          | Filter invoices by payment type.     |
 | `metadata`           | `Mercoa.MetadataFilter \| Mercoa.MetadataFilter[]` |          | Additional metadata filters.         |
 | `dateType`           | `Mercoa.InvoiceDateFilter`                         |          | The type of date filter to apply.    |
-| `approverId`         | `string`                                           |          | Filter invoices by approver ID.      |
+| `approverId`         | `string`                                           |          | Filter invoices by approver ID.<br>**Note:** Only returns invoices where the approver is in a slot with all upstream policies approved. |
 | `approverAction`     | `Mercoa.ApproverAction`                            |          | Filter invoices by approver action.  |
 | `isInitial`          | `boolean`                                          |          | Whether this is the initial load.    |
 
@@ -66,9 +71,29 @@ The `<Payables>` component displays all payables for an entity. It includes buil
 | ---------------------- | ---------------------------------------------------------- | -------- | ---------------------------------------------------------- |
 | `tableOnly`            | `boolean`                                                  |          | Show only the table, hiding filters and other UI elements. |
 | `showCumulativeFilter` | `boolean`                                                  |          | Whether to show a cumulative filter toggle.                |
-| `statusTabsOptions`    | `{ isVisible: boolean, statuses: Mercoa.InvoiceStatus[] }` |          | Configure visibility and statuses for the status tabs.     |
+| `statusTabsOptions`    | [`StatusTabsOptions`](#status-tabs-options)                |          | Configure visibility, statuses, and customizations for the status tabs. |
 | `showInvoiceMetrics`   | `boolean`                                                  |          | Whether to display invoice metrics.                        |
 | `classNames`           | `object`                                                   |          | Custom class names for table and UI elements.              |
+
+<a id="status-tabs-options"></a>
+#### Status Tabs Options (`statusTabsOptions`)
+
+The `statusTabsOptions` prop allows for advanced customization of the status tabs displayed above the payables table.
+
+| Name         | Type                              | Required | Description                                                                     |
+| ------------ | --------------------------------- | -------- | ------------------------------------------------------------------------------- |
+| `isVisible`  | `boolean`                         |          | Show/hide the status tabs.                                                      |
+| `statuses`   | `Mercoa.InvoiceStatus[]`          |          | List of statuses to display as tabs (e.g., `['DRAFT', 'PENDING', 'APPROVED']`). |
+| `labels`     | `Partial<Record<Mercoa.InvoiceStatus, string>>` |          | Override default tab labels for statuses.                                       |
+
+**Example:**
+```jsx
+statusTabsOptions={{
+  isVisible: true,
+  statuses: ['DRAFT', 'PENDING', 'APPROVED'],
+  labels: { DRAFT: "Drafts", PENDING: "Awaiting Approval", APPROVED: "Ready to Pay" }
+}}
+```
 
 ---
 
@@ -106,7 +131,7 @@ type ToastClient = {
 
 | Name       | Type      | Required | Description                         |
 | ---------- | --------- | -------- | ----------------------------------- |
-| `readOnly` | `boolean` |          | Whether the component is read-only. |
+| `readOnly` | `boolean` |          | The part is read-only. |
 
 ---
 
@@ -154,7 +179,7 @@ type ToastClient = {
   ```
 </ComponentContainer>
 
-### Display Options
+### Display Options (with Custom Status Tabs)
 
 <ComponentContainer>
   <Payables
@@ -164,6 +189,11 @@ type ToastClient = {
       statusTabsOptions: {
         isVisible: true,
         statuses: ['DRAFT', 'PENDING', 'APPROVED'],
+        labels: {
+          DRAFT: 'Drafts',
+          PENDING: 'Awaiting Approval',
+          APPROVED: 'Ready to Pay',
+        },
       },
       showInvoiceMetrics: true,
     }}
@@ -176,6 +206,11 @@ type ToastClient = {
       statusTabsOptions: {
         isVisible: true,
         statuses: ['DRAFT', 'PENDING', 'APPROVED'],
+        labels: {
+          DRAFT: 'Drafts',
+          PENDING: 'Awaiting Approval',
+          APPROVED: 'Ready to Pay',
+        },
       },
       showInvoiceMetrics: true,
     }}
@@ -242,9 +277,9 @@ type ToastClient = {
         },
       ],
       toast: {
-        success: (msg) => alert(msg),
-        error: (msg) => alert(msg),
-        info: (msg) => alert(msg),
+        success: (message) => alert(message),
+        error: (message) => alert(message),
+        info: (message) => alert(message),
       },
     }}
   />
@@ -268,60 +303,140 @@ type ToastClient = {
   ```
 </ComponentContainer>
 
-## Common Use Cases Examples
+---
+
+# Approval Policies
+
+The `<ApprovalPolicy />` part allows you to configure and manage approval policies for an entity. These policies decide which users or roles must approve an invoice before it moves from `DRAFT` or `NEW` to `APPROVED`. 
+
+> **Note:** Approval policy history is now supported. Users can view earlier versions of approval policies and restore them if necessary.
+
+## Props
+
+| Name              | Type                                                | Required | Description                                                                                 |
+| ----------------- | --------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------- |
+| `showHistory`     | `boolean`                                           |          | Show the approval policy history button and allow users to view and restore earlier versions. |
+| `approvalPolicies`| `Mercoa.ApprovalPolicyResponse[]`                   |          | Optionally give a list of approval policies. If not given, the component fetches them. |
+| `readOnly`        | `boolean`                                           |          | Render the part as read-only (no editing or restoring capabilities).                    |
+
+### approvalPolicies Data Structure
+
+Each approval policy includes the following fields:
+
+```typescript
+{
+  id: string,
+  trigger: Array<{
+    type: string, // e.g., "amount"
+    // ...additional trigger-specific fields
+  }>,
+  rule: {
+    type: string, // e.g., "approver"
+    // ...additional rule-specific fields
+  },
+  upstreamPolicyId: string,
+  createdAt: string, // ISO datetime
+  updatedAt: string, // ISO datetime
+}
+```
+
+To fetch all policies for an entity, use the [GET /entity/{entityId}/approval-policy](https://docs.mercoa.com/reference/get-entity-entityid-approval-policy) endpoint with a valid `Authorization` header.
+
+---
+
+## Approval Policy History Feature
+
+When `showHistory={true}` is true, the part adds a "View History" button.
+
+- **View**: See the details of any earlier approval policy.
+- **Restore**: Restore an earlier version as the active policy (unless `readOnly` is true).
+
+**Example Usage:**
+
+```jsx
+<ApprovalPolicy showHistory={true} readOnly={false} />
+```
+
+If you wish to pass pre-fetched policies:
+
+```jsx
+const policies = await fetchPolicies(); // Returns Mercoa.ApprovalPolicyResponse[]
+<ApprovalPolicy approvalPolicies={policies} showHistory={true} />
+```
+
+> **Note:** Restoring an approval policy may require appropriate permissions. If unauthorized or forbidden, the system displays an error. Ensure the user has the necessary rights and a valid authorization token.
+
+---
+
+## Common Use Cases
 
 ### Read-Only Mode
 
-<ComponentContainer>
-  <Payables
-    config={{
-      readOnly: true,
-    }}
-  />
-  ```jsx
-  <Payables
-    config={{
-      readOnly: true,
-    }}
-  />
-  ```
-</ComponentContainer>
+```jsx
+<ApprovalPolicy readOnly={true} showHistory={true} />
+```
+This renders the approval policy viewer/history in a non-editable mode.
 
-### Custom Columns
+### Providing Custom Policies
 
-<ComponentContainer>
-  <Payables
-    renderCustom={{
-      columns: [
-        {
-          title: 'Invoice Number',
-          field: 'invoiceNumber',
-          render: (invoice) => invoice.invoiceNumber,
-        },
-        {
-          title: 'Status',
-          field: 'status',
-          render: (invoice) => invoice.status,
-        },
-      ],
-    }}
-  />
-  ```jsx
-  <Payables
-    renderCustom={{
-      columns: [
-        {
-          title: 'Invoice Number',
-          field: 'invoiceNumber',
-          render: (invoice) => invoice.invoiceNumber,
-        },
-        {
-          title: 'Status',
-          field: 'status',
-          render: (invoice) => invoice.status,
-        },
-      ],
-    }}
-  />
-  ```
-</ComponentContainer>
+```jsx
+<ApprovalPolicy
+  approvalPolicies={[
+    {
+      id: 'policy1',
+      trigger: [{ type: 'amount', amount: 1000, currency: 'USD' }],
+      rule: { type: 'approver', identifierList: { type: 'rolesList', value: ['Manager'] }, numApprovers: 1 },
+      upstreamPolicyId: '',
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z',
+    },
+    // ...more
+  ]}
+  showHistory={true}
+/>
+```
+
+---
+
+## Migration & Compatibility Notes
+
+- **Approval Policy Triggers**: Now an array of objects (`trigger: []`) instead of a single object. This allows many triggers per policy. The system automatically migrated legacy policies.
+- **Invoice Filtering**: The `approverId` filter now only returns invoices where the approver is in a slot with all upstream policies approved.
+- **Renamed Components**: 
+    - `<InvoiceInbox />` is now `<Payables />`
+    - `<InvoiceTable />` is now `<PayablesTable />`
+    - `<InvoiceDetails />` is now `<PayableDetails />`
+- **New Fields**: Approval slots now support `upstreamPoliciesApproved` and `upstreamPolicyId`. Invoices may include new fields for `approvers` and `approvalPolicy`.
+- **Invoice Lifecycle**: The invoice lifecycle is now enforced. See [Invoice Lifecycle](https://docs.mercoa.com/concepts/invoices) for details.
+
+**Migration Steps:**
+1. Update your code to use the new `trigger: []` array structure for all approval policies.
+2. Switch to the new part names if you were using the old ones.
+3. Review your usage of `approverId` and ensure you account for the new filtering behavior.
+4. Update your API client to `@mercoa/javascript@0.6.22` or newer.
+
+---
+
+## Status Tabs Customization
+
+The `statusTabsOptions` prop in `<Payables />` allows advanced control over which invoice statuses appear as tabs, what order they appear in, and what labels they use.
+
+**Example: custom Status Tabs**
+
+```jsx
+<Payables
+  displayOptions={{
+    statusTabsOptions: {
+      isVisible: true,
+      statuses: ['DRAFT', 'PENDING', 'APPROVED', 'REJECTED'],
+      labels: {
+        DRAFT: "Drafts",
+        PENDING: "In Review",
+        APPROVED: "Ready to Pay",
+        REJECTED: "Declined",
+      },
+    },
+  }}
+/>
+```
+````
