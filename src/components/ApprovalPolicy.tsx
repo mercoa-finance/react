@@ -303,6 +303,7 @@ export function ApprovalPolicies({
             type: t.type,
             amount: Number(t.amount),
             currency: t.currency,
+            comparison: t.comparison ?? 'gte',
           }
         } else if (t.type === 'vendor') {
           return {
@@ -914,9 +915,18 @@ function Trigger({
             />
             {triggerWatch?.[triggerIndex]?.type === 'amount' && (
               <>
-                <span className="mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-ml-2 mercoa-mr-2">
-                  more than or equal to
-                </span>
+                <div className="mercoa-w-[200px]">
+                  <select
+                    {...register(`policies.${index}.trigger.${triggerIndex}.comparison`)}
+                    className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
+                  >
+                    <option value={Mercoa.Comparison.Eq}>equal to</option>
+                    <option value={Mercoa.Comparison.Gt}>greater than</option>
+                    <option value={Mercoa.Comparison.Gte}>greater than or equal to</option>
+                    <option value={Mercoa.Comparison.Lt}>less than</option>
+                    <option value={Mercoa.Comparison.Lte}>less than or equal to</option>
+                  </select>
+                </div>
                 <MercoaInput
                   leadingIcon={
                     <span className="mercoa-text-gray-500 sm:mercoa-text-sm">
@@ -1046,6 +1056,7 @@ function Trigger({
                     type: 'amount',
                     amount: 100,
                     currency: Mercoa.CurrencyCode.Usd,
+                    comparison: 'gte',
                   })
                 } else if (!hasVendor) {
                   append({

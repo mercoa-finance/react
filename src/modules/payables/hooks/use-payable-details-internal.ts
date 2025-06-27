@@ -94,7 +94,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const { toast } = renderCustom ?? {}
   const { supportedCurrencies } = config
   const mercoaSession = useMercoaSession()
-  const { invoiceType, invoiceId, invoice: invoiceExternal, getInvoiceEvents } = queryOptions
+  const { invoiceType, invoiceId, invoice: invoiceExternal } = queryOptions
   const [vendorSearch, setVendorSearch] = useState('')
   const [duplicateVendorModalOpen, setDuplicateVendorModalOpen] = useState(false)
   const [duplicateVendorInfo, setDuplicateVendorInfo] = useState<{
@@ -103,6 +103,8 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     foundString: string
     type: 'payee' | 'payor'
   }>()
+
+  const getInvoiceEvents = typeof queryOptions.getInvoiceEvents === 'boolean' ? queryOptions.getInvoiceEvents : true
 
   const { heightOffset } = displayOptions
   const showDestinationPaymentMethodConfirmation =
@@ -1541,12 +1543,11 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const filteredComments = comments?.filter((comment) => comment.text || comment.associatedApprovalAction) ?? []
 
   const initialCreationComment = {
-    id: watch('id') ?? '',
-    createdAt: watch('createdAt') ?? new Date(),
-    updatedAt: watch('updatedAt') ?? new Date(),
-    user: watch('creatorUser') ?? {
+    id: '',
+    createdAt: invoiceData?.createdAt ?? new Date(),
+    updatedAt: invoiceData?.createdAt ?? new Date(),
+    user: {
       id: '',
-      name: '',
       roles: [],
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -1554,7 +1555,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     text: '',
     associatedApprovalAction: {
       action: Mercoa.ApproverAction.None,
-      userId: watch('creatorUser')?.id ?? '',
+      userId: '',
     },
   }
 
@@ -1782,7 +1783,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       setValue('formAction', PayableFormAction.COMMENT)
     },
     getCommentAuthor: (comment: Mercoa.CommentResponse) => {
-      return comment.user?.name ?? 'System'
+      return comment.user?.name ?? ''
     },
   }
   const metadataContext: PayableMetadataContext = {

@@ -91,7 +91,7 @@ export function DuplicateCounterpartyModal({
                     <h4 className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">
                       Existing {entityType} details:
                     </h4>
-                    <div className="mercoa-space-y-2">
+                    <div className="mercoa-space-y-2 mercoa-max-h-60 mercoa-overflow-y-auto">
                       {duplicateInfo.duplicates.map((counterparty, index) => (
                         <label
                           key={index}

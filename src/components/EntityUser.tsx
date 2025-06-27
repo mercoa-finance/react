@@ -82,16 +82,35 @@ export function EntityUserNotificationTable({
   }, [mercoaSession.client, startingAfter, resultsPerPage])
 
   useEffect(() => {
+    let isCurrent = true
+    if (!notifications || notifications.length === 0 || !mercoaSession.client || !entityId) {
+      setInvoices([])
+      return () => {
+        isCurrent = false
+      }
+    }
+
+    const invoiceIds = notifications?.filter((e) => e.invoiceId).map((e) => `${e.invoiceId}`) ?? []
+    if (invoiceIds.length === 0) {
+      setInvoices([])
+      return () => {
+        isCurrent = false
+      }
+    }
+
     mercoaSession.client?.entity.invoice
       .find(entityId, {
-        invoiceId: notifications?.filter((e) => e.invoiceId).map((e) => `${e.invoiceId}`) ?? [],
-        limit: resultsPerPage,
+        invoiceId: invoiceIds,
+        limit: 100,
       })
       .then((e) => {
-        if (e) {
+        if (e && isCurrent) {
           setInvoices(e.data)
         }
       })
+    return () => {
+      isCurrent = false
+    }
   }, [mercoaSession.client, entityId, notifications])
 
   if (!mercoaSession.client) return <NoSession componentName="EntityUserNotificationTable" />
@@ -155,33 +174,35 @@ export function EntityUserNotificationTable({
                     </tr>
                   )}
                   {notifications &&
-                    notifications.map((notification, index) => (
-                      <tr
-                        onClick={() => onClick?.({ entityId, userId, invoiceId: notification.invoiceId })}
-                        key={notification.id}
-                        className={`hover:mercoa-bg-gray-100 ${index % 2 === 0 ? undefined : 'mercoa-bg-gray-50'}`}
-                      >
-                        <td className="mercoa-whitespace-nowrap mercoa-py-4 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-6">
-                          {notificationTypeToText[notification.type]}
-                        </td>
-                        <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
-                          {' '}
-                          {dayjs(notification.createdAt).format('MM/DD/YY')}
-                        </td>
-                        <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
-                          {invoices?.find((e) => notification.invoiceId === e.id)?.vendor?.name ?? ''}
-                        </td>
-                        <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
-                          {accounting.formatMoney(
-                            invoices?.find((e) => notification.invoiceId === e.id)?.amount ?? '',
-                            currencyCodeToSymbol(invoices?.find((e) => notification.invoiceId === e.id)?.currency),
-                          )}
-                        </td>
-                        <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
-                          {notification.invoiceId}
-                        </td>
-                      </tr>
-                    ))}
+                    notifications.map((notification, index) => {
+                      const invoice = invoices?.find((e) => notification.invoiceId === e.id)
+                      return (
+                        <tr
+                          onClick={() => onClick?.({ entityId, userId, invoiceId: notification.invoiceId })}
+                          key={notification.id}
+                          className={`hover:mercoa-bg-gray-100 ${index % 2 === 0 ? undefined : 'mercoa-bg-gray-50'}`}
+                        >
+                          <td className="mercoa-whitespace-nowrap mercoa-py-4 mercoa-pl-4 mercoa-pr-3 mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 sm:mercoa-pl-6">
+                            {notificationTypeToText[notification.type]}
+                          </td>
+                          <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                            {' '}
+                            {dayjs(notification.createdAt).format('MM/DD/YY')}
+                          </td>
+                          <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                            {invoice?.vendor?.name ?? 'Loading...'}
+                          </td>
+                          <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                            {invoice?.amount
+                              ? accounting.formatMoney(invoice.amount, currencyCodeToSymbol(invoice.currency))
+                              : 'Loading...'}
+                          </td>
+                          <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                            {notification.invoiceId}
+                          </td>
+                        </tr>
+                      )
+                    })}
                 </tbody>
               </table>
             </div>

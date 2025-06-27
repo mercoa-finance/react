@@ -189,7 +189,7 @@ export const counterpartyYupValidation = {
   ),
 }
 
-export function CounterpartySearch({
+export function CounterpartySearchV1({
   counterparty,
   disableCreation,
   counterpartyPreSubmit,
@@ -826,7 +826,7 @@ export function CounterpartySearchBase({
   )
 }
 
-function CounterpartyAddOrEditForm({
+export function CounterpartyAddOrEditForm({
   counterparty,
   name,
   onComplete,

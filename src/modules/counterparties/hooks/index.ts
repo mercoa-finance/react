@@ -1,1 +1,1 @@
-export * from "./use-counterparties-table"
+export * from "./use-counterparties-search"

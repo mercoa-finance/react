@@ -20,7 +20,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup'
 import dayjs from 'dayjs'
 import get from 'lodash/get'
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import Dropzone from 'react-dropzone'
 import { usePlacesWidget } from 'react-google-autocomplete'
 import { Control, Controller, FieldErrors, UseFormRegister, useForm } from 'react-hook-form'
@@ -114,25 +114,42 @@ export function UploadBlock({
   const [existingDocumentUri, setExistingDocumentUri] = useState<string | undefined>()
   const [existingDocumentId, setExistingDocumentId] = useState<string | undefined>()
   const [isEditing, setIsEditing] = useState(true)
+  const [isUploading, setIsUploading] = useState(false)
+  const [progressPercentage, setProgressPercentage] = useState(0)
 
-  useEffect(() => {
+  const refreshDocuments = useCallback(async () => {
     if (!entity) return
     if (type === 'Logo') {
-      setExistingDocumentUri(entity.logo)
-      return
-    }
-    mercoaSession.client?.entity.document.getAll(entity.id, { type: uploadTypeToDocumentType[type] }).then((resp) => {
-      const document = resp.find((d) => d.type === uploadTypeToDocumentType[type])
+      const resp = await mercoaSession.client?.entity.get(entity.id)
+      setExistingDocumentUri(resp?.logo)
+      setIsEditing(false)
+    } else {
+      const resp = await mercoaSession.client?.entity.document.getAll(entity.id, {
+        type: uploadTypeToDocumentType[type],
+      })
+      const document = resp?.find((d) => d.type === uploadTypeToDocumentType[type])
       setExistingDocumentUri(document?.uri)
       setExistingDocumentId(document?.id)
-    })
-  }, [entity, type])
-
-  useEffect(() => {
-    if (existingDocumentUri) {
       setIsEditing(false)
     }
-  }, [existingDocumentUri])
+  }, [entity, type, mercoaSession.client])
+
+  useEffect(() => {
+    refreshDocuments()
+  }, [refreshDocuments])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgressPercentage((prevProgressPercentage) => {
+        if (prevProgressPercentage === 100) {
+          return 0
+        } else {
+          return prevProgressPercentage + 15
+        }
+      })
+    }, 300)
+    return () => clearInterval(interval)
+  }, [])
 
   let defaultIcon = (
     <PhotoIcon className="mercoa-mx-auto mercoa-h-12 mercoa-w-12 mercoa-text-gray-300" aria-hidden="true" />
@@ -174,6 +191,8 @@ export function UploadBlock({
         <Dropzone
           onDropAccepted={async (acceptedFiles) => {
             try {
+              setIsUploading(true)
+              setProgressPercentage(0)
               const fileReaderObj = await blobToDataUrl(acceptedFiles[0])
               mercoaSession.debug(fileReaderObj)
               if (!entity) return
@@ -203,8 +222,12 @@ export function UploadBlock({
                 await mercoaSession.client?.entity.document.delete(entity.id, existingDocumentId)
               }
               await mercoaSession.refresh()
+              await refreshDocuments()
+              setProgressPercentage(100)
+              setIsUploading(false)
               toast.success(`${type} Updated`)
             } catch (error) {
+              setIsUploading(false)
               console.error('Error uploading file:', error)
               toast.error(`Failed to update ${type}`)
             }
@@ -239,28 +262,40 @@ export function UploadBlock({
               } mercoa-px-6 mercoa-py-10`}
               {...getRootProps()}
             >
-              <div className="mercoa-text-center">
-                {defaultIcon}
-                <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm mercoa-text-gray-600">
-                  <label
-                    htmlFor="file-upload"
-                    className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-bg-white mercoa-font-semibold mercoa-primary-text focus-within:mercoa-outline-none focus-within:mercoa-ring-2 focus-within:mercoa-ring-primary focus-within:mercoa-ring-offset-2 hover:mercoa-text-mercoa-primary-dark"
-                  >
-                    <span>Upload {type}</span>
-                    <input
-                      {...getInputProps()}
-                      id="file-upload"
-                      name="file-upload"
-                      type="file"
-                      className="mercoa-sr-only"
-                    />
-                  </label>
-                  <p className="mercoa-pl-1">or drag and drop</p>
+              {isUploading ? (
+                <div className={`mercoa-text-center ${isUploading ? 'mercoa-block mercoa-mb-5' : 'mercoa-hidden'}`}>
+                  <span className="mercoa-text-gray-800 mercoa-w-full"> Uploading {type} </span>
+                  <div className="mercoa-h-2 mercoa-w-full mercoa-bg-gray-300">
+                    <div
+                      style={{ width: `${progressPercentage}%` }}
+                      className={`mercoa-rounded-sm mercoa-h-full mercoa-bg-mercoa-primary`}
+                    ></div>
+                  </div>
                 </div>
-                <p className="mercoa-text-xs mercoa-leading-5 mercoa-text-gray-600">
-                  {type === 'Logo' ? 'PNG, JPG, GIF, or SVG' : 'PDF'} up to 1MB
-                </p>
-              </div>
+              ) : (
+                <div className="mercoa-text-center">
+                  {defaultIcon}
+                  <div className="mercoa-mt-4 mercoa-flex mercoa-text-sm mercoa-text-gray-600">
+                    <label
+                      htmlFor="file-upload"
+                      className="mercoa-relative mercoa-cursor-pointer mercoa-rounded-md mercoa-bg-white mercoa-font-semibold mercoa-primary-text focus-within:mercoa-outline-none focus-within:mercoa-ring-2 focus-within:mercoa-ring-primary focus-within:mercoa-ring-offset-2 hover:mercoa-text-mercoa-primary-dark"
+                    >
+                      <span>Upload {type}</span>
+                      <input
+                        {...getInputProps()}
+                        id="file-upload"
+                        name="file-upload"
+                        type="file"
+                        className="mercoa-sr-only"
+                      />
+                    </label>
+                    <p className="mercoa-pl-1">or drag and drop</p>
+                  </div>
+                  <p className="mercoa-text-xs mercoa-leading-5 mercoa-text-gray-600">
+                    {type === 'Logo' ? 'PNG, JPG, GIF, or SVG' : 'PDF'} up to 1MB
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </Dropzone>
