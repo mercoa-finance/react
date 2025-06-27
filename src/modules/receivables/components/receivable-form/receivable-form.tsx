@@ -3,7 +3,7 @@ import { ReactNode } from 'react'
 import { FormProvider, useFieldArray } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import {
-  CounterpartySearch,
+  CounterpartiesSearch,
   InvoiceStatusPill,
   MercoaButton,
   MercoaInput,
@@ -89,19 +89,23 @@ export function ReceivableForm({ children }: { children?: ReactNode }) {
               </label>
 
               <div className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-left mercoa-w-full">
-                <CounterpartySearch
-                  type="payor"
-                  onSelect={(payer) => {
-                    mercoaSession.debug({ payer })
-                    if (!payer || payer.id === 'new') return
-                    setSelectedPayer(payer)
-                    setValue('payerId', payer?.id ?? undefined, { shouldTouch: true, shouldDirty: true })
-                    setValue('payerName', payer?.name ?? undefined, { shouldTouch: true, shouldDirty: true })
-                    clearErrors('payerId')
+                <CounterpartiesSearch
+                  config={{
+                    type: 'payor',
+                    selectedCounterparty: selectedPayer,
+                    disableCreation: disableCustomerCreation,
+                    readOnly: notDraft,
                   }}
-                  counterparty={selectedPayer}
-                  disableCreation={disableCustomerCreation}
-                  readOnly={notDraft}
+                  handlers={{
+                    onCounterpartySelect: (payer) => {
+                      mercoaSession.debug({ payer })
+                      if (!payer || payer.id === 'new') return
+                      setSelectedPayer(payer)
+                      setValue('payerId', payer?.id ?? undefined, { shouldTouch: true, shouldDirty: true })
+                      setValue('payerName', payer?.name ?? undefined, { shouldTouch: true, shouldDirty: true })
+                      clearErrors('payerId')
+                    },
+                  }}
                 />
               </div>
               {errors.payerId?.message && (

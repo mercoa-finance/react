@@ -23,7 +23,7 @@ import {
   BankAccount,
   Card,
   Check,
-  CounterpartySearch,
+  CounterpartySearchV1,
   InvoiceStatusPill,
   LoadingSpinnerIcon,
   MercoaButton,
@@ -603,7 +603,7 @@ export function ReceivableFormV1({
           </label>
 
           <div className="mercoa-mt-2 mercoa-flex mercoa-items-center mercoa-justify-left mercoa-w-full">
-            <CounterpartySearch
+            <CounterpartySearchV1
               type="payor"
               onSelect={(payer) => {
                 mercoaSession.debug({ payer })
@@ -613,9 +613,6 @@ export function ReceivableFormV1({
                 setValue('payerName', payer?.name ?? undefined, { shouldTouch: true, shouldDirty: true })
                 clearErrors('payerId')
               }}
-              counterparty={selectedPayer}
-              disableCreation={disableCustomerCreation}
-              readOnly={notDraft}
             />
           </div>
           {errors.payerId?.message && (

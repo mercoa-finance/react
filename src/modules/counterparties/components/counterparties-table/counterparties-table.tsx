@@ -9,7 +9,7 @@ import { cn } from '../../../../lib/style'
 import { SearchIcon } from '../../../common/assets/icons'
 import { TableSkeletonBody } from '../../../common/components/table-skeleton-body'
 import { Pagination, ResultsPerPageDropdown } from '../../../payables/components/payables-table/components'
-import { useCounterpartiesTable } from '../../hooks/use-counterparties-table'
+import { useCounterpartiesTable } from '../../hooks/use-counterparty-table'
 import { FullPageModal } from '../counterparty-detail.tsx/components/full-page-modal'
 
 export interface CounterpartiesTableProps {

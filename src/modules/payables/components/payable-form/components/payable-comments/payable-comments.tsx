@@ -1,7 +1,8 @@
+import { Dialog, Transition } from '@headlessui/react'
 import { CheckCircleIcon, UserIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import accounting from 'accounting'
 import dayjs from 'dayjs'
-import { useMemo } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import {
@@ -21,6 +22,65 @@ export type PayableCommentsChildrenProps = {
   addComment: (comment: string) => void
 }
 
+function EmailModal({ isOpen, onClose, email }: { isOpen: boolean; onClose: () => void; email: Mercoa.EmailLog }) {
+  return (
+    <Transition.Root show={isOpen} as={Fragment}>
+      <Dialog as="div" className="mercoa-relative mercoa-z-[100]" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="mercoa-ease-out mercoa-duration-300"
+          enterFrom="mercoa-opacity-0"
+          enterTo="mercoa-opacity-100"
+          leave="mercoa-ease-in mercoa-duration-200"
+          leaveFrom="mercoa-opacity-100"
+          leaveTo="mercoa-opacity-0"
+        >
+          <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75" />
+        </Transition.Child>
+
+        <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
+          <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="mercoa-ease-out mercoa-duration-300"
+              enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+              enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+              leave="mercoa-ease-in mercoa-duration-200"
+              leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+              leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+            >
+              <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-6 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-w-full sm:mercoa-max-w-4xl sm:mercoa-p-6">
+                <div className="mercoa-flex mercoa-justify-between mercoa-items-center mercoa-mb-4">
+                  <Dialog.Title
+                    as="h3"
+                    className="mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900"
+                  >
+                    Email Details
+                  </Dialog.Title>
+                  <button
+                    onClick={onClose}
+                    className="mercoa-inline-flex mercoa-items-center mercoa-rounded mercoa-bg-gray-500 mercoa-px-4 mercoa-py-2 mercoa-text-sm mercoa-font-semibold mercoa-text-white hover:mercoa-bg-gray-600"
+                  >
+                    Close
+                  </button>
+                </div>
+                <div className="mercoa-rounded-mercoa mercoa-border mercoa-shadow-lg">
+                  <div className="mercoa-space-y-2 mercoa-text-gray-800 mercoa-p-5 mercoa-bg-white">
+                    <div className="mercoa-font-medium">From: {email.from}</div>
+                    <div className="mercoa-font-medium">Subject: {email.subject}</div>
+                    <div className="mercoa-font-medium">Date: {dayjs(email.createdAt).format('MMM DD, hh:mm a')}</div>
+                    <div className="mercoa-text-gray-600" dangerouslySetInnerHTML={{ __html: email.htmlBody }} />
+                  </div>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition.Root>
+  )
+}
+
 export function PayableComments({
   readOnly,
   children,
@@ -30,12 +90,14 @@ export function PayableComments({
 }) {
   const mercoaSession = useMercoaSession()
   const { userPermissionConfig } = mercoaSession
+  const [selectedEmail, setSelectedEmail] = useState<Mercoa.EmailLog | null>(null)
 
   const { register, watch } = useFormContext()
-  const { formContextValue, eventsContextValue } = usePayableDetails()
+  const { formContextValue, eventsContextValue, documentContextValue } = usePayableDetails()
   const { commentsContextValue } = formContextValue
   const { comments, getCommentAuthor, addComment } = commentsContextValue
   const { getEventAuthor, events } = eventsContextValue
+  const { sourceEmails } = documentContextValue
 
   // useMemo to merge comments and events
   const commentsAndEvents = useMemo(() => {
@@ -53,7 +115,7 @@ export function PayableComments({
             const currentMetadata = event.data['metadata'] as Record<string, string>
             const lastMetadata = lastEvent.data['metadata'] as Record<string, string>
             Object.keys(currentMetadata).forEach((metadataKey) => {
-              if (currentMetadata[metadataKey] !== lastMetadata[metadataKey]) {
+              if (currentMetadata && lastMetadata && currentMetadata[metadataKey] !== lastMetadata[metadataKey]) {
                 diff[metadataKey] = {
                   old: JSON.stringify(lastMetadata[metadataKey] ?? ''),
                   new: JSON.stringify(currentMetadata[metadataKey] ?? ''),
@@ -63,7 +125,7 @@ export function PayableComments({
           } else {
             const currentValue = JSON.stringify((event.data as EventData)[key])
             const lastValue = JSON.stringify((lastEvent.data as EventData)[key])
-            if (currentValue !== lastValue) {
+            if (lastEvent.data && event.data && currentValue !== lastValue) {
               diff[key] = {
                 old: String(lastValue ?? ''),
                 new: String(currentValue ?? ''),
@@ -72,7 +134,7 @@ export function PayableComments({
           }
         })
 
-        eventsWithDiff.push({ ...event, diff })
+        eventsWithDiff.push({ ...event, diff, createdAt: dayjs(event.createdAt).add(1, 'second').toDate() })
       }
     })
     return [...comments, ...eventsWithDiff].sort((a, b) => dayjs(a.createdAt).diff(dayjs(b.createdAt)))
@@ -121,108 +183,133 @@ export function PayableComments({
   return (
     <div className="mercoa-col-span-full">
       <ul role="list" className="mercoa-space-y-6 mercoa-ml-1">
-        {commentsAndEvents?.map((comment, index) => (
-          <li key={comment.id} className="mercoa-relative mercoa-flex mercoa-gap-x-4">
-            <div
-              className={`${
-                index === commentsAndEvents.length - 1 ? 'mercoa-h-6' : '-mercoa-bottom-6'
-              } mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center`}
-            >
-              <div className="mercoa-w-px mercoa-bg-gray-200" />
-            </div>
-            {'text' in comment && comment.text && (
-              <>
-                <div className="mercoa-relative mercoa-flex mercoa-h-8 mercoa-w-8 mercoa-flex-none mercoa-items-center mercoa-justify-center ">
-                  <UserIcon className="mercoa-h-6 mercoa-w-6 mercoa-text-mercoa-primary mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1 -mercoa-ml-2" />
-                </div>
-                <div className="mercoa-flex-auto mercoa-rounded-mercoa mercoa-p-3 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-200 mercoa-bg-white">
-                  <div className="mercoa-flex mercoa-justify-between mercoa-gap-x-4">
-                    <div className="mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
-                      <span className="mercoa-font-medium mercoa-text-gray-900">{getCommentAuthor(comment)}</span>{' '}
-                      commented
-                    </div>
-                    <time
-                      dateTime={dayjs(comment.createdAt).toISOString()}
-                      className="mercoa-flex-none mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500"
-                    >
-                      {dayjs(comment.createdAt).fromNow()}
-                    </time>
+        {commentsAndEvents?.map((comment, index) => {
+          const commentAuthor = 'text' in comment && comment.text ? getCommentAuthor(comment) : ''
+          const approverAuthor =
+            'associatedApprovalAction' in comment && comment.associatedApprovalAction ? getCommentAuthor(comment) : ''
+          const eventAuthor = 'status' in comment && comment.status ? getEventAuthor(comment) : ''
+          return (
+            <li key={comment.id} className="mercoa-relative mercoa-flex mercoa-gap-x-4">
+              <div
+                className={`${
+                  index === commentsAndEvents.length - 1 ? 'mercoa-h-6' : '-mercoa-bottom-6'
+                } mercoa-absolute mercoa-left-0 mercoa-top-0 mercoa-flex mercoa-w-6 mercoa-justify-center`}
+              >
+                <div className="mercoa-w-px mercoa-bg-gray-200" />
+              </div>
+              {'text' in comment && comment.text && (
+                <>
+                  <div className="mercoa-relative mercoa-flex mercoa-h-8 mercoa-w-8 mercoa-flex-none mercoa-items-center mercoa-justify-center ">
+                    <UserIcon className="mercoa-h-6 mercoa-w-6 mercoa-text-mercoa-primary mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1 -mercoa-ml-2" />
                   </div>
-                  <p className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-500">{comment.text}</p>
-                </div>
-              </>
-            )}
-            {'associatedApprovalAction' in comment && comment.associatedApprovalAction && (
-              <>
-                <div className="mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center">
-                  {getApprovalIcon(comment.associatedApprovalAction)}
-                </div>
-                <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
-                  <span className="mercoa-font-medium mercoa-text-gray-900">{getCommentAuthor(comment)}</span>{' '}
-                  {getCommentAuthor(comment) ? (
-                    <> {approvalToText[comment.associatedApprovalAction.action]} the invoice. </>
-                  ) : (
-                    <> invoice {approvalToText[comment.associatedApprovalAction.action]}. </>
-                  )}
-                </p>
-                <time
-                  dateTime={dayjs(comment.createdAt).toISOString()}
-                  className="mercoa-flex-none mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500"
-                >
-                  {dayjs(comment.createdAt).fromNow()}
-                </time>
-              </>
-            )}
-            {'status' in comment && comment.status && (
-              <>
-                {Object.keys(comment.diff).length > 0 ? (
-                  <>
-                    <div className="mercoa-relative mercoa-flex mercoa-h-8 mercoa-w-8 mercoa-flex-none mercoa-items-center mercoa-justify-center ">
-                      <UserIcon className="mercoa-h-6 mercoa-w-6 mercoa-text-mercoa-primary mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1 -mercoa-ml-2" />
-                    </div>
-                    <div className="mercoa-flex-auto mercoa-rounded-mercoa mercoa-p-3 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-200 mercoa-bg-white">
-                      <div className="mercoa-flex mercoa-justify-between mercoa-gap-x-4">
-                        <div className="mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
-                          <span className="mercoa-font-medium mercoa-text-gray-900">{getEventAuthor(comment)}</span>{' '}
-                          updated the invoice{' '}
-                          <span className="mercoa-font-medium mercoa-text-gray-800">
-                            <InvoiceStatusPill status={comment.status} type="payable" skipValidation={true} />
-                          </span>
-                        </div>
-                        <time
-                          dateTime={dayjs(comment.createdAt).toISOString()}
-                          className="mercoa-flex-none mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500"
-                        >
-                          {dayjs(comment.createdAt).fromNow()}
-                        </time>
+                  <div className="mercoa-flex-auto mercoa-rounded-mercoa mercoa-p-3 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-200 mercoa-bg-white">
+                    <div className="mercoa-flex mercoa-justify-between mercoa-gap-x-4">
+                      <div className="mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
+                        <span className="mercoa-font-medium mercoa-text-gray-900">{commentAuthor}</span> commented
                       </div>
-                      <FormatDiff diff={comment.diff} currency={formContextValue.overviewContextValue.currency} />
+                      <time
+                        dateTime={dayjs(comment.createdAt).toISOString()}
+                        className="mercoa-flex-none mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500"
+                      >
+                        {dayjs(comment.createdAt).fromNow()}
+                      </time>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center">
-                      {getApprovalIcon()}
-                    </div>
-                    <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
-                      <span className="mercoa-font-medium mercoa-text-gray-900">{getEventAuthor(comment)}</span> updated
-                      the invoice{' '}
-                      <span className="mercoa-font-medium mercoa-text-gray-800">
-                        <InvoiceStatusPill status={comment.status} type="payable" skipValidation={true} />
-                      </span>
-                    </p>
-                    <time
-                      dateTime={dayjs(comment.createdAt).toISOString()}
-                      className="mercoa-flex-none mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500"
-                    >
-                      {dayjs(comment.createdAt).fromNow()}
-                    </time>
-                  </>
-                )}
-              </>
-            )}
-          </li>
-        ))}
+                    <p className="mercoa-text-sm mercoa-leading-6 mercoa-text-gray-500">{comment.text}</p>
+                  </div>
+                </>
+              )}
+              {'associatedApprovalAction' in comment && comment.associatedApprovalAction && (
+                <>
+                  <div className="mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center">
+                    {getApprovalIcon(comment.associatedApprovalAction)}
+                  </div>
+                  <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
+                    <span className="mercoa-font-medium mercoa-text-gray-900">{approverAuthor}</span>{' '}
+                    {approverAuthor ? (
+                      <> {approvalToText[comment.associatedApprovalAction.action]} the invoice. </>
+                    ) : (
+                      <div className="mercoa-flex mercoa-items-center mercoa-gap-1">
+                        {' '}
+                        Invoice {approvalToText[comment.associatedApprovalAction.action]}{' '}
+                        {sourceEmails && sourceEmails.length > 0 ? (
+                          <span>
+                            from{' '}
+                            <button
+                              className="mercoa-text-blue-500 mercoa-underline"
+                              onClick={() => setSelectedEmail(sourceEmails[0])}
+                              type="button"
+                            >
+                              email
+                            </button>
+                            .
+                          </span>
+                        ) : (
+                          'by system.'
+                        )}
+                      </div>
+                    )}
+                  </p>
+                  <time
+                    dateTime={dayjs(comment.createdAt).toISOString()}
+                    className="mercoa-flex-none mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500"
+                  >
+                    {dayjs(comment.createdAt).fromNow()}
+                  </time>
+                </>
+              )}
+              {'status' in comment && comment.status && (
+                <>
+                  {Object.keys(comment.diff).length > 0 ? (
+                    <>
+                      <div className="mercoa-relative mercoa-flex mercoa-h-8 mercoa-w-8 mercoa-flex-none mercoa-items-center mercoa-justify-center ">
+                        <UserIcon className="mercoa-h-6 mercoa-w-6 mercoa-text-mercoa-primary mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1 -mercoa-ml-2" />
+                      </div>
+                      <div className="mercoa-flex-auto mercoa-rounded-mercoa mercoa-p-3 mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-200 mercoa-bg-white">
+                        <div className="mercoa-flex mercoa-justify-between mercoa-gap-x-4">
+                          <div className="mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
+                            <span className="mercoa-font-medium mercoa-text-gray-900">
+                              {commentAuthor || approverAuthor || eventAuthor}
+                            </span>{' '}
+                            updated the invoice{' '}
+                            <span className="mercoa-font-medium mercoa-text-gray-800">
+                              <InvoiceStatusPill status={comment.status} type="payable" skipValidation={true} />
+                            </span>
+                          </div>
+                          <time
+                            dateTime={dayjs(comment.createdAt).toISOString()}
+                            className="mercoa-flex-none mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500"
+                          >
+                            {dayjs(comment.createdAt).fromNow()}
+                          </time>
+                        </div>
+                        <FormatDiff diff={comment.diff} currency={formContextValue.overviewContextValue.currency} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mercoa-relative mercoa-flex mercoa-h-6 mercoa-w-6 mercoa-flex-none mercoa-items-center mercoa-justify-center">
+                        {getApprovalIcon()}
+                      </div>
+                      <p className="mercoa-flex-auto mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500">
+                        <span className="mercoa-font-medium mercoa-text-gray-900">{eventAuthor}</span> updated the
+                        invoice{' '}
+                        <span className="mercoa-font-medium mercoa-text-gray-800">
+                          <InvoiceStatusPill status={comment.status} type="payable" skipValidation={true} />
+                        </span>
+                      </p>
+                      <time
+                        dateTime={dayjs(comment.createdAt).toISOString()}
+                        className="mercoa-flex-none mercoa-py-0.5 mercoa-text-xs mercoa-leading-5 mercoa-text-gray-500"
+                      >
+                        {dayjs(comment.createdAt).fromNow()}
+                      </time>
+                    </>
+                  )}
+                </>
+              )}
+            </li>
+          )
+        })}
       </ul>
 
       {/* New comment form */}
@@ -256,6 +343,11 @@ export function PayableComments({
           </div>
         </div>
       )}
+
+      {/* Email Modal */}
+      {selectedEmail && (
+        <EmailModal isOpen={!!selectedEmail} onClose={() => setSelectedEmail(null)} email={selectedEmail} />
+      )}
     </div>
   )
 }
@@ -276,20 +368,24 @@ function FormatDiffRow({
   const formatValue = (value: any, label: string) => {
     if (label === 'Amount') {
       return accounting.formatMoney(Number(value), currencyCodeToSymbol(currency))
-    } else if (dayjs(value).isValid()) {
-      return dayjs(value).format('MMM DD, YYYY')
-    } else if (typeof value === 'object') {
+    } else if (typeof value === 'object' || label.includes('Id')) {
       return ''
     } else if (typeof value === 'number') {
       return value.toLocaleString()
     } else if (typeof value === 'boolean') {
-      return value ? 'Yes' : 'No'
+      return ''
+    } else if (dayjs(value).isValid()) {
+      return dayjs(value).format('MMM DD, YYYY')
     }
     return value
   }
 
   const oldLabelValue = formatValue(oldValue, label)
   const newLabelValue = formatValue(newValue, label)
+
+  if (label.includes('Id')) {
+    label = label.replace('Id', '').trim()
+  }
 
   return (
     <div key={keyProp} className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-text-sm">
@@ -310,18 +406,14 @@ function FormatDiffRow({
 function FormatDiff({ diff, currency }: { diff: Record<string, { old: string; new: string }>; currency: string }) {
   return (
     <>
-      <div className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-text-sm">
-        <span className="mercoa-font-medium mercoa-text-gray-700">Amount</span>
-        <span className="mercoa-text-gray-500">Updated</span>
-      </div>
       {Object.keys(diff)
         .filter((key) => key !== 'status')
         .map((key) => {
           const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, function (str) {
             return str.toUpperCase()
           })
-          const oldValue = JSON.parse(diff[key].old)
-          const newValue = JSON.parse(diff[key].new)
+          const oldValue = diff[key].old ? JSON.parse(diff[key].old) : null
+          const newValue = diff[key].new ? JSON.parse(diff[key].new) : null
           return (
             <FormatDiffRow
               key={key}

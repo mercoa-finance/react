@@ -189,7 +189,7 @@ export const counterpartyYupValidation = {
   ),
 }
 
-export function CounterpartySearch({
+export function CounterpartySearchV1({
   counterparty,
   disableCreation,
   counterpartyPreSubmit,
@@ -511,7 +511,7 @@ export function CounterpartySearchBase({
   readOnly?: boolean
   enableOnboardingLinkOnCreate?: boolean
   renderCustom?: {
-    counterPartySearchBase?: (props: {
+    counterpartySearchBase?: (props: {
       counterparties: Mercoa.CounterpartyResponse[] | undefined
       onSearchChangeCb: (search: string) => void
       selectedCounterparty: Mercoa.CounterpartyResponse | undefined
@@ -596,8 +596,8 @@ export function CounterpartySearchBase({
     }
   }
 
-  if (renderCustom?.counterPartySearchBase) {
-    return renderCustom.counterPartySearchBase({
+  if (renderCustom?.counterpartySearchBase) {
+    return renderCustom.counterpartySearchBase({
       counterparties,
       selectedCounterparty,
       onSearchChangeCb: (search) => {
@@ -826,7 +826,7 @@ export function CounterpartySearchBase({
   )
 }
 
-function CounterpartyAddOrEditForm({
+export function CounterpartyAddOrEditForm({
   counterparty,
   name,
   onComplete,
