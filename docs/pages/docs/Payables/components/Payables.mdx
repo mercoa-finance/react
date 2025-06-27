@@ -4,9 +4,6 @@ import { ComponentContainer } from '../../../../components/helpers'
 
 # Payables
 
-> **What's New:**  
-> The `<Payables>` component now supports custom grouping and labeling of status tabs via the new `customStatuses` prop in `displayOptions`. This allows you to define your own tab labels and map multiple invoice statuses to each tab for a more tailored dashboard experience.
-
 The `<Payables>` component displays all payables for an entity. It includes built-in filters, invoice metrics, and customizable table options. The entity is determined from the JWT token provided to `<MercoaSession>`.
 
 ## Customization Options
@@ -146,7 +143,7 @@ type ToastClient = {
 
 | Name       | Type      | Required | Description                         |
 | ---------- | --------- | -------- | ----------------------------------- |
-| `readOnly` | `boolean` |          | Indicates if the part is read-only. |
+| `readOnly` | `boolean` |          | Whether the component is read-only. |
 
 ---
 
@@ -311,11 +308,9 @@ type ToastClient = {
         },
       ],
       toast: {
-        success: (message) => alert(message),
-        error: (message) => alert(message),
-        ```jsx
-        info: (message) => alert(message),
-```
+        success: (msg) => alert(msg),
+        error: (msg) => alert(msg),
+        info: (msg) => alert(msg),
       },
     }}
   />
@@ -396,4 +391,3 @@ type ToastClient = {
   />
   ```
 </ComponentContainer>
-````

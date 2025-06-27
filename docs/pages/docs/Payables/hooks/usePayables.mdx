@@ -1,18 +1,15 @@
 ---
 title: usePayables Hook
-description: The `usePayables` hook provides access to Payables data, filtering, pagination, selection, and actions within the `Payables` part, now supporting custom status tab groupings.
+description: The `usePayables` hook provides access to payables data, filtering, pagination, selection, and actions within the `Payables` component.
 ---
 
 # usePayables
 
-The `usePayables` hook works inside the children of the `<Payables>` component. It provides access to payables data, filtering capabilities, pagination controls, row selection, action handlers, and now supports advanced customization of status tabs via the `customStatuses` prop.
-
-> **New in v0.1.8:**  
-> Use the `customStatuses` prop to group many statuses under custom labels, enabling highly flexible dashboard and workflow views.
+The `usePayables` hook works inside the children of the `<Payables>` component. It provides access to payables data, filtering capabilities, pagination controls, row selection, action handlers, and advanced customization of status tabs.
 
 ## Props
 
-The props for `usePayables` match those of [`Payables`](./Payables), as it's designed for its context.
+The props for `usePayables` are the same as [`Payables`](./Payables), as it is meant to be used within its context.
 
 ### `customStatuses` Prop
 
@@ -102,7 +99,7 @@ This renders status tabs "Open," "Completed," and "Drafts," each showing invoice
 | `allFetchedInvoices`    | `Mercoa.InvoiceResponse[]`         | All fetched invoice data          |
 | `totalItems`            | `number`                           | Total number of items             |
 | `totalEntries`          | `number`                           | Total number of entries           |
-| `recurringPayableData`   | `Mercoa.InvoiceTemplateResponse[]` | Recurring payable data           |
+| `recurringPayablesData`   | `Mercoa.InvoiceTemplateResponse[]` | Recurring payables data           |
 | `metricsData`           | `Mercoa.InvoiceMetricsResponse[]`  | Metrics data                      |
 | `approvalPolicies`      | `Mercoa.ApprovalPolicyResponse[]`  | Approval policies                 |
 | `statusTabsMetrics`     | `any`                              | Metrics for status tabs           |
@@ -118,7 +115,7 @@ This renders status tabs "Open," "Completed," and "Drafts," each showing invoice
 
 | Name                 | Type                                  | Description                       |
 | :------------------- | :------------------------------------ | :-------------------------------- |
-| `currentStatuses`    | `Mercoa.InvoiceStatus[]`              | Now selected status filters |
+| `currentStatuses`    | `Mercoa.InvoiceStatus[]`              | Currently selected status filters |
 | `setCurrentStatuses` | `(statuses: InvoiceStatus[]) => void` | Sets status filters               |
 | `search`             | `string`                              | Search query string               |
 | `setSearch`          | `(search: string) => void`            | Sets search query                 |
@@ -139,9 +136,9 @@ This renders status tabs "Open," "Completed," and "Drafts," each showing invoice
 | `resultsPerPage`   | `number`                     | Number of results per page         |
 | `page`             | `number`                     | Current page number                |
 | `goToNextPage`     | `() => void`                 | Go to next page                    |
-| `goToEarlierPage` | `() => void`                 | Go to earlier page                |
+| `goToPreviousPage` | `() => void`                 | Go to previous page                |
 | `isNextDisabled`   | `boolean`                    | Whether next page is available     |
-| `isPrevDisabled`   | `boolean`                    | Whether earlier page is available     |
+| `isPrevDisabled`   | `boolean`                    | Whether previous page is available     |
 
 ---
 
@@ -150,8 +147,8 @@ This renders status tabs "Open," "Completed," and "Drafts," each showing invoice
 
 | Name                   | Type                                   | Description                    |
 | :--------------------- | :------------------------------------- | :----------------------------- |
-| `selectedInvoiceIds`   | `string[]`                             | Now selected invoice IDs |
-| `isAllSelected`        | `boolean`                              | Selects all items                    |
+| `selectedInvoiceIds`   | `string[]`                             | Currently selected invoice IDs |
+| `isAllSelected`        | `boolean`                              | Whether all items are selected |
 | `handleSelectAll`      | `() => void`                           | Selects/deselects all items    |
 | `handleSelectRow`      | `(invoiceId: string) => void`          | Selects/deselects a single row |
 | `selectedColumns`      | `InvoiceTableColumn[]`                 | Visible columns                |
@@ -165,15 +162,13 @@ This renders status tabs "Open," "Completed," and "Drafts," each showing invoice
 | Name                    | Type                    | Description                             |
 | :---------------------- | :---------------------- | :-------------------------------------- |
 | `deletePayable`         | `UseMutateFunction`     | Delete single payable                   |
-| `bulkDeletePayables`    | `UseMutateFunction`     | Delete many payable                    |
+| `bulkDeletePayables`    | `UseMutateFunction`     | Delete multiple payables                    |
 | `schedulePayment`       | `UseMutateFunction`     | Schedule payment for single payable     |
-| `bulkSchedulePayment`   | `UseMutateFunction`     | Schedule payments for many payable |
+| `bulkSchedulePayment`   | `UseMutateFunction`     | Schedule payments for multiple payables |
 | `approvePayable`        | `UseMutateFunction`     | Approve single payable                  |
-| `bulkApprovePayables`   | `UseMutateFunction`     | Approve many payables                  |
+| `bulkApprovePayables`   | `UseMutateFunction`     | Approve multiple payables                  |
 | `downloadInvoicesAsCSV` | `() => void`            | Download invoices as CSV                |
-| `activeInvoiceAction`   | `PayableAction \| null` | Now active invoice action         |
-
----
+| `activeInvoiceAction`   | `PayableAction \| null` | Currently active invoice action         |
 
 ## Example Usage
 
@@ -253,5 +248,3 @@ This example demonstrates how to use the `usePayables` hook with custom status t
 
 > **See also:**  
 > The [`Payables` props documentation](./Payables) for a full reference of available props, including `customStatuses`.  
->  
-> **Note:** if `customStatuses` isn't documented there, refer to the structure in the preceding section; it's fully supported as of v0.1.8.
