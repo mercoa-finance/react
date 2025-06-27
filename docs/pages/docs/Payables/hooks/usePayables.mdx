@@ -1,15 +1,80 @@
 ---
 title: usePayables Hook
-description: The `usePayables` hook provides access to payables data, filtering, pagination, selection, and actions within the `Payables` component.
+description: The `usePayables` hook provides access to Payables data, filtering, pagination, selection, and actions within the `Payables` part, now supporting custom status tab groupings.
 ---
 
 # usePayables
 
-The `usePayables` hook is used inside children of the `<Payables>` component. It provides access to payables data, filtering capabilities, pagination controls, row selection, and action handlers.
+The `usePayables` hook works inside the children of the `<Payables>` component. It provides access to payables data, filtering capabilities, pagination controls, row selection, action handlers, and now supports advanced customization of status tabs via the `customStatuses` prop.
+
+> **New in v0.1.8:**  
+> Use the `customStatuses` prop to group many statuses under custom labels, enabling highly flexible dashboard and workflow views.
 
 ## Props
 
-The props for `usePayables` are the same as [`Payables`](./Payables), as it is meant to be used within its context.
+The props for `usePayables` match those of [`Payables`](./Payables), as it's designed for its context.
+
+### `customStatuses` Prop
+
+The `customStatuses` prop enables you to customize the set of status tabs shown in the payables dashboard or table.
+
+**Type:**
+
+```ts
+type CustomStatusGroup = {
+  label: string;
+  statuses: InvoiceStatus[];
+};
+
+customStatuses?: CustomStatusGroup[];
+```
+
+- `label`: The label to display on the tab.
+- `statuses`: Array of one or more `InvoiceStatus` enum values that this tab represents.
+
+**Accepted values for `statuses`:**  
+Any valid `InvoiceStatus` enum value, such as `'draft'`, `'approved'`, `'pending'`, `'paid'`, etc.
+
+**Where's it supported?**
+- `Payables` part (as a prop, often within `displayOptions`)
+- `PayablesDashboard`
+- `ReceivablesDashboard`
+- `StatusTabs`
+- `usePayables` hook (via `propsContextValue`)
+
+**Example usage:**
+
+```tsx
+import { Payables, InvoiceStatus } from '@mercoa/react';
+
+const customStatuses = [
+  {
+    label: 'Open',
+    statuses: [InvoiceStatus.Pending, InvoiceStatus.Approved],
+  },
+  {
+    label: 'Completed',
+    statuses: [InvoiceStatus.Paid, InvoiceStatus.Reconciled],
+  },
+  {
+    label: 'Drafts',
+    statuses: [InvoiceStatus.Draft],
+  },
+];
+
+<Payables
+  displayOptions={{
+    customStatuses,
+    // ...other display options
+  }}
+>
+  {/* Your custom content */}
+</Payables>
+```
+
+This renders status tabs "Open," "Completed," and "Drafts," each showing invoices matching the grouped statuses.
+
+---
 
 ## Return Type
 
@@ -20,7 +85,10 @@ The props for `usePayables` are the same as [`Payables`](./Payables), as it is m
 | `paginationContextValue` | [`PayablesPaginationContext`](#payables-pagination-context) | Controls pagination and sorting                    |
 | `selectionContextValue`  | [`PayablesSelectionContext`](#payables-selection-context)   | Handles row selection and column visibility        |
 | `actionsContextValue`    | [`PayablesActionContext`](#payables-action-context)         | Manages payable actions like approve, delete, etc. |
-| `propsContextValue`      | `PayablesProps`                                             | Access to the original props passed to `Payables`  |
+| `propsContextValue`      | `PayablesProps`                                             | Access to the original props passed to `Payables`, including `customStatuses` if provided  |
+
+> **Note:**  
+> If you pass `customStatuses` to the `Payables` part (or via `displayOptions`), it's accessible inside your custom components via `propsContextValue.customStatuses` in the hook.
 
 ---
 
@@ -34,11 +102,11 @@ The props for `usePayables` are the same as [`Payables`](./Payables), as it is m
 | `allFetchedInvoices`    | `Mercoa.InvoiceResponse[]`         | All fetched invoice data          |
 | `totalItems`            | `number`                           | Total number of items             |
 | `totalEntries`          | `number`                           | Total number of entries           |
-| `recurringPayablesData` | `Mercoa.InvoiceTemplateResponse[]` | Recurring payables data           |
+| `recurringPayableData`   | `Mercoa.InvoiceTemplateResponse[]` | Recurring payable data           |
 | `metricsData`           | `Mercoa.InvoiceMetricsResponse[]`  | Metrics data                      |
 | `approvalPolicies`      | `Mercoa.ApprovalPolicyResponse[]`  | Approval policies                 |
 | `statusTabsMetrics`     | `any`                              | Metrics for status tabs           |
-| `isFetching`            | `boolean`                          | Whether data is being fetched     |
+| `isFetching`            | `boolean`                          | Whether the system is fetching data     |
 | `isLoading`             | `boolean`                          | Whether initial load is happening |
 | `isError`               | `boolean`                          | Whether an error occurred         |
 | `handleRefresh`         | `() => void`                       | Function to refresh data          |
@@ -50,7 +118,7 @@ The props for `usePayables` are the same as [`Payables`](./Payables), as it is m
 
 | Name                 | Type                                  | Description                       |
 | :------------------- | :------------------------------------ | :-------------------------------- |
-| `currentStatuses`    | `Mercoa.InvoiceStatus[]`              | Currently selected status filters |
+| `currentStatuses`    | `Mercoa.InvoiceStatus[]`              | Now selected status filters |
 | `setCurrentStatuses` | `(statuses: InvoiceStatus[]) => void` | Sets status filters               |
 | `search`             | `string`                              | Search query string               |
 | `setSearch`          | `(search: string) => void`            | Sets search query                 |
@@ -71,9 +139,9 @@ The props for `usePayables` are the same as [`Payables`](./Payables), as it is m
 | `resultsPerPage`   | `number`                     | Number of results per page         |
 | `page`             | `number`                     | Current page number                |
 | `goToNextPage`     | `() => void`                 | Go to next page                    |
-| `goToPreviousPage` | `() => void`                 | Go to previous page                |
+| `goToEarlierPage` | `() => void`                 | Go to earlier page                |
 | `isNextDisabled`   | `boolean`                    | Whether next page is available     |
-| `isPrevDisabled`   | `boolean`                    | Whether previous page is available |
+| `isPrevDisabled`   | `boolean`                    | Whether earlier page is available     |
 
 ---
 
@@ -82,8 +150,8 @@ The props for `usePayables` are the same as [`Payables`](./Payables), as it is m
 
 | Name                   | Type                                   | Description                    |
 | :--------------------- | :------------------------------------- | :----------------------------- |
-| `selectedInvoiceIds`   | `string[]`                             | Currently selected invoice IDs |
-| `isAllSelected`        | `boolean`                              | Whether all items are selected |
+| `selectedInvoiceIds`   | `string[]`                             | Now selected invoice IDs |
+| `isAllSelected`        | `boolean`                              | Selects all items                    |
 | `handleSelectAll`      | `() => void`                           | Selects/deselects all items    |
 | `handleSelectRow`      | `(invoiceId: string) => void`          | Selects/deselects a single row |
 | `selectedColumns`      | `InvoiceTableColumn[]`                 | Visible columns                |
@@ -97,31 +165,56 @@ The props for `usePayables` are the same as [`Payables`](./Payables), as it is m
 | Name                    | Type                    | Description                             |
 | :---------------------- | :---------------------- | :-------------------------------------- |
 | `deletePayable`         | `UseMutateFunction`     | Delete single payable                   |
-| `bulkDeletePayables`    | `UseMutateFunction`     | Delete multiple payables                |
+| `bulkDeletePayables`    | `UseMutateFunction`     | Delete many payable                    |
 | `schedulePayment`       | `UseMutateFunction`     | Schedule payment for single payable     |
-| `bulkSchedulePayment`   | `UseMutateFunction`     | Schedule payments for multiple payables |
+| `bulkSchedulePayment`   | `UseMutateFunction`     | Schedule payments for many payable |
 | `approvePayable`        | `UseMutateFunction`     | Approve single payable                  |
-| `bulkApprovePayables`   | `UseMutateFunction`     | Approve multiple payables               |
+| `bulkApprovePayables`   | `UseMutateFunction`     | Approve many payables                  |
 | `downloadInvoicesAsCSV` | `() => void`            | Download invoices as CSV                |
-| `activeInvoiceAction`   | `PayableAction \| null` | Currently active invoice action         |
+| `activeInvoiceAction`   | `PayableAction \| null` | Now active invoice action         |
+
+---
 
 ## Example Usage
 
 ```tsx
-import { PayablesTable, usePayables } from '@mercoa/react'
+import { Payables, usePayables, InvoiceStatus } from '@mercoa/react'
 
-// Custom table component using the usePayables hook
+// Example: Custom status groups for the dashboard
+const customStatuses = [
+  {
+    label: 'Active',
+    statuses: [InvoiceStatus.Pending, InvoiceStatus.Approved],
+  },
+  {
+    label: 'Archived',
+    statuses: [InvoiceStatus.Paid, InvoiceStatus.Reconciled],
+  },
+]
+
 const CustomPayablesTableContent = () => {
   const {
     dataContextValue: { tableData, isLoading },
     selectionContextValue: { selectedInvoiceIds, handleSelectRow },
     paginationContextValue: { goToNextPage, isNextDisabled },
+    propsContextValue: { displayOptions },
   } = usePayables()
+
+  // Access customStatuses if needed
+  const statusTabs = displayOptions?.customStatuses
 
   if (isLoading) return <div>Loading...</div>
 
   return (
     <div>
+      {statusTabs && (
+        <div>
+          <strong>Status Tabs:</strong>
+          {statusTabs.map(({ label }) => (
+            <span key={label} style={{ marginRight: 8 }}>{label}</span>
+          ))}
+        </div>
+      )}
       <table>
         <tbody>
           {tableData.map((row) => (
@@ -144,14 +237,21 @@ const CustomPayablesTableContent = () => {
   )
 }
 
-// Wrapper component that provides the PayablesTable context
+// Wrapper component that provides the Payables context with customStatuses
 const CustomPayablesTable = () => {
   return (
-    <Payables>
+    <Payables displayOptions={{ customStatuses }}>
       <CustomPayablesTableContent />
     </Payables>
   )
 }
 ```
 
-This example demonstrates how to use the `usePayables` hook to create a custom table component with selection and pagination.
+This example demonstrates how to use the `usePayables` hook with custom status tabs using the `customStatuses` prop, enabling you to group and label invoice statuses as needed for your workflow.
+
+---
+
+> **See also:**  
+> The [`Payables` props documentation](./Payables) for a full reference of available props, including `customStatuses`.  
+>  
+> **Note:** if `customStatuses` isn't documented there, refer to the structure in the preceding section; it's fully supported as of v0.1.8.
