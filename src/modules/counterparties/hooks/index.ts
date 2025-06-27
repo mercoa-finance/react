@@ -1,1 +1,1 @@
-export * from "./use-counterparties-search"
+export * from './use-counterparty-search'

@@ -1,8 +1,8 @@
 import { createContext, ReactNode } from 'react'
-import { useCounterpartiesSearchInternal } from '../hooks/use-counterparties-search-internal'
+import { useCounterpartySearchInternal } from '../hooks/use-counterparty-search-internal'
 import { CounterpartySearchProps } from '../types'
 
-export type CounterpartySearchContextValue = ReturnType<typeof useCounterpartiesSearchInternal>
+export type CounterpartySearchContextValue = ReturnType<typeof useCounterpartySearchInternal>
 
 export const CounterpartySearchContext = createContext<CounterpartySearchContextValue | undefined>(undefined)
 
@@ -13,7 +13,7 @@ export const CounterpartySearchProvider = ({
   children: ReactNode
   counterpartySearchProps: CounterpartySearchProps
 }) => {
-  const counterpartySearch = useCounterpartiesSearchInternal(counterpartySearchProps)
+  const counterpartySearch = useCounterpartySearchInternal(counterpartySearchProps)
 
   return <CounterpartySearchContext.Provider value={counterpartySearch}>{children}</CounterpartySearchContext.Provider>
 }

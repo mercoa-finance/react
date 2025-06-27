@@ -9,7 +9,7 @@ import { useMercoaSession } from '../../../../components/Mercoa'
 import { DuplicateCounterpartyModal } from '../../../payables/components/payable-form/components/payable-counterparty-search/duplicate-counterparty-modal'
 import { PayableFormData } from '../../../payables/components/payable-form/types'
 import { CounterpartyFormAction } from '../../constants'
-import { useCounterpartiesSearch } from '../../hooks/use-counterparties-search'
+import { useCounterpartySearch } from '../../hooks/use-counterparty-search'
 
 export function CounterpartySearchBase() {
   const mercoaSession = useMercoaSession()
@@ -24,7 +24,7 @@ export function CounterpartySearchBase() {
     },
     formContextValue: { edit, setEdit },
     propsContextValue: { config, handlers, renderCustom },
-  } = useCounterpartiesSearch()
+  } = useCounterpartySearch()
 
   const [counterparties, setCounterparties] = useState<Mercoa.CounterpartyResponse[]>([])
 
@@ -36,8 +36,8 @@ export function CounterpartySearchBase() {
   const buttonRef = useRef<HTMLButtonElement>(null)
 
   // Handle custom rendering
-  if (renderCustom?.counterPartySearchBase) {
-    return renderCustom.counterPartySearchBase({
+  if (renderCustom?.counterpartySearchBase) {
+    return renderCustom.counterpartySearchBase({
       counterparties,
       selectedCounterparty,
       onSearchChangeCb: (search) => {
@@ -249,7 +249,7 @@ export function CounterpartySearchInternal() {
     dataContextValue: { duplicateVendorInfo, setSelectedCounterparty, setDuplicateVendorInfo },
     formContextValue: { formMethods, handleFormAction },
     displayContextValue: { duplicateVendorModalOpen, setDuplicateVendorModalOpen },
-  } = useCounterpartiesSearch()
+  } = useCounterpartySearch()
 
   const { handleSubmit, setValue } = formMethods
 

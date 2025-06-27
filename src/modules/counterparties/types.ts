@@ -53,7 +53,7 @@ export type CounterpartySearchDisplayOptions = {
 
 // Render Custom
 export type CounterpartySearchRenderCustom = {
-  counterPartySearchBase?: (props: {
+  counterpartySearchBase?: (props: {
     counterparties: Mercoa.CounterpartyResponse[] | undefined
     onSearchChangeCb: (search: string) => void
     selectedCounterparty: Mercoa.CounterpartyResponse | undefined
