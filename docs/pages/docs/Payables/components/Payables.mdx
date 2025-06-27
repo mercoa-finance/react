@@ -1,7 +1,11 @@
+````mdx
 import { Payables } from '@mercoa/react'
 import { ComponentContainer } from '../../../../components/helpers'
 
 # Payables
+
+> **What's New:**  
+> The `<Payables>` component now supports custom grouping and labeling of status tabs via the new `customStatuses` prop in `displayOptions`. This allows you to define your own tab labels and map multiple invoice statuses to each tab for a more tailored dashboard experience.
 
 The `<Payables>` component displays all payables for an entity. It includes built-in filters, invoice metrics, and customizable table options. The entity is determined from the JWT token provided to `<MercoaSession>`.
 
@@ -66,9 +70,45 @@ The `<Payables>` component displays all payables for an entity. It includes buil
 | ---------------------- | ---------------------------------------------------------- | -------- | ---------------------------------------------------------- |
 | `tableOnly`            | `boolean`                                                  |          | Show only the table, hiding filters and other UI elements. |
 | `showCumulativeFilter` | `boolean`                                                  |          | Whether to show a cumulative filter toggle.                |
-| `statusTabsOptions`    | `{ isVisible: boolean, statuses: Mercoa.InvoiceStatus[] }` |          | Configure visibility and statuses for the status tabs.     |
+| `statusTabsOptions`    | `{ isVisible: boolean, statuses: Mercoa.InvoiceStatus[] }` |          | Configure visibility and statuses for the status tabs.<br/>You may also use [`customStatuses`](#custom-status-tabs-customstatuses) for advanced grouping and labeling.     |
 | `showInvoiceMetrics`   | `boolean`                                                  |          | Whether to display invoice metrics.                        |
 | `classNames`           | `object`                                                   |          | Custom class names for table and UI elements.              |
+| `customStatuses`       | [`CustomStatusTab[]`](#custom-status-tabs-customstatuses)  |          | Allows custom grouping and labeling of status tabs. Overrides the `statuses` prop in `statusTabsOptions`. |
+
+---
+
+<a id="custom-status-tabs-customstatuses"></a>
+### Custom Status Tabs (`customStatuses`)
+
+The `customStatuses` display option allows you to define custom groups of invoice statuses and assign them user-friendly tab labels. This enables advanced tab customization and grouping in the payables dashboard.
+
+```typescript
+type CustomStatusTab = {
+  label: string;                // The tab label to display (e.g., 'Open', 'Closed')
+  statuses: Mercoa.InvoiceStatus[]; // The invoice statuses grouped under this tab
+};
+```
+
+- **label**: The text shown on the status tab.
+- **statuses**: An array of one or more `Mercoa.InvoiceStatus` values that this tab includes.
+
+When you provide `customStatuses`, it overrides the default status tab configuration (`statusTabsOptions.statuses`). This allows you to create tabs that represent many statuses or use custom labels.
+
+#### Example
+
+```jsx
+<Payables
+  displayOptions={{
+    customStatuses: [
+      { label: 'Open', statuses: ['DRAFT', 'PENDING'] },
+      { label: 'Approved', statuses: ['APPROVED'] },
+      { label: 'Paid', statuses: ['PAID'] },
+      { label: 'Closed', statuses: ['VOIDED', 'CANCELLED'] },
+    ],
+    statusTabsOptions: { isVisible: true }, // `statuses` is ignored when customStatuses is set
+  }}
+/>
+```
 
 ---
 
@@ -106,7 +146,7 @@ type ToastClient = {
 
 | Name       | Type      | Required | Description                         |
 | ---------- | --------- | -------- | ----------------------------------- |
-| `readOnly` | `boolean` |          | Whether the component is read-only. |
+| `readOnly` | `boolean` |          | Indicates if the part is read-only. |
 
 ---
 
@@ -183,6 +223,35 @@ type ToastClient = {
   ```
 </ComponentContainer>
 
+#### Custom Status Tabs Example
+
+<ComponentContainer>
+  <Payables
+    displayOptions={{
+      customStatuses: [
+        { label: 'Open', statuses: ['DRAFT', 'PENDING'] },
+        { label: 'Approved', statuses: ['APPROVED'] },
+        { label: 'Paid', statuses: ['PAID'] },
+        { label: 'Closed', statuses: ['VOIDED', 'CANCELLED'] },
+      ],
+      statusTabsOptions: { isVisible: true }, // `statuses` in statusTabsOptions is ignored when customStatuses is set
+    }}
+  />
+  ```jsx
+  <Payables
+    displayOptions={{
+      customStatuses: [
+        { label: 'Open', statuses: ['DRAFT', 'PENDING'] },
+        { label: 'Approved', statuses: ['APPROVED'] },
+        { label: 'Paid', statuses: ['PAID'] },
+        { label: 'Closed', statuses: ['VOIDED', 'CANCELLED'] },
+      ],
+      statusTabsOptions: { isVisible: true },
+    }}
+  />
+  ```
+</ComponentContainer>
+
 ### Query Options
 
 <ComponentContainer>
@@ -242,9 +311,11 @@ type ToastClient = {
         },
       ],
       toast: {
-        success: (msg) => alert(msg),
-        error: (msg) => alert(msg),
-        info: (msg) => alert(msg),
+        success: (message) => alert(message),
+        error: (message) => alert(message),
+        ```jsx
+        info: (message) => alert(message),
+```
       },
     }}
   />
@@ -325,3 +396,4 @@ type ToastClient = {
   />
   ```
 </ComponentContainer>
+````
