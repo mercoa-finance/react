@@ -27,7 +27,9 @@ The `<ReceivableDetailsV1>` component is used to let users create and manage rec
   <ReceivableDetailsV1 invoiceId={'inv_new_ready'} />
   ```jsx
 <ReceivableDetailsV1
-  invoiceId={'inv_XXXXX-XXXX-XXXXXX'}   
+  ```jsx
+  invoiceId={'inv_XXXXX-XXXX-XXXXXX'} // 'XXXX' is a placeholder used in this context
+```   
   onRedirect={(invoice) => {
     if (!invoice) {
       router.push(`/dashboard/payers/${entityId}`)

@@ -10,7 +10,7 @@ import { useEffect } from 'react'
 
 # Payable Document
 
-The `<PayableDocument>` component should be used as a child of the [`<PayableDetails>`](./Details) component. Normally, all props should come from the parent `<PayableDetails>` component. It renders the document, email log, and OCR progress for an invoice.
+It renders the document, email log, and Optical Character Recognition (OCR) progress for an invoice.
 
 ## Customization Options
 
@@ -23,7 +23,7 @@ The `<PayableDocument>` component should be used as a child of the [`<PayableDet
 | Name                  | Type                                                                                 | Required | Description                                                                                                                                           |
 | :---------------------| :------------------------------------------------------------------------------------| :--------| :-----------------------------------------------------------------------------------------------------------------------------------------------------|
 | invoice               | `Mercoa.InvoiceResponse`                                                             |          | The ID of the invoice to edit. Leave blank if creating a new invoice                                                                                  |
-| onOcrComplete         | `(ocrResponse?: Mercoa.OcrResponse) => void`                                         |          | Callback when OCR is completed
+| onOcrComplete         | `(ocrResponse?: Mercoa.OcrResponse) => void`                                         |          | Callback when Optical Character Recognition (OCR) is completed
 | setUploadedDocument   | `(document: string) => void`                                                         |          | Callback of base64 document when the document is uploaded                                                                          |
 | height                | `number`                                                                             |   ✅     | Height of the component in pixels |
 | theme                 | `'light' \| 'dark'`                                                                  |          |                                                                            |
@@ -35,7 +35,7 @@ The `<PayableDocument>` component should be used as a child of the [`<PayableDet
 type PayableDocumentChildrenProps = {
   documents?: Array<{ fileReaderObj: string; mimeType: string }> // Documents uploaded or related to invoice
   sourceEmails?: Mercoa.EmailLog[] // Incomming emails related to this invoice
-  ocrProcessing: boolean // True if OCR is still processing
+  ocrProcessing: boolean // True if Optical Character Recognition (OCR) is still processing
   invoice?: Mercoa.InvoiceResponse
   height: number
   downloadButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
