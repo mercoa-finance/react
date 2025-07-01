@@ -4092,7 +4092,17 @@ export function PayableApproversV1({
   )
 }
 
-function ApproversSelectionV1({ allowAnyApprover = true, label }: { allowAnyApprover?: boolean; label?: string }) {
+function ApproversSelectionV1({
+  allowAnyApprover = true,
+  label,
+  renderCustom,
+}: {
+  allowAnyApprover?: boolean
+  label?: string
+  renderCustom?: {
+    resetSelection?: (resetSelection: () => void) => ReactNode
+  }
+}) {
   const mercoaSession = useMercoaSession()
 
   const { watch, setValue } = useFormContext()
@@ -4149,7 +4159,9 @@ function ApproversSelectionV1({ allowAnyApprover = true, label }: { allowAnyAppr
                 }).map((option) => {
                   return { disabled: option.disabled, value: option.user }
                 }),
-                { disabled: false, value: { id: '', name: 'Reset Selection', email: '' } },
+                ...(!renderCustom?.resetSelection
+                  ? [{ disabled: false, value: { id: '', name: 'Reset Selection', email: '' } }]
+                  : []),
               ]}
               displayIndex="name"
               secondaryDisplayIndex="email"
@@ -4157,6 +4169,11 @@ function ApproversSelectionV1({ allowAnyApprover = true, label }: { allowAnyAppr
               displaySelectedAs="pill"
             />
           )}
+          {renderCustom?.resetSelection
+            ? renderCustom.resetSelection(() => {
+                setValue(`approvers.${index}.assignedUserId`, '')
+              })
+            : null}
         </Fragment>
       ))}
     </>
