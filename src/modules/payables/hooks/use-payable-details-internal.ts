@@ -10,6 +10,8 @@ import { queryClient } from '../../../lib/react-query/query-client-provider'
 import { getInvoiceClient } from '../../common/utils'
 import { useApprovePayable, useCreatePayable, useRejectPayable, useRunOcr, useUpdatePayable } from '../api/mutations'
 import {
+  useBnplLoanQuery,
+  useBnplOfferQuery,
   useOcrJobQuery,
   usePayableDetailQuery,
   usePayableDocumentsQuery,
@@ -32,6 +34,7 @@ import {
 } from '../components/payable-form/utils'
 import {
   PayableApproversContext,
+  PayableBnplContext,
   PayableCommentsContext,
   PayableDetailsContextValue,
   PayableDetailsProps,
@@ -211,6 +214,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       paymentDestinationOptions: yup.mixed().nullable(),
       paymentSourceId: yup.string(),
       paymentSourceType: yup.string(),
+      paymentSourceOptions: yup.mixed().nullable(),
       paymentSourceCheckEnabled: yup.boolean().nullable(),
       batchPayment: yup.boolean().nullable(),
       paymentSourceSchemaId: yup.string().nullable(),
@@ -259,6 +263,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     paymentDestinationOptions: invoiceData?.paymentDestinationOptions,
     paymentSourceId: invoiceData?.paymentSource?.id,
     paymentSourceType: invoiceData?.paymentSource?.type ?? '',
+    paymentSourceOptions: invoiceData?.paymentSourceOptions,
     paymentSourceCheckEnabled:
       (invoiceData?.paymentSource as Mercoa.BankAccountResponse)?.checkOptions?.enabled ?? false,
     batchPayment: invoiceData?.batchPayment ?? false,
@@ -361,6 +366,10 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     paymentSourceType,
     printDescriptionOnCheckRemittance,
     paymentSourceId,
+    bnplInstallmentsStartDate,
+    bnplDefermentWeeks,
+    bnplAcceptedTerms,
+    bnplLoanId,
     paymentDestinationId,
     vendorCreditIds,
     payerId,
@@ -396,6 +405,10 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     'paymentSourceType',
     'paymentDestinationOptions.printDescription',
     'paymentSourceId',
+    'paymentSourceOptions.installmentsStartDate',
+    'paymentSourceOptions.defermentWeeks',
+    'paymentSourceOptions.acceptedTerms',
+    'paymentSourceOptions.loanId',
     'paymentDestinationId',
     'vendorCreditIds',
     'payerId',
@@ -439,6 +452,23 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     paymentDestinationOptions: paymentDestinationOptions,
   })
 
+  const bnplRequest: Mercoa.BnplOfferRequest = useMemo(
+    () => ({
+      cadence: 'WEEKLY',
+      numberOfInstallments: bnplDefermentWeeks,
+      downPaymentDueDate: dayjs(deductionDate).format('YYYY-MM-DD'),
+      installmentsStartDate: bnplInstallmentsStartDate,
+      paymentDayOfWeek: dayjs(bnplInstallmentsStartDate).format('dddd').toUpperCase() as Mercoa.BnplDayOfWeek,
+    }),
+    [bnplDefermentWeeks, deductionDate, bnplInstallmentsStartDate],
+  )
+
+  const { data: bnplOffer, isLoading: bnplOfferLoading } = useBnplOfferQuery(
+    invoiceId ?? '',
+    bnplRequest,
+    !!invoiceId && !!bnplInstallmentsStartDate && !!bnplDefermentWeeks && !!deductionDate && !bnplLoanId,
+  )
+
   const { data: paymentMethodsSource, isLoading: paymentMethodsSourceLoading } = usePaymentMethodsQuery({
     entityId: payerId,
   })
@@ -451,6 +481,8 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     invoiceId: invoiceId,
     enabled: !!getInvoiceEvents,
   })
+
+  const { data: bnplLoan, isLoading: bnplLoanLoading } = useBnplLoanQuery(bnplLoanId ?? '')
 
   useEffect(() => {
     if (!invoiceData) return
@@ -472,7 +504,12 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     if (invoiceData.paymentSource?.type === 'custom') {
       setValue('paymentSourceType', (invoiceData.paymentSource as Mercoa.CustomPaymentMethodResponse)?.schemaId ?? '')
     } else {
-      setValue('paymentSourceType', invoiceData.paymentSource?.type ?? '')
+      setValue(
+        'paymentSourceType',
+        invoiceData.paymentSourceOptions?.type === 'bnpl'
+          ? Mercoa.PaymentMethodType.Bnpl
+          : invoiceData.paymentSource?.type ?? '',
+      )
     }
 
     setValue('id', invoiceData.id)
@@ -505,6 +542,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       })),
     )
     setValue('paymentDestinationId', invoiceData.paymentDestination?.id)
+    setValue('paymentSourceOptions', invoiceData.paymentSourceOptions)
     setValue('paymentDestinationOptions', invoiceData.paymentDestinationOptions)
     setValue('paymentSourceId', invoiceData.paymentSource?.id)
     setValue(
@@ -542,10 +580,12 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       setValue('paymentDestinationId', '')
       setValue('paymentDestinationType', '')
       setValue('paymentDestinationOptions', undefined)
+      setValue('paymentSourceOptions', undefined)
     } else if (selectedVendor.id === 'new') {
       setValue('paymentDestinationId', '')
       setValue('paymentDestinationType', '')
       setValue('paymentDestinationOptions', undefined)
+      setValue('paymentSourceOptions', undefined)
     } else if (selectedVendor.id) {
       mercoaSession.debug({ selectedVendor })
       setValue('vendorId', selectedVendor.id)
@@ -554,6 +594,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
         setValue('paymentDestinationId', '')
         setValue('paymentDestinationType', '')
         setValue('paymentDestinationOptions', undefined)
+        setValue('paymentSourceOptions', undefined)
       }
       clearErrors('vendorId')
       clearErrors('vendorName')
@@ -705,6 +746,17 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     })
   }, [invoiceOcrJob])
 
+  useEffect(() => {
+    if (paymentSourceType === 'bnpl' && !bnplDefermentWeeks) {
+      setValue('paymentSourceOptions', {
+        type: 'bnpl',
+        installmentsStartDate: '',
+        defermentWeeks: 4,
+        acceptedTerms: false,
+      })
+    }
+  }, [bnplDefermentWeeks, paymentSourceType, setValue])
+
   const setMethodOnTypeChange = useCallback(
     (isDestination: boolean, selectedType: Mercoa.PaymentMethodType | string) => {
       const sourceOrDestination = isDestination ? 'paymentDestinationId' : 'paymentSourceId'
@@ -717,7 +769,10 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       if (isDestination) {
         setValue('paymentDestinationOptions', undefined)
       }
-      if (selectedType === Mercoa.PaymentMethodType.BankAccount) {
+      if (!isDestination) {
+        setValue('paymentSourceOptions', undefined)
+      }
+      if (selectedType === Mercoa.PaymentMethodType.BankAccount || selectedType === Mercoa.PaymentMethodType.Bnpl) {
         const account = paymentMethods.find(
           (paymentMethod) => paymentMethod.type === Mercoa.PaymentMethodType.BankAccount,
         ) as Mercoa.PaymentMethodResponse.BankAccount
@@ -787,6 +842,12 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   // Handle source payment method defaults
   useEffect(() => {
     if (!paymentMethodsSource || paymentSourceType) return
+    // Check if payment source options contain BNPL
+    const paymentSourceOptions = watch('paymentSourceOptions')
+    if (paymentSourceOptions?.type === 'bnpl') {
+      setValue('paymentSourceType', 'bnpl')
+      return
+    }
 
     // Check for default source payment method
     const defaultSourcePm = paymentMethodsSource?.find((e) => e.isDefaultSource)
@@ -821,7 +882,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
         }
       }
     }
-  }, [paymentMethodsSource, paymentSourceType, setValue, clearErrors, setMethodOnTypeChange])
+  }, [paymentMethodsSource, paymentSourceType, setValue, clearErrors, setMethodOnTypeChange, watch])
 
   // Handle destination payment method defaults
   useEffect(() => {
@@ -1012,7 +1073,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   }, [payerId, vendorId])
 
   const handleCreateOrUpdatePayable = async (formData: PayableFormData, action: PayableFormAction) => {
-    const request: Mercoa.InvoiceCreationRequest | false = payableFormUtils.validateAndConstructPayload({
+    const request: Mercoa.InvoiceCreationRequest | false = await payableFormUtils.validateAndConstructPayload({
       formData,
       setError,
       invoice: invoiceData,
@@ -1423,7 +1484,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       if (!invoiceData?.id) return
       if (invoiceData.status !== 'PAID' && invoiceData.status !== 'ARCHIVED') {
         if (confirm('Do you want to create a printable check? This will mark the invoice as paid cannot be undone.')) {
-          let requestPayload: Mercoa.InvoiceCreationRequest | false = payableFormUtils.validateAndConstructPayload({
+          let requestPayload: Mercoa.InvoiceCreationRequest | false = await payableFormUtils.validateAndConstructPayload({
             formData: data,
             setError,
             invoice: invoiceData,
@@ -1596,77 +1657,103 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     }
   }
 
-  const getAvailablePaymentMethodTypes = (isDestination: boolean = false) => {
-    const paymentMethods = (isDestination ? paymentMethodsDestination : paymentMethodsSource) ?? []
-    const availableTypes: Array<{ key: string; value: string }> = []
+  const getAvailablePaymentMethodTypes = useCallback(
+    (isDestination: boolean = false) => {
+      const paymentMethods = (isDestination ? paymentMethodsDestination : paymentMethodsSource) ?? []
+      const availableTypes: Array<{ key: string; value: string }> = []
 
-    if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'bankAccount')) {
-      availableTypes.push({ key: 'bankAccount', value: 'Bank Account' })
-    }
-    if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'card')) {
-      availableTypes.push({ key: 'card', value: 'Card' })
-    }
-    if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'check')) {
-      availableTypes.push({ key: 'check', value: 'Check' })
-    }
-    if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'utility')) {
-      availableTypes.push({ key: 'utility', value: 'Utility' })
-    }
-    if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'wallet')) {
-      availableTypes.push({ key: 'wallet', value: 'Wallet' })
-    }
-
-    paymentMethods?.forEach((paymentMethod) => {
-      if (paymentMethod.type === 'custom') {
-        if (availableTypes.some((type) => type.key === paymentMethod.schemaId)) return
-        availableTypes.push({ key: paymentMethod.schemaId ?? '', value: paymentMethod.schema.name ?? '' })
+      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'bankAccount')) {
+        availableTypes.push({ key: 'bankAccount', value: 'Bank Account' })
       }
-    })
+      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'card')) {
+        availableTypes.push({ key: 'card', value: 'Card' })
+      }
+      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'check')) {
+        availableTypes.push({ key: 'check', value: 'Check' })
+      }
+      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'utility')) {
+        availableTypes.push({ key: 'utility', value: 'Utility' })
+      }
+      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'wallet')) {
+        availableTypes.push({ key: 'wallet', value: 'Wallet' })
+      }
 
-    if (isDestination && vendorId) {
-      mercoaSession.organization?.paymentMethods?.backupDisbursements.forEach((backupDisbursement) => {
-        if (!backupDisbursement.active) return
-        if (
-          availableTypes.some((type) => {
-            if (type.key === backupDisbursement.type) return true
-            if (backupDisbursement.type === 'custom') {
-              const schema = mercoaSession.customPaymentMethodSchemas.find((e) => e.id == backupDisbursement.name)
-              if (schema && type.key === schema.id) return true
-            }
-            return false
-          })
-        ) {
-          return
+      paymentMethods?.forEach((paymentMethod) => {
+        if (paymentMethod.type === 'custom') {
+          if (availableTypes.some((type) => type.key === paymentMethod.schemaId)) return
+          availableTypes.push({ key: paymentMethod.schemaId ?? '', value: paymentMethod.schema.name ?? '' })
         }
-
-        if (backupDisbursement.type != 'custom')
-          availableTypes.push({ key: backupDisbursement.type, value: backupDisbursement.name })
-        else
-          availableTypes.push({
-            key: backupDisbursement.name,
-            value:
-              mercoaSession.customPaymentMethodSchemas.find((e) => e.id == backupDisbursement.name)?.name ?? 'Other',
-          })
       })
-    } else {
-      const offPlatform = mercoaSession.organization?.paymentMethods?.payerPayments.find(
-        (e) => e.type === 'offPlatform',
-      )
-      if (offPlatform && offPlatform.active) {
-        availableTypes.push({
-          key: offPlatform.type,
-          value: offPlatform.name,
-        })
-      }
-    }
 
-    return availableTypes
-  }
+      if (isDestination && vendorId) {
+        mercoaSession.organization?.paymentMethods?.backupDisbursements.forEach((backupDisbursement) => {
+          if (!backupDisbursement.active) return
+          if (
+            availableTypes.some((type) => {
+              if (type.key === backupDisbursement.type) return true
+              if (backupDisbursement.type === 'custom') {
+                const schema = mercoaSession.customPaymentMethodSchemas.find((e) => e.id == backupDisbursement.name)
+                if (schema && type.key === schema.id) return true
+              }
+              return false
+            })
+          ) {
+            return
+          }
+
+          if (backupDisbursement.type != 'custom')
+            availableTypes.push({ key: backupDisbursement.type, value: backupDisbursement.name })
+          else
+            availableTypes.push({
+              key: backupDisbursement.name,
+              value:
+                mercoaSession.customPaymentMethodSchemas.find((e) => e.id == backupDisbursement.name)?.name ?? 'Other',
+            })
+        })
+      } else {
+        const offPlatform = mercoaSession.organization?.paymentMethods?.payerPayments.find(
+          (e) => e.type === 'offPlatform',
+        )
+        if (offPlatform && offPlatform.active) {
+          availableTypes.push({
+            key: offPlatform.type,
+            value: offPlatform.name,
+          })
+        }
+        const bnpl = mercoaSession.organization?.paymentMethods?.payerPayments.find((e) => e.type === 'bnpl')
+        console.log('mercoaSession.entity?.oatfiStatus', mercoaSession.entity?.oatfiStatus)
+        if (
+          bnpl &&
+          bnpl.active &&
+          invoiceId &&
+          mercoaSession.entity?.oatfiStatus === 'APPROVED' &&
+          dueDate &&
+          !dayjs(dueDate).isBefore(dayjs())
+        ) {
+          availableTypes.push({
+            key: bnpl.type,
+            value: 'Pay Later',
+          })
+        }
+      }
+
+      return availableTypes
+    },
+    [
+      paymentMethodsDestination,
+      paymentMethodsSource,
+      mercoaSession.organization?.paymentMethods,
+      invoiceId,
+      mercoaSession.entity?.oatfiStatus,
+      dueDate,
+    ],
+  )
 
   const handleUpdateTotalAmount = useCallback(() => {
     if (!lineItems?.length) return
     const total = lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0)
     const calculatedTotal = total + (taxAmount ?? 0) + (shippingAmount ?? 0)
+
     if (calculatedTotal !== amount) {
       let amount = new Big(0)
       lineItems?.forEach((lineItem, index) => {
@@ -1934,6 +2021,20 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     duplicateVendorInfo,
   }
 
+  const bnplContext: PayableBnplContext = {
+    bnplInstallmentsStartDate: watch('paymentSourceOptions.installmentsStartDate'),
+    setBnplInstallmentsStartDate: (installmentsStartDate: string) =>
+      setValue('paymentSourceOptions.installmentsStartDate', installmentsStartDate),
+    bnplDefermentWeeks: watch('paymentSourceOptions.defermentWeeks'),
+    setBnplDefermentWeeks: (defermentWeeks: number) => setValue('paymentSourceOptions.defermentWeeks', defermentWeeks),
+    bnplAcceptedTerms: watch('paymentSourceOptions.acceptedTerms'),
+    setBnplAcceptedTerms: (acceptedTerms: boolean) => setValue('paymentSourceOptions.acceptedTerms', acceptedTerms),
+    bnplOffer,
+    bnplOfferLoading,
+    bnplLoan,
+    bnplLoanLoading,
+  }
+
   const out: PayableDetailsContextValue = {
     dataContextValue: {
       invoice: invoiceData,
@@ -1971,6 +2072,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       vendorCreditContextValue: vendorCreditContext,
       paymentTimingContextValue: paymentTimingContext,
       recurringScheduleContextValue: recurringScheduleContext,
+      bnplContextValue: bnplContext,
     },
     eventsContextValue: eventsContext,
   }

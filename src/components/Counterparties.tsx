@@ -11,6 +11,7 @@ import {
   PencilSquareIcon,
   PlusIcon,
   ShieldCheckIcon,
+  TrashIcon,
   UserIcon,
   XCircleIcon,
   XMarkIcon,
@@ -2466,7 +2467,42 @@ function VendorCreditsCard({
   type: 'payor' | 'payee'
   admin?: boolean
 }) {
+  const mercoaSession = useMercoaSession()
   const [createVendorCreditOpen, setCreateVendorCreditOpen] = useState(false)
+  const [deleteVendorCredit, setDeleteVendorCredit] = useState<Mercoa.VendorCreditResponse | null>(null)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+
+  const handleDeleteVendorCredit = async () => {
+    if (!deleteVendorCredit || !mercoaSession.client || !mercoaSession.entity?.id) return
+
+    try {
+      if (type === 'payee') {
+        await mercoaSession.client.entity.counterparty.vendorCredit.delete(
+          mercoaSession.entity.id,
+          counterparty.id,
+          deleteVendorCredit.id,
+        )
+      } else {
+        await mercoaSession.client.entity.counterparty.vendorCredit.delete(
+          counterparty.id,
+          mercoaSession.entity.id,
+          deleteVendorCredit.id,
+        )
+      }
+      toast('Vendor credit deleted successfully!', { type: 'success' })
+      mercoaSession.refresh()
+    } catch (e: any) {
+      console.error(e)
+      toast('There was an error deleting the vendor credit.', { type: 'error' })
+    }
+    setIsDeleteModalOpen(false)
+    setDeleteVendorCredit(null)
+  }
+
+  const openDeleteModal = (vendorCredit: Mercoa.VendorCreditResponse) => {
+    setDeleteVendorCredit(vendorCredit)
+    setIsDeleteModalOpen(true)
+  }
 
   return (
     <div className="mercoa-py-4 mercoa-bg-gray-50 mercoa-border mercoa-border-gray-200 mercoa-rounded-lg">
@@ -2513,7 +2549,19 @@ function VendorCreditsCard({
               scope="col"
               className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
             >
+              Memo Number
+            </th>
+            <th
+              scope="col"
+              className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+            >
               Note
+            </th>
+            <th
+              scope="col"
+              className="mercoa-px-3 mercoa-py-3.5 mercoa-text-left mercoa-text-sm mercoa-font-semibold mercoa-text-gray-900"
+            >
+              Actions
             </th>
           </tr>
         </thead>
@@ -2537,7 +2585,19 @@ function VendorCreditsCard({
                   {dayjs(vendorCredit.createdAt).format('MMM DD, YYYY')}
                 </td>
                 <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                  {vendorCredit.memoNumber || '-'}
+                </td>
+                <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
                   {vendorCredit.note}
+                </td>
+                <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
+                  <button
+                    onClick={() => openDeleteModal(vendorCredit)}
+                    className="mercoa-text-red-600 hover:mercoa-text-red-900 mercoa-transition-colors mercoa-text-sm mercoa-font-medium"
+                    title="Delete vendor credit"
+                  >
+                    <TrashIcon className="mercoa-h-4 mercoa-w-4" />
+                  </button>
                 </td>
                 {admin && (
                   <td className="mercoa-whitespace-nowrap mercoa-px-3 mercoa-py-4 mercoa-text-sm mercoa-text-gray-900">
@@ -2587,6 +2647,94 @@ function VendorCreditsCard({
           </div>
         </Dialog>
       </Transition.Root>
+
+      {/* Delete Confirmation Modal */}
+      <Transition.Root show={isDeleteModalOpen} as={Fragment}>
+        <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={() => setIsDeleteModalOpen(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="mercoa-ease-out mercoa-duration-300"
+            enterFrom="mercoa-opacity-0"
+            enterTo="mercoa-opacity-100"
+            leave="mercoa-ease-in mercoa-duration-200"
+            leaveFrom="mercoa-opacity-100"
+            leaveTo="mercoa-opacity-0"
+          >
+            <div className="mercoa-fixed mercoa-inset-0 mercoa-bg-gray-500 mercoa-bg-opacity-75 mercoa-transition-opacity" />
+          </Transition.Child>
+
+          <div className="mercoa-fixed mercoa-inset-0 mercoa-z-10 mercoa-overflow-y-auto">
+            <div className="mercoa-flex mercoa-min-h-full mercoa-items-end mercoa-justify-center mercoa-p-4 mercoa-text-center sm:mercoa-items-center sm:mercoa-p-0">
+              <Transition.Child
+                as={Fragment}
+                enter="mercoa-ease-out mercoa-duration-300"
+                enterFrom="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+                enterTo="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                leave="mercoa-ease-in mercoa-duration-200"
+                leaveFrom="mercoa-opacity-100 mercoa-translate-y-0 sm:mercoa-scale-100"
+                leaveTo="mercoa-opacity-0 mercoa-translate-y-4 sm:mercoa-translate-y-0 sm:mercoa-scale-95"
+              >
+                <Dialog.Panel className="mercoa-relative mercoa-transform mercoa-rounded-mercoa mercoa-bg-white mercoa-px-4 mercoa-pt-5 mercoa-pb-4 mercoa-text-left mercoa-shadow-xl mercoa-transition-all sm:mercoa-my-8 sm:mercoa-max-w-lg sm:mercoa-p-6">
+                  <div className="mercoa-mt-3 mercoa-text-center sm:mercoa-mt-5">
+                    <Dialog.Title
+                      as="h3"
+                      className="mercoa-text-base mercoa-font-semibold mercoa-leading-6 mercoa-text-gray-900"
+                    >
+                      Delete Vendor Credit
+                    </Dialog.Title>
+                    <div className="mercoa-mt-2">
+                      <p className="mercoa-text-sm mercoa-text-gray-500">
+                        Are you sure you want to delete this vendor credit? This action cannot be undone.
+                      </p>
+                      {deleteVendorCredit && (
+                        <div className="mercoa-mt-4 mercoa-p-3 mercoa-bg-gray-50 mercoa-rounded-mercoa">
+                          <p className="mercoa-text-sm mercoa-font-medium mercoa-text-gray-900">
+                            Amount:{' '}
+                            {accounting.formatMoney(
+                              Number(deleteVendorCredit.totalAmount),
+                              currencyCodeToSymbol(deleteVendorCredit.currency),
+                            )}
+                          </p>
+                          {deleteVendorCredit.memoNumber && (
+                            <p className="mercoa-text-sm mercoa-text-gray-600 mercoa-mt-1">
+                              Memo Number: {deleteVendorCredit.memoNumber}
+                            </p>
+                          )}
+                          {deleteVendorCredit.note && (
+                            <p className="mercoa-text-sm mercoa-text-gray-600 mercoa-mt-1">
+                              Note: {deleteVendorCredit.note}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="mercoa-mt-5 sm:mercoa-mt-6 sm:mercoa-grid sm:mercoa-grid-flow-row-dense sm:mercoa-grid-cols-2 sm:mercoa-gap-3">
+                    <MercoaButton
+                      type="button"
+                      className="mercoa-mt-3 mercoa-inline-flex mercoa-w-full mercoa-justify-center sm:mercoa-col-start-2 sm:mercoa-mt-0"
+                      onClick={handleDeleteVendorCredit}
+                      isEmphasized={true}
+                      color="red"
+                    >
+                      Delete
+                    </MercoaButton>
+                    <MercoaButton
+                      type="button"
+                      className="mercoa-mt-3 mercoa-inline-flex mercoa-w-full mercoa-justify-center sm:mercoa-col-start-1 sm:mercoa-mt-0"
+                      isEmphasized={false}
+                      onClick={() => setIsDeleteModalOpen(false)}
+                      color="gray"
+                    >
+                      Cancel
+                    </MercoaButton>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition.Root>
     </div>
   )
 }
@@ -2606,6 +2754,7 @@ function CreateVendorCredit({
     .object({
       totalAmount: yup.number().positive().typeError('Please enter a valid number'),
       currency: yup.string().required(),
+      memoNumber: yup.string().nullable(),
       note: yup.string().nullable(),
     })
     .required()
@@ -2621,6 +2770,7 @@ function CreateVendorCredit({
     defaultValues: {
       totalAmount: 0,
       currency: 'USD',
+      memoNumber: '',
       note: '',
     },
   })
@@ -2632,6 +2782,7 @@ function CreateVendorCredit({
     const create: Mercoa.VendorCreditRequest = {
       totalAmount: Number(data.totalAmount),
       currency: data.currency,
+      memoNumber: data.memoNumber || undefined,
       note: data.note,
     }
     try {
@@ -2684,7 +2835,8 @@ function CreateVendorCredit({
         errors={errors}
       />
 
-      <MercoaInput label="Note" register={register} name="note" className="mercoa-mt-2" />
+      <MercoaInput label="Memo Number" optional register={register} name="memoNumber" className="mercoa-mt-2" />
+      <MercoaInput label="Note" optional register={register} name="note" className="mercoa-mt-2" />
       <MercoaButton isEmphasized={true} className="mercoa-mt-5 mercoa-w-full">
         Create
       </MercoaButton>

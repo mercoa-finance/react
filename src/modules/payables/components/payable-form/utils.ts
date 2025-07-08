@@ -695,8 +695,8 @@ const validateLineItems = (
 }
 
 const validateAmount = (invoiceData: Mercoa.InvoiceCreationRequest, setError: any) => {
-  if (Number(invoiceData.amount) < 0.01) {
-    setError('amount', { type: 'manual', message: 'Amount must be at least 0.01' })
+  if (Number(invoiceData.amount) < 0.0) {
+    setError('amount', { type: 'manual', message: 'Amount must be at least 0.00' })
     return false
   }
   return true
@@ -766,7 +766,7 @@ const validateDeductionDate = (
   return true
 }
 
-const validateAndConstructPayload = (props: {
+const validateAndConstructPayload = async (props: {
   formData: PayableFormData
   invoice?: Mercoa.InvoiceResponse
   saveAsStatus: Mercoa.InvoiceStatus
@@ -837,6 +837,14 @@ const validateAndConstructPayload = (props: {
           accountId: (formData.paymentDestinationOptions as any)?.accountId,
         },
       }),
+    ...(formData.paymentSourceType === Mercoa.PaymentMethodType.Bnpl && {
+      paymentSourceOptions: {
+        type: 'bnpl',
+        defermentWeeks: (formData.paymentSourceOptions as any)?.defermentWeeks,
+        installmentsStartDate: (formData.paymentSourceOptions as any)?.installmentsStartDate,
+        acceptedTerms: (formData.paymentSourceOptions as any)?.acceptedTerms,
+      },
+    }),
     lineItems: formData.lineItems?.map((lineItem: any) => {
       const out: Mercoa.InvoiceLineItemUpdateRequest = {
         ...(lineItem.id && { id: lineItem.id }),
@@ -876,15 +884,24 @@ const validateAndConstructPayload = (props: {
       PayableFormAction.RETRY_PAYMENT,
     ].includes(action!)
   ) {
+    console.log('formData', formData)
+
     if (
-      !validateSchema({
+      !(await validateSchema({
         setError,
         schema:
           action === PayableFormAction.SUBMIT_FOR_APPROVAL ? baseSubmitForApprovalSchema : baseSchedulePaymentSchema,
         data: invoiceRequestData,
-      })
+      }))
     ) {
       return false
+    }
+
+    if (formData.paymentSourceType === Mercoa.PaymentMethodType.Bnpl) {
+      if (!formData.deductionDate) {
+        setError('deductionDate', { type: 'manual', message: 'Please select a payment date' })
+        return false
+      }
     }
 
     if (!validateLineItems(invoiceRequestData, mercoaSession, setError, lineItemDescriptionOptional)) {
@@ -924,7 +941,7 @@ const validateAndConstructPayload = (props: {
     return false
   }
 
-  if (!autoAssignVendorCredits(invoiceRequestData, mercoaSession, saveAsStatus, toast, invoice)) {
+  if (!(await autoAssignVendorCredits(invoiceRequestData, mercoaSession, saveAsStatus, toast, invoice))) {
     return false
   }
 

@@ -401,4 +401,21 @@ type ReceivablesActions = {
     } | null,
   ) => void
   downloadInvoicesAsCSV: () => void
+  bulkDownloadReceivables: UseMutateFunction<
+    Mercoa.BulkDownloadResponse,
+    ErrorResponse,
+    {
+      format?: Mercoa.BulkDownloadFormat
+      startDate?: Date
+      endDate?: Date
+      dateType?: Mercoa.InvoiceDateFilter
+      orderBy?: Mercoa.InvoiceOrderByField
+      orderDirection?: Mercoa.OrderDirection
+      search?: string
+      status?: Mercoa.InvoiceStatus[]
+      toast?: ToastClient
+    },
+    unknown
+  >
+  isBulkDownloadReceivablesLoading: boolean
 }

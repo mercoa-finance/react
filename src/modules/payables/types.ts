@@ -100,6 +100,7 @@ export type PayableFormContext = {
   vendorCreditContextValue: PayableVendorCreditContext
   paymentTimingContextValue: PayablePaymentTimingContext
   recurringScheduleContextValue: PayableRecurringScheduleContext
+  bnplContextValue?: PayableBnplContext
 }
 
 export type PayableDocumentContext = {
@@ -220,6 +221,19 @@ export type PayablePaymentMethodContext = {
   selectedDestinationType?: Mercoa.PaymentMethodType
   setSelectedDestinationType: (type: Mercoa.PaymentMethodType) => void
   getVendorPaymentLink: (invoiceId: string) => Promise<string | undefined>
+}
+
+export type PayableBnplContext = {
+  bnplInstallmentsStartDate?: string
+  setBnplInstallmentsStartDate: (installmentsStartDate: string) => void
+  bnplDefermentWeeks?: number
+  setBnplDefermentWeeks: (defermentWeeks: number) => void
+  bnplAcceptedTerms?: boolean
+  setBnplAcceptedTerms: (acceptedTerms: boolean) => void
+  bnplOffer?: Mercoa.BnplOfferResponse
+  bnplOfferLoading: boolean
+  bnplLoan?: Mercoa.BnplLoanResponse
+  bnplLoanLoading: boolean
 }
 
 export type PayableRecurringScheduleContext = {
@@ -644,4 +658,21 @@ export type PayablesActionsContext = {
     } | null,
   ) => void
   downloadInvoicesAsCSV: () => void
+  bulkDownloadPayables: UseMutateFunction<
+    Mercoa.BulkDownloadResponse,
+    ErrorResponse,
+    {
+      format?: Mercoa.BulkDownloadFormat
+      startDate?: Date
+      endDate?: Date
+      dateType?: Mercoa.InvoiceDateFilter
+      orderBy?: Mercoa.InvoiceOrderByField
+      orderDirection?: Mercoa.OrderDirection
+      search?: string
+      status?: Mercoa.InvoiceStatus[]
+      toast?: ToastClient
+    },
+    unknown
+  >
+  isBulkDownloadPayablesLoading: boolean
 }

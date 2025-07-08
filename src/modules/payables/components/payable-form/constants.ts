@@ -80,6 +80,7 @@ export const baseSchema = yup
     paymentDestinationOptions: yup.mixed().nullable(),
     paymentSourceId: yup.string(),
     paymentSourceType: yup.string(),
+    paymentSourceOptions: yup.mixed().nullable(),
     paymentSourceCheckEnabled: yup.boolean().nullable(),
     batchPayment: yup.boolean().nullable(),
     paymentSourceSchemaId: yup.string().nullable(),

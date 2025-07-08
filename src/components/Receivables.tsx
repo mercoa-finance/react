@@ -1,7 +1,6 @@
 import accounting from 'accounting'
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
-import Papa from 'papaparse'
 import { ReactElement, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
@@ -86,73 +85,44 @@ export function ReceivablesTableV1({
 
   async function downloadAsCSV() {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    let startingAfter = ''
-    let invoices: Mercoa.InvoiceResponse[] = []
 
-    getNextPage()
-
-    async function getNextPage() {
-      if (!mercoaSession.token || !mercoaSession.entity?.id) return
-
-      const filter = {
+    try {
+      const response = await mercoaSession.client?.entity.invoice.download(mercoaSession.entity.id, {
+        format: 'CSV',
         status: currentStatuses,
         search,
         startDate,
         endDate,
         orderBy,
         orderDirection,
-        limit: 100,
-        startingAfter,
         excludePayables: true,
         metadata: metadata as any,
-      }
-
-      const response = await mercoaSession.client?.entity.invoice.find(mercoaSession.entity.id, filter)
+      })
 
       if (response) {
-        if (response.data.length > 0) {
-          startingAfter = response.data[response.data.length - 1].id
-          invoices = [...invoices, ...response.data]
-          await getNextPage()
-        } else {
-          const csv = Papa.unparse(
-            invoices.map((invoice) => {
-              return {
-                'Invoice ID': invoice.id,
-                'Invoice Number': invoice.invoiceNumber,
-                Status: invoice.status,
-                Amount: invoice.amount,
-                Currency: invoice.currency,
-                Note: invoice.noteToSelf,
-
-                'Payer ID': invoice.payer?.id,
-                'Payer Email': invoice.payer?.email,
-                'Payer Name': invoice.payer?.name,
-                'Vendor ID': invoice.vendor?.id,
-                'Vendor Email': invoice.vendor?.email,
-                'Vendor Name': invoice.vendor?.name,
-
-                Metadata: JSON.stringify(invoice.metadata),
-
-                'Due Date': dayjs(invoice.dueDate),
-                'Deduction Date': dayjs(invoice.deductionDate),
-                'Processed At': dayjs(invoice.processedAt),
-                'Created At': dayjs(invoice.createdAt),
-                'Updated At': dayjs(invoice.updatedAt),
-              }
-            }),
-          )
-          const blob = new Blob([csv], { type: 'text/csv' })
-          const url = window.URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.setAttribute('mercoa-hidden', '')
-          a.setAttribute('href', url)
-          a.setAttribute('download', `mercoa-invoice-export-${dayjs().format('YYYY-MM-DD')}.csv`)
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
+        // Handle local file URLs (non-production)
+        if (response.url.startsWith('file://')) {
+          toast.info(`File saved locally: ${response.url.replace('file://', '')}`)
+          return
         }
+
+        // Download the file from the signed URL
+        const a = document.createElement('a')
+        a.setAttribute('mercoa-hidden', '')
+        a.setAttribute('href', response.url)
+        a.setAttribute(
+          'download',
+          `mercoa-receivables-export-${startDate ? dayjs(startDate).format('YYYY-MM-DD') : 'all'}-to-${
+            endDate ? dayjs(endDate).format('YYYY-MM-DD') : 'all'
+          }.csv`,
+        )
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
       }
+    } catch (error) {
+      console.error('Error downloading invoices:', error)
+      toast.error('Failed to download invoices. Please try again.')
     }
   }
 
@@ -176,7 +146,7 @@ export function ReceivablesTableV1({
       orderDirection,
       limit: resultsPerPage,
       startingAfter: startingAfter[startingAfter.length - 1],
-      excludePayables: true,
+      excludeReceivables: true,
       metadata: metadata as any,
     }
 
@@ -480,74 +450,45 @@ export function GroupReceivablesTableV1({
   }
 
   async function downloadAsCSV() {
-    if (!mercoaSession.token || !mercoaSession.entity?.id) return
-    let startingAfter = ''
-    let invoices: Mercoa.InvoiceResponse[] = []
+    if (!mercoaSession.token || !mercoaSession.entityGroup?.id) return
 
-    getNextPage()
-
-    async function getNextPage() {
-      if (!mercoaSession.token || !mercoaSession.entityGroup?.id) return
-
-      const filter = {
+    try {
+      const response = await mercoaSession.client?.entityGroup.invoice.download(mercoaSession.entityGroup.id, {
+        format: 'CSV',
         status: currentStatuses,
         search,
         startDate,
         endDate,
         orderBy,
         orderDirection,
-        limit: 100,
-        startingAfter,
-        excludeReceivables: true,
+        excludePayables: true,
         metadata: metadata as any,
-      }
-
-      const response = await mercoaSession.client?.entityGroup.invoice.find(mercoaSession.entityGroup.id, filter)
+      })
 
       if (response) {
-        if (response.data.length > 0) {
-          startingAfter = response.data[response.data.length - 1].id
-          invoices = [...invoices, ...response.data]
-          await getNextPage()
-        } else {
-          const csv = Papa.unparse(
-            invoices.map((invoice) => {
-              return {
-                'Invoice ID': invoice.id,
-                'Invoice Number': invoice.invoiceNumber,
-                Status: invoice.status,
-                Amount: invoice.amount,
-                Currency: invoice.currency,
-                Note: invoice.noteToSelf,
-
-                'Payer ID': invoice.payer?.id,
-                'Payer Email': invoice.payer?.email,
-                'Payer Name': invoice.payer?.name,
-                'Vendor ID': invoice.vendor?.id,
-                'Vendor Email': invoice.vendor?.email,
-                'Vendor Name': invoice.vendor?.name,
-
-                Metadata: JSON.stringify(invoice.metadata),
-
-                'Due Date': dayjs(invoice.dueDate),
-                'Deduction Date': dayjs(invoice.deductionDate),
-                'Processed At': dayjs(invoice.processedAt),
-                'Created At': dayjs(invoice.createdAt),
-                'Updated At': dayjs(invoice.updatedAt),
-              }
-            }),
-          )
-          const blob = new Blob([csv], { type: 'text/csv' })
-          const url = window.URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.setAttribute('mercoa-hidden', '')
-          a.setAttribute('href', url)
-          a.setAttribute('download', `mercoa-invoice-export-${dayjs().format('YYYY-MM-DD')}.csv`)
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
+        // Handle local file URLs (non-production)
+        if (response.url.startsWith('file://')) {
+          toast.info(`File saved locally: ${response.url.replace('file://', '')}`)
+          return
         }
+
+        // Download the file from the signed URL
+        const a = document.createElement('a')
+        a.setAttribute('mercoa-hidden', '')
+        a.setAttribute('href', response.url)
+        a.setAttribute(
+          'download',
+          `mercoa-receivables-export-${startDate ? dayjs(startDate).format('YYYY-MM-DD') : 'all'}-to-${
+            endDate ? dayjs(endDate).format('YYYY-MM-DD') : 'all'
+          }.csv`,
+        )
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
       }
+    } catch (error) {
+      console.error('Error downloading invoices:', error)
+      toast.error('Failed to download invoices. Please try again.')
     }
   }
 

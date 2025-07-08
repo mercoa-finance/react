@@ -194,6 +194,7 @@ export function CustomPaymentMethod({
   showEntityConfirmation,
   editEntityConfirmation,
   schema,
+  paymentDestinationOptions,
 }: {
   account?: Mercoa.PaymentMethodResponse.Custom
   onSelect?: (value?: Mercoa.PaymentMethodResponse.Custom) => void
@@ -203,6 +204,7 @@ export function CustomPaymentMethod({
   showEntityConfirmation?: boolean
   editEntityConfirmation?: boolean
   schema?: Mercoa.CustomPaymentMethodSchemaResponse
+  paymentDestinationOptions?: Mercoa.PaymentDestinationOptions
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -211,6 +213,14 @@ export function CustomPaymentMethod({
   if (account) {
     const { accountName, accountNumber } = findCustomPaymentMethodAccountNameAndNumber(account)
     if (!mercoaSession.client) return <NoSession componentName="CustomPaymentMethod" />
+    // Get dynamicUrl fields from schema
+    const dynamicUrlFields = account.schema?.fields?.filter((field) => field.type === 'dynamicUrl')
+    const embeddedUrlFields = account.schema?.fields?.filter((field) => field.type === 'embeddedUrl')
+    // Get dynamicUrls from paymentDestinationOptions if present and type is 'custom'
+    const dynamicUrls =
+      paymentDestinationOptions && paymentDestinationOptions.type === 'custom'
+        ? (paymentDestinationOptions as Mercoa.PaymentDestinationOptions.Custom).dynamicUrls || {}
+        : {}
     return (
       <div className={account.frozen ? 'mercoa-line-through pointer-events-none' : ''}>
         <div
@@ -247,6 +257,26 @@ export function CustomPaymentMethod({
               >{`${capitalize(accountName)} ${accountNumber ? `••••${String(accountNumber).slice(-4)}` : ''}`}</p>
             </div>
           </div>
+          {/* Dynamic URL fields display */}
+          {dynamicUrlFields?.length > 0 && Object.keys(dynamicUrls).length > 0 && (
+            <div className="mercoa-ml-2 mercoa-text-xs">
+              {dynamicUrlFields.map((field) =>
+                dynamicUrls[field.name] ? (
+                  <MercoaButton
+                    key={field.name}
+                    size="sm"
+                    isEmphasized={false}
+                    onClick={() => {
+                      window.open(dynamicUrls[field.name], '_blank')
+                    }}
+                    type="button"
+                  >
+                    {field.displayName || field.name}
+                  </MercoaButton>
+                ) : null,
+              )}
+            </div>
+          )}
           <div className="mercoa-flex">
             {showEdit || showEntityConfirmation || editEntityConfirmation ? (
               <>
@@ -289,6 +319,26 @@ export function CustomPaymentMethod({
             )}
           </div>
         </div>
+        {/* Embedded URL fields display */}
+        {embeddedUrlFields?.length > 0 && Object.keys(dynamicUrls).length > 0 && (
+          <div className="mercoa-mt-2 mercoa-text-xs">
+            {embeddedUrlFields.map((field) =>
+              dynamicUrls[field.name] ? (
+                <div key={field.name} className="mercoa-mb-2">
+                  <p className="mercoa-text-xs mercoa-font-medium mercoa-text-gray-700 mercoa-mb-1">
+                    {field.displayName || field.name}
+                  </p>
+                  <iframe
+                    src={dynamicUrls[field.name]}
+                    className="mercoa-w-full mercoa-h-48 mercoa-border mercoa-border-gray-300 mercoa-rounded-md"
+                    title={field.displayName || field.name}
+                    sandbox="allow-scripts allow-same-origin allow-forms"
+                  />
+                </div>
+              ) : null,
+            )}
+          </div>
+        )}
       </div>
     )
   } else if (schema) {

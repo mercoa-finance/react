@@ -652,3 +652,38 @@ export const usePayableEventsQuery = ({ invoiceId, enabled }: { invoiceId?: stri
     },
   })
 }
+
+export function useBnplOfferQuery(
+  invoiceId: Mercoa.InvoiceId,
+  request: Mercoa.BnplOfferRequest,
+  enabled: boolean = true,
+) {
+  const mercoaSession = useMercoaSession()
+  return useQuery({
+    queryKey: ['bnplOffer', invoiceId, request],
+    queryFn: async () => {
+      if (!mercoaSession.client) throw new Error('Mercoa client not initialized')
+      const response = await mercoaSession.client.invoice.bnpl.offer(invoiceId, request)
+      return response
+    },
+    options: {
+      enabled: !!mercoaSession.token && !!invoiceId && enabled,
+    },
+  })
+}
+
+
+export function useBnplLoanQuery(loanId: string) {
+  const mercoaSession = useMercoaSession()
+  return useQuery({
+    queryKey: ['bnplLoan', loanId],
+    queryFn: async () => {
+      if (!mercoaSession.client) throw new Error('Mercoa client not initialized')
+      const response = await mercoaSession.client.invoice.bnpl.loan(loanId)
+      return response
+    },
+    options: {
+      enabled: !!mercoaSession.token && !!loanId,
+    },
+  })
+}

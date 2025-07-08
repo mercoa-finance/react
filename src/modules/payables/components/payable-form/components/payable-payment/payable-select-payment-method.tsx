@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import {
@@ -11,18 +11,17 @@ import {
   Check,
   CounterpartyAccount,
   CustomPaymentMethod,
-  MercoaButton,
   MercoaCombobox,
   NoSession,
   useMercoaSession,
   usePayableDetails,
   Wallet,
 } from '../../../../../../components'
-import { FinanceWithOatfi } from '../../../../../../components/Oatfi'
+import { BnplOffer } from '../../../../../../components/Oatfi'
 import { PayableFormAction } from '../../constants'
 import { PayablesInlineForm } from './payables-inline-form'
 
-const PaymentMethodList = ({
+export const PayablePaymentMethodList = ({
   paymentMethods,
   paymentId,
   readOnly,
@@ -222,8 +221,6 @@ export function PayableSelectPaymentMethod({
 
   const paymentMethods = (isSource ? sourcePaymentMethods : destinationPaymentMethods) ?? []
 
-  const [showBNPL, setShowBNPL] = useState(false)
-
   const { watch, setValue } = useFormContext()
 
   const vendorId = watch('vendorId')
@@ -238,10 +235,6 @@ export function PayableSelectPaymentMethod({
   const setPaymentType = isSource ? setSelectedSourceType : setSelectedDestinationType
   const destinationOptions = watch('paymentDestinationOptions')
   const counterpartyAccounts: Array<Mercoa.CounterpartyCustomizationAccount> = watch('vendor.accounts')
-
-  const enableBNPL = mercoaSession.organization?.paymentMethods?.payerPayments.find(
-    (e) => e.type === 'bnpl' && e.active,
-  )
 
   const backupDisbursement = useMemo(
     () =>
@@ -271,7 +264,7 @@ export function PayableSelectPaymentMethod({
 
       {selectedType === Mercoa.PaymentMethodType.BankAccount && (
         <>
-          <PaymentMethodList
+          <PayablePaymentMethodList
             paymentMethods={paymentMethods}
             paymentId={paymentId}
             readOnly={readOnly}
@@ -280,19 +273,6 @@ export function PayableSelectPaymentMethod({
             Component={BankAccount}
             showEntityConfirmation={showDestinationPaymentMethodConfirmation && isDestination}
           />
-          {isSource && enableBNPL && (
-            <>
-              {showBNPL ? (
-                <FinanceWithOatfi paymentMethods={paymentMethods} setShowBNPL={setShowBNPL} />
-              ) : (
-                <div className="mercoa-flex mercoa-items-center mercoa-justify-end mercoa-mt-1">
-                  <MercoaButton isEmphasized={false} onClick={() => setShowBNPL(true)} size="sm">
-                    Extend payment terms
-                  </MercoaButton>
-                </div>
-              )}
-            </>
-          )}
           {isDestination &&
             !disableCreation &&
             vendorId &&
@@ -311,9 +291,11 @@ export function PayableSelectPaymentMethod({
         </>
       )}
 
+      {selectedType === 'bnpl' && isSource && <BnplOffer paymentMethods={paymentMethods} />}
+
       {selectedType === Mercoa.PaymentMethodType.Check && (
         <>
-          <PaymentMethodList
+          <PayablePaymentMethodList
             paymentMethods={paymentMethods}
             paymentId={paymentId}
             readOnly={readOnly}
@@ -340,7 +322,7 @@ export function PayableSelectPaymentMethod({
       )}
 
       {selectedType === Mercoa.PaymentMethodType.Card && (
-        <PaymentMethodList
+        <PayablePaymentMethodList
           paymentMethods={paymentMethods}
           paymentId={paymentId}
           readOnly={readOnly}
@@ -399,7 +381,7 @@ export function PayableSelectPaymentMethod({
       )}
 
       {selectedType === Mercoa.PaymentMethodType.Wallet && (
-        <PaymentMethodList
+        <PayablePaymentMethodList
           paymentMethods={paymentMethods}
           paymentId={paymentId}
           readOnly={readOnly}
@@ -411,7 +393,7 @@ export function PayableSelectPaymentMethod({
 
       {selectedType.startsWith('cpms_') && (
         <>
-          <PaymentMethodList
+          <PayablePaymentMethodList
             paymentMethods={paymentMethods}
             paymentId={paymentId}
             readOnly={readOnly}

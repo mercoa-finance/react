@@ -1,3 +1,5 @@
+import dayjs from 'dayjs'
+import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import { useMercoaSession } from '../../../components'
 import { queryClient } from '../../../lib/react-query/query-client-provider'
@@ -1141,6 +1143,95 @@ export const useBulkCancelPayables = () => {
       },
       onError: (error) => {
         console.error('Bulk cancel payables failed:', error)
+      },
+    },
+  })
+}
+
+export const useBulkDownloadPayables = () => {
+  const mercoaSession = useMercoaSession()
+
+  return useMutation<
+    Mercoa.BulkDownloadResponse,
+    {
+      format?: Mercoa.BulkDownloadFormat
+      startDate?: Date
+      endDate?: Date
+      dateType?: Mercoa.InvoiceDateFilter
+      orderBy?: Mercoa.InvoiceOrderByField
+      orderDirection?: Mercoa.OrderDirection
+      search?: string
+      status?: Mercoa.InvoiceStatus[]
+      toast?: ToastClient
+    }
+  >({
+    mutationKey: ['bulkDownloadPayables'],
+    mutationFn: async ({
+      format = 'CSV',
+      startDate,
+      endDate,
+      dateType,
+      orderBy,
+      orderDirection,
+      search,
+      status,
+      toast: customToast,
+    }) => {
+      if (!mercoaSession.token || !mercoaSession.entityId) {
+        throw new Error('Client or entity not found')
+      }
+
+      // Use custom toast if provided, otherwise use react-toastify directly
+      const toastClient = customToast || {
+        success: (message: string) => toast.success(message),
+        error: (message: string) => toast.error(message),
+        info: (message: string) => toast.info(message),
+      }
+
+      try {
+        const response = await mercoaSession.client?.entity.invoice.download(mercoaSession.entityId, {
+          format,
+          startDate,
+          endDate,
+          dateType,
+          orderBy,
+          orderDirection,
+          search,
+          status,
+          excludeReceivables: true,
+        })
+
+        if (!response) {
+          throw new Error('No response from bulk download API')
+        }
+
+        // Handle the download URL
+        if (response.url.startsWith('file://')) {
+          // Local file in non-production environment
+          const filePath = response.url.replace('file://', '')
+          toastClient.success(`File saved locally: ${filePath}`)
+        } else {
+          // Production environment - trigger download
+          const a = document.createElement('a')
+          a.setAttribute('mercoa-hidden', '')
+          a.setAttribute('href', response.url)
+          a.setAttribute('download', `payables-export-${dayjs().format('YYYY-MM-DD-HH-mm-ss')}.${format.toLowerCase()}`)
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          toastClient.success('Download started')
+        }
+
+        return response
+      } catch (error: any) {
+        console.error('Bulk download failed:', error)
+        toastClient.error(`Download failed: ${error.message}`)
+        throw error
+      }
+    },
+    options: {
+      onError: (error) => {
+        console.error('Bulk download payables failed:', error)
       },
     },
   })

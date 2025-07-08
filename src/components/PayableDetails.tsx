@@ -83,7 +83,6 @@ import {
   useDebounce,
   useMercoaSession,
 } from './index'
-import { FinanceWithOatfi } from './Oatfi'
 import { RecurringSchedule } from './RecurringSchedule'
 dayjs.extend(utc)
 dayjs.extend(minMax)
@@ -1349,12 +1348,12 @@ export function PayableFormV1({
         return
       }
 
-      // check that amount is at least 0.01
-      if (Number(data.amount) < 0.01) {
+      // check that amount is at least 0.00
+      if (Number(data.amount) < 0.0) {
         renderCustom?.toast
-          ? renderCustom?.toast.error(`'Amount must be at least 0.01'`)
-          : toast.error('Amount must be at least 0.01')
-        setError('amount', { type: 'manual', message: 'Amount must be at least 0.01' })
+          ? renderCustom?.toast.error(`'Amount must be at least 0.00'`)
+          : toast.error('Amount must be at least 0.00')
+        setError('amount', { type: 'manual', message: 'Amount must be at least 0.00' })
 
         return
       }
@@ -3614,7 +3613,7 @@ export function PayableSelectPaymentMethodV1({
           {isSource && enableBNPL && (
             <>
               {showBNPL ? (
-                <FinanceWithOatfi paymentMethods={paymentMethods} setShowBNPL={setShowBNPL} />
+                <></>
               ) : (
                 <div className="mercoa-flex mercoa-items-center mercoa-justify-end mercoa-mt-1">
                   <MercoaButton isEmphasized={false} onClick={() => setShowBNPL(true)} size="sm">
@@ -3807,6 +3806,7 @@ mercoa-bg-white mercoa-px-6 mercoa-py-5 mercoa-shadow-sm focus-within:mercoa-rin
                 <div key={paymentMethod.id} className="mercoa-mt-1">
                   <CustomPaymentMethod
                     account={paymentMethod as Mercoa.PaymentMethodResponse.Custom}
+                    paymentDestinationOptions={readOnly ? destinationOptions : undefined}
                     selected={paymentId === paymentMethod.id}
                     onSelect={() => {
                       if (readOnly) return
@@ -4085,7 +4085,11 @@ export function PayableApproversV1({
             {title || 'Approvals'}
           </h2>
           {status === Mercoa.InvoiceStatus.Draft && !readOnly ? (
-            <ApproversSelectionV1 allowAnyApprover={allowAnyApprover} label={selectorLabel} renderCustom={renderCustom} />
+            <ApproversSelectionV1
+              allowAnyApprover={allowAnyApprover}
+              label={selectorLabel}
+              renderCustom={renderCustom}
+            />
           ) : (
             <ApproverWellsV1 />
           )}

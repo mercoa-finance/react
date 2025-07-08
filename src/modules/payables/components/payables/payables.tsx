@@ -1,8 +1,8 @@
 import { FC, memo, PropsWithChildren } from 'react'
 import { PayablesProvider } from '../../providers/payables-provider'
+import { PayablesProps } from '../../types'
 import { PayablesDashboard } from '../payables-dashboard/payables-dashboard'
 import { PayablesTable } from '../payables-table/payables-table'
-import { PayablesProps } from '../../types'
 
 export const Payables: FC<PropsWithChildren<PayablesProps>> = memo(
   ({ queryOptions, renderCustom, displayOptions, handlers, config, children }) => {

@@ -1,16 +1,14 @@
-import dayjs from 'dayjs'
-import Papa from 'papaparse'
 import { useEffect, useMemo, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { useMercoaSession } from '../../../components'
 import { queryClient } from '../../../lib/react-query/query-client-provider'
-import { invoicePaymentTypeMapper } from '../../common/invoice-payment-type'
 import { InvoiceTableColumn } from '../../payables/types'
 import {
   useArchiveReceivable,
   useBulkArchiveReceivables,
   useBulkCancelReceivables,
   useBulkDeleteReceivables,
+  useBulkDownloadReceivables,
   useBulkRestoreAsDraftReceivable,
   useCancelReceivable,
   useDeleteReceivable,
@@ -122,6 +120,7 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   const { mutate: bulkArchiveReceivables, isPending: isBulkArchiveReceivablesLoading } = useBulkArchiveReceivables()
   const { mutate: cancelReceivable, isPending: isCancelReceivableLoading } = useCancelReceivable()
   const { mutate: bulkCancelReceivables, isPending: isBulkCancelReceivablesLoading } = useBulkCancelReceivables()
+  const { mutate: bulkDownloadReceivables, isPending: isBulkDownloadReceivablesLoading } = useBulkDownloadReceivables()
 
   const currentPageData = useMemo(() => {
     return data?.pages[page]?.invoices || []
@@ -277,53 +276,17 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
   }
 
   const downloadInvoicesAsCSV = async () => {
-    let allInvoicePages = data?.pages ?? []
-    while (allInvoicePages[allInvoicePages.length - 1].nextCursor) {
-      const resp = await fetchNextPage()
-      allInvoicePages = resp.data?.pages ?? []
-    }
-    const allInvoices = allInvoicePages.flatMap((page) => page.invoices)
-    const csv = Papa.unparse(
-      allInvoices.map((invoice) => {
-        return {
-          'Invoice ID': invoice.id,
-          'Invoice Number': invoice.invoiceNumber,
-          Status: invoice.status,
-          Amount: invoice.amount,
-          Currency: invoice.currency,
-          Note: invoice.noteToSelf,
-          'Payer ID': invoice.payer?.id,
-          'Payer Foreign ID': invoice.payer?.foreignId,
-          'Payer Email': invoice.payer?.email,
-          'Payer Name': invoice.payer?.name,
-          'Vendor ID': invoice.vendor?.id,
-          'Vendor Foreign ID': invoice.vendor?.foreignId,
-          'Vendor Email': invoice.vendor?.email,
-          'Vendor Name': invoice.vendor?.name,
-          'Payment Type': invoicePaymentTypeMapper(invoice),
-          Metadata: JSON.stringify(invoice.metadata),
-          'Due Date': invoice.dueDate ? dayjs(invoice.dueDate).format('YYYY-MM-DD') : undefined,
-          'Deduction Date': invoice.deductionDate ? dayjs(invoice.deductionDate).format('YYYY-MM-DD') : undefined,
-          'Processed At': invoice.processedAt ? dayjs(invoice.processedAt).format('YYYY-MM-DD') : undefined,
-          'Created At': invoice.createdAt ? dayjs(invoice.createdAt).format('YYYY-MM-DD') : undefined,
-          'Updated At': invoice.updatedAt ? dayjs(invoice.updatedAt).format('YYYY-MM-DD') : undefined,
-        }
-      }),
-    )
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.setAttribute('mercoa-hidden', '')
-    a.setAttribute('href', url)
-    a.setAttribute(
-      'download',
-      `receivable-invoice-export-${dayjs(startDate).format('YYYY-MM-DD')}-to-${dayjs(endDate).format(
-        'YYYY-MM-DD',
-      )}.csv`,
-    )
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
+    bulkDownloadReceivables({
+      format: 'CSV',
+      startDate: dateRange.startDate ?? undefined,
+      endDate: dateRange.endDate ?? undefined,
+      dateType,
+      orderBy,
+      orderDirection,
+      search: debouncedSearch,
+      status: memoizedStatusFilters,
+      toast: receivableProps.renderCustom?.toast,
+    })
   }
 
   useEffect(() => {
@@ -424,6 +387,8 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
       isCancelReceivableLoading,
       bulkCancelReceivables,
       isBulkCancelReceivablesLoading,
+      bulkDownloadReceivables,
+      isBulkDownloadReceivablesLoading,
     },
   }
 

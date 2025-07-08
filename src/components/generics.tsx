@@ -798,6 +798,7 @@ export function PaymentMethodList({
 
   return (
     <>
+      <h3>Payment Methods</h3>
       {/* List of payment methods if provided */}
       {hasAccounts &&
         accounts.map((account) => (

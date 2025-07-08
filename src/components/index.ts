@@ -26,6 +26,7 @@ export * from './ReceivablePaymentPdf'
 export * from './ReceivablePaymentPortal'
 export * from './Receivables'
 export * from './Wallet'
+export * from './Oatfi'
 
 export type onCloseFunction = (value: boolean) => void
 
