@@ -4046,11 +4046,15 @@ export function PayableApproversV1({
   allowAnyApprover,
   title,
   selectorLabel,
+  renderCustom,
 }: {
   readOnly?: boolean
   allowAnyApprover?: boolean
   title?: string
   selectorLabel?: string
+  renderCustom?: {
+    resetSelection?: (resetSelection: () => void) => ReactNode
+  }
 }) {
   const mercoaSession = useMercoaSession()
   const {
@@ -4081,7 +4085,7 @@ export function PayableApproversV1({
             {title || 'Approvals'}
           </h2>
           {status === Mercoa.InvoiceStatus.Draft && !readOnly ? (
-            <ApproversSelectionV1 allowAnyApprover={allowAnyApprover} label={selectorLabel} />
+            <ApproversSelectionV1 allowAnyApprover={allowAnyApprover} label={selectorLabel} renderCustom={renderCustom} />
           ) : (
             <ApproverWellsV1 />
           )}
