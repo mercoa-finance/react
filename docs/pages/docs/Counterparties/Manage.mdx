@@ -1,87 +1,238 @@
 import { Mercoa } from '@mercoa/javascript'
-import { Counterparties, MercoaSession } from '@mercoa/react'
+import { Counterparties, CounterpartiesSearch, useCounterpartySearch } from '@mercoa/react'
 import { ComponentContainer } from '../../../components/helpers'
 import { payerEntity, vendorEntities } from '../../../mockData'
 
 # Manage Counterparties
 
-The `<Counterparties>` renders a list of counterparties that can be selected, as well as allowing your user to add a new counterparty
+The `<Counterparties>` part renders a list of counterparties that users can select and allows them to add a new counterparty.
 
-## Customization Options
+---
 
-| Themeable | Variations | Custom Component |
-| :-------: | :--------: | :--------------: |
-|    ✅     |     ❌     |        ✅        |
+## CounterpartiesSearch Part (New)
 
-## Props
+> **Note:** The new `<CounterpartiesSearch />` part is the preferred solution for searching and selecting counterparties. The legacy `<CounterpartySearchV1 />` (before `<CounterpartySearch />`) is deprecated and will be removed in a later release.
 
-| Name                           | Type                                                                                                                                                                                   | Required | Description                                                                                                                      |
-| :----------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :------------------------------------------------------------------------------------------------------------------------------- |
-| type                           | `"payee"` \| `"payor"`                                                                                                                                                                 | ✅       | Use `Payee` to view as a payee (AP), and `Payor` to view as a payor (AR)                                                         |
-| disableCreation                | `boolean`                                                                                                                                                                              |          | Disable the ability to create a counterparty from the search                                                                     |
-| hideCounterpartyDetails        | `boolean`                                                                                                                                                                              |          | Hide the counterparty details section                                                                                            |
-| hideCounterpartyPaymentMethods | `boolean`                                                                                                                                                                              |          | Hide the counterparty payment methods section                                                                                    |
-| hideCounterpartyInvoices       | `boolean`                                                                                                                                                                              |          | Hide the counterparty invoices section                                                                                           |
-| hideCounterpartyVendorCredits  | `boolean`                                                                                                                                                                              |          | Hide the counterparty vendor credits section                                                                                     |
-| hideOnboardingLink             | `boolean`                                                                                                                                                                              |          | Hide the onboarding link generation option                                                                                       |
-| hideSendOnboardingEmail        | `boolean`                                                                                                                                                                              |          | Hide the send onboarding email option                                                                                            |
-| onboardingLinkOptions          | `Mercoa.entity.GenerateOnboardingLink`                                                                                                                                                 |          | Options for generating the onboarding link                                                                                       |
-| onboardingEmailOptions         | `Mercoa.entity.SendOnboardingLink`                                                                                                                                                     |          | Options for sending the onboarding email                                                                                         |
-| counterpartyPreSubmit          | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined, counterPartyId?: string) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Function to call before an entity is submitted to Mercoa. Useful for adding custom fields to the entity or preventing submission |
-| counterpartyDetailsButtons     | `CounterpartyDetailsButtons`                                                                                                                                                           |          | Custom buttons for counterparty details section                                                                                  |
-| children                       | `(props: CounterpartiesChildrenProps) => JSX.Element`                                                                                                                                  |          | Fully customize the UI with the help of these hooks and helper functions. See [example](#custom-design)                          |
+### Overview
 
-### CounterpartyDetailsButtons Type
+`<CounterpartiesSearch />` provides a modern, context-driven UI for searching, selecting, and onboarding counterparties—either payees (vendors) or payers (customers). It supports advanced customization, extensibility, and integration into forms or onboarding flows.
 
-The `CounterpartyDetailsButtons` type allows customization of buttons in the counterparty details section:
+Typical use cases:
+- Selecting a payee (vendor) when creating a bill
+- Selecting a payor (customer) when issuing an invoice
+- Onboarding new counterparties from the search UI
 
-```typescript
-type CounterpartyDetailsButtons = {
-  onboardingLink?: ({
-    onClick,
-    counterparty,
-  }: {
-    onClick: () => void
-    counterparty: Mercoa.CounterpartyResponse
-  }) => JSX.Element
-  onboardingEmail?: ({
-    onClick,
-    counterparty,
-  }: {
-    onClick: () => void
-    counterparty: Mercoa.CounterpartyResponse
-  }) => JSX.Element
-  editButton?: ({
-    onClick,
-    counterparty,
-  }: {
-    onClick: () => void
-    counterparty: Mercoa.CounterpartyResponse
-  }) => JSX.Element
+---
+
+### Props
+
+| Name                | Type                                                                                                      | Required | Description                                                                                                                                           |
+|---------------------|----------------------------------------------------------------------------------------------------------|:--------:|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`              | `"payee"` \| `"payor"`                                                                                   |   ✅     | Whether to search for payees (accounts payable, vendors) or payers (accounts receivable, customers).                                                 |
+| `search`            | `string`                                                                                                 |          | Initial search filter value (controlled search, optional).                                                                                            |
+| `onSelect`          | `(counterparty: Mercoa.CounterpartyResponse) => void`                                                    |   ✅     | Handler calls when a counterparty selects from the search results.                                                                                   |
+| `disableCreation`   | `boolean`                                                                                                |          | If true, disables the option to create a new counterparty from the search UI.                                                                        |
+| `readOnly`          | `boolean`                                                                                                |          | If true, disables all user interactions (searching/selecting/creating).                                                                              |
+| `networkType`       | `"ENTITY"` \| `"NETWORK"`                                                                                |          | Filter which network(s) to search: your entity's counterparties or the global network. Defaults to `"ENTITY"`.                                       |
+| `paymentMethods`    | `boolean`                                                                                                |          | If true, includes counterparty payment method details in results.                                                                                    |
+| `invoiceMetrics`    | `boolean`                                                                                                |          | If true, includes counterparty invoice metrics in results.                                                                                           |
+| `limit`             | `number`                                                                                                 |          | Maximum number of results per page (1—100, default: 10).                                                                                             |
+| `onCreate`          | `(draftCounterparty: Partial<Mercoa.EntityRequest>) => Promise<Mercoa.EntityResponse>`                   |          | Custom handler for creating a new counterparty. If omitted, uses Mercoa's default onboarding flow.                                                   |
+| `customRender`      | `{ base?: React.FC, dropdown?: React.FC, selected?: React.FC }`                                          |          | Optional custom renderers for the base input, dropdown list, or selected state.                                                                      |
+| `onboardingLinkOptions` | `Mercoa.entity.GenerateOnboardingLink`                                                               |          | Options for onboarding link generation when onboarding a new counterparty.                                                                            |
+| `onboardingEmailOptions`| `Mercoa.entity.SendOnboardingLink`                                                                   |          | Options for sending onboarding email to a new counterparty.                                                                                          |
+| `metadata`          | `{ [key: string]: string }`                                                                              |          | Filter counterparties by metadata key/value pairs (AND condition, meaning all conditions must be satisfied).                                                                                   |
+| `returnMetadata`    | `boolean`                                                                                                |          | If true, returns simple key/value metadata with counterparty results.                                                                                |
+| `counterpartyId`    | `string`                                                                                                 |          | Filter by specific counterparty ID (supports Foreign ID).                                                                                            |
+| `startingAfter`     | `string`                                                                                                 |          | ID for paginating results (start after this counterparty).                                                                                           |
+| `children`          | `React.ReactNode`                                                                                        |          | Custom children (advanced usage; can access search context via `useCounterpartySearch`).                                                             |
+
+> **Note:** For advanced integration or custom UI, you can access all state and handlers via the [`useCounterpartySearch`](#usecounterpartysearch-hook) hook.
+
+---
+
+### Example Usage
+
+#### Basic Usage (Payee)
+
+```jsx
+import { CounterpartiesSearch } from '@mercoa/react';
+
+<CounterpartiesSearch
+  type="payee"
+  onSelect={(counterparty) => {
+    // Handle selection
+    console.log('Selected payee:', counterparty);
+  }}
+/>
+```
+
+#### Basic Usage (Payor)
+
+```jsx
+<CounterpartiesSearch
+  type="payor"
+  onSelect={(counterparty) => {
+    // Handle selection
+    console.log('Selected payor:', counterparty);
+  }}
+/>
+```
+
+#### Advanced Usage: Custom Render and Onboarding
+
+```jsx
+<CounterpartiesSearch
+  type="payee"
+  onSelect={handleCounterpartySelect}
+  disableCreation={false}
+  onboardingLinkOptions={{
+    // ...Mercoa.entity.GenerateOnboardingLink options
+  }}
+  customRender={{
+    base: CustomInputComponent,
+    dropdown: CustomDropdownComponent,
+    selected: CustomSelectedComponent,
+  }}
+/>
+```
+
+---
+
+### useCounterpartySearch Hook
+
+The `useCounterpartySearch` hook lets you access all the state and handler functions related to the counterparty search context. This enables advanced custom user interfaces or form integrations.
+
+#### Exposed State and Handlers
+
+| Name                    | Type                                                         | Description                                                                     |
+|-------------------------|--------------------------------------------------------------|---------------------------------------------------------------------------------|
+| `selectedCounterparty`  | `Mercoa.CounterpartyResponse \| null`                        | The now selected counterparty (if any).                                    |
+| `setSelectedCounterparty`| `(cp: Mercoa.CounterpartyResponse \| null) => void`         | Sets the selected counterparty.                                                  |
+| `search`                | `string`                                                     | Current search filter value.                                                     |
+| `setSearch`             | `(value: string) => void`                                    | Change the search string.                                                        |
+| `results`               | `Mercoa.CounterpartyResponse[]`                              | Array of search results (counterparties).                                        |
+| `isLoading`             | `boolean`                                                    | True if the search is loading.                                                   |
+| `error`                 | `Error \| null`                                              | Error from the search, if any.                                                   |
+| `selectCounterparty`    | `(cp: Mercoa.CounterpartyResponse) => void`                  | Select a counterparty from results.                                              |
+| `createCounterparty`    | `(draft: Partial<Mercoa.EntityRequest>) => Promise<...>`     | Create a new counterparty (returns a promise).                                   |
+| `canCreate`             | `boolean`                                                    | Allows the creation of new counterparties.                                       |
+| `pagination`            | `{ hasNext: boolean, getNext: () => void, hasPrevious: boolean, getPrevious: () => void }` | Controls pagination of results.      |
+| `limit`                 | `number`                                                     | Number of results per page.                                                      |
+| `setLimit`              | `(value: number) => void`                                    | Set number of results per page.                                                  |
+| `context`               | `...`                                                        | Other context values for advanced use.                                           |
+
+#### Usage Example
+
+```jsx
+import { useCounterpartySearch } from '@mercoa/react';
+
+function MyCustomCounterpartySelector() {
+  const {
+    search, setSearch, results, isLoading, error,
+    selectedCounterparty, selectCounterparty,
+    createCounterparty, canCreate,
+    pagination: { hasNext, getNext, hasPrevious, getPrevious }
+  } = useCounterpartySearch();
+
+  // Custom UI here...
 }
 ```
 
-### CounterpartiesChildrenProps Type
+---
 
-The `CounterpartiesChildrenProps` type allows customization of the counterparty list:
+## Migration Guide: CounterpartySearchV1 → CounterpartiesSearch
 
-```typescript
-type CounterpartiesChildrenProps = {
-  dataLoaded: boolean // If data is loaded, this is true. Otherwise this is false.
-  counterparties: Mercoa.CounterpartyResponse[] // List of counterparties. Will be an empty list if dataLoaded is false.
+> **Legacy Notice:**  
+> `<CounterpartySearchV1 />` (before `<CounterpartySearch />`) is **deprecated**.  
+> Please migrate to `<CounterpartiesSearch />` for all new and existing integrations.
 
-  setSearch: (search: string) => void // Update the search filter
+### Key Differences
 
-  hasNext: boolean // Has next page of counterparties
-  getNext: () => void // Get next page of counterparties
-  hasPrevious: boolean // Has previous page of counterparties
-  getPrevious: () => void // Get previous page of counterparties
-  count: number // Total number of counterparties
+- **Props:**  
+  - Legacy: Prop-driven and less extensible.  
+  - New: More granular configuration, supports custom renderers, onboarding, and advanced filtering.
 
-  resultsPerPage: number // Max number of results shown per page
-  setResultsPerPage: (value: number) => void // Set max number of results shown per page (1-100)
+- **State Management:**  
+  - Legacy: All state managed internally or via parent props.  
+  - New: Uses React context for state; access with `useCounterpartySearch` for advanced integration.
+
+- **Extensibility:**  
+  - New part supports custom UI through `customRender` and children/context.
+
+### Migration Steps
+
+1. **Replace** `<CounterpartySearchV1 ... />` with `<CounterpartiesSearch ... />`.
+2. **Update Props:**  
+   - Use `type="payee"` or `type="payor"`.
+   - Replace old handler props with `onSelect`, `onCreate`, etc.
+   - Move any custom search logic to the new `useCounterpartySearch` hook as needed.
+3. **Custom UI:**  
+   - Use the `customRender` prop or children/context for advanced UI requirements.
+
+#### Migration Example
+
+**Before (Legacy):**
+```jsx
+<CounterpartySearchV1
+  type="payee"
+  onSelect={onSelect}
+  // ...other legacy props
+/>
+```
+**After (New):**
+```jsx
+<CounterpartiesSearch
+  type="payee"
+  onSelect={onSelect}
+/>
+```
+
+---
+
+## Existing Counterparties List
+
+The `<Counterparties>` part remains available for displaying a list of counterparties, with customization options as documented earlier.
+
+---
+
+## ApprovalPolicy: Comparison Operators for Amount Triggers
+
+> **New:** Approval policy triggers now support comparison operators for invoice amount conditions.
+
+When defining approval policy triggers, you can specify:
+- `comparison`: One of `"gte"` (greater than or equal), `"gt"` (greater than), `"lte"` (less than or equal), or `"lt"` (less than).
+- `amount`, `currency`: Amount and currency to compare against.
+
+**Default:** `"gte"` (greater than or equal).
+
+#### Example (API/JavaScript):
+```json
+{
+  "type": "amount",
+  "amount": 1000,
+  "currency": "USD",
+  "comparison": "gt" // or "gte", "lt", "lte"
 }
 ```
+Set these via props or UI in the `<ApprovalPolicy />` part as appropriate.
+
+---
+
+## Advanced Types for Integrators
+
+New types and interfaces for advanced counterparty search and selection are available in  
+`src/modules/counterparties/types.ts`.  
+Refer to the library source or API docs for the latest type definitions.
+
+---
+
+## Legacy Components
+
+- Migrate from `<CounterpartySearchV1 />` to `<CounterpartiesSearch />` for all new development.
+- Legacy references in examples support backward compatibility only and will be removed in a future release.
+
+---
 
 ## Examples
 
@@ -105,14 +256,14 @@ children={({
       hasNext,
       getNext,
       hasPrevious,
-      getPrevious,
+      getPrevious
       resultsPerPage,
       setResultsPerPage,
       counterparties,
     }) => {
       return (
         <table className="mercoa-min-w-full mercoa-leading-normal">
-          {/* We are using Tailwind CSS in this example */}
+          {/* We're using Tailwind CSS in this example */}
           <thead>
             <tr>
               {['Vendor', 'Total bills', 'Total Payments'].map((text, index) => (
@@ -155,7 +306,7 @@ children={({
 ({setSearch, dataLoaded, hasNext, getNext, hasPrevious, getPrevious, resultsPerPage, setResultsPerPage, counterparties }) => {
   return (
     <table className="min-w-full leading-normal">
-      {/* We are using tailwind CSS in this example */}
+      {/* We're using tailwind CSS in this example */}
       <thead>
         <tr>
           {['Vendor', 'Total bills', 'Total Payments'].map((text, index) => (
