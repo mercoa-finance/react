@@ -1,3 +1,4 @@
+````mdx
 import {
   InvoiceComments,
   MercoaSession,
@@ -13,7 +14,8 @@ import {
   PayableOverview,
   PayablePaymentDestination,
   PayablePaymentSource,
-  PaymentDestinationProcessingTime
+  PaymentDestinationProcessingTime,
+  PayableApproversV1,
 } from '@mercoa/react'
 import { Callout } from 'nextra/components'
 import { useEffect } from 'react'
@@ -56,6 +58,49 @@ type PayableDetailsV1ChildrenProps = {
 };
 ```
 
+---
+
+## Payable Approvers
+
+The `<PayableApproversV1>` part assigns approvers to an invoice as part of approval policies within invoice flows.
+
+### Props
+
+| Name         | Type                                                                                                              | Required | Description                                                                                                        |
+| :----------- | :--------------------------------------------------------------------------------------------------------------- | :--------| :------------------------------------------------------------------------------------------------------------------|
+| renderCustom | `{ resetSelection?: (resetSelection: () => void) => React.ReactNode }`                                           |          | Optional. Allows injection of custom UI into the approver selection interface. Use `resetSelection` to give a custom reset button or logic. |
+
+**Type signature:**
+
+```typescript
+renderCustom?: {
+  resetSelection?: (resetSelection: () => void) => React.ReactNode
+}
+```
+
+#### Example Usage
+
+```jsx
+<PayableApproversV1
+  /* ...other props */
+  renderCustom={{
+    resetSelection: (resetSelection) => (
+      <button
+        type="button"
+        style={{ marginLeft: 8, color: 'red', background: 'none', border: 'none', cursor: 'pointer' }}
+        onClick={resetSelection}
+      >
+        Clear All Approvers
+      </button>
+    ),
+  }}
+/>
+```
+
+In this example, a custom "Clear All Approvers" button renders in the approver selection interface. Clicking it calls the internal `resetSelection` method to clear all selected approvers.
+
+---
+
 ## Examples
 
 ### Edit Existing Invoice
@@ -93,7 +138,7 @@ type PayableDetailsV1ChildrenProps = {
   ```
 </ComponentContainer>
 
-### Document on right
+### Document Position
 
 <ComponentContainer>
   <PayableDetailsV1 invoiceId={'inv_new_ready'} documentPosition="right" />
@@ -112,6 +157,7 @@ type PayableDetailsV1ChildrenProps = {
   ```
 </ComponentContainer>
 
+---
 
 ## Customization
 
@@ -127,3 +173,4 @@ The default children is the following:
   ]}
 </PayableDetailsV1>
 ```
+````
