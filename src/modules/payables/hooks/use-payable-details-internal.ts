@@ -1484,19 +1484,20 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       if (!invoiceData?.id) return
       if (invoiceData.status !== 'PAID' && invoiceData.status !== 'ARCHIVED') {
         if (confirm('Do you want to create a printable check? This will mark the invoice as paid cannot be undone.')) {
-          let requestPayload: Mercoa.InvoiceCreationRequest | false = await payableFormUtils.validateAndConstructPayload({
-            formData: data,
-            setError,
-            invoice: invoiceData,
-            mercoaSession,
-            uploadedDocument,
-            toast: toast,
-            saveAsStatus: action
-              ? payableFormUtils.getNextInvoiceStatus(action, mercoaSession)
-              : Mercoa.InvoiceStatus.Draft,
-            selectedVendor,
-            action,
-          })
+          let requestPayload: Mercoa.InvoiceCreationRequest | false =
+            await payableFormUtils.validateAndConstructPayload({
+              formData: data,
+              setError,
+              invoice: invoiceData,
+              mercoaSession,
+              uploadedDocument,
+              toast: toast,
+              saveAsStatus: action
+                ? payableFormUtils.getNextInvoiceStatus(action, mercoaSession)
+                : Mercoa.InvoiceStatus.Draft,
+              selectedVendor,
+              action,
+            })
 
           if (!requestPayload) {
             setIsLoading(false)
@@ -1721,7 +1722,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
           })
         }
         const bnpl = mercoaSession.organization?.paymentMethods?.payerPayments.find((e) => e.type === 'bnpl')
-        console.log('mercoaSession.entity?.oatfiStatus', mercoaSession.entity?.oatfiStatus)
         if (
           bnpl &&
           bnpl.active &&

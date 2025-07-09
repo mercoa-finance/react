@@ -1,7 +1,3 @@
-import { Mercoa } from '@mercoa/javascript'
-import { Counterparties, MercoaSession } from '@mercoa/react'
-import { ComponentContainer } from '../../../components/helpers'
-import { payerEntity, vendorEntities } from '../../../mockData'
 
 # Manage Counterparties
 
@@ -30,6 +26,11 @@ The `<Counterparties>` renders a list of counterparties that can be selected, as
 | counterpartyPreSubmit          | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined, counterPartyId?: string) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Function to call before an entity is submitted to Mercoa. Useful for adding custom fields to the entity or preventing submission |
 | counterpartyDetailsButtons     | `CounterpartyDetailsButtons`                                                                                                                                                           |          | Custom buttons for counterparty details section                                                                                  |
 | children                       | `(props: CounterpartiesChildrenProps) => JSX.Element`                                                                                                                                  |          | Fully customize the UI with the help of these hooks and helper functions. See [example](#custom-design)                          |
+| network                        | `Mercoa.CounterpartyNetworkType[]`                                                                                                                                                     |          | Filter counterparties by network type                                                                                              |
+| admin                          | `boolean`                                                                                                                                                                              |          | Enable admin features for counterparty management                                                                                  |
+| showEntityConfirmation         | `boolean`                                                                                                                                                                              |          | Show entity confirmation dialog (default: true)                                                                                   |
+| defaultCurrency                | `string`                                                                                                                                                                               |          | Default currency for vendor credits (default: 'USD')                                                                              |
+| allowedCurrencies              | `string[]`                                                                                                                                                                             |          | Allowed currencies for vendor credits (default: ['USD'])                                                                           |
 
 ### CounterpartyDetailsButtons Type
 

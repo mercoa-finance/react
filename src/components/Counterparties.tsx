@@ -1187,6 +1187,8 @@ export function Counterparties({
   counterpartyDetailsButtons,
   showEntityConfirmation = true,
   children,
+  defaultCurrency = 'USD',
+  allowedCurrencies = ['USD'],
 }: {
   type: 'payor' | 'payee'
   disableCreation?: boolean
@@ -1218,6 +1220,8 @@ export function Counterparties({
     counterparties,
     count,
   }: CounterpartiesChildrenProps) => JSX.Element
+  defaultCurrency?: string
+  allowedCurrencies?: string[]
 }) {
   const mercoaSession = useMercoaSession()
   const [entities, setEntities] = useState<Mercoa.CounterpartyResponse[] | undefined>(undefined)
@@ -1498,6 +1502,8 @@ export function Counterparties({
                 type={type}
                 showEntityConfirmation={showEntityConfirmation}
                 refetch={() => setRefetch(refetch + 1)}
+                defaultCurrency={defaultCurrency}
+                allowedCurrencies={allowedCurrencies}
               />
             </div>
           </div>
@@ -1591,6 +1597,8 @@ export function CounterpartyDetails({
   showEntityConfirmation = true,
   children,
   refetch,
+  defaultCurrency = 'USD',
+  allowedCurrencies = ['USD'],
 }: {
   counterparty?: Mercoa.CounterpartyResponse
   counterpartyId?: Mercoa.EntityId
@@ -1614,6 +1622,8 @@ export function CounterpartyDetails({
     invoices?: Mercoa.InvoiceResponse[]
   }) => JSX.Element
   refetch?: () => void
+  defaultCurrency?: string
+  allowedCurrencies?: string[]
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -1776,7 +1786,14 @@ export function CounterpartyDetails({
       )}
 
       {!hideCounterpartyVendorCredits && type === 'payee' && (
-        <VendorCreditsCard vendorCredits={vendorCredits} counterparty={counterpartyLocal} type={type} admin={admin} />
+        <VendorCreditsCard
+          vendorCredits={vendorCredits}
+          counterparty={counterpartyLocal}
+          type={type}
+          admin={admin}
+          defaultCurrency={defaultCurrency}
+          allowedCurrencies={allowedCurrencies}
+        />
       )}
     </div>
   )
@@ -2461,11 +2478,15 @@ function VendorCreditsCard({
   counterparty,
   type,
   admin,
+  defaultCurrency = 'USD',
+  allowedCurrencies = ['USD'],
 }: {
   vendorCredits?: Mercoa.VendorCreditResponse[]
   counterparty: Mercoa.CounterpartyResponse
   type: 'payor' | 'payee'
   admin?: boolean
+  defaultCurrency?: string
+  allowedCurrencies?: string[]
 }) {
   const mercoaSession = useMercoaSession()
   const [createVendorCreditOpen, setCreateVendorCreditOpen] = useState(false)
@@ -2640,6 +2661,8 @@ function VendorCreditsCard({
                     type={type}
                     counterpartyId={counterparty.id}
                     setCreateVendorCreditOpen={setCreateVendorCreditOpen}
+                    defaultCurrency={defaultCurrency}
+                    allowedCurrencies={allowedCurrencies}
                   />
                 </Dialog.Panel>
               </Transition.Child>
@@ -2743,10 +2766,14 @@ function CreateVendorCredit({
   type,
   counterpartyId,
   setCreateVendorCreditOpen,
+  defaultCurrency = 'USD',
+  allowedCurrencies = ['USD'],
 }: {
   type: 'payor' | 'payee'
   counterpartyId: Mercoa.EntityId
   setCreateVendorCreditOpen: (open: boolean) => void
+  defaultCurrency?: string
+  allowedCurrencies?: string[]
 }) {
   const mercoaSession = useMercoaSession()
 
@@ -2769,7 +2796,7 @@ function CreateVendorCredit({
     resolver: yupResolver(schema),
     defaultValues: {
       totalAmount: 0,
-      currency: 'USD',
+      currency: defaultCurrency,
       memoNumber: '',
       note: '',
     },
@@ -2828,7 +2855,11 @@ function CreateVendorCredit({
               {...register('currency')}
               className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
             >
-              <option value="USD">USD</option>
+              {allowedCurrencies.map((curr) => (
+                <option key={curr} value={curr}>
+                  {curr}
+                </option>
+              ))}
             </select>
           </>
         }

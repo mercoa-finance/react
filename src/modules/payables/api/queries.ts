@@ -672,7 +672,6 @@ export function useBnplOfferQuery(
   })
 }
 
-
 export function useBnplLoanQuery(loanId: string) {
   const mercoaSession = useMercoaSession()
   return useQuery({

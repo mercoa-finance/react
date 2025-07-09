@@ -117,7 +117,7 @@ export const baseSubmitForApprovalSchema = baseSchema.shape({
   amount: yup
     .number()
     .typeError('Please enter an amount')
-    .positive('Amount must be positive')
+    .min(0, 'Amount must be at least 0.00')
     .required('Amount is required'),
   invoiceDate: yup.date().required('Please select an invoice date'),
   dueDate: yup.date().required('Please select a due date'),
