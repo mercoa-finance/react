@@ -22,11 +22,11 @@ import { inv_new_ready, inv_scheduled, payerEntity, vendorEntities } from '../..
 
 # Payable Details
 
-The `<PayableDetailsV1>` component is used to let users create and manage payable invoices.
+The `<PayableDetailsV1>` part lets users create and manage payable invoices.
 
 ## Customization Options
 
-| Themeable | Variations | Custom Component |
+| Themeable | Variations | Custom Part |
 | :-------: | :--------: | :--------------: |
 |    ✅     |     ✅     |        ✅        |
 
@@ -34,12 +34,12 @@ The `<PayableDetailsV1>` component is used to let users create and manage payabl
 
 | Name                  | Type                                                                                 | Required | Description                                                                                                                                           |
 | :---------------------| :------------------------------------------------------------------------------------| :--------| :-----------------------------------------------------------------------------------------------------------------------------------------------------|
-| invoiceId             | `string`                                                                             |          | The ID of the invoice to edit. Leave blank if creating a new invoice                                                                                  |
-| onUpdate              | `(invoice: InvoiceResponse \| undefined) => void`                                    |          | When the invoice is created, updated, or deleted, this callback is triggered                                                                          |
-| heightOffset          | `number`                                                                             |          | This component uses the screen size to set its height. If you have other elements on the screen, increase the height offset to reduce the size of this component. |
-| documentPosition      | `'right' \| 'left' \| 'none'`                                                        |          | Control where to place the invoice document (or hide it). Default is `left`                                                                           |
-| invoicePreSubmit      | `(invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>` |          | This function is called after frontend validations are complete, and before the API call to create/update the invoice is sent.                        |
-| counterpartyPreSubmit | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined, counterPartyId: string \| undefined) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Function to call before an entity is submitted to Mercoa. Useful for adding custom fields to the entity or preventing submission |
+| invoiceID             | `string`                                                                             |          | The ID of the invoice to edit. Leave blank if creating a new invoice                                                                                  |
+| onUpdate              | `(invoice: InvoiceResponse \| undefined) => void`                                    |          | This callback triggers when the invoice is created, updated, or deleted.                                                                          |
+| heightOffset          | `number`                                                                             |          | This part uses the screen size to set its height. If you have other elements on the screen, increase the height offset to reduce the size of this section. |
+| documentPosition      | `'right' \| 'left' \| 'none'`                                                        |          | Control where to place the invoice document (or hide it). Default is `left`.                                                                          |
+| invoicePreSubmit      | `(invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>` |          | This function runs after frontend validations are complete, and before the API calls to create/update the invoice.                        |
+| counterpartyPreSubmit | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined, counterPartyId: string \| undefined) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Call this function before submitting an entity to Mercoa. Useful for adding custom fields to the entity or preventing submission |
 | children              | `(methods: PayableDetailsChildrenProps) => JSX.Element[]`                            |          | See [customization](#customization) for details on how to use the children prop.                                                                      |
 
 ```typescript
@@ -93,7 +93,7 @@ type PayableDetailsV1ChildrenProps = {
   ```
 </ComponentContainer>
 
-### Document on right
+### Document Position
 
 <ComponentContainer>
   <PayableDetailsV1 invoiceId={'inv_new_ready'} documentPosition="right" />
@@ -127,3 +127,51 @@ The default children is the following:
   ]}
 </PayableDetailsV1>
 ```
+
+---
+
+## Approver Selection Customization
+
+The selection of invoice approvers within the Payable Details flow uses the `ApproversSelectionV1` part. As of **@mercoa/react v0.1.11-rc1**, you can customize the reset selection UI behavior.
+
+### `ApproversSelectionV1` Props
+
+| Name         | Type                                                                                     | Required | Description                                                                                                                                               |
+| ------------ | ----------------------------------------------------------------------------------------| :------: | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| allowAnyApprover | `boolean`                                                                           |    -     | Allow selecting any approver. Default: `true`                                                                                                             |
+| label        | `string`                                                                                |    -     | Label for the part.                                                                                                                                       |
+| renderCustom | `{ resetSelection?: (resetSelection: () => void) => React.ReactNode }`                   |    -     | Optional object for customizing internal UI. If `resetSelection` is available, it renders the reset UI instead of the default.                   |
+
+#### `renderCustom.resetSelection`
+
+- **Type:** `(resetSelection: () => void) => React.ReactNode`
+- **Purpose:** Renders a custom UI for resetting the selection of approvers.
+- **Behavior:**  
+  - If provided, the default "Reset Selection" option is *not* shown.
+  - Your function receives a `resetSelection` callback as an argument. Call this function to reset all selected approvers.
+
+**If you don't give `renderCustom.resetSelection`, the default "Reset Selection" UI appears.**
+
+### Example: Custom Reset Selection
+
+```jsx
+import { ApproversSelectionV1 } from '@mercoa/react'
+
+<ApproversSelectionV1
+  allowAnyApprover={true}
+  label="Select Approvers"
+  renderCustom={{
+    resetSelection: (resetSelection) => (
+      <button
+        type="button"
+        style={{ marginTop: 8, color: '#d32f2f', background: 'none', border: 'none', cursor: 'pointer' }}
+        onClick={resetSelection}
+      >
+        Clear All Approvers
+      </button>
+    ),
+  }}
+/>
+```
+
+In this example, the default "Reset Selection" link replaces a custom-styled button. Clicking the button resets all approvers using the provided `resetSelection` function.
