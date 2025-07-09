@@ -1,327 +1,66 @@
-import { Payables } from '@mercoa/react'
-import { ComponentContainer } from '../../../../components/helpers'
+# PayableApproversV1
 
-# Payables
-
-The `<Payables>` component displays all payables for an entity. It includes built-in filters, invoice metrics, and customizable table options. The entity is determined from the JWT token provided to `<MercoaSession>`.
-
-## Customization Options
-
-| Themeable | Variations | Custom Component |
-| :-------: | :--------: | :--------------: |
-|    ✅     |     ✅     |        ✅        |
+The `<PayableApproversV1>` part manages the selection of approvers for an invoice. It provides a flexible interface for assigning users or roles to approval slots, supporting both default UI and deep customization. This part is typically used within approval workflows in the Mercoa platform.
 
 ## Props
 
-### Main Props
-
-| Name             | Type                                         | Required | Description                                                                 |
-| ---------------- | -------------------------------------------- | -------- | --------------------------------------------------------------------------- |
-| `queryOptions`   | [`PayablesQueryOptions`](#query-options)     |          | Data-related options such as filtering invoices by status, date, or search. |
-| `renderCustom`   | [`PayablesRenderCustom`](#custom-rendering)  |          | Allows customization of table columns and formatting.                       |
-| `displayOptions` | [`PayablesDisplayOptions`](#display-options) |          | Options for displaying table, filters, and metrics.                         |
-| `handlers`       | [`PayablesHandlers`](#event-handlers)        |          | Callback functions for handling invoice interactions.                       |
-| `config`         | [`PayablesConfig`](#functional-options)      |          | Configuration settings such as `readOnly`.                                  |
+| Name         | Type                                                                                   | Required | Description                                                                                                 |
+| ------------ | -------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| `invoiceId`  | `string`                                                                              | ✅       | The ID of the invoice for which you assign approvers.                                               |
+| `onChange`   | `(approvers: ApproverSelection[]) => void`                                             | ✅       | Callback triggered when the list of assigned approvers changes.                                             |
+| `readOnly`   | `boolean`                                                                             |          | If true, disables editing; the part displays in read-only mode.                                             |
+| `renderCustom` | `{ resetSelection?: (resetSelection: () => void) => React.ReactNode }`               |          | Provides custom UI rendering hooks. See ["Custom Rendering (renderCustom)"](#custom-rendering-renderCustom) |
 
 ---
 
-<a id="event-handlers"></a>
-### Event Handlers (`handlers`)
-
-| Name                      | Type                                                        | Required | Description                                                    |
-| ------------------------- | ----------------------------------------------------------- | -------- | -------------------------------------------------------------- |
-| `onCreateInvoice`         | `() => void`                                                |          | Triggered when the user initiates invoice creation.            |
-| `onCreateInvoiceTemplate` | `() => void`                                                |          | Triggered when a recurring invoice is being created.           |
-| `onSelectInvoice`         | `(invoice: Mercoa.InvoiceResponse) => void`                 |          | Triggered when an invoice is selected from the table.          |
-| `onSelectInvoiceTemplate` | `(invoiceTemplate: Mercoa.InvoiceTemplateResponse) => void` |          | Triggered when an invoice template is selected from the table. |
-
----
-
-<a id="query-options"></a>
-### Query Options (`queryOptions`)
-
-| Name                 | Type                                               | Required | Description                          |
-| -------------------- | -------------------------------------------------- | -------- | ------------------------------------ |
-| `currentStatuses`    | `Mercoa.InvoiceStatus[]`                           |          | List of invoice statuses to filter.  |
-| `search`             | `string`                                           |          | Search query for filtering invoices. |
-| `startDate`          | `Date`                                             |          | Start date filter.                   |
-| `endDate`            | `Date`                                             |          | End date filter.                     |
-| `orderBy`            | `Mercoa.InvoiceOrderByField`                       |          | Field to order the invoices by.      |
-| `orderDirection`     | `Mercoa.OrderDirection`                            |          | Order direction (`asc` or `desc`).   |
-| `excludeReceivables` | `boolean`                                          |          | Whether to exclude receivables.      |
-| `resultsPerPage`     | `number`                                           | ✅       | Number of results per page.          |
-| `paymentType`        | `Mercoa.PaymentType[]`                             |          | Filter invoices by payment type.     |
-| `metadata`           | `Mercoa.MetadataFilter \| Mercoa.MetadataFilter[]` |          | Additional metadata filters.         |
-| `dateType`           | `Mercoa.InvoiceDateFilter`                         |          | The type of date filter to apply.    |
-| `approverId`         | `string`                                           |          | Filter invoices by approver ID.      |
-| `approverAction`     | `Mercoa.ApproverAction`                            |          | Filter invoices by approver action.  |
-| `isInitial`          | `boolean`                                          |          | Whether this is the initial load.    |
-
----
-
-<a id="display-options"></a>
-### Display Options (`displayOptions`)
-
-| Name                   | Type                                                       | Required | Description                                                |
-| ---------------------- | ---------------------------------------------------------- | -------- | ---------------------------------------------------------- |
-| `tableOnly`            | `boolean`                                                  |          | Show only the table, hiding filters and other UI elements. |
-| `showCumulativeFilter` | `boolean`                                                  |          | Whether to show a cumulative filter toggle.                |
-| `statusTabsOptions`    | `{ isVisible: boolean, statuses: Mercoa.InvoiceStatus[] }` |          | Configure visibility and statuses for the status tabs.     |
-| `showInvoiceMetrics`   | `boolean`                                                  |          | Whether to display invoice metrics.                        |
-| `classNames`           | `object`                                                   |          | Custom class names for table and UI elements.              |
-
----
-
-<a id="custom-rendering"></a>
+<a id="custom-rendering-rendercustom"></a>
 ### Custom Rendering (`renderCustom`)
 
-| Name      | Type                   | Required | Description                           |
-| --------- | ---------------------- | -------- | ------------------------------------- |
-| `columns` | `InvoiceTableColumn[]` |          | Custom columns for the invoice table. |
-| `toast`   | `ToastClient`          |          | Custom toast client.                  |
+The `renderCustom` prop enables you to override or extend portions of the UI within the approver selection interface. Now, the following customization point is available:
 
-```typescript
-type InvoiceTableColumn = {
-  // The field to display in the column
-  field: keyof Mercoa.InvoiceResponse | `${'metadata.'}${string}`
-  // The field to order the column by
-  orderBy?: Mercoa.InvoiceOrderByField
-  // The header text for the column. Will default to the field name or a Mercoa default if not provided.
-  header?: string | ReactElement | null
-  // The cell content for the column. Will default to the field value or a Mercoa default if not provided.
-  cell?: (value: string | number | Date | any, invoice: Mercoa.InvoiceResponse) => string | ReactElement | null
-}
+| Property          | Type                                        | Description                                                                                                                                |
+| ----------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `resetSelection`  | `(resetSelection: () => void) => ReactNode` | A function that receives the internal `resetSelection` callback. Use this to render a custom "Reset Selection" button or control.           |
 
-type ToastClient = {
-  success: (message: string) => void
-  error: (message: string) => void
-  info: (message: string) => void
-}
+#### How it works
+
+- The `resetSelection` property is a function you give. `PayableApproversV1` calls it with a callback as its argument.
+- Your function should return a React node (for example, a button). When your UI element calls the provided `resetSelection` function, the approver selection resets to its initial state.
+- This allows you to give a custom location, style, or logic for the reset action within the selection interface.
+
+**This prop is optional** and doesn't affect the default UI unless you give a custom implementation.
+
+---
+
+## Usage Example
+
+### Custom Reset Selection Button
+
+```jsx
+import { PayableApproversV1 } from '@mercoa/react';
+
+<PayableApproversV1
+  invoiceId="inv_123"
+  onChange={(approvers) => {
+    // handle updated approver selection
+  }}
+  renderCustom={{
+    resetSelection: (resetSelection) => (
+      <button
+        type="button"
+        onClick={resetSelection}
+        style={{
+          background: '#f5f5f5',
+          border: '1px solid #ccc',
+          padding: '6px 12px',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          marginBottom: '12px',
+        }}
+      >
+        Reset Approver Selection
+      </button>
+    ),
+  }}
+/>
 ```
-
----
-
-<a id="functional-options"></a>
-### Functional Options (`config`)
-
-| Name       | Type      | Required | Description                         |
-| ---------- | --------- | -------- | ----------------------------------- |
-| `readOnly` | `boolean` |          | Whether the component is read-only. |
-
----
-
-## Main Props Examples
-
-### Default Usage
-
-<ComponentContainer>
-  <Payables />
-  ```jsx
-  <Payables />
-  ```
-</ComponentContainer>
-
-### Event Handlers
-
-<ComponentContainer>
-  <Payables
-    handlers={{
-      onSelectInvoice: (invoice) => {
-        alert('Invoice selected')
-      },
-      onCreateInvoice: () => {
-        alert('Invoice created')
-      },
-      onCreateInvoiceTemplate: () => {
-        alert('Invoice template created')
-      },
-    }}
-  />
-  ```jsx
-  <Payables
-    handlers={{
-      onSelectInvoice: (invoice) => {
-        router.push(`/dashboard/payers/${entityId}/invoices/${invoice.id}`)
-      },
-      onCreateInvoice: () => {
-        router.push(`/dashboard/payers/${entityId}/invoices/create`)
-      },
-      onCreateInvoiceTemplate: () => {
-        router.push(`/dashboard/payers/${entityId}/invoice-templates/create`)
-      },
-    }}
-  />
-  ```
-</ComponentContainer>
-
-### Display Options
-
-<ComponentContainer>
-  <Payables
-    displayOptions={{
-      tableOnly: true,
-      showCumulativeFilter: false,
-      statusTabsOptions: {
-        isVisible: true,
-        statuses: ['DRAFT', 'PENDING', 'APPROVED'],
-      },
-      showInvoiceMetrics: true,
-    }}
-  />
-  ```jsx
-  <Payables
-    displayOptions={{
-      tableOnly: true,
-      showCumulativeFilter: false,
-      statusTabsOptions: {
-        isVisible: true,
-        statuses: ['DRAFT', 'PENDING', 'APPROVED'],
-      },
-      showInvoiceMetrics: true,
-    }}
-  />
-  ```
-</ComponentContainer>
-
-### Query Options
-
-<ComponentContainer>
-  <Payables
-    queryOptions={{
-      currentStatuses: ['PENDING', 'APPROVED'],
-      search: 'Invoice #123',
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-12-31'),
-      resultsPerPage: 10,
-      orderBy: 'dueDate',
-      orderDirection: 'desc',
-    }}
-  />
-  ```jsx
-  <Payables
-    queryOptions={{
-      currentStatuses: ['PENDING', 'APPROVED'],
-      search: 'Invoice #123',
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2024-12-31'),
-      resultsPerPage: 10,
-      orderBy: 'dueDate',
-      orderDirection: 'desc',
-    }}
-  />
-  ```
-</ComponentContainer>
-
-### Config Options
-
-<ComponentContainer>
-  <Payables
-    config={{
-      readOnly: true,
-    }}
-  />
-  ```jsx
-  <Payables
-    config={{
-      readOnly: true,
-    }}
-  />
-  ```
-</ComponentContainer>
-
-### Custom Rendering
-
-<ComponentContainer>
-  <Payables
-    renderCustom={{
-      columns: [
-        {
-          title: 'Invoice Number',
-          field: 'invoiceNumber',
-          render: (invoice) => invoice.invoiceNumber,
-        },
-      ],
-      toast: {
-        success: (msg) => alert(msg),
-        error: (msg) => alert(msg),
-        info: (msg) => alert(msg),
-      },
-    }}
-  />
-  ```jsx
-  <Payables
-    renderCustom={{
-      columns: [
-        {
-          title: 'Invoice Number',
-          field: 'invoiceNumber',
-          render: (invoice) => invoice.invoiceNumber,
-        },
-      ],
-      toast: {
-        success: (msg) => alert(msg),
-        error: (msg) => alert(msg),
-        info: (msg) => alert(msg),
-      },
-    }}
-  />
-  ```
-</ComponentContainer>
-
-## Common Use Cases Examples
-
-### Read-Only Mode
-
-<ComponentContainer>
-  <Payables
-    config={{
-      readOnly: true,
-    }}
-  />
-  ```jsx
-  <Payables
-    config={{
-      readOnly: true,
-    }}
-  />
-  ```
-</ComponentContainer>
-
-### Custom Columns
-
-<ComponentContainer>
-  <Payables
-    renderCustom={{
-      columns: [
-        {
-          title: 'Invoice Number',
-          field: 'invoiceNumber',
-          render: (invoice) => invoice.invoiceNumber,
-        },
-        {
-          title: 'Status',
-          field: 'status',
-          render: (invoice) => invoice.status,
-        },
-      ],
-    }}
-  />
-  ```jsx
-  <Payables
-    renderCustom={{
-      columns: [
-        {
-          title: 'Invoice Number',
-          field: 'invoiceNumber',
-          render: (invoice) => invoice.invoiceNumber,
-        },
-        {
-          title: 'Status',
-          field: 'status',
-          render: (invoice) => invoice.status,
-        },
-      ],
-    }}
-  />
-  ```
-</ComponentContainer>
