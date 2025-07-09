@@ -21,13 +21,16 @@ import { useEffect } from 'react'
 import { ComponentContainer } from '../../../../../components/helpers'
 import { inv_new_ready, inv_scheduled, payerEntity, vendorEntities } from '../../../../../mockData'
 
+> **Note:**  
+> Support for the `renderCustom` prop (including `resetSelection` capability) first appeared in **v0.1.11-rc2**.
+
 # Payable Form
 
-The `<PayableForm>` component should be used as a child of the [`<PayableDetails>`](./Details) component. Normally, all props should come from the parent `<PayableDetails>` component. It renders the form used to display and update the payable data.
+Use the `<PayableForm>` part as a child of the [`<PayableDetails>`](./Details) part. Normally, the parent `<PayableDetails>` part provides all props. It renders the form used to display and update the payable data.
 
 ## Customization Options
 
-| Themeable | Variations | Custom Component |
+| Themeable | Variations | Custom Part |
 | :-------: | :--------: | :--------------: |
 |    ✅     |     ✅     |        ✅        |
 
@@ -36,13 +39,13 @@ The `<PayableForm>` component should be used as a child of the [`<PayableDetails
 | Name                  | Type                                                                                                                                                          | Required | Description                                                                                                                      |
 | :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------- | :------------------------------------------------------------------------------------------------------------------------------- |
 | invoice               | `Mercoa.InvoiceResponse`                                                                                                                                      |          | The invoice object                                                                                                               |
-| ocrResponse           | `Mercoa.OcrResponse`                                                                                                                                          |          | Results of OCR                                                                                                                   |
-| onUpdate              | `(invoice: InvoiceResponse \| undefined) => void`                                                                                                             |          | When the invoice is created, updated, or deleted, this callback is triggered                                                     |
-| height                | `number`                                                                                                                                                      | ✅       | Height of the component in pixels                                                                                                |
+| ocrResponse           | `Mercoa.OCRResponse`                                                                                                                                          |          | Results of Optical Character Recognition (OCR)                                                                                   |
+| onUpdate              | `(invoice: InvoiceResponse \| undefined) => void`                                                                                                             |          | This callback triggers when the system creates, updates, or deletes the invoice.                                                         |
+| height                | `number`                                                                                                                                                      | ✅       | Height of the part in pixels                                                                                                    |
 | uploadedDocument      | `string`                                                                                                                                                      |          | Base64-encoded invoice document                                                                                                  |
 | setUploadedDocument   | `(e?: string) => void`                                                                                                                                        |          | Overrides for buttons                                                                                                            |
-| invoicePreSubmit      | `(invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>`                                                                          |          | This function is called after frontend validations are complete, and before the API call to create/update the invoice is sent.   |
-| counterpartyPreSubmit | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined, counterPartyId: string \| undefined) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Function to call before an entity is submitted to Mercoa. Useful for adding custom fields to the entity or preventing submission |
+| invoicePreSubmit      | `(invoice: Mercoa.InvoiceCreationRequest) => Promise<Mercoa.InvoiceCreationRequest>`                                                                          |          | This function runs after frontend validations are complete, and before the API call to create/update the invoice.   |
+| counterpartyPreSubmit | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined, counterPartyId: string \| undefined) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Function to call before submitting an entity to Mercoa. Useful for adding custom fields to the entity or preventing submission |
 | children              | `(methods: PayableFormChildrenProps) => JSX.Element`                                                                                                          |          | See [customization](#customization) for details on how to use the children prop.                                                 |
 
 ```typescript
@@ -70,9 +73,9 @@ type PayableFormChildrenProps = {
 
 ## Customization
 
-The `PayableFormV1` component consists of multiple subcomponents that can all be customized. Additionally, you can mix in your own custom components to further control the UX.
+The `PayableFormV1` part includes many subparts that you can customize. Additionally, you can mix in your own custom parts to further control the UX.
 
-<Callout>All of the subcomponents must be children of a `PayableFormV1` component</Callout>
+<Callout>All sub-components must be children of a `PayableFormV1` part</Callout>
 
 The default children is the following:
 
@@ -112,11 +115,86 @@ The default children is the following:
 </>
 ```
 
+---
+
+### PayableApprovers
+
+| Name        | Type                                                                                                                                                               | Required | Description                                                                                   |
+| :---------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------- | :-------------------------------------------------------------------------------------------- |
+| readOnly    | `boolean`                                                                                                                                                         |          | Make data read only                                                                           |
+| renderCustom | `{ resetSelection?: (resetSelection: () => void) => React.ReactNode }`                                                                                            |          | Optional. Allows injection of a custom UI (for example, a button) that, when triggered, calls the internal selection reset function. |
+
+#### About `renderCustom.resetSelection`
+
+The `renderCustom` prop lets you give a custom part (such as a button or link) to reset the selection of approvers in the selection interface. Pass an object with a `resetSelection` function, which receives an internal callback as its argument. Calling this callback resets the internal selection state.
+
+**Usage Example:**
+
+```jsx
+<PayableFormV1 invoice={inv_new_ready}>
+  {() => (
+    <PayableApproversV1
+      renderCustom={{
+        resetSelection: (resetSelection) => (
+          <button type="button" onClick={resetSelection} style={{ marginLeft: 8 }}>
+            Custom Reset Selection
+          </button>
+        ),
+      }}
+    />
+  )}
+</PayableFormV1>
+```
+
+- The `resetSelection` function provided by Mercoa clears the current selection when called.
+- Your implementation should return a ReactNode (for example, a button, link, or icon).
+
+<Callout>
+  Using <code>renderCustom</code> doesn't override other existing props or behaviors. It allows you to add more UI controls for actions like resetting the selection. The internal state and error handling remain managed by the part.
+</Callout>
+
+<ComponentContainer display="block">
+  <PayableFormV1 invoice={inv_new_ready}>
+    {() => (
+      <>
+        <PayableApproversV1
+          renderCustom={{
+            resetSelection: (resetSelection) => (
+              <button type="button" onClick={resetSelection} style={{ marginLeft: 8 }}>
+                Custom Reset Selection
+              </button>
+            ),
+          }}
+        />
+      </>
+    )}
+  </PayableFormV1>
+  ```jsx
+  <PayableFormV1 invoice={inv_new_ready}>
+    {() => (
+      <>
+        <PayableApproversV1
+          renderCustom={{
+            resetSelection: (resetSelection) => (
+              <button type="button" onClick={resetSelection} style={{ marginLeft: 8 }}>
+                Custom Reset Selection
+              </button>
+            ),
+          }}
+        />
+      </>
+    )}
+  </PayableFormV1>
+  ```
+</ComponentContainer>
+
+---
+
 ### PayableFormHeaderV1
 
 | Name   | Type      | Required | Description                  |
 | :----- | :-------- | :------- | :--------------------------- |
-| hideId | `boolean` |          | Hide the internal invoice id |
+| hideID | `boolean` |          | Hide the internal invoice ID |
 
 <ComponentContainer>
   <PayableFormV1>{() => <PayableFormHeaderV1 />}</PayableFormV1>
@@ -135,11 +213,11 @@ The default children is the following:
 
 | Name            | Type                                                    | Required | Description                                                |
 | :-------------- | :------------------------------------------------------ | :------- | :--------------------------------------------------------- |
-| onSelect        | `(counterparty?: Mercoa.CounterpartyResponse ) => any`  | ✅       | Callback when a vendor is selected or created.             |
+| onSelect        | `(counterparty?: Mercoa.CounterpartyResponse) => any`  | ✅       | Callback when you select or create a vendor.               |
 | counterparty    | `Mercoa.CounterpartyResponse`                           |          | Pre-selected vendor counterparty (C3)                      |
-| disableCreation | `boolean`                                               |          | Disable new vendor creation                                |
+| disableCreation | `boolean`                                               |          | Disable new vendor creation.                               |
 | network         | `Mercoa.CounterpartyNetworkType[]`                      |          | Mercoa counterparty network to search. Default is `ENTITY` |
-| saveButton      | `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for button.                                       |
+| saveButton      | `({ onClick }: { onClick: () => void }) => JSX.Element` |          | Override for the save button.                              |
 
 <ComponentContainer display="block">
   <PayableFormV1>
@@ -165,9 +243,9 @@ The default children is the following:
 | Name                          | Type                                                     | Required | Description                                                                            |
 | :---------------------------- | :------------------------------------------------------- | :------- | :------------------------------------------------------------------------------------- |
 | readOnly                      | `boolean`                                                |          | Make data read only                                                                    |
-| supportedCurrencies           | `Array<Mercoa.CurrencyCode>`                             |          | Set supported currencies in addition to the currencies supported by the payment source |
-| supportedSchedulePaymentDates | `Array \<'Weekend' \| 'Past' \| 'Holiday'\>`             |          | Set overrides for dates to be enabled for the scheduled payment date                   |
-| children                      | `( props : PayableOverviewChildrenProps) => JSX.Element` |          | Custom Component                                                                       |
+| supportedCurrencies           | `Array<Mercoa.CurrencyCode>`                             |          | Set supported currencies to the currencies supported by the payment source             |
+| supportedSchedulePaymentDates | `Array \<'Weekend' \| 'Past' \| 'Holiday'\>`             |          | Set overrides for dates to enable the scheduled payment date                           |
+| children                      | `( props : PayableOverviewChildrenProps) => JSX.Element` |          | Custom Part                                                                            |
 
 ```ts
 type PayableOverviewChildrenProps = {
@@ -209,7 +287,7 @@ type PayableOverviewChildrenProps = {
 | Name     | Type                                                     | Required | Description         |
 | :------- | :------------------------------------------------------- | :------- | :------------------ |
 | readOnly | `boolean`                                                |          | Make data read only |
-| children | `( props : PayableLineItemChildrenProps) => JSX.Element` |          | Custom Component    |
+| children | `( props : PayableLineItemChildrenProps) => JSX.Element` |          | Custom Part         |
 
 ```ts
 type PayableLineItemChildrenProps = {
@@ -307,7 +385,7 @@ type PayableLineItemChildrenProps = {
 
 | Name     | Type                                                                              | Required | Description      |
 | :------- | :-------------------------------------------------------------------------------- | :------- | :--------------- |
-| children | `({ timing }: { timing?: Mercoa.CalculatePaymentTimingResponse }) => JSX.Element` |          | Custom Component |
+| children | `({ timing }: { timing?: Mercoa.CalculatePaymentTimingResponse }) => JSX.Element` |          | Custom Part |
 
 <ComponentContainer display="block">
   <PayableFormV1 invoice={inv_scheduled}>{() => <PaymentDestinationProcessingTimeV1 />}</PayableFormV1>
@@ -343,7 +421,7 @@ Render a switch to allow the user to enable batch payments
 
 | Name     | Type                                                               | Required | Description      |
 | :------- | :----------------------------------------------------------------- | :------- | :--------------- |
-| children | `({ fees }: { fees?: Mercoa.InvoiceFeesResponse }) => JSX.Element` |          | Custom Component |
+| children | `({ fees }: { fees?: Mercoa.InvoiceFeesResponse }) => JSX.Element` |          | Custom Part |
 
 <ComponentContainer display="block">
   <PayableFormV1 invoice={inv_new_ready}>{() => <PayableFeesV1 />}</PayableFormV1>
@@ -358,31 +436,12 @@ Render a switch to allow the user to enable batch payments
   ```
 </ComponentContainer>
 
-### PayableApprovers
-
-| Name     | Type      | Required | Description         |
-| :------- | :-------- | :------- | :------------------ |
-| readOnly | `boolean` |          | Make data read only |
-
-<ComponentContainer display="block">
-  <PayableFormV1 invoice={inv_new_ready}>{() => <PayableApproversV1 />}</PayableFormV1>
-  ```jsx
-  <PayableFormV1 invoice={inv_new_ready}>
-    {() => (
-      <>
-        <PayableApprovers />
-      </>
-    )}
-  </PayableFormV1>
-  ```
-</ComponentContainer>
-
 ### InvoiceComments
 
 | Name     | Type                                                     | Required | Description         |
 | :------- | :------------------------------------------------------- | :------- | :------------------ |
 | readOnly | `boolean`                                                |          | Make data read only |
-| children | `( props : InvoiceCommentsChildrenProps) => JSX.Element` |          | Custom Component    |
+| children | `( props : InvoiceCommentsChildrenProps) => JSX.Element` |          | Custom Part         |
 
 ```ts
 type InvoiceCommentsChildrenProps = {
@@ -409,15 +468,15 @@ type InvoiceCommentsChildrenProps = {
 {' '}
 
 <Callout>
-  The payable actions is a `position: absolute` component that sticks to the bottom of the form. It should only be used
-  in a `position: relative` container or in `PayableDetails`. It also wraps the `PayableFormErrors` component.
+  The payable actions is a `position: absolute` part that sticks to the bottom of the form. Use it only
+  in a `position: relative` container or in `PayableDetails`. It also wraps the `PayableFormErrors` part.
 </Callout>
 
 {' '}
 
 <Callout>
-  If you fully customize this component by passing in a child component, you will need to also add the `
-  <PayableFormErrors />` component to render from validation errors.
+  If you fully customize this part by passing in a child part, you must also add the `
+  <PayableFormErrors />` part to render from validation errors.
 </Callout>
 
 | Name                    | Type                                                                                                   | Required | Description                                                                                                                                  |
@@ -425,9 +484,9 @@ type InvoiceCommentsChildrenProps = {
 | approveButton           | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
 | rejectButton            | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
 | nonApproverButton       | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
-| deleteButton            | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
-| archiveButton           | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
-| cancelButton            | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
+| deleteButton            | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for the button.                                                                                                                     |
+| archiveButton           | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for the button.                                                                                                                     |
+| cancelButton            | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for the button.                                                                                                                     |
 | saveDraftButton         | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
 | printCheckButton        | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
 | viewCheckButton         | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
@@ -437,8 +496,8 @@ type InvoiceCommentsChildrenProps = {
 | markAsPaidButton        | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
 | schedulePaymentButton   | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
 | retryPaymentButton      | `({ onClick }: { onClick: () => void }) => JSX.Element`                                                |          | Override for button.                                                                                                                         |
-| children                | `(props: PayableActionChildrenProps) => JSX.Element`                                                   |          | Custom component. `Buttons` will return buttons with the correct actions for the state the invoice is in. Customize buttons using the props. |
-| additionalActions       | `{ hideDefaultActions?: boolean; position: 'left' \| 'right'; actions: (props: PayableActionChildrenProps) => JSX.Element[] }` |          | Pass additional actions to render in the action bar.    |                                                                                                                     |
+| children                | `(props: PayableActionChildrenProps) => JSX.Element`                                                   |          | Custom part. `Buttons` return buttons with the correct actions for the state the invoice is in. Customize buttons using the props. |
+| additionalActions       | `{ hideDefaultActions?: boolean; position: 'left' | 'right'; actions: (props: PayableActionChildrenProps) => JSX.Element[] }` |          | Pass more actions to render in the app bar.    |
 
 
 ```typescript
@@ -471,4 +530,9 @@ type PayableActionChildrenProps = {
 
 ### PayableFormErrorsV1
 
-This component shows errors when the form is submitted.
+This part shows errors when you submit the form.
+
+---
+
+> **Non-breaking change:**  
+> Existing integrations of `<PayableApproversV1 />` don't require updates. The `renderCustom` prop is optional and only required if you wish to implement custom reset selection UI.
