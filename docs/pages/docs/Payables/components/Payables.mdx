@@ -1,3 +1,4 @@
+````mdx
 import { Payables } from '@mercoa/react'
 import { ComponentContainer } from '../../../../components/helpers'
 
@@ -106,7 +107,67 @@ type ToastClient = {
 
 | Name       | Type      | Required | Description                         |
 | ---------- | --------- | -------- | ----------------------------------- |
-| `readOnly` | `boolean` |          | Whether the component is read-only. |
+| `readOnly` | `boolean` |          | Indicates whether the part is read-only. |
+
+---
+
+## Approvers Selection (`ApproversSelectionV1`)
+
+> **Available since:** `@mercoa/react` v0.1.11-rc1
+
+The `ApproversSelectionV1` component helps select or manage invoice approvers within invoice and payable flows. It now supports advanced customization via the `renderCustom` prop.
+
+### Props
+
+| Name                | Type                                                                          | Required | Description                                                                                                         |
+| ------------------- | ----------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| `allowAnyApprover`  | `boolean`                                                                     |          | Allow selection of any approver. Defaults to `true`.                                                                |
+| `label`             | `string`                                                                      |          | Optional label for the selection UI.                                                                                |
+| `renderCustom`      | `{ resetSelection?: (resetSelection: () => void) => React.ReactNode }`        |          | Optional. Allows customization of the "Reset Selection" UI.                                                         |
+
+#### `renderCustom.resetSelection`
+
+- **Type:** `(resetSelection: () => void) => React.ReactNode`
+- **Description:**  
+  If provided, this function renders the UI for resetting the approver selection instead of the default "Reset Selection" option.
+  The function receives a `resetSelection` callback which invokes the actual reset.
+
+- **Behavior:**
+  - If `renderCustom.resetSelection` isn't provided, the default "Reset Selection" UI element renders.
+  - If `renderCustom.resetSelection` **is** provided, only the custom UI renders for resetting selection.
+
+---
+
+#### Example: Default "Reset Selection"
+
+```jsx
+<ApproversSelectionV1
+  allowAnyApprover={true}
+  label="Select Approver"
+/>
+```
+
+This renders the default selection UI, including the default "Reset Selection" option.
+
+---
+
+#### Example: Custom "Reset Selection" UI
+
+```jsx
+<ApproversSelectionV1
+  allowAnyApprover={true}
+  label="Select Approver"
+  renderCustom={{
+    resetSelection: (resetSelection) => (
+      <button style={{ color: 'red' }} onClick={resetSelection}>
+        Clear Approvers
+      </button>
+    ),
+  }}
+/>
+```
+
+In this example, the default "Reset Selection" is replaced with a custom button labeled "Clear Approvers". Clicking the button resets the approver selection.
 
 ---
 
@@ -127,7 +188,7 @@ type ToastClient = {
   <Payables
     handlers={{
       onSelectInvoice: (invoice) => {
-        alert('Invoice selected')
+        alert('Invoice selected');
       },
       onCreateInvoice: () => {
         alert('Invoice created')
@@ -242,9 +303,9 @@ type ToastClient = {
         },
       ],
       toast: {
-        success: (msg) => alert(msg),
-        error: (msg) => alert(msg),
-        info: (msg) => alert(msg),
+        success: (message) => alert(message),
+        error: (message) => alert(message),
+        info: (message) => alert(message),
       },
     }}
   />
@@ -325,3 +386,5 @@ type ToastClient = {
   />
   ```
 </ComponentContainer>
+
+````
