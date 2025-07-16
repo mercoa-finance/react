@@ -8,13 +8,6 @@ import { isSupportedScheduleDate, isWeekday } from '../../../../../../lib/schedu
 import { afterApprovedStatus, afterScheduledStatus } from '../../constants'
 import { PrintDescriptionOnCheckRemittanceSwitch } from './print-description-on-check-remittance-switch'
 
-function isInvoiceNumberEditable(invoice?: Mercoa.InvoiceResponse) {
-  if (!invoice) return false
-  if (invoice.status === 'SCHEDULED' && invoice.recurringTemplateId) return true
-  // Existing logic for drafts
-  return invoice.status === 'DRAFT' || invoice.status === 'UNASSIGNED'
-}
-
 // export type PayableOverviewChildrenProps = {
 //   readOnly?: boolean
 //   amount?: number
@@ -60,6 +53,13 @@ export function PayableOverview({
   const paymentSourceType = watch('paymentSourceType')
 
   const notDraft = !!status && status !== Mercoa.InvoiceStatus.Draft
+
+  function isInvoiceNumberEditable(invoice?: Mercoa.InvoiceResponse) {
+    if (!invoice) return true
+    if (invoice.status === 'SCHEDULED' && invoice.recurringTemplateId) return true
+    if (notDraft) return false
+    return true
+  }
 
   const useWidth = (target: any) => {
     const [width, setWidth] = useState<number>(0)

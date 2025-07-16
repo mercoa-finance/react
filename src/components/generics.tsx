@@ -60,7 +60,7 @@ export const MercoaButton = React.forwardRef<HTMLButtonElement | HTMLAnchorEleme
     mercoa-font-medium 
     ${
       hideOutline
-        ? ''
+        ? 'hover:mercoa-underline'
         : `mercoa-shadow-sm mercoa-border 
     focus:mercoa-outline-none focus:mercoa-ring-1 
     focus:mercoa-ring-offset-2`

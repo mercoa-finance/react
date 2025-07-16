@@ -42,7 +42,11 @@ export function getAvailableActions(params: {
   // Schedule Payment Date
   if (
     currentStatuses.some((e) => {
-      const allowedStatuses: Mercoa.InvoiceStatus[] = [Mercoa.InvoiceStatus.Approved, Mercoa.InvoiceStatus.Scheduled]
+      const allowedStatuses: Mercoa.InvoiceStatus[] = [
+        Mercoa.InvoiceStatus.Approved,
+        Mercoa.InvoiceStatus.Scheduled,
+        Mercoa.InvoiceStatus.Failed,
+      ]
       return allowedStatuses.includes(e)
     })
   ) {

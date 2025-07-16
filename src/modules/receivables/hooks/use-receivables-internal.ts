@@ -220,8 +220,6 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
 
   const handleSelectRow = (invoice: Mercoa.InvoiceResponse) => {
     setSelectedInvoices((prev) => {
-      console.log('invoice', invoice)
-      console.log('prev', prev)
       if (prev.some((e) => e.id === invoice.id)) {
         return prev.filter((e) => e.id !== invoice.id)
       }

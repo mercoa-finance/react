@@ -18,15 +18,16 @@ export * from './ExternalAccountingSystem'
 export * from './generics'
 export * from './InvoiceComments'
 export * from './Mercoa'
+export * from './Oatfi'
 export * from './PayableDetails'
 export * from './Payables'
+export * from './PaymentConfirmationPdf'
 export * from './PaymentMethods'
 export * from './ReceivableDetails'
 export * from './ReceivablePaymentPdf'
 export * from './ReceivablePaymentPortal'
 export * from './Receivables'
 export * from './Wallet'
-export * from './Oatfi'
 
 export type onCloseFunction = (value: boolean) => void
 

@@ -157,7 +157,11 @@ export const TableActionsBar = ({
                 })
               }}
             >
-              {selectedInvoices.some((e) => e.status === Mercoa.InvoiceStatus.Scheduled) ? 'Reschedule' : 'Schedule'}{' '}
+              {selectedInvoices.some(
+                (e) => e.status === Mercoa.InvoiceStatus.Scheduled || e.status === Mercoa.InvoiceStatus.Failed,
+              )
+                ? 'Reschedule'
+                : 'Schedule'}{' '}
               Payment
             </MercoaButton>
           )}
