@@ -80,7 +80,7 @@ export function usePayablesQuery({
         orderBy,
         orderDirection,
         limit: resultsPerPage,
-        startingAfter: pageParam,
+        startingAfter: typeof pageParam === 'string' ? pageParam : undefined,
         excludeReceivables,
         metadata,
         paymentType,

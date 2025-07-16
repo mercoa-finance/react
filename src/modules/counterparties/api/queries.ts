@@ -31,11 +31,11 @@ export function useCounterpartiesQuery(
       const response = await (type === 'payee'
         ? mercoaSession.client.entity.counterparty.findPayees(entityId, {
             ...requestOptions,
-            startingAfter: pageParam,
+            startingAfter: typeof pageParam === 'string' ? pageParam : undefined,
           })
         : mercoaSession.client.entity.counterparty.findPayors(entityId, {
             ...requestOptions,
-            startingAfter: pageParam,
+            startingAfter: typeof pageParam === 'string' ? pageParam : undefined,
           }))
 
       return {

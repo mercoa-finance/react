@@ -1939,7 +1939,7 @@ export function DocumentUploadBoxV1({
         renderCustom?.toast ? renderCustom.toast.error('Invalid file type') : toast.success('Invalid file type')
       }}
       minSize={0}
-      maxSize={10_000_000}
+      maxSize={25_000_000}
       accept={{
         'application/pdf': ['.pdf'],
         'image/png': ['.png'],

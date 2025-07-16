@@ -17,6 +17,13 @@ import { ReceivablePaymentDestination } from './components/receivable-payment-de
 import { ReceivablePaymentSource } from './components/receivable-payment-source'
 import { ReceivableRecurringSchedule } from './components/receivable-recurring-schedule'
 
+function isInvoiceNumberEditable(invoice?: Mercoa.InvoiceResponse) {
+  if (!invoice) return false
+  if (invoice.status === 'SCHEDULED' && invoice.recurringTemplateId) return true
+  // Existing logic for drafts
+  return invoice.status === 'DRAFT' || invoice.status === 'UNASSIGNED'
+}
+
 export function ReceivableForm({ children }: { children?: ReactNode }) {
   const mercoaSession = useMercoaSession()
   const { formContextValue, dataContextValue, propsContextValue, displayContextValue } = useReceivableDetails()
@@ -158,7 +165,7 @@ export function ReceivableForm({ children }: { children?: ReactNode }) {
                 label="Invoice #"
                 type="text"
                 className="sm:mercoa-col-span-1"
-                readOnly={notDraft}
+                readOnly={!isInvoiceNumberEditable(invoice)}
               />
             </div>
 

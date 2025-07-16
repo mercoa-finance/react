@@ -71,7 +71,7 @@ export function useReceivablesQuery({
         orderBy,
         orderDirection,
         limit: resultsPerPage,
-        startingAfter: pageParam,
+        startingAfter: typeof pageParam === 'string' ? pageParam : undefined,
         excludePayables,
         metadata: metadata,
         paymentType: paymentType,

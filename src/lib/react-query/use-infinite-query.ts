@@ -1,21 +1,21 @@
 import {
   InfiniteData,
+  useInfiniteQuery as libUseInfiniteQuery,
   QueryFunction,
   QueryKey,
-  useInfiniteQuery as libUseInfiniteQuery,
   UseInfiniteQueryOptions,
   UseInfiniteQueryResult,
-} from "@tanstack/react-query";
+} from '@tanstack/react-query'
 
-import { ErrorResponse } from "./types";
+import { ErrorResponse } from './types'
 
 export const useInfiniteQuery = <T, TPageParam>({
   queryKey,
   queryFn,
   options,
 }: {
-  queryKey: QueryKey;
-  queryFn: QueryFunction<T, QueryKey, TPageParam | undefined>;
+  queryKey: QueryKey
+  queryFn: QueryFunction<T, QueryKey, TPageParam | undefined>
   options: Omit<
     UseInfiniteQueryOptions<
       T,
@@ -25,8 +25,8 @@ export const useInfiniteQuery = <T, TPageParam>({
       QueryKey,
       TPageParam | undefined
     >,
-    "queryKey" | "queryFn"
-  >;
+    'queryKey' | 'queryFn'
+  >
 }): UseInfiniteQueryResult<InfiniteData<T, TPageParam | undefined>, ErrorResponse> => {
   return libUseInfiniteQuery<
     T,
@@ -38,5 +38,5 @@ export const useInfiniteQuery = <T, TPageParam>({
     queryKey,
     queryFn,
     ...options,
-  });
-};
+  })
+}

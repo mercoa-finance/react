@@ -8,6 +8,13 @@ import { isSupportedScheduleDate, isWeekday } from '../../../../../../lib/schedu
 import { afterApprovedStatus, afterScheduledStatus } from '../../constants'
 import { PrintDescriptionOnCheckRemittanceSwitch } from './print-description-on-check-remittance-switch'
 
+function isInvoiceNumberEditable(invoice?: Mercoa.InvoiceResponse) {
+  if (!invoice) return false
+  if (invoice.status === 'SCHEDULED' && invoice.recurringTemplateId) return true
+  // Existing logic for drafts
+  return invoice.status === 'DRAFT' || invoice.status === 'UNASSIGNED'
+}
+
 // export type PayableOverviewChildrenProps = {
 //   readOnly?: boolean
 //   amount?: number
@@ -35,10 +42,11 @@ export function PayableOverview({
   readOnly?: boolean
   supportedSchedulePaymentDates?: Array<'Weekend' | 'Past' | 'Holiday'>
 }) {
-  const { formContextValue } = usePayableDetails()
+  const { formContextValue, dataContextValue } = usePayableDetails()
   const { formMethods, overviewContextValue, lineItemsContextValue } = formContextValue
   const { currency, supportedCurrencies: finalSupportedCurrencies } = overviewContextValue
   const { lineItems } = lineItemsContextValue
+  const { invoice } = dataContextValue
 
   const {
     register,
@@ -98,7 +106,7 @@ export function PayableOverview({
         name="invoiceNumber"
         label="Invoice #"
         type="text"
-        readOnly={readOnly || notDraft}
+        readOnly={readOnly || !isInvoiceNumberEditable(invoice)}
         className="md:mercoa-col-span-1 mercoa-col-span-full"
       />
 
