@@ -2,7 +2,32 @@ import accounting from 'accounting'
 import dayjs from 'dayjs'
 import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { BankAccount, Check, CustomPaymentMethod, useMercoaSession } from './index'
+
+export function getStatusMessage(invoice: Mercoa.InvoiceResponse) {
+  switch (invoice.status) {
+    case Mercoa.InvoiceStatus.Paid:
+    case Mercoa.InvoiceStatus.Archived:
+      return {
+        title: 'Payment Successful',
+        subtitle: 'Your payment has been processed and settled successfully',
+      }
+    case Mercoa.InvoiceStatus.Pending:
+      return {
+        title: 'Payment On The Way',
+        subtitle: 'Your payment is being processed and will arrive soon',
+      }
+    case Mercoa.InvoiceStatus.Scheduled:
+      return {
+        title: 'Payment Scheduled',
+        subtitle: 'Your payment has been scheduled and will be processed on the due date',
+      }
+    default:
+      return {
+        title: 'Payment Confirmation',
+        subtitle: 'Your payment details have been saved',
+      }
+  }
+}
 
 export function PaymentConfirmationPdf({
   invoice,
@@ -10,6 +35,8 @@ export function PaymentConfirmationPdf({
   existingMethods,
   paymentMethodSchemas,
   paymentTiming,
+  logoUrl,
+  supportEmail,
 }: {
   invoice: Mercoa.InvoiceResponse
   fromName: string
@@ -24,41 +51,15 @@ export function PaymentConfirmationPdf({
     estimatedProcessingTime: number
     estimatedSettlementDate: string
   } | null
+  logoUrl?: string
+  supportEmail?: string
 }) {
-  const mercoaSession = useMercoaSession()
-
   if (!invoice) return null
 
   const totalDisplay = accounting.formatMoney(invoice.amount ?? '', currencyCodeToSymbol(invoice.currency))
-  const logo = mercoaSession.organization?.logoUrl ?? 'https://storage.googleapis.com/mercoa-partner-logos/mercoa.png'
+  const logo = logoUrl ?? 'https://storage.googleapis.com/mercoa-partner-logos/mercoa.png'
 
-  function getStatusMessage() {
-    switch (invoice.status) {
-      case Mercoa.InvoiceStatus.Paid:
-      case Mercoa.InvoiceStatus.Archived:
-        return {
-          title: 'Payment Successful',
-          subtitle: 'Your payment has been processed and settled successfully',
-        }
-      case Mercoa.InvoiceStatus.Pending:
-        return {
-          title: 'Payment On The Way',
-          subtitle: 'Your payment is being processed and will arrive soon',
-        }
-      case Mercoa.InvoiceStatus.Scheduled:
-        return {
-          title: 'Payment Scheduled',
-          subtitle: 'Your payment has been scheduled and will be processed on the due date',
-        }
-      default:
-        return {
-          title: 'Payment Confirmation',
-          subtitle: 'Your payment details have been saved',
-        }
-    }
-  }
-
-  const statusInfo = getStatusMessage()
+  const statusInfo = getStatusMessage(invoice)
 
   function ReceiptItem({ title, value }: { title: string; value?: string }) {
     if (!invoice) return <></>
@@ -155,7 +156,35 @@ export function PaymentConfirmationPdf({
                 {(() => {
                   const existingPaymentMethod = existingMethods?.find((e) => e.id === invoice?.paymentDestination?.id)
                   return existingPaymentMethod ? (
-                    <BankAccount account={existingPaymentMethod as Mercoa.PaymentMethodResponse.BankAccount} />
+                    <div className="mercoa-space-y-2">
+                      {(existingPaymentMethod as Mercoa.PaymentMethodResponse.BankAccount).accountName && (
+                        <p className="mercoa-text-sm">
+                          <span className="mercoa-text-gray-500">Account Name:</span>{' '}
+                          <span className="mercoa-font-medium">
+                            {(existingPaymentMethod as Mercoa.PaymentMethodResponse.BankAccount).accountName}
+                          </span>
+                        </p>
+                      )}
+                      <p className="mercoa-text-sm">
+                        <span className="mercoa-text-gray-500">Account Number:</span>{' '}
+                        <span className="mercoa-font-medium">
+                          ****
+                          {(existingPaymentMethod as Mercoa.PaymentMethodResponse.BankAccount).accountNumber.slice(-4)}
+                        </span>
+                      </p>
+                      <p className="mercoa-text-sm">
+                        <span className="mercoa-text-gray-500">Routing Number:</span>{' '}
+                        <span className="mercoa-font-medium">
+                          {(existingPaymentMethod as Mercoa.PaymentMethodResponse.BankAccount).routingNumber}
+                        </span>
+                      </p>
+                      <p className="mercoa-text-sm">
+                        <span className="mercoa-text-gray-500">Bank Name:</span>{' '}
+                        <span className="mercoa-font-medium">
+                          {(existingPaymentMethod as Mercoa.PaymentMethodResponse.BankAccount).bankName}
+                        </span>
+                      </p>
+                    </div>
                   ) : (
                     <p className="mercoa-text-gray-600">Bank account details will be provided</p>
                   )
@@ -166,13 +195,39 @@ export function PaymentConfirmationPdf({
               <div className="mercoa-bg-white mercoa-p-4 mercoa-rounded-lg mercoa-border">
                 <h3 className="mercoa-text-lg mercoa-font-semibold mercoa-mb-2">Check</h3>
                 {existingMethods?.find((e) => e.id === invoice?.paymentDestination?.id) ? (
-                  <Check
-                    account={
-                      existingMethods?.find(
-                        (e) => e.id === invoice?.paymentDestination?.id,
-                      ) as Mercoa.PaymentMethodResponse.Check
-                    }
-                  />
+                  <div className="mercoa-space-y-2">
+                    <p className="mercoa-text-sm">
+                      <span className="mercoa-text-gray-500">Pay To The Order Of:</span>{' '}
+                      <span className="mercoa-font-medium">
+                        {
+                          (
+                            existingMethods?.find(
+                              (e) => e.id === invoice?.paymentDestination?.id,
+                            ) as Mercoa.PaymentMethodResponse.Check
+                          ).payToTheOrderOf
+                        }
+                      </span>
+                    </p>
+                    <p className="mercoa-text-sm">
+                      <span className="mercoa-text-gray-500">Address:</span>{' '}
+                      <span className="mercoa-font-medium">
+                        {(() => {
+                          const check = existingMethods?.find(
+                            (e) => e.id === invoice?.paymentDestination?.id,
+                          ) as Mercoa.PaymentMethodResponse.Check
+                          const addressParts = [
+                            check.addressLine1,
+                            check.addressLine2,
+                            check.city,
+                            check.stateOrProvince,
+                            check.postalCode,
+                            check.country,
+                          ].filter(Boolean)
+                          return addressParts.join(', ')
+                        })()}
+                      </span>
+                    </p>
+                  </div>
                 ) : (
                   <p className="mercoa-text-gray-600">Check will be mailed to your address</p>
                 )}
@@ -180,23 +235,44 @@ export function PaymentConfirmationPdf({
             )}
             {invoice?.paymentDestination?.type === Mercoa.PaymentMethodType.Custom && (
               <div className="mercoa-bg-white mercoa-p-4 mercoa-rounded-lg mercoa-border">
-                <h3 className="mercoa-text-lg mercoa-font-semibold mercoa-mb-2">
-                  {paymentMethodSchemas?.find(
-                    (e) => e.id === (invoice?.paymentDestination as Mercoa.PaymentMethodResponse.Custom)?.schemaId,
-                  )?.name || 'Custom Payment Method'}
-                </h3>
-                {existingMethods?.find((e) => e.id === invoice?.paymentDestination?.id) ? (
-                  <CustomPaymentMethod
-                    account={
-                      existingMethods?.find(
-                        (e) => e.id === invoice?.paymentDestination?.id,
-                      ) as Mercoa.PaymentMethodResponse.Custom
-                    }
-                    paymentDestinationOptions={invoice?.paymentDestinationOptions}
-                  />
-                ) : (
-                  <p className="mercoa-text-gray-600">Custom payment method details will be provided</p>
-                )}
+                {(() => {
+                  const existingPaymentMethod = existingMethods?.find((e) => e.id === invoice?.paymentDestination?.id)
+                  const schemaName =
+                    paymentMethodSchemas?.find(
+                      (e) => e.id === (invoice?.paymentDestination as Mercoa.PaymentMethodResponse.Custom)?.schemaId,
+                    )?.name || ''
+
+                  const accountName = (existingPaymentMethod as Mercoa.PaymentMethodResponse.Custom)?.accountName
+                  const accountNumber = (existingPaymentMethod as Mercoa.PaymentMethodResponse.Custom)?.accountNumber
+
+                  if (existingPaymentMethod) {
+                    return (
+                      <>
+                        <h3 className="mercoa-text-lg mercoa-font-semibold mercoa-mb-2">{schemaName}</h3>
+                        <div className="mercoa-space-y-2">
+                          {accountName && (
+                            <p className="mercoa-text-sm">
+                              <span className="mercoa-text-gray-500">Account Name:</span>{' '}
+                              <span className="mercoa-font-medium">{accountName}</span>
+                            </p>
+                          )}
+                          {accountNumber && (
+                            <p className="mercoa-text-sm">
+                              <span className="mercoa-text-gray-500">Account Number:</span>{' '}
+                              <span className="mercoa-font-medium">{accountNumber}</span>
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    )
+                  } else {
+                    return (
+                      <>
+                        <h3 className="mercoa-text-lg mercoa-font-semibold mercoa-mb-2">{schemaName}</h3>
+                      </>
+                    )
+                  }
+                })()}
               </div>
             )}
             {invoice?.paymentDestination?.type === Mercoa.PaymentMethodType.OffPlatform && (
@@ -246,10 +322,10 @@ export function PaymentConfirmationPdf({
         <p className="mercoa-mt-2">
           Have questions? Contact{' '}
           <a
-            href={`mailto:${mercoaSession.organization?.supportEmail ?? 'support@mercoa.com'}`}
+            href={`mailto:${supportEmail ?? 'support@mercoa.com'}`}
             className="mercoa-text-blue-600 hover:mercoa-text-blue-800"
           >
-            {mercoaSession.organization?.supportEmail ?? 'support@mercoa.com'}
+            {supportEmail ?? 'support@mercoa.com'}
           </a>
         </p>
       </div>

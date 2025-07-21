@@ -1,6 +1,6 @@
+import { Mercoa } from '@mercoa/javascript'
 import accounting from 'accounting'
 import Big from 'big.js'
-import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { MercoaContext } from '../../../../components'
 import { currencyCodeToSymbol } from '../../../../lib/currency'
@@ -819,24 +819,26 @@ const validateAndConstructPayload = async (props: {
     paymentDestinationId: formData.paymentDestinationId,
     batchPayment: formData.batchPayment ?? undefined,
     ...(formData.paymentDestinationType === Mercoa.PaymentMethodType.Check && {
-      paymentDestinationOptions: formData.paymentDestinationOptions ?? {
-        type: 'check',
-        delivery: 'MAIL',
+      paymentDestinationOptions: {
+        type: (formData.paymentDestinationOptions as any)?.type ?? 'check',
+        delivery: (formData.paymentDestinationOptions as any)?.delivery ?? 'MAIL',
+        ...((formData.paymentDestinationOptions as any)?.printDescription && {
+          printDescription: (formData.paymentDestinationOptions as any)?.printDescription,
+        }),
       },
     }),
     ...(formData.paymentDestinationType === Mercoa.PaymentMethodType.BankAccount && {
-      paymentDestinationOptions: formData.paymentDestinationOptions ?? {
-        type: 'bankAccount',
-        delivery: 'ACH_SAME_DAY',
+      paymentDestinationOptions: {
+        type: (formData.paymentDestinationOptions as any)?.type ?? 'bankAccount',
+        delivery: (formData.paymentDestinationOptions as any)?.delivery ?? 'ACH_SAME_DAY',
       },
     }),
-    ...(formData.paymentDestinationType === Mercoa.PaymentMethodType.Utility &&
-      formData.paymentDestinationOptions && {
-        paymentDestinationOptions: {
-          type: 'utility',
-          accountId: (formData.paymentDestinationOptions as any)?.accountId,
-        },
-      }),
+    ...(formData.paymentDestinationType === Mercoa.PaymentMethodType.Utility && {
+      paymentDestinationOptions: {
+        type: (formData.paymentDestinationOptions as any)?.type ?? 'utility',
+        accountId: (formData.paymentDestinationOptions as any)?.accountId ?? '',
+      },
+    }),
     ...(formData.paymentSourceType === Mercoa.PaymentMethodType.Bnpl && {
       paymentSourceOptions: {
         type: 'bnpl',
