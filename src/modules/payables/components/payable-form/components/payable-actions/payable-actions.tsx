@@ -10,6 +10,7 @@ import {
   useMercoaSession,
   usePayableDetails,
 } from '../../../../../../components'
+import { isOffPlatformEnabled } from '../../../../../../lib/paymentMethods'
 import { getInvoiceClient } from '../../../../../common/utils'
 import { PayableFormAction } from '../../constants'
 import { PayableFormData } from '../../types'
@@ -94,6 +95,7 @@ export function PayableActions({
 
   const paymentDestinationOptions = watch('paymentDestinationOptions')
   const paymentDestinationType = watch('paymentDestinationType')
+  const paymentSourceType = watch('paymentSourceType')
   const id = watch('id')
   const status = watch('status') as Mercoa.InvoiceStatus | undefined
   const approverSlots = watch('approvers') as Mercoa.ApprovalSlot[]
@@ -598,7 +600,11 @@ export function PayableActions({
         ) {
           buttons.push(printCheckButtonComponent)
         }
-        if (paymentDestinationType === Mercoa.PaymentMethodType.OffPlatform) {
+        if (
+          (paymentDestinationType === Mercoa.PaymentMethodType.OffPlatform ||
+            paymentSourceType === Mercoa.PaymentMethodType.OffPlatform) &&
+          isOffPlatformEnabled(mercoaSession)
+        ) {
           buttons.push(markPaidButtonComponent)
         }
         buttons.push(cancelButtonComponent)

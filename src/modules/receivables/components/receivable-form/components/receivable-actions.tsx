@@ -1,11 +1,13 @@
 import { Menu, Transition } from '@headlessui/react'
 import { EllipsisVerticalIcon } from '@heroicons/react/24/outline'
 import { Mercoa } from '@mercoa/javascript'
-import { ButtonLoadingSpinner, MercoaButton } from '../../../../../components'
+import { ButtonLoadingSpinner, MercoaButton, useMercoaSession } from '../../../../../components'
+import { isOffPlatformEnabled } from '../../../../../lib/paymentMethods'
 import { useReceivableDetails } from '../../../hooks/use-receivable-details'
 import { ReceivableFormAction } from '../constants'
 
 export function ReceivableActions() {
+  const mercoaSession = useMercoaSession()
   const { dataContextValue, formContextValue } = useReceivableDetails()
   const { formMethods, handleActionClick, payerContextValue } = formContextValue
   const { invoice, invoiceType } = dataContextValue
@@ -173,7 +175,10 @@ export function ReceivableActions() {
 
   const markAsPaidStatuses: Mercoa.InvoiceStatus[] = [Mercoa.InvoiceStatus.Approved, Mercoa.InvoiceStatus.Scheduled]
   const showMarkAsPaidButton =
-    invoice?.status && markAsPaidStatuses.includes(invoice?.status) && invoiceType === 'invoice'
+    invoice?.status &&
+    markAsPaidStatuses.includes(invoice?.status) &&
+    invoiceType === 'invoice' &&
+    isOffPlatformEnabled(mercoaSession)
   const markAsPaidButton = (
     <Menu.Item>
       {({ active }) => (

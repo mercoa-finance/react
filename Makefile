@@ -8,7 +8,7 @@ copy_components:
 	@echo "Copying Components..."
 	rsync -av $(CORE_SRC_DIR)/components ./src/
 	rsync -av $(CORE_SRC_DIR)/modules ./src/
-	rsync -av $(CORE_SRC_DIR)/lib ./src/
+	rsync -av --exclude='use-infinite-query.ts' $(CORE_SRC_DIR)/lib ./src/
 
 ## rsync -av --exclude='Mercoa.tsx' $(ORIGINAL_DIR) ./src/
 
