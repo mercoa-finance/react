@@ -121,16 +121,20 @@ export function UploadBlock({
     if (!entity) return
     if (type === 'Logo') {
       const resp = await mercoaSession.client?.entity.get(entity.id)
-      setExistingDocumentUri(resp?.logo)
-      setIsEditing(false)
+      if (resp?.logo) {
+        setExistingDocumentUri(resp?.logo)
+        setIsEditing(false)
+      }
     } else {
       const resp = await mercoaSession.client?.entity.document.getAll(entity.id, {
         type: uploadTypeToDocumentType[type],
       })
       const document = resp?.find((d) => d.type === uploadTypeToDocumentType[type])
-      setExistingDocumentUri(document?.uri)
-      setExistingDocumentId(document?.id)
-      setIsEditing(false)
+      if (document?.uri) {
+        setExistingDocumentUri(document?.uri)
+        setExistingDocumentId(document?.id)
+        setIsEditing(false)
+      }
     }
   }, [entity, type, mercoaSession.client])
 

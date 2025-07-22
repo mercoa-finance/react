@@ -1127,11 +1127,18 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
               }
             },
             onError: async (e) => {
+              // if we are trying to approve or reject, just try that directly
+              if (action && [PayableFormAction.APPROVE, PayableFormAction.REJECT].includes(action)) {
+                try {
+                  handleApproveOrRejectPayable(invoiceData, action)
+                } catch (error) {
+                  console.error(e)
+                  toast?.error(e.message)
+                }
+                return
+              }
               toast?.error(e.message)
-              if (
-                requestPayload.status === 'NEW' &&
-                ![PayableFormAction.APPROVE, PayableFormAction.REJECT].includes(action)
-              ) {
+              if (requestPayload.status === 'NEW') {
                 requestPayload.status = 'DRAFT'
                 updatePayable(
                   {
