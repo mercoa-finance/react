@@ -65,7 +65,7 @@ const getPrefillReceivableData = ({
       : defaultPaymentMethodDestinationType,
     paymentDestination: receivableData
       ? receivableData?.paymentDestination
-      : defaultPaymentMethodDestination.paymentDestination,
+      : defaultPaymentMethodDestination?.paymentDestination,
     paymentDestinationId: receivableData
       ? receivableData?.paymentDestination?.id
       : defaultPaymentMethodDestination?.paymentDestinationId,
