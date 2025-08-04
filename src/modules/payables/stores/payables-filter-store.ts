@@ -77,6 +77,7 @@ export const usePayablesFilterStore = create<PayablesFilterStoreState & Payables
           { header: 'Amount', field: 'amount' },
           { header: 'Due Date', field: 'dueDate' },
           { header: 'Invoice Date', field: 'invoiceDate' },
+          { header: 'Scheduled Payment Date', field: 'deductionDate' },
           { header: 'Payment Initiated', field: 'processedAt' },
           { header: 'Status', field: 'status' },
         ]

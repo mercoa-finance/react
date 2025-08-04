@@ -1,5 +1,4 @@
-import { Dispatch, FC, useState } from 'react'
-import { Mercoa } from '@mercoa/javascript'
+import { FC, useState } from 'react'
 import { MercoaButton, Tooltip } from '../../../../../components'
 import { Popover } from '../../../../../lib/components'
 import { ColumnIcon } from '../../../../common/assets/icons'
@@ -10,6 +9,7 @@ const allColumnsDefault: InvoiceTableColumn[] = [
   { field: 'invoiceNumber', header: 'Invoice Number' },
   { field: 'dueDate', header: 'Due Date' },
   { field: 'invoiceDate', header: 'Invoice Date' },
+  { field: 'deductionDate', header: 'Scheduled Payment Date' },
   { field: 'amount', header: 'Amount' },
   { field: 'approvers', header: 'Approvers' },
   { field: 'status', header: 'Status' },

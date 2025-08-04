@@ -149,7 +149,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const { data: sourceEmails, isLoading: sourceEmailsLoading } = usePayableSourceEmailQuery(invoiceId, invoiceType)
   const { data: vendors, isLoading: vendorsLoading } = usePayeesQuery({ search: vendorSearch })
 
-  const { data: ocrJob } = useOcrJobQuery(activeOcrJobId ?? '', 2500)
+  const { data: ocrJob } = useOcrJobQuery(activeOcrJobId, 2500)
 
   const { data: invoiceOcrJob } = useOcrJobQuery(invoiceData?.ocrJobId ?? '', Infinity)
 
@@ -711,6 +711,9 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   }, [documents])
 
   useEffect(() => {
+    // Early exit if no active OCR job ID to prevent infinite loop
+    if (!activeOcrJobId) return
+
     if (!!ocrJob && activeOcrJobId === ocrJob.data?.jobId) {
       if (ocrJob.status === Mercoa.OcrJobStatus.Success) {
         if (ocrJob.data && onOcrComplete) {
@@ -733,7 +736,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
         return
       }
     }
-  }, [ocrJob, toast, activeOcrJobId])
+  }, [ocrJob, toast, activeOcrJobId, onOcrComplete])
 
   useEffect(() => {
     if (!invoiceOcrJob?.data) return

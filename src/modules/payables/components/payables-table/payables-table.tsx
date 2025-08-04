@@ -350,7 +350,7 @@ export const PayablesTable: FC = memo(() => {
             className="mercoa-flex mercoa-items-center mercoa-gap-1 mercoa-cursor-pointer"
             onClick={() => handleOrderByChange(Mercoa.InvoiceOrderByField.DeductionDate)}
           >
-            <span>Deduction Date</span>
+            <span>Scheduled Payment Date</span>
             <div className="hover:mercoa-bg-gray-100 mercoa-rounded-full mercoa-p-1">
               {getSortIcon(Mercoa.InvoiceOrderByField.DeductionDate)}
             </div>

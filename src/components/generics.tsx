@@ -44,7 +44,7 @@ export interface MercoaButtonProps extends HTMLAttributes<HTMLButtonElement | HT
   tooltip?: string
   disabledTooltipText?: string
   className?: string
-  color?: 'red' | 'green' | 'blue' | 'indigo' | 'yellow' | 'gray' | 'secondary'
+  color?: 'red' | 'green' | 'blue' | 'indigo' | 'yellow' | 'gray' | 'secondary' | 'orange'
   size?: 'sm' | 'md' | 'lg'
   children: ReactNode
   [x: string]: any
@@ -235,6 +235,25 @@ export const MercoaButton = React.forwardRef<HTMLButtonElement | HTMLAnchorEleme
       mercoa-border-transparent
       hover:mercoa-bg-gray-700
       focus:mercoa-ring-gray-500
+    `
+    } else if (color === 'orange') {
+      colorOverride += `
+      mercoa-text-orange-600
+      ${
+        hideOutline
+          ? ''
+          : `mercoa-border-orange-600
+      hover:mercoa-border-orange-700
+      focus:mercoa-ring-orange-500`
+      }
+      hover:mercoa-text-orange-700
+    `
+      colorOverrideIsEmphasized += `
+      mercoa-bg-orange-600
+      mercoa-text-white
+      mercoa-border-transparent
+      hover:mercoa-bg-orange-700
+      focus:mercoa-ring-orange-500
     `
     }
 

@@ -912,7 +912,7 @@ export function PayablesTableV1({
       },
     },
     {
-      title: 'Deduction Date',
+      title: 'Scheduled Payment Date',
       field: 'deductionDate',
       orderBy: Mercoa.InvoiceOrderByField.DeductionDate,
     },
