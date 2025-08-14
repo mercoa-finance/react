@@ -16,6 +16,7 @@ import { PayableFormAction } from '../../constants'
 import { PayableFormData } from '../../types'
 import { findApproverSlot } from '../payable-approvers/utils'
 import { PayableFormErrors } from './payable-form-errors'
+import { VoidCheckDialog } from './void-check-dialog'
 
 export type PayableActionChildrenProps = {
   isSaving: boolean
@@ -41,6 +42,7 @@ export function PayableActions({
   markAsPaidButton,
   schedulePaymentButton,
   retryPaymentButton,
+  voidCheckButton,
   additionalActions,
   children,
 }: {
@@ -67,6 +69,7 @@ export function PayableActions({
   markAsPaidButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   schedulePaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   retryPaymentButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
+  voidCheckButton?: ({ onClick }: { onClick: () => void }) => JSX.Element
   additionalActions?: {
     hideDefaultActions?: boolean
     position: 'left' | 'right'
@@ -90,6 +93,7 @@ export function PayableActions({
   const { userPermissionConfig } = mercoaSession
 
   const [isSaving, setIsSaving] = useState(false)
+  const [voidCheckDialogOpen, setVoidCheckDialogOpen] = useState(false)
   const { setValue, watch, formState } = useFormContext()
   const formAction = watch('formAction')
 
@@ -326,6 +330,28 @@ export function PayableActions({
         Mercoa.CheckDeliveryMethod.Print
           ? 'Print Check'
           : 'View Mailed Check'}
+      </ButtonLoadingSpinner>
+    </MercoaButton>
+  )
+
+  const voidCheckButtonComponent = voidCheckButton ? (
+    voidCheckButton({
+      onClick: () => setVoidCheckDialogOpen(true),
+    })
+  ) : (
+    <MercoaButton
+      type="button"
+      disabled={
+        !userPermissionConfig?.invoice?.update.statuses.includes(Mercoa.InvoiceStatus.Failed) &&
+        !userPermissionConfig?.invoice?.all
+      }
+      disabledTooltipText="You do not have permission to void checks"
+      color="red"
+      onClick={() => setVoidCheckDialogOpen(true)}
+      className="mercoa-whitespace-nowrap"
+    >
+      <ButtonLoadingSpinner isLoading={actionLoading && formAction === PayableFormAction.VOID_CHECK}>
+        Void Check
       </ButtonLoadingSpinner>
     </MercoaButton>
   )
@@ -615,6 +641,9 @@ export function PayableActions({
           buttons.push(viewCheckButtonComponent)
         }
         buttons.push(archiveButtonComponent)
+        if (paymentDestinationType === Mercoa.PaymentMethodType.Check) {
+          buttons.push(voidCheckButtonComponent)
+        }
         break
 
       case Mercoa.InvoiceStatus.Failed:
@@ -658,6 +687,19 @@ export function PayableActions({
 
   return (
     <>
+      <VoidCheckDialog
+        open={voidCheckDialogOpen}
+        setOpen={setVoidCheckDialogOpen}
+        onConfirm={async () => {
+          if (!id) return
+          setValue('formAction', PayableFormAction.VOID_CHECK)
+          submitForm()
+          setVoidCheckDialogOpen(false)
+        }}
+        onCancel={() => setVoidCheckDialogOpen(false)}
+        isLoading={actionLoading && formAction === PayableFormAction.VOID_CHECK}
+        checkNumber={undefined} // TODO: Get check number from transaction if available
+      />
       <div className="mercoa-col-span-full" style={{ visibility: 'hidden' }}>
         <PayableFormErrors />
       </div>

@@ -9,15 +9,24 @@ import { LoadingSpinner, useMercoaSession } from './index'
 export function ReceivablePaymentPdf({
   invoice,
   hideQR = false,
+  paymentLinkUrl,
 }: {
   invoice?: Mercoa.InvoiceResponse
   hideQR?: boolean
+  paymentLinkUrl?: string
 }) {
   const mercoaSession = useMercoaSession()
 
   const [paymentLink, setPaymentLink] = useState<string>()
 
   useEffect(() => {
+    // If paymentLinkUrl is provided, use it directly
+    if (paymentLinkUrl) {
+      setPaymentLink(paymentLinkUrl)
+      return
+    }
+
+    // Otherwise, generate payment link dynamically
     if (paymentLink || !invoice?.id || !invoice?.payer || !mercoaSession.client) return
     // get payment link
     mercoaSession.client.invoice.paymentLinks
@@ -28,7 +37,7 @@ export function ReceivablePaymentPdf({
       .catch((e) => {
         console.error(e)
       })
-  }, [paymentLink, invoice?.id, invoice?.payer, mercoaSession.client])
+  }, [paymentLink, invoice?.id, invoice?.payer, mercoaSession.client, paymentLinkUrl])
 
   if (!invoice || (mercoaSession.organization && mercoaSession.isLoading)) return <LoadingSpinner />
 

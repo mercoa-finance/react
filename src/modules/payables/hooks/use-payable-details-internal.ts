@@ -842,6 +842,97 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     ],
   )
 
+  const getAvailablePaymentMethodTypes = useCallback(
+    (isDestination: boolean = false) => {
+      const paymentMethods = (isDestination ? paymentMethodsDestination : paymentMethodsSource) ?? []
+      const availableTypes: Array<{ key: string; value: string }> = []
+
+      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'bankAccount')) {
+        availableTypes.push({ key: 'bankAccount', value: 'Bank Account' })
+      }
+      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'card')) {
+        availableTypes.push({ key: 'card', value: 'Card' })
+      }
+      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'check')) {
+        availableTypes.push({ key: 'check', value: 'Check' })
+      }
+      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'utility')) {
+        availableTypes.push({ key: 'utility', value: 'Utility' })
+      }
+      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'wallet')) {
+        availableTypes.push({ key: 'wallet', value: 'Wallet' })
+      }
+
+      paymentMethods?.forEach((paymentMethod) => {
+        if (paymentMethod.type === 'custom') {
+          if (availableTypes.some((type) => type.key === paymentMethod.schemaId)) return
+          availableTypes.push({ key: paymentMethod.schemaId ?? '', value: paymentMethod.schema.name ?? '' })
+        }
+      })
+
+      if (isDestination && vendorId) {
+        mercoaSession.organization?.paymentMethods?.backupDisbursements.forEach((backupDisbursement) => {
+          if (!backupDisbursement.active) return
+          if (
+            availableTypes.some((type) => {
+              if (type.key === backupDisbursement.type) return true
+              if (backupDisbursement.type === 'custom') {
+                const schema = mercoaSession.customPaymentMethodSchemas.find((e) => e.id == backupDisbursement.name)
+                if (schema && type.key === schema.id) return true
+              }
+              return false
+            })
+          ) {
+            return
+          }
+
+          if (backupDisbursement.type != 'custom')
+            availableTypes.push({ key: backupDisbursement.type, value: backupDisbursement.name })
+          else
+            availableTypes.push({
+              key: backupDisbursement.name,
+              value:
+                mercoaSession.customPaymentMethodSchemas.find((e) => e.id == backupDisbursement.name)?.name ?? 'Other',
+            })
+        })
+      } else {
+        const offPlatform = mercoaSession.organization?.paymentMethods?.payerPayments.find(
+          (e) => e.type === 'offPlatform',
+        )
+        if (offPlatform && offPlatform.active) {
+          availableTypes.push({
+            key: offPlatform.type,
+            value: offPlatform.name,
+          })
+        }
+        const bnpl = mercoaSession.organization?.paymentMethods?.payerPayments.find((e) => e.type === 'bnpl')
+        if (
+          bnpl &&
+          bnpl.active &&
+          invoiceId &&
+          mercoaSession.entity?.oatfiStatus === 'APPROVED' &&
+          dueDate &&
+          !dayjs(dueDate).isBefore(dayjs())
+        ) {
+          availableTypes.push({
+            key: bnpl.type,
+            value: 'Pay Later',
+          })
+        }
+      }
+
+      return availableTypes
+    },
+    [
+      paymentMethodsDestination,
+      paymentMethodsSource,
+      mercoaSession.organization?.paymentMethods,
+      invoiceId,
+      mercoaSession.entity?.oatfiStatus,
+      dueDate,
+    ],
+  )
+
   // Handle source payment method defaults
   useEffect(() => {
     if (!paymentMethodsSource || paymentSourceType) return
@@ -865,27 +956,47 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       clearErrors('paymentSourceId')
     } else {
       // Set sane source defaults
-      if (paymentMethodsSource?.some((pm) => pm.type === 'bankAccount')) {
+      if (
+        paymentMethodsSource?.some((pm) => pm.type === 'bankAccount') &&
+        getAvailablePaymentMethodTypes(false).some((e) => e.key === 'bankAccount')
+      ) {
         setValue('paymentSourceType', 'bankAccount')
         setMethodOnTypeChange(false, 'bankAccount')
-      } else if (paymentMethodsSource?.some((pm) => pm.type === 'card')) {
+      } else if (
+        paymentMethodsSource?.some((pm) => pm.type === 'card') &&
+        getAvailablePaymentMethodTypes(false).some((e) => e.key === 'card')
+      ) {
         setValue('paymentSourceType', 'card')
         setMethodOnTypeChange(false, 'card')
-      } else if (paymentMethodsSource?.some((pm) => pm.type === 'utility')) {
+      } else if (
+        paymentMethodsSource?.some((pm) => pm.type === 'utility') &&
+        getAvailablePaymentMethodTypes(false).some((e) => e.key === 'utility')
+      ) {
         setValue('paymentSourceType', 'utility')
         setMethodOnTypeChange(false, 'utility')
-      } else if (paymentMethodsSource?.some((pm) => pm.type === 'offPlatform')) {
+      } else if (
+        paymentMethodsSource?.some((pm) => pm.type === 'offPlatform') &&
+        getAvailablePaymentMethodTypes(false).some((e) => e.key === 'offPlatform')
+      ) {
         setValue('paymentSourceType', 'offPlatform')
         setMethodOnTypeChange(false, 'offPlatform')
       } else if (paymentMethodsSource?.some((pm) => pm.type === 'custom')) {
         const cpm = paymentMethodsSource?.find((pm) => pm.type === 'custom') as Mercoa.PaymentMethodResponse.Custom
-        if (cpm.schemaId) {
+        if (cpm.schemaId && getAvailablePaymentMethodTypes(false).some((e) => e.key === cpm.schemaId)) {
           setValue('paymentSourceType', cpm.schemaId)
           setMethodOnTypeChange(false, cpm.schemaId)
         }
       }
     }
-  }, [paymentMethodsSource, paymentSourceType, setValue, clearErrors, setMethodOnTypeChange, watch])
+  }, [
+    paymentMethodsSource,
+    paymentSourceType,
+    setValue,
+    clearErrors,
+    setMethodOnTypeChange,
+    watch,
+    getAvailablePaymentMethodTypes,
+  ])
 
   // Handle destination payment method defaults
   useEffect(() => {
@@ -904,27 +1015,46 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       clearErrors('paymentDestinationId')
     } else {
       // Set sane destination defaults
-      if (paymentMethodsDestination?.some((pm) => pm.type === 'bankAccount')) {
+      if (
+        paymentMethodsDestination?.some((pm) => pm.type === 'bankAccount') &&
+        getAvailablePaymentMethodTypes(true).some((e) => e.key === 'bankAccount')
+      ) {
         setValue('paymentDestinationType', 'bankAccount')
         setMethodOnTypeChange(true, 'bankAccount')
-      } else if (paymentMethodsDestination?.some((pm) => pm.type === 'check')) {
+      } else if (
+        paymentMethodsDestination?.some((pm) => pm.type === 'check') &&
+        getAvailablePaymentMethodTypes(true).some((e) => e.key === 'check')
+      ) {
         setValue('paymentDestinationType', 'check')
         setMethodOnTypeChange(true, 'check')
-      } else if (paymentMethodsDestination?.some((pm) => pm.type === 'utility')) {
+      } else if (
+        paymentMethodsDestination?.some((pm) => pm.type === 'utility') &&
+        getAvailablePaymentMethodTypes(true).some((e) => e.key === 'utility')
+      ) {
         setValue('paymentDestinationType', 'utility')
         setMethodOnTypeChange(true, 'utility')
-      } else if (paymentMethodsDestination?.some((pm) => pm.type === 'offPlatform')) {
+      } else if (
+        paymentMethodsDestination?.some((pm) => pm.type === 'offPlatform') &&
+        getAvailablePaymentMethodTypes(true).some((e) => e.key === 'offPlatform')
+      ) {
         setValue('paymentDestinationType', 'offPlatform')
         setMethodOnTypeChange(true, 'offPlatform')
       } else if (paymentMethodsDestination?.some((pm) => pm.type === 'custom')) {
         const cpm = paymentMethodsDestination?.find((pm) => pm.type === 'custom') as Mercoa.PaymentMethodResponse.Custom
-        if (cpm.schemaId) {
+        if (cpm.schemaId && getAvailablePaymentMethodTypes(true).some((e) => e.key === cpm.schemaId)) {
           setValue('paymentDestinationType', cpm.schemaId)
           setMethodOnTypeChange(true, cpm.schemaId)
         }
       }
     }
-  }, [paymentMethodsDestination, paymentDestinationType, setValue, clearErrors, setMethodOnTypeChange])
+  }, [
+    paymentMethodsDestination,
+    paymentDestinationType,
+    setValue,
+    clearErrors,
+    setMethodOnTypeChange,
+    getAvailablePaymentMethodTypes,
+  ])
 
   // If selected type is custom, find the schema for both source and destination
   useEffect(() => {
@@ -971,6 +1101,18 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       }
     }
   }, [selectedSourceType, paymentMethodsSource, selectedSourcePaymentMethodId, setValue])
+
+  // Auto-sync destination to offPlatform when source is offPlatform
+  useEffect(() => {
+    if (
+      paymentSourceType === Mercoa.PaymentMethodType.OffPlatform &&
+      paymentDestinationType !== Mercoa.PaymentMethodType.OffPlatform &&
+      paymentMethodsDestination?.some((pm) => pm.type === Mercoa.PaymentMethodType.OffPlatform)
+    ) {
+      setValue('paymentDestinationType', Mercoa.PaymentMethodType.OffPlatform)
+      setMethodOnTypeChange(true, 'offPlatform')
+    }
+  }, [paymentSourceType, paymentDestinationType, paymentMethodsDestination, setValue, setMethodOnTypeChange])
 
   const finalSupportedCurrencies = useMemo(() => {
     let derivedSupportedCurrencies: Mercoa.CurrencyCode[] = []
@@ -1038,6 +1180,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
         PayableFormAction.CANCEL,
         PayableFormAction.ARCHIVE,
         PayableFormAction.PRINT_CHECK,
+        PayableFormAction.VOID_CHECK,
         PayableFormAction.DELETE,
         PayableFormAction.COMMENT,
         PayableFormAction.CREATE_COUNTERPARTY_ACCOUNT,
@@ -1130,6 +1273,17 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
               }
             },
             onError: async (e) => {
+              // Check if this is an invoice number conflict error
+              if (e.message && typeof e.message === 'string' && e.message.includes('Invoice number already exists')) {
+                setError('invoiceNumber', {
+                  type: 'manual',
+                  message: 'This invoice number already exists for this vendor.',
+                })
+                setIsLoading(false)
+                setValue('formAction', '')
+                return
+              }
+
               // if we are trying to approve or reject, just try that directly
               if (action && [PayableFormAction.APPROVE, PayableFormAction.REJECT].includes(action)) {
                 try {
@@ -1156,7 +1310,22 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
                       setValue('formAction', '')
                     },
                     onError: (e) => {
-                      console.error(e)
+                      // Check if this is an invoice number conflict error
+                      if (
+                        e.message &&
+                        typeof e.message === 'string' &&
+                        e.message.includes('Invoice number already exists')
+                      ) {
+                        setError('invoiceNumber', {
+                          type: 'manual',
+                          message: 'This invoice number already exists for this vendor.',
+                        })
+                        setIsLoading(false)
+                        setValue('formAction', '')
+                        return
+                      }
+
+                      console.error(e.message, e.reasons)
                       setIsLoading(false)
                       setValue('formAction', '')
                     },
@@ -1188,7 +1357,18 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
                 handleApproveOrRejectPayable(res, action)
               }
             },
-            onError: (e) => {
+            onError: (e: any) => {
+              // Check if this is an invoice number conflict error
+              if (e.message && typeof e.message === 'string' && e.message.includes('Invoice number already exists')) {
+                setError('invoiceNumber', {
+                  type: 'manual',
+                  message: 'This invoice number already exists. Please choose a different number.',
+                })
+                setIsLoading(false)
+                setValue('formAction', '')
+                return
+              }
+
               setIsLoading(false)
               setValue('formAction', '')
               console.error(e.message, e.reasons)
@@ -1545,6 +1725,28 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
         setValue('formAction', '')
       }
       return
+    } else if (action === PayableFormAction.VOID_CHECK) {
+      if (!invoiceData?.id) return
+      if (invoiceData.status !== Mercoa.InvoiceStatus.Paid) {
+        toast?.error('Only paid invoices can be voided')
+        setIsLoading(false)
+        setValue('formAction', '')
+        return
+      }
+
+      try {
+        await getInvoiceClient(mercoaSession, invoiceType ?? 'invoice')?.update(invoiceData.id, {
+          status: Mercoa.InvoiceStatus.Failed,
+        })
+        toast?.success('Check voided successfully')
+        refreshInvoice(invoiceData.id)
+      } catch (error: any) {
+        toast?.error(`Failed to void check: ${error.body ?? error.message}`)
+      }
+
+      setIsLoading(false)
+      setValue('formAction', '')
+      return
     } else if (action === PayableFormAction.COMMENT) {
       if (!mercoaSession.token || !invoiceData?.id) return
       if (!data.commentText) return
@@ -1556,7 +1758,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
         if (comment) {
           setValue('comments', [...(invoiceData?.comments ?? []), comment])
           setValue('commentText', '')
-          refreshInvoice(invoiceData.id)
           setIsLoading(false)
           setValue('formAction', '')
         } else {
@@ -1667,97 +1868,6 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       remove(index)
     }
   }
-
-  const getAvailablePaymentMethodTypes = useCallback(
-    (isDestination: boolean = false) => {
-      const paymentMethods = (isDestination ? paymentMethodsDestination : paymentMethodsSource) ?? []
-      const availableTypes: Array<{ key: string; value: string }> = []
-
-      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'bankAccount')) {
-        availableTypes.push({ key: 'bankAccount', value: 'Bank Account' })
-      }
-      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'card')) {
-        availableTypes.push({ key: 'card', value: 'Card' })
-      }
-      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'check')) {
-        availableTypes.push({ key: 'check', value: 'Check' })
-      }
-      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'utility')) {
-        availableTypes.push({ key: 'utility', value: 'Utility' })
-      }
-      if (paymentMethods?.some((paymentMethod) => paymentMethod.type === 'wallet')) {
-        availableTypes.push({ key: 'wallet', value: 'Wallet' })
-      }
-
-      paymentMethods?.forEach((paymentMethod) => {
-        if (paymentMethod.type === 'custom') {
-          if (availableTypes.some((type) => type.key === paymentMethod.schemaId)) return
-          availableTypes.push({ key: paymentMethod.schemaId ?? '', value: paymentMethod.schema.name ?? '' })
-        }
-      })
-
-      if (isDestination && vendorId) {
-        mercoaSession.organization?.paymentMethods?.backupDisbursements.forEach((backupDisbursement) => {
-          if (!backupDisbursement.active) return
-          if (
-            availableTypes.some((type) => {
-              if (type.key === backupDisbursement.type) return true
-              if (backupDisbursement.type === 'custom') {
-                const schema = mercoaSession.customPaymentMethodSchemas.find((e) => e.id == backupDisbursement.name)
-                if (schema && type.key === schema.id) return true
-              }
-              return false
-            })
-          ) {
-            return
-          }
-
-          if (backupDisbursement.type != 'custom')
-            availableTypes.push({ key: backupDisbursement.type, value: backupDisbursement.name })
-          else
-            availableTypes.push({
-              key: backupDisbursement.name,
-              value:
-                mercoaSession.customPaymentMethodSchemas.find((e) => e.id == backupDisbursement.name)?.name ?? 'Other',
-            })
-        })
-      } else {
-        const offPlatform = mercoaSession.organization?.paymentMethods?.payerPayments.find(
-          (e) => e.type === 'offPlatform',
-        )
-        if (offPlatform && offPlatform.active) {
-          availableTypes.push({
-            key: offPlatform.type,
-            value: offPlatform.name,
-          })
-        }
-        const bnpl = mercoaSession.organization?.paymentMethods?.payerPayments.find((e) => e.type === 'bnpl')
-        if (
-          bnpl &&
-          bnpl.active &&
-          invoiceId &&
-          mercoaSession.entity?.oatfiStatus === 'APPROVED' &&
-          dueDate &&
-          !dayjs(dueDate).isBefore(dayjs())
-        ) {
-          availableTypes.push({
-            key: bnpl.type,
-            value: 'Pay Later',
-          })
-        }
-      }
-
-      return availableTypes
-    },
-    [
-      paymentMethodsDestination,
-      paymentMethodsSource,
-      mercoaSession.organization?.paymentMethods,
-      invoiceId,
-      mercoaSession.entity?.oatfiStatus,
-      dueDate,
-    ],
-  )
 
   const handleUpdateTotalAmount = useCallback(() => {
     if (!lineItems?.length) return

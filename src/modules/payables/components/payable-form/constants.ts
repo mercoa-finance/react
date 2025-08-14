@@ -153,6 +153,7 @@ export enum PayableFormAction {
   MARK_PAID = 'markPaid',
   ASSIGN_TO_ENTITY = 'assignToEntity',
   GENERATE_CHECK = 'generateCheck',
+  VOID_CHECK = 'voidCheck',
 }
 
 export enum INVOICE_FIELDS {
