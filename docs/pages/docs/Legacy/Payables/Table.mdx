@@ -341,14 +341,14 @@ type PayablesTableChildrenProps = {
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
           <button
             style={{ padding: '5px', border: '1px solid #eee', color: hasPrevious ? '#000' : '#ccc' }}
-            disabled={!hasPrevious}
+            enabled={!hasPrevious}
             onClick={getPrevious}
           >
             Previous
           </button>
           <button
             style={{ padding: '5px', border: '1px solid #eee', color: hasNext ? '#000' : '#ccc' }}
-            disabled={!hasNext}
+            enabled={hasNext}
             onClick={getNext}
           >
             Next
