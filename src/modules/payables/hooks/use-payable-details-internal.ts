@@ -2088,22 +2088,26 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     setEnds: (ends: Date | undefined) => setValue('paymentSchedule.ends', ends),
   }
 
-  const approversContext: PayableApproversContext = {
+  const approversContextValue: PayableApproversContext = {
     approvers: watch('approvers') as Mercoa.ApprovalSlot[],
     approvalPolicy: approvalPolicy as Mercoa.ApprovalPolicyResponse[],
     setApproverBySlot: (approvalSlotId: string, assignedUserId: string) => {
       const index = approvers.findIndex((approver) => approver.approvalSlotId === approvalSlotId)
       if (index !== -1) {
         setValue(`approvers.${index}.assignedUserId`, assignedUserId)
-        propagateApprovalPolicy({
-          userId: assignedUserId,
-          policyId: approvers[index].approvalPolicyId,
-          approvalPolicies: approvalPolicy as Mercoa.ApprovalPolicyResponse[],
-          approverSlots: approvers,
-          setValue,
-          users: mercoaSession.users,
-          selectedApprovers: approvers,
-        })
+        if (!assignedUserId || assignedUserId === '') {
+          resetDownstreamPoliciesRecursive(approvalSlotId, approvers, setValue)
+        } else {
+          propagateApprovalPolicy({
+            userId: assignedUserId,
+            policyId: approvers[index].approvalPolicyId,
+            approvalPolicies: approvalPolicy as Mercoa.ApprovalPolicyResponse[],
+            approverSlots: approvers,
+            setValue,
+            users: mercoaSession.users,
+            selectedApprovers: approvers,
+          })
+        }
       }
     },
     getApprovalSlotOptions: (approvalSlotId: string) => {
@@ -2124,13 +2128,37 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       ]
     },
     selectedApproverBySlot: (approvalSlotId: string) => {
-      return (
+      const result =
         [...mercoaSession.users, { id: 'ANY', name: 'Any Approver', email: '' }].find((user) => {
           const approverSlot = approvers.find((e) => e?.approvalSlotId === approvalSlotId)
           if (user.id === approverSlot?.assignedUserId) return true
         }) ?? ''
-      )
+      return result
     },
+  }
+
+  // Recursive function to reset all downstream policies when upstream is reset
+  function resetDownstreamPoliciesRecursive(
+    upstreamSlotId: string,
+    approvers: Mercoa.ApprovalSlot[],
+    setValue: Function,
+  ) {
+    const upstreamSlot = approvers.find((slot) => slot.approvalSlotId === upstreamSlotId)
+    if (!upstreamSlot) return
+
+    // Find immediate downstream slots that depend on this upstream policy
+    const immediateDownstreamSlots = approvers.filter((slot) => slot.upstreamPolicyId === upstreamSlot.approvalPolicyId)
+
+    // Reset immediate downstream slots
+    immediateDownstreamSlots.forEach((slot) => {
+      const slotIndex = approvers.findIndex((a) => a.approvalSlotId === slot.approvalSlotId)
+      if (slotIndex !== -1) {
+        setValue(`approvers.${slotIndex}.assignedUserId`, '')
+
+        // RECURSIVE: Reset all downstream policies from this slot too
+        resetDownstreamPoliciesRecursive(slot.approvalSlotId, approvers, setValue)
+      }
+    })
   }
 
   const vendorContextValue: PayableVendorContext = {
@@ -2190,7 +2218,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       commentsContextValue: commentsContext,
       metadataContextValue: metadataContext,
       paymentMethodContextValue: paymentMethodContext,
-      approversContextValue: approversContext,
+      approversContextValue: approversContextValue,
       taxAndShippingContextValue: taxAndShippingContext,
       feesContextValue: feesContext,
       vendorCreditContextValue: vendorCreditContext,
