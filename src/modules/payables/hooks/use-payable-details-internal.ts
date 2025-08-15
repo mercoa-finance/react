@@ -1383,9 +1383,11 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       approvePayable(
         { invoice, invoiceType: invoiceType ?? 'invoice', toast },
         {
-          onSuccess: () => {
+          onSuccess: async () => {
             setIsLoading(false)
             setValue('formAction', '')
+            const updatedInvoice = await getInvoiceClient(mercoaSession, invoiceType ?? 'invoice')?.get(invoice.id)
+            onInvoiceUpdate?.(updatedInvoice)
           },
           onError: (e) => {
             setIsLoading(false)
@@ -1397,9 +1399,11 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       rejectPayable(
         { invoice, invoiceType: invoiceType ?? 'invoice', toast },
         {
-          onSuccess: () => {
+          onSuccess: async () => {
             setIsLoading(false)
             setValue('formAction', '')
+            const updatedInvoice = await getInvoiceClient(mercoaSession, invoiceType ?? 'invoice')?.get(invoice.id)
+            onInvoiceUpdate?.(updatedInvoice)
           },
           onError: (e) => {
             setIsLoading(false)

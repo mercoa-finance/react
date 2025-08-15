@@ -45,6 +45,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
   const { data: paymentLink } = usePaymentLinkQuery(invoiceId, invoiceType)
   const usePrefillOnce = useRef(true)
   const useOnceAfterPayerChange = useRef(false)
+  const isUpdating = useRef(false)
 
   const defaultPaymentSchedule =
     invoiceType === 'invoiceTemplate'
@@ -239,6 +240,9 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
 
   useEffect(() => {
     const subscription = watch((data, { name, type }) => {
+      // Prevent recursive updates
+      if (isUpdating.current) return
+
       if (name === 'currency') {
         const lineItems = data.lineItems as Mercoa.InvoiceLineItemUpdateRequest[]
         lineItems.forEach((lineItem, index) => {
@@ -252,20 +256,43 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
       // NOTE: data.lineItems is NOT ACTUALLY a Mercoa.InvoiceLineItemUpdateRequest[]!!! quantity, unitPrice, and amount can be strings
       const lineItems = data.lineItems as any[]
 
-      let amount = lineItems.reduce((acc, lineItem, index) => {
+      let totalAmount = 0
+      const updatedLineItems: Array<{ index: number; amount: number }> = []
+
+      // Calculate amounts without calling setValue immediately
+      lineItems.forEach((lineItem, index) => {
         // Coerce quantity / unitPrice types back to number
         // NOTE: Can safely assume , is the thousands separator because this frontend is formatting it that way
-        lineItem.quantity = Number(lineItem.quantity)
-        lineItem.unitPrice = Number(String(lineItem.unitPrice).replace(/,/g, ''))
+        const quantity = Number(lineItem.quantity)
+        const unitPrice = Number(String(lineItem.unitPrice).replace(/,/g, ''))
 
-        lineItem.amount = Math.floor((lineItem.quantity ?? 1) * (lineItem.unitPrice ?? 1) * 100) / 100
-        setValue(`lineItems.${index}.amount`, lineItem.amount)
-        return acc + lineItem.amount
-      }, 0)
+        const calculatedAmount = Math.floor((quantity ?? 1) * (unitPrice ?? 1) * 100) / 100
 
-      amount = Math.floor(amount * 100) / 100
+        // Only update if the amount actually changed
+        if (lineItem.amount !== calculatedAmount) {
+          updatedLineItems.push({ index, amount: calculatedAmount })
+        }
 
-      setValue('amount', amount)
+        totalAmount += calculatedAmount
+      })
+
+      // Update line item amounts in batch to avoid recursive triggers
+      if (updatedLineItems.length > 0) {
+        isUpdating.current = true
+        updatedLineItems.forEach(({ index, amount }) => {
+          setValue(`lineItems.${index}.amount`, amount, { shouldValidate: false })
+        })
+        isUpdating.current = false
+      }
+
+      const finalAmount = Math.floor(totalAmount * 100) / 100
+
+      // Only update total amount if it actually changed
+      if (data.amount !== finalAmount) {
+        isUpdating.current = true
+        setValue('amount', finalAmount, { shouldValidate: false })
+        isUpdating.current = false
+      }
     })
 
     return () => subscription.unsubscribe()

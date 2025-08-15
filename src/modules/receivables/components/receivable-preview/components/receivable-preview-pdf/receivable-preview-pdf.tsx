@@ -25,7 +25,6 @@ export function ReceivablePreviewPdf({
     invoice.vendor?.logo ??
     mercoaSession.organization?.logoUrl ??
     'https://1000logos.net/wp-content/uploads/2021/04/ACME-logo.png'
-  // 'https://storage.googleapis.com/mercoa-partner-logos/mercoa-logo.png'
 
   return (
     <div className="mercoa-container mercoa-mx-auto mercoa-mt-10">
@@ -51,14 +50,16 @@ export function ReceivablePreviewPdf({
                 </div>
               )}
             </div>
-            <div>
-              <QRCode
-                size={75}
-                style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
-                value={paymentLink ?? mercoaSession.organization?.websiteUrl ?? 'https://mercoa.com'}
-              />
-              <div className="mercoa-text-gray-500 mercoa-text-sm mercoa-text-center">Scan to pay</div>
-            </div>
+            {paymentLink && (
+              <div>
+                <QRCode
+                  size={75}
+                  style={{ height: 'auto', maxWidth: '100%', width: '100%' }}
+                  value={paymentLink ?? mercoaSession.organization?.websiteUrl ?? 'https://mercoa.com'}
+                />
+                <div className="mercoa-text-gray-500 mercoa-text-sm mercoa-text-center">Scan to pay</div>
+              </div>
+            )}
           </div>
         </div>
       )}
