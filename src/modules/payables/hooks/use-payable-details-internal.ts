@@ -268,7 +268,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       (invoiceData?.paymentSource as Mercoa.BankAccountResponse)?.checkOptions?.enabled ?? false,
     batchPayment: invoiceData?.batchPayment ?? false,
     description: invoiceData?.noteToSelf ?? '',
-    hasDocuments: invoiceData?.hasDocuments ?? !!uploadedDocument ?? false,
+    hasDocuments: invoiceData?.hasDocuments ?? !!uploadedDocument,
     formAction: '',
     saveAsAdmin: false,
     metadata: invoiceData?.metadata ?? {},
@@ -551,7 +551,7 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     )
     setValue('batchPayment', invoiceData.batchPayment ?? false)
     setValue('description', invoiceData.noteToSelf ?? '')
-    setValue('hasDocuments', invoiceData.hasDocuments ?? uploadedDocument ?? false)
+    setValue('hasDocuments', invoiceData.hasDocuments ?? !!uploadedDocument)
     setValue('formAction', '')
     setValue('saveAsAdmin', false)
     setValue('metadata', invoiceData.metadata ?? {})

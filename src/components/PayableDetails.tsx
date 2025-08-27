@@ -467,7 +467,7 @@ export function PayableFormV1({
       paymentSourceCheckEnabled: (invoice?.paymentSource as Mercoa.BankAccountResponse)?.checkOptions?.enabled ?? false,
       batchPayment: invoice?.batchPayment ?? false,
       description: invoice?.noteToSelf ?? '',
-      hasDocuments: invoice?.hasDocuments ?? !!uploadedDocument ?? false,
+      hasDocuments: invoice?.hasDocuments ?? !!uploadedDocument,
       saveAsStatus: '',
       saveAsAdmin: false,
       metadata: invoice?.metadata ?? {},
@@ -573,7 +573,7 @@ export function PayableFormV1({
     )
     setValue('batchPayment', invoice.batchPayment ?? false)
     setValue('description', invoice.noteToSelf ?? '')
-    setValue('hasDocuments', invoice.hasDocuments ?? uploadedDocument ?? false)
+    setValue('hasDocuments', invoice.hasDocuments ?? !!uploadedDocument)
     setValue('saveAsStatus', '')
     setValue('saveAsAdmin', false)
     setValue('metadata', invoice.metadata ?? {})

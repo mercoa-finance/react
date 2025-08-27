@@ -1938,7 +1938,7 @@ export function InvoiceMetrics({
       return accounting.formatMoney(0, currencyCodeToSymbol('USD'))
     }
     if (metrics.length < 2) {
-      return accounting.formatMoney(metrics[0][key] ?? 0 ?? '', currencyCodeToSymbol(metrics[0].currency))
+      return accounting.formatMoney(metrics[0][key] ?? 0, currencyCodeToSymbol(metrics[0].currency))
     }
     return (
       <div>
@@ -1948,7 +1948,7 @@ export function InvoiceMetrics({
             <p key={metric.currency + metric.group?.join('-')} className="mercoa-text-xs">
               {statuses.length > 1 && <span className="mercoa-text-gray-600">{statuses.join(', ')}: </span>}
               <span className="mercoa-text-gray-900">
-                {accounting.formatMoney(metric[key] ?? 0 ?? '', currencyCodeToSymbol(metric.currency))}
+                {accounting.formatMoney(metric[key] ?? 0, currencyCodeToSymbol(metric.currency))}
               </span>
               <span className="mercoa-text-gray-500"> {metric.currency}</span>
             </p>

@@ -16,7 +16,6 @@ import {
   MercoaInputLabel,
   NoSession,
   PaymentMethodButton,
-  PaymentMethodConfirmationPill,
   PaymentMethodList,
   Tooltip,
   inputClassName,
@@ -278,15 +277,8 @@ export function CustomPaymentMethod({
             </div>
           )}
           <div className="mercoa-flex">
-            {showEdit || showEntityConfirmation || editEntityConfirmation ? (
+            {showEdit ? (
               <>
-                {(showEntityConfirmation || editEntityConfirmation) && (
-                  <PaymentMethodConfirmationPill
-                    showEntityConfirmation={showEntityConfirmation}
-                    editEntityConfirmation={editEntityConfirmation}
-                    account={account}
-                  />
-                )}
                 {!hideDefaultIndicator && <DefaultPaymentMethodIndicator paymentMethod={account} />}
                 <MercoaButton
                   size="sm"

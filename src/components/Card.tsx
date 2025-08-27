@@ -9,7 +9,6 @@ import {
   MercoaButton,
   NoSession,
   PaymentMethodButton,
-  PaymentMethodConfirmationPill,
   PaymentMethodList,
   useMercoaSession,
 } from './index'
@@ -300,13 +299,7 @@ export function Card({
               >{`${capitalize(brand)} ••••${account?.lastFour}`}</p>
             </div>
           </div>
-          {(showEntityConfirmation || editEntityConfirmation) && (
-            <PaymentMethodConfirmationPill
-              showEntityConfirmation={showEntityConfirmation}
-              editEntityConfirmation={editEntityConfirmation}
-              account={account}
-            />
-          )}
+
           {showEdit && (
             <>
               {!hideDefaultIndicator && (

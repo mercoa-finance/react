@@ -13,7 +13,6 @@ import {
   MercoaInput,
   NoSession,
   PaymentMethodButton,
-  PaymentMethodConfirmationPill,
   PaymentMethodList,
   StateDropdown,
   useMercoaSession,
@@ -171,13 +170,7 @@ export function Check({
               className={`mercoa-text-sm mercoa-font-medium mercoa-text-gray-900 ${selected ? 'mercoa-underline' : ''}`}
             >{`${account?.city} ${account?.stateOrProvince}, ${account?.postalCode}`}</p>
           </div>
-          {(showEntityConfirmation || editEntityConfirmation) && (
-            <PaymentMethodConfirmationPill
-              showEntityConfirmation={showEntityConfirmation}
-              editEntityConfirmation={editEntityConfirmation}
-              account={account}
-            />
-          )}
+
           {showEdit && (
             <>
               {!hideDefaultIndicator && (

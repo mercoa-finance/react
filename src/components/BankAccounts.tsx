@@ -26,7 +26,6 @@ import {
   MercoaInput,
   NoSession,
   PaymentMethodButton,
-  PaymentMethodConfirmationPill,
   PaymentMethodList,
   Tooltip,
   inputClassName,
@@ -254,7 +253,7 @@ export function BankAccount({
             </div>
           </div>
         </div>
-        {(showEdit || showVerification || showEntityConfirmation || editEntityConfirmation) && (
+        {(showEdit || showVerification) && (
           <div className="mercoa-flex mercoa-items-center mercoa-gap-x-1">
             {/* Default Payment Method Indicator */}
             {showEdit && !hideDefaultIndicator && <DefaultPaymentMethodIndicator paymentMethod={account} />}
@@ -280,15 +279,6 @@ export function BankAccount({
 
             {/* Verification Status Indicator */}
             {!hideVerificationStatus && <BankAccountStatus status={account?.status} />}
-
-            {/* Entity Confirmation Indicator */}
-            {(showEntityConfirmation || editEntityConfirmation) && (
-              <PaymentMethodConfirmationPill
-                showEntityConfirmation={showEntityConfirmation}
-                editEntityConfirmation={editEntityConfirmation}
-                account={account}
-              />
-            )}
 
             {/* Check Send Status Indicator */}
             {showEdit && !hideCheckSendStatus && (

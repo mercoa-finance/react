@@ -55,9 +55,9 @@ export type OnboardingFormData = {
   email: string
   accountType: Mercoa.AccountType
   businessType?: Mercoa.BusinessType
-  firstName?: string
+  firstName: string
   middleName?: string
-  lastName?: string
+  lastName: string
   suffix?: string
   dob?: Date
   taxID?: string
@@ -1395,7 +1395,7 @@ export function EntityOnboardingButton({
   const [showAdd, setShowAdd] = useState(false)
   const mercoaSession = useMercoaSession()
 
-  const { register, handleSubmit, watch, formState, reset } = useForm({
+  const { register, handleSubmit, watch, formState, reset } = useForm<OnboardingFormData>({
     defaultValues: {
       accountType: Mercoa.AccountType.Business,
       legalBusinessName: '',
@@ -1692,7 +1692,16 @@ export function RepresentativeOnboardingForm({
       } catch (e) {
         console.error(e)
         setIsSubmitting(false)
-        toast.error('There was an issue creating this representative. Please check your information and try again.')
+        const errorMessage =
+          e && typeof e === 'object' && 'message' in e && typeof (e as { message?: string }).message === 'string'
+            ? (e as { message: string }).message
+            : `${e}`
+
+        toast.error(
+          `There was an issue creating this representative. Please check your information and try again.${
+            errorMessage ? `Error: ${errorMessage}` : ''
+          }`,
+        )
       }
     }
   }

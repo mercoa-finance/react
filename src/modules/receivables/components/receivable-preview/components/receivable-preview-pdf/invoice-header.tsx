@@ -1,6 +1,19 @@
 import { Mercoa } from '@mercoa/javascript'
 
-export function InvoiceHeader({ invoice, logo }: { invoice: Mercoa.InvoiceResponse; logo: string }) {
+export function InvoiceHeader({
+  invoice,
+  logo,
+  invoiceCustomizations,
+}: {
+  invoice: Mercoa.InvoiceResponse
+  logo: string
+  invoiceCustomizations?: {
+    hideAddress?: boolean
+    hideQrCode?: boolean
+    hideBankDetails?: boolean
+    hidePaymentLink?: boolean
+  }
+}) {
   const payerAddress = invoice.payer?.profile?.individual?.address ?? invoice.payer?.profile?.business?.address
   const payerEmail = invoice.payer?.profile?.individual?.email ?? invoice.payer?.profile?.business?.email
   const vendorAddress = invoice.vendor?.profile?.individual?.address ?? invoice.vendor?.profile?.business?.address
@@ -11,7 +24,7 @@ export function InvoiceHeader({ invoice, logo }: { invoice: Mercoa.InvoiceRespon
       <div>
         <p className="mercoa-text-2xl mercoa-font-bold">Bill To:</p>
         <p className="mercoa-text-xl">{invoice.payer?.name}</p>
-        {payerAddress?.addressLine1 && (
+        {!invoiceCustomizations?.hideAddress && payerAddress?.addressLine1 && (
           <>
             <p>
               {payerAddress.addressLine1} {payerAddress.addressLine2}
@@ -21,7 +34,7 @@ export function InvoiceHeader({ invoice, logo }: { invoice: Mercoa.InvoiceRespon
             </p>
           </>
         )}
-        {payerEmail && <p>{payerEmail}</p>}
+        {!invoiceCustomizations?.hideAddress && payerEmail && <p>{payerEmail}</p>}
       </div>
 
       <div className="mercoa-border-l-2 mercoa-border-gray-500 mercoa-pl-6">
@@ -29,7 +42,7 @@ export function InvoiceHeader({ invoice, logo }: { invoice: Mercoa.InvoiceRespon
         <p className="mercoa-text-xl mercoa-mt-2">
           {invoice.vendor?.profile?.business?.doingBusinessAs ?? invoice.vendor?.name}
         </p>
-        {vendorAddress?.addressLine1 && (
+        {!invoiceCustomizations?.hideAddress && vendorAddress?.addressLine1 && (
           <>
             <p>
               {vendorAddress.addressLine1} {vendorAddress.addressLine2}
@@ -39,7 +52,7 @@ export function InvoiceHeader({ invoice, logo }: { invoice: Mercoa.InvoiceRespon
             </p>
           </>
         )}
-        {vendorEmail && <p>{vendorEmail}</p>}
+        {!invoiceCustomizations?.hideAddress && vendorEmail && <p>{vendorEmail}</p>}
       </div>
     </div>
   )

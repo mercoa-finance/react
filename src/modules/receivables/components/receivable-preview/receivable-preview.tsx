@@ -21,6 +21,15 @@ export default function InvoicePreview() {
   const paymentDestinationType = watch('paymentDestinationType')
 
   const [previewType, setPreviewType] = useState<PreviewType>('pdf')
+  const [invoiceCustomizations, setInvoiceCustomizations] = useState<
+    | {
+        hideAddress?: boolean
+        hideQrCode?: boolean
+        hideBankDetails?: boolean
+        hidePaymentLink?: boolean
+      }
+    | undefined
+  >(undefined)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const previewRef = useRef<HTMLDivElement>(null)
@@ -99,6 +108,22 @@ export default function InvoicePreview() {
     }
   }, [])
 
+  useEffect(() => {
+    const fetchVendorCustomizations = async () => {
+      if (!mercoaSession.client || !mercoaSession.entity?.id) return
+
+      try {
+        const customizations = await mercoaSession.client.entity.customization.get(mercoaSession.entity.id)
+        setInvoiceCustomizations(customizations.invoice)
+      } catch (e) {
+        console.error('Failed to fetch vendor customizations:', e)
+        setInvoiceCustomizations(undefined)
+      }
+    }
+
+    fetchVendorCustomizations()
+  }, [mercoaSession.client, mercoaSession.entity?.id])
+
   return (
     <div
       ref={containerRef}
@@ -124,7 +149,9 @@ export default function InvoicePreview() {
         ref={previewRef}
         className="mercoa-h-[880px] mercoa-w-[680px] mercoa-grow mercoa-border mercoa-rounded-mercoa mercoa-shadow-md mercoa-p-10"
       >
-        {previewType === 'pdf' && <ReceivablePreviewPdf invoice={invoice} />}
+        {previewType === 'pdf' && (
+          <ReceivablePreviewPdf invoice={invoice} invoiceCustomizations={invoiceCustomizations} />
+        )}
         {previewType === 'paymentPage' && <ReceivablePreviewPaymentPage invoice={invoice} />}
       </div>
     </div>
