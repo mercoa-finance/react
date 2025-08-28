@@ -18,7 +18,9 @@ import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
+import { removeThousands } from '../lib/lib'
 import InvoicePreviewV1 from './InvoicePreview'
+import { ReceivableFormErrorsV1 } from './ReceivableFormErrorsV1'
 import {
   BankAccount,
   Card,
@@ -105,6 +107,7 @@ export function ReceivableDetailsV1({
       status: yup.string(),
       amount: yup
         .number()
+        .transform(removeThousands)
         .positive('Please add a line item to the invoice. Amount must be at least 0.00')
         .required()
         .typeError('Please enter a valid number'),
@@ -120,10 +123,10 @@ export function ReceivableDetailsV1({
           name: yup.string().required('Name is a required field'),
           description: yup.string(),
           showDescription: yup.boolean(),
-          amount: yup.number().required().typeError('Please enter a valid number'),
+          amount: yup.number().transform(removeThousands).required().typeError('Please enter a valid number'),
           currency: yup.string(),
-          quantity: yup.number().required().typeError('Please enter a valid number'),
-          unitPrice: yup.number().required().typeError('Please enter a valid number'),
+          quantity: yup.number().transform(removeThousands).required().typeError('Please enter a valid number'),
+          unitPrice: yup.number().transform(removeThousands).required().typeError('Please enter a valid number'),
           metadata: yup.mixed().nullable(),
           glAccountId: yup.string(),
           createdAt: yup.date(),
@@ -688,6 +691,7 @@ export function ReceivableFormV1({
                         register={register}
                         placeholder="Quantity"
                         type="number"
+                        step="any"
                         readOnly={notDraft}
                       />
                     </div>
@@ -699,6 +703,7 @@ export function ReceivableFormV1({
                         control={control}
                         placeholder="Unit Price"
                         type="currency"
+                        step="any"
                         leadingIcon={
                           <span className="mercoa-text-gray-500 sm:mercoa-text-sm">
                             {currencyCodeToSymbol(currency)}
@@ -1541,28 +1546,36 @@ export function ReceivableActionsV1({
   )
 
   return (
-    <div className="mercoa-absolute mercoa-bottom-0 mercoa-right-0 mercoa-w-full mercoa-bg-white mercoa-z-10">
-      {isSaving ? (
-        <div className="mercoa-flex mercoa-items-center mercoa-justify-center mercoa-p-2">
-          <LoadingSpinnerIcon />
-        </div>
-      ) : (
-        <div className="mercoa-mx-auto mercoa-flex mercoa-flex-row mercoa-justify-end mercoa-items-center mercoa-gap-2 mercoa-py-3 mercoa-px-6">
-          {!invoice?.id ? (
-            createInvoiceButton
-          ) : (
-            <>
-              {showDeleteButton && deleteButton}
-              {showCancelButton && cancelButton}
-              {showSaveDraftButton && saveDraftButton}
-              {showSendEmailButton && sendEmailButton}
-              {showMarkAsPaidButton && markAsPaidButton}
-              {showRestoreAsDraftButton && restoreAsDraftButton}
-              {menu}
-            </>
-          )}
-        </div>
-      )}
-    </div>
+    <>
+      <div className="mercoa-col-span-full" style={{ visibility: 'hidden' }}>
+        <ReceivableFormErrorsV1 />
+      </div>
+      <div className="mercoa-absolute mercoa-bottom-0 mercoa-right-0 mercoa-w-full mercoa-bg-white mercoa-z-10">
+        {isSaving ? (
+          <div className="mercoa-flex mercoa-items-center mercoa-justify-center mercoa-p-2">
+            <LoadingSpinnerIcon />
+          </div>
+        ) : (
+          <>
+            <ReceivableFormErrorsV1 />
+            <div className="mercoa-mx-auto mercoa-flex mercoa-flex-row mercoa-justify-end mercoa-items-center mercoa-gap-2 mercoa-py-3 mercoa-px-6">
+              {!invoice?.id ? (
+                createInvoiceButton
+              ) : (
+                <>
+                  {showDeleteButton && deleteButton}
+                  {showCancelButton && cancelButton}
+                  {showSaveDraftButton && saveDraftButton}
+                  {showSendEmailButton && sendEmailButton}
+                  {showMarkAsPaidButton && markAsPaidButton}
+                  {showRestoreAsDraftButton && restoreAsDraftButton}
+                  {menu}
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </>
   )
 }

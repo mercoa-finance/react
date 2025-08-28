@@ -1107,12 +1107,38 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     if (
       paymentSourceType === Mercoa.PaymentMethodType.OffPlatform &&
       paymentDestinationType !== Mercoa.PaymentMethodType.OffPlatform &&
-      paymentMethodsDestination?.some((pm) => pm.type === Mercoa.PaymentMethodType.OffPlatform)
+      vendorId
     ) {
-      setValue('paymentDestinationType', Mercoa.PaymentMethodType.OffPlatform)
-      setMethodOnTypeChange(true, 'offPlatform')
+      // Check if vendor already has an off-platform payment method
+      const existingOffPlatformMethod = paymentMethodsDestination?.find(
+        (pm) => pm.type === Mercoa.PaymentMethodType.OffPlatform
+      )
+      
+      if (existingOffPlatformMethod) {
+        // Use existing off-platform method
+        setValue('paymentDestinationType', Mercoa.PaymentMethodType.OffPlatform)
+        setMethodOnTypeChange(true, 'offPlatform')
+      } else {
+        // Create off-platform payment method for vendor
+        mercoaSession.client?.entity.paymentMethod
+          .create(vendorId, {
+            type: Mercoa.PaymentMethodType.OffPlatform,
+          })
+          .then((resp) => {
+            if (resp) {
+              // Refresh payment methods and set the new one
+              queryClient.invalidateQueries({ queryKey: ['paymentMethods', vendorId] })
+              setValue('paymentDestinationType', Mercoa.PaymentMethodType.OffPlatform)
+              setValue('paymentDestinationId', resp.id)
+              clearErrors('paymentDestinationId')
+            }
+          })
+          .catch((error) => {
+            console.error('Failed to create off-platform payment method for vendor:', error)
+          })
+      }
     }
-  }, [paymentSourceType, paymentDestinationType, paymentMethodsDestination, setValue, setMethodOnTypeChange])
+  }, [paymentSourceType, paymentDestinationType, paymentMethodsDestination, vendorId, setValue, setMethodOnTypeChange, mercoaSession.client, queryClient, clearErrors])
 
   const finalSupportedCurrencies = useMemo(() => {
     let derivedSupportedCurrencies: Mercoa.CurrencyCode[] = []

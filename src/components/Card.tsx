@@ -144,6 +144,7 @@ export function AddCard({
 
   const [moovScriptLoaded, setMoovScriptLoaded] = useState(false)
   const [moovToken, setMoovToken] = useState<Mercoa.CardLinkTokenResponse | null>(null)
+  const [tokenError, setTokenError] = useState<string | null>(null)
 
   const entityIdFinal = entityId ?? mercoaSession.entityId
 
@@ -170,47 +171,104 @@ export function AddCard({
 
   useEffect(() => {
     if (!entityIdFinal || !mercoaSession.client) return
-    mercoaSession.client?.entity.paymentMethod.cardLinkToken(entityIdFinal).then((resp) => {
-      setMoovToken(resp)
-    })
+    setTokenError(null)
+    mercoaSession.client?.entity.paymentMethod
+      .cardLinkToken(entityIdFinal)
+      .then((resp) => {
+        if (!resp?.accountId) {
+          setTokenError('Unable to initialize card form. Please ensure your entity is properly configured.')
+          return
+        }
+        setMoovToken(resp)
+      })
+      .catch((error) => {
+        console.error('Failed to get card link token:', error)
+        setTokenError('Unable to initialize card form. Please try again or contact support if the issue persists.')
+      })
   }, [mercoaSession, entityIdFinal])
 
   useEffect(() => {
-    if (!entityIdFinal || !moovToken || !moovScriptLoaded || !cardInput) return
+    if (!entityIdFinal || !moovToken || !moovScriptLoaded) return
 
-    const { token, accountId } = moovToken
+    // Wait for the Moov component to be rendered and available
+    const waitForMoovComponent = () => {
+      const cardInput = document.querySelector("[id^='moov-card-link']") as HTMLFormElement
+      if (cardInput) {
+        const { token, accountId } = moovToken
 
-    cardInput.setAttribute('oauth-token', token)
-    cardInput.setAttribute('account-id', accountId)
+        cardInput.setAttribute('oauth-token', token)
+        cardInput.setAttribute('account-id', accountId)
 
-    const successCallback = async (card: {
-      cardType: Mercoa.CardType
-      brand: string
-      lastFourCardNumber: string
-      expiration: { month: string; year: string }
-      cardID: string
-    }) => {
-      const resp = await mercoaSession.client?.entity.paymentMethod.create(entityIdFinal, {
-        type: 'card',
-        cardType: card.cardType,
-        cardBrand: card.brand.replace(' ', '') as Mercoa.CardBrand,
-        lastFour: card.lastFourCardNumber,
-        expMonth: card.expiration.month,
-        expYear: card.expiration.year,
-        token: card.cardID,
-      })
-      if (!resp) {
-        throw new Error('Failed to create payment method')
+        // Set up the success callback
+        const successCallback = async (card: {
+          cardType: Mercoa.CardType
+          brand: string
+          lastFourCardNumber: string
+          expiration: { month: string; year: string }
+          cardID: string
+        }) => {
+          const resp = await mercoaSession.client?.entity.paymentMethod.create(entityIdFinal, {
+            type: 'card',
+            cardType: card.cardType,
+            cardBrand: card.brand.replace(' ', '') as Mercoa.CardBrand,
+            lastFour: card.lastFourCardNumber,
+            expMonth: card.expiration.month,
+            expYear: card.expiration.year,
+            token: card.cardID,
+          })
+          if (!resp) {
+            throw new Error('Failed to create payment method')
+          }
+          onSubmit(resp as Mercoa.PaymentMethodResponse.Card)
+          mercoaSession.refresh()
+        }
+
+        // @ts-ignore
+        cardInput.onSuccess = successCallback
+      } else {
+        // If component not found, retry after a short delay
+        setTimeout(waitForMoovComponent, 100)
       }
-      onSubmit(resp as Mercoa.PaymentMethodResponse.Card)
-      mercoaSession.refresh()
     }
 
-    // @ts-ignore
-    cardInput.onSuccess = successCallback
-  }, [entityIdFinal, moovToken, moovScriptLoaded, cardInput])
+    // Start waiting for the component
+    waitForMoovComponent()
+  }, [entityIdFinal, moovToken, moovScriptLoaded, mercoaSession, onSubmit])
 
   if (!mercoaSession.client) return <NoSession componentName="AddCreditCard" />
+
+  if (tokenError) {
+    return (
+      <div className="mercoa-space-y-3 mercoa-text-left">
+        {title || (
+          <h3 className="mercoa-text-center mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+            Add Card
+          </h3>
+        )}
+        <div className="mercoa-rounded-md mercoa-bg-red-50 mercoa-p-4">
+          <div className="mercoa-flex">
+            <div className="mercoa-flex-shrink-0">
+              <svg className="mercoa-h-5 mercoa-w-5 mercoa-text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </div>
+            <div className="mercoa-ml-3">
+              <h3 className="mercoa-text-sm mercoa-font-medium mercoa-text-red-800">Card Setup Error</h3>
+              <div className="mercoa-mt-2 mercoa-text-sm mercoa-text-red-700">
+                <p>{tokenError}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        {actions}
+      </div>
+    )
+  }
+
   return (
     <div className="mercoa-space-y-3 mercoa-text-left">
       {title || (

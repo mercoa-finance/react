@@ -1,17 +1,18 @@
-import { XCircleIcon } from '@heroicons/react/24/outline'
-import { ReactNode } from 'react'
-import { FormProvider, useFieldArray } from 'react-hook-form'
+import useResizeObserver from '@react-hook/resize-observer'
+import accounting from 'accounting'
+import { ReactNode, useLayoutEffect, useRef, useState } from 'react'
+import { FormProvider } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import {
   CounterpartiesSearch,
   InvoiceStatusPill,
-  MercoaButton,
   MercoaInput,
   NoSession,
   useMercoaSession,
 } from '../../../../components'
 import { currencyCodeToSymbol } from '../../../../lib/currency'
 import { useReceivableDetails } from '../../hooks/use-receivable-details'
+import { LineItems } from './components/line-items'
 import { ReceivableActions } from './components/receivable-actions'
 import { ReceivablePaymentDestination } from './components/receivable-payment-destination'
 import { ReceivablePaymentSource } from './components/receivable-payment-source'
@@ -38,19 +39,38 @@ export function ReceivableForm({ children }: { children?: ReactNode }) {
     formState: { errors },
   } = formMethods
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: 'lineItems',
-  })
+  const useWidth = (target: any) => {
+    const [width, setWidth] = useState<number>(0)
+
+    useLayoutEffect(() => {
+      if (target.current) {
+        setWidth(target.current.getBoundingClientRect().width)
+      }
+    }, [target])
+
+    useResizeObserver(target, (entry: any) => setWidth(entry.contentRect.width))
+    return width
+  }
+
+  const wrapperDiv = useRef(null)
+  const width = useWidth(wrapperDiv)
 
   const currency = watch('currency')
-  const notDraft = invoice?.status && invoice?.status !== Mercoa.InvoiceStatus.Draft
+  const notDraft = !!(invoice?.status && invoice?.status !== Mercoa.InvoiceStatus.Draft)
 
   function isInvoiceNumberEditable(invoice?: Mercoa.InvoiceResponse) {
     if (!invoice) return true
     if (invoice.status === 'SCHEDULED' && invoice.recurringTemplateId) return true
     if (notDraft) return false
     return true
+  }
+
+  let formCols = 'mercoa-grid-cols-1'
+  if (width && width > 300) {
+    formCols = 'mercoa-grid-cols-2'
+  }
+  if (width && width > 400) {
+    formCols = 'mercoa-grid-cols-3'
   }
 
   if (!mercoaSession.client) return <NoSession componentName="ReceivableForm" />
@@ -83,9 +103,9 @@ export function ReceivableForm({ children }: { children?: ReactNode }) {
 
           <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-col-span-full mercoa-my-4" />
 
-          <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-4 mercoa-items-center mercoa-w-full">
+          <div className={`mercoa-grid ${formCols} mercoa-gap-4 mercoa-items-center mercoa-w-full`}>
             {/*  VENDOR SEARCH */}
-            <div className="sm:mercoa-col-span-3">
+            <div className="mercoa-col-span-full">
               <label
                 htmlFor="vendor-name"
                 className="mercoa-block mercoa-text-lg mercoa-font-medium mercoa-leading-6 mercoa-text-gray-700"
@@ -129,14 +149,17 @@ export function ReceivableForm({ children }: { children?: ReactNode }) {
               </>
             )}
 
-            <div className="mercoa-mt-5 mercoa-grid mercoa-grid-cols-3 mercoa-items-center mercoa-gap-4 mercoa-p-0.5">
+            <div
+              className={`mercoa-grid ${formCols} mercoa-mt-5 mercoa-items-center mercoa-gap-4 mercoa-p-0.5`}
+              ref={wrapperDiv}
+            >
               {/*  INVOICE DATE */}
               <MercoaInput
                 name="invoiceDate"
                 label="Invoice Date"
                 placeholder="Invoice Date"
                 type="date"
-                className="sm:mercoa-col-span-1"
+                className="md:mercoa-col-span-1 mercoa-col-span-full"
                 control={control}
                 errors={errors}
                 readOnly={notDraft}
@@ -148,7 +171,7 @@ export function ReceivableForm({ children }: { children?: ReactNode }) {
                 label="Due Date"
                 placeholder="Due Date"
                 type="date"
-                className="sm:mercoa-col-span-1"
+                className="md:mercoa-col-span-1 mercoa-col-span-full"
                 control={control}
                 errors={errors}
                 readOnly={notDraft}
@@ -162,7 +185,7 @@ export function ReceivableForm({ children }: { children?: ReactNode }) {
                 name="invoiceNumber"
                 label="Invoice #"
                 type="text"
-                className="sm:mercoa-col-span-1"
+                className="md:mercoa-col-span-1 mercoa-col-span-full"
                 readOnly={!isInvoiceNumberEditable(invoice)}
               />
             </div>
@@ -170,193 +193,43 @@ export function ReceivableForm({ children }: { children?: ReactNode }) {
             {/*  GRAY border  */}
             <div className="mercoa-border-b mercoa-border-gray-900/10 mercoa-pb-6 mercoa-col-span-full" />
 
-            <div>
-              <p className="mercoa-mt-6 mercoa-text-lg">Line Items</p>
-              <div className="mercoa-min-w-full">
-                <div className="mercoa-mt-2 mercoa-grid mercoa-grid-cols-1 mercoa-gap-4">
-                  {/* Line Items */}
-                  {fields.map((field, index) => (
-                    <div key={field.id}>
-                      <div className="mercoa-grid mercoa-grid-cols-[2fr_1fr_1fr_1fr_18px] mercoa-gap-2 mercoa-mb-1">
-                        <div>
-                          <MercoaInput
-                            label="Name"
-                            name={`lineItems.${index}.name`}
-                            errors={errors}
-                            register={register}
-                            placeholder="Item Name"
-                            readOnly={notDraft}
-                          />
-                        </div>
-                        <div>
-                          <MercoaInput
-                            label="Quantity"
-                            name={`lineItems.${index}.quantity`}
-                            errors={errors}
-                            register={register}
-                            placeholder="Quantity"
-                            type="number"
-                            step="any"
-                            readOnly={notDraft}
-                          />
-                        </div>
-                        <div>
-                          <MercoaInput
-                            label="Unit Price"
-                            name={`lineItems.${index}.unitPrice`}
-                            errors={errors}
-                            control={control}
-                            placeholder="Unit Price"
-                            type="currency"
-                            leadingIcon={
-                              <span className="mercoa-text-gray-500 sm:mercoa-text-sm">
-                                {currencyCodeToSymbol(currency)}
-                              </span>
-                            }
-                            readOnly={notDraft}
-                          />
-                        </div>
-                        <div>
-                          <MercoaInput
-                            label="Total Amount"
-                            name={`lineItems.${index}.amount`}
-                            errors={errors}
-                            control={control}
-                            placeholder="Total Amount"
-                            readOnly
-                            type="currency"
-                            leadingIcon={
-                              <span className="mercoa-text-gray-500 sm:mercoa-text-sm">
-                                {currencyCodeToSymbol(currency)}
-                              </span>
-                            }
-                          />
-                        </div>
-                        {!notDraft && (
-                          <div className="mercoa-flex mercoa-items-center">
-                            <XCircleIcon
-                              className="mercoa-size-5 mercoa-cursor-pointer mercoa-text-gray-500 mercoa-mt-[28px]"
-                              onClick={() => remove(index)}
-                            />
-                          </div>
-                        )}
-                      </div>
-                      {watch(`lineItems.${index}.showDescription`) ? (
-                        <>
-                          <div className="mercoa-grid mercoa-grid-cols-[1fr_18px] mercoa-gap-2">
-                            <MercoaInput
-                              label="Description"
-                              name={`lineItems.${index}.description`}
-                              errors={errors}
-                              register={register}
-                              placeholder="Description"
-                              type="text"
-                            />
-                          </div>
-                          {!notDraft && (
-                            <div
-                              className="mercoa-text-sm mercoa-text-gray-500 mercoa-cursor-pointer mercoa-mt-1 hover:mercoa-text-gray-700"
-                              onClick={() => {
-                                setValue(`lineItems.${index}.showDescription`, false)
-                                setValue(`lineItems.${index}.description`, '')
-                              }}
-                            >
-                              - Remove description
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          {!notDraft && (
-                            <div
-                              className="mercoa-text-sm mercoa-text-gray-500 mercoa-cursor-pointer mercoa-mt-1 hover:mercoa-text-gray-700"
-                              onClick={() => setValue(`lineItems.${index}.showDescription`, true)}
-                            >
-                              + Add description (optional)
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
+            <LineItems
+              control={control}
+              register={register}
+              setValue={setValue}
+              watch={watch}
+              notDraft={notDraft}
+              currency={currency}
+            />
 
-                {/* Add Line Item Button */}
-                <div className={`${fields.length > 0 ? 'mercoa-mt-4' : ''}`}>
-                  {!notDraft && (
-                    <MercoaButton
-                      type="button"
-                      isEmphasized
-                      size="md"
-                      onClick={() =>
-                        append({
-                          id: 'new',
-                          description: '',
-                          quantity: 1,
-                          unitPrice: 0,
-                          amount: 0,
-                          currency: 'USD',
-                          createdAt: new Date(),
-                          updatedAt: new Date(),
-                          showDescription: false,
-                        })
-                      }
-                    >
-                      + Add Line Item
-                    </MercoaButton>
-                  )}
+            <div className={`mercoa-grid ${formCols} mercoa-mt-5 mercoa-gap-4 mercoa-items-start mercoa-p-0.5`}>
+              <div className="mercoa-col-span-full">
+                <label className="mercoa-block mercoa-text-right mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900">
+                  Total Amount
+                </label>
+                <div className="mercoa-mt-1 mercoa-flex mercoa-items-center mercoa-justify-end">
+                  <div className="mercoa-text-right mercoa-text-lg mercoa-font-semibold mercoa-text-gray-900">
+                    {accounting.formatMoney(watch('amount') || 0, currencyCodeToSymbol(currency))}
+                  </div>
                 </div>
               </div>
-              <div className="mercoa-mt-5 mercoa-flex mercoa-gap-4 mercoa-items-start mercoa-p-0.5">
-                <div className="mercoa-max-w-[150px] mercoa-flex-1">
-                  <MercoaInput
-                    name="amount"
-                    label="Total Amount"
-                    type="currency"
-                    readOnly
-                    errors={errors}
-                    control={control}
-                    leadingIcon={
-                      <span className="mercoa-text-gray-500 sm:mercoa-text-sm">{currencyCodeToSymbol(currency)}</span>
-                    }
-                    trailingIcon={
-                      <>
-                        <label htmlFor="currency" className="mercoa-sr-only">
-                          Currency
-                        </label>
-                        <select
-                          {...register('currency')}
-                          disabled={notDraft}
-                          className="mercoa-h-full mercoa-rounded-mercoa mercoa-border-0 mercoa-bg-transparent mercoa-py-0 mercoa-pl-2 mercoa-pr-7 mercoa-text-gray-500 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm"
-                        >
-                          {supportedCurrencies?.map((option: Mercoa.CurrencyCode, index: number) => (
-                            <option key={index} value={option}>
-                              {option}
-                            </option>
-                          ))}
-                        </select>
-                      </>
-                    }
+              {/*  DESCRIPTION */}
+              <div className="mercoa-col-span-full">
+                <label
+                  htmlFor="description"
+                  className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 "
+                >
+                  Internal Notes
+                </label>
+                <div className="mercoa-mt-1">
+                  <textarea
+                    id="description"
+                    {...register('description')}
+                    rows={3}
+                    className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
+                    style={{ height: '36px' }}
+                    defaultValue={''}
                   />
-                </div>
-                {/*  DESCRIPTION */}
-                <div className="mercoa-flex-1">
-                  <label
-                    htmlFor="description"
-                    className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 "
-                  >
-                    Internal Notes
-                  </label>
-                  <div className="mercoa-mt-1">
-                    <textarea
-                      id="description"
-                      {...register('description')}
-                      rows={3}
-                      className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
-                      style={{ height: '36px' }}
-                      defaultValue={''}
-                    />
-                  </div>
                 </div>
               </div>
             </div>

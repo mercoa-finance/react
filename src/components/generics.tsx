@@ -28,7 +28,7 @@ import {
   useState,
 } from 'react'
 import DatePicker from 'react-datepicker'
-import { Control, Controller, FieldErrors, UseFormRegister, useForm, useFormContext } from 'react-hook-form'
+import { Control, Controller, FieldErrors, UseFormRegister, useFormContext } from 'react-hook-form'
 import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
@@ -1287,12 +1287,22 @@ export function inputClassName({
   mercoa-outline-0 mercoa-ring-0 focus:mercoa-ring-0 focus:mercoa-outline-0 mercoa-overflow-hidden`
 }
 
-export function MercoaInputLabel({ label, name }: { label: string; name?: string }) {
+export function MercoaInputLabel({
+  label,
+  name,
+  labelClassName,
+}: {
+  label: string
+  name?: string
+  labelClassName?: string
+}) {
   return (
     <div className="mercoa-flex mercoa-justify-between">
       <label
         htmlFor={name}
-        className="mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-whitespace-nowrap"
+        className={`mercoa-block mercoa-text-sm mercoa-font-medium mercoa-leading-6 mercoa-text-gray-900 mercoa-whitespace-nowrap ${
+          labelClassName || ''
+        }`}
       >
         {label}
       </label>
@@ -1324,6 +1334,7 @@ export function MercoaInput({
   step,
   noBorder,
   inputMask,
+  labelClassName,
 }: {
   type?: 'text' | 'password' | 'email' | 'number' | 'date' | 'currency'
   label?: string
@@ -1352,6 +1363,7 @@ export function MercoaInput({
   step?: string | number
   noBorder?: boolean
   inputMask?: string
+  labelClassName?: string
 }) {
   const useWidth = (target: any) => {
     const [width, setWidth] = useState<number>(0)
@@ -1517,7 +1529,7 @@ export function MercoaInput({
 
   return (
     <div className={className}>
-      <MercoaInputLabel label={label} name={name} />
+      <MercoaInputLabel label={label} name={name} labelClassName={labelClassName} />
       <div className="mercoa-mt-1">{inputContainer}</div>
       {errorContainer}
     </div>

@@ -126,8 +126,12 @@ export const baseSubmitForApprovalSchema = baseSchema.shape({
 
 export const baseSchedulePaymentSchema = baseSubmitForApprovalSchema.shape({
   deductionDate: yup.date().required('Deduction date is required'),
-  paymentDestinationId: yup.string().required('Please select a payment method'),
-  paymentSourceId: yup.string().required('Please select a payment method'),
+  paymentDestinationId: yup.string().when('paymentSourceType', {
+    is: 'offPlatform',
+    then: (schema) => schema.nullable(), // Allow null for off-platform sources since we auto-create
+    otherwise: (schema) => schema.required('Please select how the vendor wants to get paid'),
+  }),
+  paymentSourceId: yup.string().required('Please select how you want to pay'),
 })
 
 export enum PayableFormAction {

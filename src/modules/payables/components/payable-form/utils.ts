@@ -709,6 +709,7 @@ const validatePaymentMethods = (
   setError: any,
   nextInvoiceState: Mercoa.InvoiceStatus,
   toast: any,
+  formData?: any,
 ) => {
   // Check if payment methods are selected
   if (!invoiceData.paymentSourceId && invoice?.id) {
@@ -717,21 +718,29 @@ const validatePaymentMethods = (
     return false
   }
   if (!invoiceData.paymentDestinationId && invoice?.id) {
-    // if the organization does not allow for na payment destination, check if the payment destination is set
-    if (
-      !mercoaSession.organization?.paymentMethods?.backupDisbursements?.find((e) => e.type === 'na')?.active ||
-      nextInvoiceState === 'SCHEDULED'
-    ) {
-      toast.error('Please select a payment destination')
-      setError('paymentDestinationId', {
-        type: 'manual',
-        message:
-          'Please select how the vendor wants to get paid' +
-          (mercoaSession.organization?.paymentMethods?.backupDisbursements?.find((e) => e.type === 'na')?.active
-            ? ' or send the vendor an email for their payment details'
-            : ''),
-      })
-      return false
+    // For off-platform sources, we'll auto-create the destination, so skip validation here
+    const isOffPlatformSource = formData?.paymentSourceType === Mercoa.PaymentMethodType.OffPlatform
+    
+    if (!isOffPlatformSource) {
+      // Payment destination is always required when scheduling payments (except for off-platform sources)
+      // For other statuses, allow backup disbursements if enabled
+      if (
+        nextInvoiceState === 'SCHEDULED' ||
+        !mercoaSession.organization?.paymentMethods?.backupDisbursements?.find((e) => e.type === 'na')?.active
+      ) {
+        toast.error('Please select a payment destination')
+        setError('paymentDestinationId', {
+          type: 'manual',
+          message:
+            nextInvoiceState === 'SCHEDULED'
+              ? 'Please select how the vendor wants to get paid to schedule the payment'
+              : 'Please select how the vendor wants to get paid' +
+                (mercoaSession.organization?.paymentMethods?.backupDisbursements?.find((e) => e.type === 'na')?.active
+                  ? ' or send the vendor an email for their payment details'
+                  : ''),
+        })
+        return false
+      }
     }
   }
   return true
@@ -914,7 +923,7 @@ const validateAndConstructPayload = async (props: {
       return false
     }
 
-    if (!validatePaymentMethods(invoiceRequestData, invoice!, mercoaSession, setError, saveAsStatus, toast)) {
+    if (!validatePaymentMethods(invoiceRequestData, invoice!, mercoaSession, setError, saveAsStatus, toast, formData)) {
       return false
     }
 
@@ -945,6 +954,37 @@ const validateAndConstructPayload = async (props: {
 
   if (!(await autoAssignVendorCredits(invoiceRequestData, mercoaSession, saveAsStatus, toast, invoice))) {
     return false
+  }
+
+  // Auto-set payment destination for off-platform sources
+  if (
+    formData.paymentSourceType === Mercoa.PaymentMethodType.OffPlatform &&
+    !invoiceRequestData.paymentDestinationId &&
+    formData.vendorId
+  ) {
+    try {
+      // Try to find or create off-platform payment method for vendor
+      const existingVendorPaymentMethods = await mercoaSession.client?.entity.paymentMethod.getAll(formData.vendorId, {
+        type: Mercoa.PaymentMethodType.OffPlatform,
+      })
+      let offPlatformMethodId = existingVendorPaymentMethods?.find((e) => e.type === Mercoa.PaymentMethodType.OffPlatform)?.id
+      
+      if (!offPlatformMethodId) {
+        // Create off-platform payment method for vendor
+        const newOffPlatformMethod = await mercoaSession.client?.entity.paymentMethod.create(formData.vendorId, {
+          type: Mercoa.PaymentMethodType.OffPlatform,
+        })
+        offPlatformMethodId = newOffPlatformMethod?.id
+      }
+      
+      if (offPlatformMethodId) {
+        invoiceRequestData.paymentDestinationId = offPlatformMethodId
+      }
+    } catch (error) {
+      console.error('Failed to create off-platform payment method for vendor:', error)
+      toast.error('Failed to set up payment destination. Please select a payment method manually.')
+      return false
+    }
   }
 
   return invoiceRequestData

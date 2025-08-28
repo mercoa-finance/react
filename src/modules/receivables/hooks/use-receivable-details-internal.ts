@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { useMercoaSession } from '../../../components'
+import { removeThousands } from '../../../lib/lib'
 import { queryClient } from '../../../lib/react-query/query-client-provider'
 import { getInvoiceClient } from '../../common/utils'
 import {
@@ -62,6 +63,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
       status: yup.string(),
       amount: yup
         .number()
+        .transform(removeThousands)
         .positive('Please add a line item to the invoice. Amount must be a positive number.')
         .required()
         .typeError('Please enter a valid number'),
@@ -77,10 +79,10 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
           name: yup.string().required('Name is a required field'),
           description: yup.string(),
           showDescription: yup.boolean(),
-          amount: yup.number().required().typeError('Please enter a valid number'),
+          amount: yup.number().transform(removeThousands).required().typeError('Please enter a valid number'),
           currency: yup.string(),
-          quantity: yup.number().required().typeError('Please enter a valid number'),
-          unitPrice: yup.number().required().typeError('Please enter a valid number'),
+          quantity: yup.number().transform(removeThousands).required().typeError('Please enter a valid number'),
+          unitPrice: yup.number().transform(removeThousands).required().typeError('Please enter a valid number'),
           metadata: yup.mixed().nullable(),
           glAccountId: yup.string(),
           createdAt: yup.date(),

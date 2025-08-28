@@ -1368,23 +1368,32 @@ export function PayableFormV1({
         return
       }
       if (!data.paymentDestinationId && invoice?.id) {
-        // if the organization does not allow for na payment destination, check if the payment destination is set
-        if (
-          !mercoaSession.organization?.paymentMethods?.backupDisbursements?.find((e) => e.type === 'na')?.active ||
-          nextInvoiceState === 'SCHEDULED'
-        ) {
-          renderCustom?.toast
-            ? renderCustom?.toast.error('Please select a payment destination')
-            : toast.error('Please select a payment destination')
-          setError('paymentDestinationId', {
-            type: 'manual',
-            message:
-              'Please select how the vendor wants to get paid' +
-              (mercoaSession.organization?.paymentMethods?.backupDisbursements?.find((e) => e.type === 'na')?.active
-                ? ' or send the vendor an email for their payment details'
-                : ''),
-          })
-          return
+        // For off-platform sources, we'll auto-create the destination, so skip validation here
+        const isOffPlatformSource = data.paymentSourceType === 'offPlatform'
+
+        if (!isOffPlatformSource) {
+          // Payment destination is always required when scheduling payments (except for off-platform sources)
+          // For other statuses, allow backup disbursements if enabled
+          if (
+            nextInvoiceState === 'SCHEDULED' ||
+            !mercoaSession.organization?.paymentMethods?.backupDisbursements?.find((e) => e.type === 'na')?.active
+          ) {
+            renderCustom?.toast
+              ? renderCustom?.toast.error('Please select a payment destination')
+              : toast.error('Please select a payment destination')
+            setError('paymentDestinationId', {
+              type: 'manual',
+              message:
+                nextInvoiceState === 'SCHEDULED'
+                  ? 'Please select how the vendor wants to get paid to schedule the payment'
+                  : 'Please select how the vendor wants to get paid' +
+                    (mercoaSession.organization?.paymentMethods?.backupDisbursements?.find((e) => e.type === 'na')
+                      ?.active
+                      ? ' or send the vendor an email for their payment details'
+                      : ''),
+            })
+            return
+          }
         }
       }
 

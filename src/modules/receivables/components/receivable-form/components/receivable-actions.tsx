@@ -5,6 +5,7 @@ import { ButtonLoadingSpinner, MercoaButton, useMercoaSession } from '../../../.
 import { isOffPlatformEnabled } from '../../../../../lib/paymentMethods'
 import { useReceivableDetails } from '../../../hooks/use-receivable-details'
 import { ReceivableFormAction } from '../constants'
+import { ReceivableFormErrors } from './receivable-form-errors'
 
 export function ReceivableActions() {
   const mercoaSession = useMercoaSession()
@@ -237,22 +238,30 @@ export function ReceivableActions() {
   )
 
   return (
-    <div className="mercoa-absolute mercoa-bottom-0 mercoa-right-0 mercoa-w-full mercoa-bg-white mercoa-z-10">
-      <div className="mercoa-mx-auto mercoa-flex mercoa-flex-row mercoa-justify-end mercoa-items-center mercoa-gap-2 mercoa-py-3 mercoa-px-6">
-        {!invoice?.id ? (
-          createInvoiceButton
-        ) : (
-          <>
-            {showDeleteButton && deleteButton}
-            {showCancelButton && cancelButton}
-            {showSaveDraftButton && saveDraftButton}
-            {showSendEmailButton && sendEmailButton}
-            {showScheduleRecurringInvoiceButton && scheduleRecurringInvoiceButton}
-            {showRestoreAsDraftButton && restoreAsDraftButton}
-            {menu}
-          </>
-        )}
+    <>
+      <div className="mercoa-col-span-full" style={{ visibility: 'hidden' }}>
+        <ReceivableFormErrors />
       </div>
-    </div>
+      <div className="mercoa-absolute mercoa-bottom-0 mercoa-right-0 mercoa-w-full mercoa-bg-white mercoa-z-10">
+        <>
+          <ReceivableFormErrors />
+          <div className="mercoa-mx-auto mercoa-flex mercoa-flex-row mercoa-justify-end mercoa-items-center mercoa-gap-2 mercoa-py-3 mercoa-px-6">
+            {!invoice?.id ? (
+              createInvoiceButton
+            ) : (
+              <>
+                {showDeleteButton && deleteButton}
+                {showCancelButton && cancelButton}
+                {showSaveDraftButton && saveDraftButton}
+                {showSendEmailButton && sendEmailButton}
+                {showScheduleRecurringInvoiceButton && scheduleRecurringInvoiceButton}
+                {showRestoreAsDraftButton && restoreAsDraftButton}
+                {menu}
+              </>
+            )}
+          </div>
+        </>
+      </div>
+    </>
   )
 }

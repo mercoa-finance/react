@@ -1441,7 +1441,7 @@ export function EntityOnboardingButton({
         {buttonText || 'Get Started'}
       </button>
       <Transition.Root show={showAdd} as={Fragment}>
-        <Dialog as="div" className="mercoa-relative mercoa-z-10" onClose={setShowAdd}>
+        <Dialog as="div" className="mercoa-relative mercoa-z-50" onClose={setShowAdd}>
           <Transition.Child
             as={Fragment}
             enter="mercoa-ease-out mercoa-duration-300"
