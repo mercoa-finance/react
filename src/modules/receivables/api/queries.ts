@@ -1,5 +1,5 @@
-import { useMemo } from 'react'
 import { Mercoa } from '@mercoa/javascript'
+import { useMemo } from 'react'
 import { useMercoaSession } from '../../../components'
 import { useInfiniteQuery } from '../../../lib/react-query/use-infinite-query'
 import { useQuery } from '../../../lib/react-query/use-query'
@@ -56,11 +56,7 @@ export function useReceivablesQuery({
     ],
     queryFn: async ({ pageParam = undefined }) => {
       if (!mercoaSession || !mercoaSession.client || !mercoaSession.entityId) {
-        return {
-          count: 0,
-          invoices: [],
-          nextCursor: undefined,
-        }
+        return { count: 0, invoices: [], nextCursor: undefined }
       }
 
       const filter: Mercoa.entity.EntityGetInvoicesRequest = {
@@ -90,8 +86,8 @@ export function useReceivablesQuery({
     options: {
       initialPageParam: undefined,
       refetchInterval: 30000,
-      getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
-      getPreviousPageParam: (_, allPages) => {
+      getNextPageParam: (lastPage: ReceivablesResponse) => lastPage.nextCursor || undefined,
+      getPreviousPageParam: (_: unknown, allPages: ReceivablesResponse[]) => {
         return allPages.length > 1 ? allPages[allPages.length - 2].nextCursor : undefined
       },
     },
@@ -153,9 +149,7 @@ export function useRecurringReceivablesQuery({
 
       return response.data
     },
-    options: {
-      enabled: !!mercoaSession?.client && !!mercoaSession?.entity?.id,
-    },
+    options: { enabled: !!mercoaSession?.client && !!mercoaSession?.entity?.id },
   })
 }
 
@@ -208,9 +202,7 @@ export const useReceivableMetricsByStatusQuery = ({
 
       return response
     },
-    options: {
-      enabled: !!mercoaSession?.client && !!mercoaSession?.entityId,
-    },
+    options: { enabled: !!mercoaSession?.client && !!mercoaSession?.entityId },
   })
 }
 
@@ -296,9 +288,7 @@ export const useReceivableStatusTabsMetricsQuery = ({
 
       return Object.fromEntries(results) as { [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse }
     },
-    options: {
-      enabled: !!mercoaSession?.client && !!mercoaSession?.entityId,
-    },
+    options: { enabled: !!mercoaSession?.client && !!mercoaSession?.entityId },
   })
 }
 
@@ -324,10 +314,7 @@ export const useReceivableDetailQuery = (
       }
       return response
     },
-    options: {
-      enabled: !!invoiceId && !!mercoaSession?.client,
-      throwOnError: true,
-    },
+    options: { enabled: !!invoiceId && !!mercoaSession?.client, throwOnError: true },
   })
 }
 
@@ -342,9 +329,7 @@ export const usePaymentMethodsQuery = ({ entityId, type }: { entityId?: string; 
       }
       return await mercoaSession.client.entity.paymentMethod.getAll(entityId, { type })
     },
-    options: {
-      enabled: !!mercoaSession?.client && !!entityId,
-    },
+    options: { enabled: !!mercoaSession?.client && !!entityId },
   })
 }
 
@@ -363,9 +348,7 @@ export const usePaymentLinkQuery = (
       }
       return await mercoaSession.client.invoice.paymentLinks.getPayerLink(invoiceId)
     },
-    options: {
-      enabled: !!mercoaSession?.client && !!invoiceId,
-    },
+    options: { enabled: !!mercoaSession?.client && !!invoiceId },
   })
 }
 
@@ -400,8 +383,6 @@ export const useSupportedCurrenciesQuery = () => {
 
       return supportedCurrencies
     },
-    options: {
-      enabled: !!mercoaSession?.client && !!mercoaSession.organization,
-    },
+    options: { enabled: !!mercoaSession?.client && !!mercoaSession.organization },
   })
 }

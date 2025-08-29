@@ -21,11 +21,7 @@ export function useCounterpartiesQuery(
     queryKey: ['counterparties', entityId, requestOptions],
     queryFn: async ({ pageParam = undefined }) => {
       if (!mercoaSession || !mercoaSession.client) {
-        return {
-          count: 0,
-          counterparties: [],
-          nextCursor: undefined,
-        }
+        return { count: 0, counterparties: [], nextCursor: undefined }
       }
 
       const response = await (type === 'payee'
@@ -49,8 +45,8 @@ export function useCounterpartiesQuery(
       enabled: !!entityId,
       initialPageParam: undefined,
       refetchInterval: !mercoaSession || !mercoaSession.client || !mercoaSession.entity?.id ? 4000 : undefined,
-      getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
-      getPreviousPageParam: (_, allPages) => {
+      getNextPageParam: (lastPage: CounterpartiesResponse) => lastPage.nextCursor || undefined,
+      getPreviousPageParam: (_: unknown, allPages: CounterpartiesResponse[]) => {
         return allPages.length > 1 ? allPages[allPages.length - 2].nextCursor : undefined
       },
     },

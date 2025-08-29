@@ -21,7 +21,6 @@ export const useInfiniteQuery = <T, TPageParam>({
       T,
       ErrorResponse,
       InfiniteData<T, TPageParam | undefined>,
-      T,
       QueryKey,
       TPageParam | undefined
     >,
@@ -34,9 +33,5 @@ export const useInfiniteQuery = <T, TPageParam>({
     InfiniteData<T, TPageParam | undefined>,
     QueryKey,
     TPageParam | undefined
-  >({
-    queryKey,
-    queryFn,
-    ...options,
-  })
+  >({ queryKey, queryFn, ...options })
 }
