@@ -720,7 +720,7 @@ const validatePaymentMethods = (
   if (!invoiceData.paymentDestinationId && invoice?.id) {
     // For off-platform sources, we'll auto-create the destination, so skip validation here
     const isOffPlatformSource = formData?.paymentSourceType === Mercoa.PaymentMethodType.OffPlatform
-    
+
     if (!isOffPlatformSource) {
       // Payment destination is always required when scheduling payments (except for off-platform sources)
       // For other statuses, allow backup disbursements if enabled
@@ -967,8 +967,10 @@ const validateAndConstructPayload = async (props: {
       const existingVendorPaymentMethods = await mercoaSession.client?.entity.paymentMethod.getAll(formData.vendorId, {
         type: Mercoa.PaymentMethodType.OffPlatform,
       })
-      let offPlatformMethodId = existingVendorPaymentMethods?.find((e) => e.type === Mercoa.PaymentMethodType.OffPlatform)?.id
-      
+      let offPlatformMethodId = existingVendorPaymentMethods?.find(
+        (e) => e.type === Mercoa.PaymentMethodType.OffPlatform,
+      )?.id
+
       if (!offPlatformMethodId) {
         // Create off-platform payment method for vendor
         const newOffPlatformMethod = await mercoaSession.client?.entity.paymentMethod.create(formData.vendorId, {
@@ -976,7 +978,7 @@ const validateAndConstructPayload = async (props: {
         })
         offPlatformMethodId = newOffPlatformMethod?.id
       }
-      
+
       if (offPlatformMethodId) {
         invoiceRequestData.paymentDestinationId = offPlatformMethodId
       }

@@ -16,8 +16,8 @@ import {
   MercoaButton,
   MercoaInput,
   NoSession,
-  PaymentMethodList,
   PaymentMethodButton,
+  PaymentMethodList,
   Tooltip,
   useMercoaSession,
 } from './index'

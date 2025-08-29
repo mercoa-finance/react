@@ -1111,9 +1111,9 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
     ) {
       // Check if vendor already has an off-platform payment method
       const existingOffPlatformMethod = paymentMethodsDestination?.find(
-        (pm) => pm.type === Mercoa.PaymentMethodType.OffPlatform
+        (pm) => pm.type === Mercoa.PaymentMethodType.OffPlatform,
       )
-      
+
       if (existingOffPlatformMethod) {
         // Use existing off-platform method
         setValue('paymentDestinationType', Mercoa.PaymentMethodType.OffPlatform)
@@ -1138,7 +1138,17 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
           })
       }
     }
-  }, [paymentSourceType, paymentDestinationType, paymentMethodsDestination, vendorId, setValue, setMethodOnTypeChange, mercoaSession.client, queryClient, clearErrors])
+  }, [
+    paymentSourceType,
+    paymentDestinationType,
+    paymentMethodsDestination,
+    vendorId,
+    setValue,
+    setMethodOnTypeChange,
+    mercoaSession.client,
+    queryClient,
+    clearErrors,
+  ])
 
   const finalSupportedCurrencies = useMemo(() => {
     let derivedSupportedCurrencies: Mercoa.CurrencyCode[] = []

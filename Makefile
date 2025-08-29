@@ -16,10 +16,7 @@ copy_components:
 replace_import:
 		@echo "Replacing import..."
 		@for file in $(FILES); do \
-			sed "s/import { MercoaApi as Mercoa, MercoaApiClient as MercoaClient } from 'sdks\/typescript'/import { Mercoa, MercoaClient } from '@mercoa\/javascript'/g" "$$file" > "$$file.tmp" && mv "$$file.tmp" "$$file"; \
-		done
-		@for file in $(FILES); do \
-			sed "s/import { MercoaApi as Mercoa } from 'sdks\/typescript'/import { Mercoa } from '@mercoa\/javascript'/g" "$$file" > "$$file.tmp" && mv "$$file.tmp" "$$file"; \
+			sed "s/'sdks\/typescript'/'@mercoa\/javascript'/g" "$$file" > "$$file.tmp" && mv "$$file.tmp" "$$file"; \
 		done
 		@for file in $(FILES); do \
 			sed "s/import jwtDecode from 'jwt-decode'/import { jwtDecode } from 'jwt-decode'/g" "$$file" > "$$file.tmp" && mv "$$file.tmp" "$$file"; \
