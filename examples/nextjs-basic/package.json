@@ -11,7 +11,7 @@
   "dependencies": {
     "@mercoa/javascript": "^0.6.13",
     "@mercoa/react": "^0.1.0-rc21",
-    "next": "^15.2.4",
+    "next": "^15.4.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
