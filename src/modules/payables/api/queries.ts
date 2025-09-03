@@ -1,5 +1,5 @@
-import { Mercoa } from '@mercoa/javascript'
 import { useMemo } from 'react'
+import { Mercoa } from '@mercoa/javascript'
 import { useMercoaSession } from '../../../components'
 import { useInfiniteQuery } from '../../../lib/react-query/use-infinite-query'
 import { useQuery } from '../../../lib/react-query/use-query'
@@ -65,7 +65,11 @@ export function usePayablesQuery({
     ],
     queryFn: async ({ pageParam = undefined }) => {
       if (!mercoaSession || !mercoaSession.client || !mercoaSession.entityId) {
-        return { count: 0, invoices: [], nextCursor: undefined }
+        return {
+          count: 0,
+          invoices: [],
+          nextCursor: undefined,
+        }
       }
 
       const filter: Mercoa.entity.EntityGetInvoicesRequest = {
@@ -98,7 +102,7 @@ export function usePayablesQuery({
     options: {
       initialPageParam: undefined,
       refetchInterval: 30000,
-      getNextPageParam: (lastPage: PayablesResponse) => lastPage.nextCursor || undefined,
+      getNextPageParam: (lastPage) => lastPage.nextCursor || undefined,
     },
   })
 }
@@ -164,7 +168,9 @@ export function useRecurringPayablesQuery({
 
       return response.data
     },
-    options: { enabled: !!mercoaSession?.client && !!mercoaSession?.entity?.id },
+    options: {
+      enabled: !!mercoaSession?.client && !!mercoaSession?.entity?.id,
+    },
   })
 }
 
@@ -217,7 +223,9 @@ export const usePayableMetricsByStatusQuery = ({
 
       return response
     },
-    options: { enabled: !!mercoaSession?.client && !!mercoaSession?.entityId },
+    options: {
+      enabled: !!mercoaSession?.client && !!mercoaSession?.entityId,
+    },
   })
 }
 
@@ -234,7 +242,9 @@ export const usePayableApprovalPoliciesQuery = () => {
       const response = await mercoaSession.client.entity.approvalPolicy.getAll(mercoaSession.entityId)
       return response
     },
-    options: { enabled: !!mercoaSession?.client && !!mercoaSession?.entityId },
+    options: {
+      enabled: !!mercoaSession?.client && !!mercoaSession?.entityId,
+    },
   })
 }
 
@@ -325,7 +335,9 @@ export const usePayableStatusTabsMetricsQuery = ({
 
       return Object.fromEntries(results) as { [key in Mercoa.InvoiceStatus]: Mercoa.InvoiceMetricsResponse }
     },
-    options: { enabled: !!mercoaSession?.client && !!mercoaSession?.entity?.id },
+    options: {
+      enabled: !!mercoaSession?.client && !!mercoaSession?.entity?.id,
+    },
   })
 }
 
@@ -352,7 +364,9 @@ export const usePayableDetailQuery = (
       }
       return response
     },
-    options: { enabled: !!invoiceId && !!mercoaSession?.client },
+    options: {
+      enabled: !!invoiceId && !!mercoaSession?.client,
+    },
   })
 }
 
@@ -374,7 +388,9 @@ export const usePayableDocumentsQuery = (
       })
       return response
     },
-    options: { enabled: !!invoiceId && !!mercoaSession?.client },
+    options: {
+      enabled: !!invoiceId && !!mercoaSession?.client,
+    },
   })
 }
 
@@ -394,7 +410,9 @@ export const usePayableSourceEmailQuery = (
       const response = await getInvoiceClient(mercoaSession, invoiceType)?.document.getSourceEmail(invoiceId)
       return response?.data
     },
-    options: { enabled: !!invoiceId && !!mercoaSession?.client },
+    options: {
+      enabled: !!invoiceId && !!mercoaSession?.client,
+    },
   })
 }
 
@@ -415,7 +433,10 @@ export function useOcrJobQuery(ocrJobId?: string, refetchInterval?: number) {
         throw e
       }
     },
-    options: { enabled: !!ocrJobId && !!mercoaSession?.client, refetchInterval: refetchInterval ?? 2500 },
+    options: {
+      enabled: !!ocrJobId && !!mercoaSession?.client,
+      refetchInterval: refetchInterval ?? 2500,
+    },
   })
 }
 
@@ -454,7 +475,9 @@ export const usePayeesQuery = ({ search, networkType }: UsePayeesRequestOptions)
       })
       return response.data
     },
-    options: { enabled: !!mercoaSession?.client && !!mercoaSession?.entity?.id },
+    options: {
+      enabled: !!mercoaSession?.client && !!mercoaSession?.entity?.id,
+    },
   })
 }
 
@@ -534,7 +557,9 @@ export const useVendorCreditUsageQuery = ({
         ...(vendorCreditApplicationIsFixed && { includedVendorCreditIds: vendorCreditIds ?? [] }),
       })
     },
-    options: { enabled: !!mercoaSession?.client && !!amount && !!payerId && !!vendorId },
+    options: {
+      enabled: !!mercoaSession?.client && !!amount && !!payerId && !!vendorId,
+    },
   })
 }
 
@@ -606,7 +631,9 @@ export const usePaymentMethodsQuery = ({ entityId, type }: { entityId?: string; 
       }
       return await mercoaSession.client.entity.paymentMethod.getAll(entityId, { type })
     },
-    options: { enabled: !!mercoaSession?.client && !!entityId },
+    options: {
+      enabled: !!mercoaSession?.client && !!entityId,
+    },
   })
 }
 export const usePayableEventsQuery = ({ invoiceId, enabled }: { invoiceId?: string; enabled?: boolean }) => {
@@ -620,7 +647,9 @@ export const usePayableEventsQuery = ({ invoiceId, enabled }: { invoiceId?: stri
       }
       return await mercoaSession.client.invoice.events(invoiceId, { limit: 100 })
     },
-    options: { enabled: !!mercoaSession?.client && !!invoiceId && enabled },
+    options: {
+      enabled: !!mercoaSession?.client && !!invoiceId && enabled,
+    },
   })
 }
 
@@ -637,7 +666,9 @@ export function useBnplOfferQuery(
       const response = await mercoaSession.client.invoice.bnpl.offer(invoiceId, request)
       return response
     },
-    options: { enabled: !!mercoaSession.token && !!invoiceId && enabled },
+    options: {
+      enabled: !!mercoaSession.token && !!invoiceId && enabled,
+    },
   })
 }
 
@@ -650,6 +681,8 @@ export function useBnplLoanQuery(loanId: string) {
       const response = await mercoaSession.client.invoice.bnpl.loan(loanId)
       return response
     },
-    options: { enabled: !!mercoaSession.token && !!loanId },
+    options: {
+      enabled: !!mercoaSession.token && !!loanId,
+    },
   })
 }

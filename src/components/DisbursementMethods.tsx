@@ -108,7 +108,9 @@ export function DisbursementMethods({
                 }
                 return true
               })
-              .map((method) => <DisbursementMethod method={method} key={method.name} />)}
+              .map((method) => (
+                <DisbursementMethod method={method} key={method.name} />
+              ))}
           </div>
           {goToPreviousStep && (
             <div className="mercoa-mt-5 mercoa-flex sm:mercoa-mt-6">

@@ -179,7 +179,9 @@ function CustomPaymentMethodsPerSchema({
           />
         )}
       />
-      {paymentMethods?.map((account) => <div className="mercoa-mt-2" key={account.id}></div>)}
+      {paymentMethods?.map((account) => (
+        <div className="mercoa-mt-2" key={account.id}></div>
+      ))}
     </div>
   )
 }

@@ -910,6 +910,19 @@ export function EditBankAccount({
         signatoryName: account.checkOptions?.signatoryName ?? '',
         accountNumberOverride: account.checkOptions?.accountNumberOverride ?? account.accountNumber,
         routingNumberOverride: account.checkOptions?.routingNumberOverride ?? account.routingNumber,
+        accountHolderNameOverride: account.checkOptions?.accountHolderNameOverride ?? '',
+        accountHolderAddressOverride: account.checkOptions?.accountHolderAddressOverride ?? {
+          addressLine1: '',
+          addressLine2: '',
+          city: '',
+          stateOrProvince: '',
+          postalCode: '',
+          country: 'US',
+        },
+        useNameAddressOverride: !!(
+          account.checkOptions?.accountHolderNameOverride ||
+          account.checkOptions?.accountHolderAddressOverride?.addressLine1
+        ),
       },
       externalAccountingSystemId: account.externalAccountingSystemId,
     },
@@ -931,6 +944,8 @@ export function EditBankAccount({
             routingNumberOverride: data.checkOptions?.routingNumberOverride,
             signatoryName: `${data.checkOptions?.signatoryName}`,
             useSignatureImage: data.checkOptions?.useSignatureImage,
+            accountHolderNameOverride: data.checkOptions?.accountHolderNameOverride,
+            accountHolderAddressOverride: data.checkOptions?.accountHolderAddressOverride,
             ...(signatureImage &&
               signatureImage !== `data:image/png;base64,${account.checkOptions?.signatureImage}` && { signatureImage }),
           },
@@ -950,6 +965,7 @@ export function EditBankAccount({
 
   const checkEnabled = !!(account.accountType === 'CHECKING' && watch('checkOptions.enabled'))
   const useSig = watch('checkOptions.useSignatureImage')
+  const useNameAddressOverride = watch('checkOptions.useNameAddressOverride')
 
   useEffect(() => {
     if (!mercoaSession.entityId) return
@@ -1030,6 +1046,65 @@ export function EditBankAccount({
             required
             className="mercoa-mt-2"
           />
+          <div className="mercoa-relative mercoa-mt-5 mercoa-flex mercoa-items-center">
+            <div className="mercoa-flex mercoa-h-5 mercoa-items-center">
+              <input
+                {...register('checkOptions.useNameAddressOverride')}
+                type="checkbox"
+                className="mercoa-size-4 mercoa-rounded mercoa-border-gray-300 mercoa-text-mercoa-primary-text focus:mercoa-ring-mercoa-primary"
+              />
+            </div>
+            <div className="mercoa-ml-3 mercoa-text-sm">
+              <label htmlFor="useNameAddressOverride" className="mercoa-font-medium mercoa-text-gray-700">
+                Use Custom Name and Address
+              </label>
+            </div>
+          </div>
+          {useNameAddressOverride && (
+            <>
+              <MercoaInput
+                label="Account Holder Name Override"
+                name="checkOptions.accountHolderNameOverride"
+                register={register}
+                optional
+                className="mercoa-mt-2"
+              />
+              <div className="mercoa-grid mercoa-grid-cols-2 mercoa-gap-2 mercoa-mt-2">
+                <MercoaInput
+                  label="Address Line 1"
+                  name="checkOptions.accountHolderAddressOverride.addressLine1"
+                  register={register}
+                  optional
+                />
+                <MercoaInput
+                  label="Address Line 2"
+                  name="checkOptions.accountHolderAddressOverride.addressLine2"
+                  register={register}
+                  optional
+                />
+              </div>
+              <div className="mercoa-grid mercoa-grid-cols-3 mercoa-gap-2 mercoa-mt-2">
+                <MercoaInput
+                  label="City"
+                  name="checkOptions.accountHolderAddressOverride.city"
+                  register={register}
+                  optional
+                />
+                <MercoaInput
+                  label="State"
+                  name="checkOptions.accountHolderAddressOverride.stateOrProvince"
+                  register={register}
+                  optional
+                />
+                <MercoaInput
+                  label="Postal Code"
+                  name="checkOptions.accountHolderAddressOverride.postalCode"
+                  register={register}
+                  optional
+                />
+              </div>
+            </>
+          )}
           <div className="mercoa-relative mercoa-mt-5 mercoa-flex mercoa-items-center">
             <div className="mercoa-flex mercoa-h-5 mercoa-items-center">
               <input

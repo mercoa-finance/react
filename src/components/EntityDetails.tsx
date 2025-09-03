@@ -30,21 +30,21 @@ export function EntityStatus({
     color = '',
     content = ''
   if (entity.status === Mercoa.EntityStatus.Unverified)
-    (title = 'Can only receive funds'),
+    ((title = 'Can only receive funds'),
       (color = 'mercoa-bg-indigo-100 mercoa-text-indigo-800'),
-      (content = 'Unverified')
+      (content = 'Unverified'))
   if (entity.status === Mercoa.EntityStatus.Verified)
-    (title = 'Can send and receive funds'),
+    ((title = 'Can send and receive funds'),
       (color = 'mercoa-bg-green-100 mercoa-text-green-800'),
-      (content = 'Verified')
+      (content = 'Verified'))
   if (entity.status === Mercoa.EntityStatus.Pending)
-    (title = 'Can only receive funds'), (color = 'mercoa-bg-yellow-100 mercoa-text-yellow-800'), (content = 'Pending')
+    ((title = 'Can only receive funds'), (color = 'mercoa-bg-yellow-100 mercoa-text-yellow-800'), (content = 'Pending'))
   if (entity.status === Mercoa.EntityStatus.Resubmit)
-    (title = 'Can only receive funds'), (color = 'mercoa-bg-red-100 mercoa-text-red-800'), (content = 'Resubmit')
+    ((title = 'Can only receive funds'), (color = 'mercoa-bg-red-100 mercoa-text-red-800'), (content = 'Resubmit'))
   if (entity.status === Mercoa.EntityStatus.Review)
-    (title = 'Can only receive funds'), (color = 'mercoa-bg-blue-100 mercoa-text-blue-800'), (content = 'Review')
+    ((title = 'Can only receive funds'), (color = 'mercoa-bg-blue-100 mercoa-text-blue-800'), (content = 'Review'))
   if (entity.status === Mercoa.EntityStatus.Failed)
-    (title = 'Can only receive funds'), (color = 'mercoa-bg-red-100 mercoa-text-red-800'), (content = 'Failed')
+    ((title = 'Can only receive funds'), (color = 'mercoa-bg-red-100 mercoa-text-red-800'), (content = 'Failed'))
 
   if (showTooltip) {
     return (
