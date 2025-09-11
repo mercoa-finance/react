@@ -56,7 +56,7 @@ export const MercoaButton = React.forwardRef<HTMLButtonElement | HTMLAnchorEleme
   ) => {
     let classNameInternal = `
     disabled:mercoa-bg-gray-300 disabled:mercoa-text-gray-600
-    mercoa-items-center mercoa-rounded-mercoa
+    mercoa-inline-flex mercoa-items-center mercoa-justify-center mercoa-rounded-mercoa
     mercoa-font-medium 
     ${
       hideOutline

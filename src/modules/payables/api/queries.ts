@@ -390,6 +390,7 @@ export const usePayableDocumentsQuery = (
     },
     options: {
       enabled: !!invoiceId && !!mercoaSession?.client,
+      refetchInterval: 600000, // 10 minutes in milliseconds
     },
   })
 }
@@ -412,6 +413,7 @@ export const usePayableSourceEmailQuery = (
     },
     options: {
       enabled: !!invoiceId && !!mercoaSession?.client,
+      refetchInterval: 600000, // 10 minutes in milliseconds
     },
   })
 }

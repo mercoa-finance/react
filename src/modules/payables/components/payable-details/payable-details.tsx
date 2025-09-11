@@ -31,6 +31,16 @@ export function PayableDetails({
   const { heightOffset = 0, documentPosition = 'left', formLayout, paymentMethods } = displayOptions ?? {}
   const { supportedCurrencies } = config ?? {}
 
+  // Automatically respect disableVendorCreation from iframeOptions
+  const mergedConfig = {
+    ...config,
+    counterparty: {
+      ...config?.counterparty,
+      disableCreation:
+        config?.counterparty?.disableCreation || mercoaSession.iframeOptions?.options?.vendors?.disableCreation,
+    },
+  }
+
   if (!mercoaSession.client) return <NoSession componentName="PayableDetails" />
 
   // Try to infer invoiceType when not provided, defaulting to 'invoice' when unable to infer
@@ -63,7 +73,7 @@ export function PayableDetails({
               paymentMethods: paymentMethods,
             },
             handlers,
-            config,
+            config: mergedConfig,
             renderCustom,
           }}
         >
@@ -88,7 +98,7 @@ export function PayableDetails({
             paymentMethods: paymentMethods,
           },
           handlers,
-          config,
+          config: mergedConfig,
           renderCustom,
         }}
       >
@@ -104,7 +114,7 @@ export function PayableDetails({
         handlers,
         renderCustom,
         config: {
-          ...config,
+          ...mergedConfig,
           supportedCurrencies: supportedCurrencies,
         },
         displayOptions: {

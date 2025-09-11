@@ -50,7 +50,7 @@ export const TableActionsBar = ({
               isEmphasized={false}
               color="gray"
               hideOutline
-              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit"
             >
               No Actions Available
             </MercoaButton>
@@ -58,7 +58,7 @@ export const TableActionsBar = ({
           {/* {validActions.includes(ReceivablesTableAction.SendInvoice) && (
             <MercoaButton
               isEmphasized
-              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit"
               onClick={() => {
                 setActiveInvoiceAction({
                   invoiceId: selectedInvoices.map((e) => e.id),
@@ -73,7 +73,7 @@ export const TableActionsBar = ({
           {validActions.includes(ReceivablesTableAction.Edit) && (
             <MercoaButton
               isEmphasized
-              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit"
               onClick={() => {
                 setActiveInvoiceAction({
                   invoiceId: selectedInvoices.map((e) => e.id),
@@ -88,7 +88,7 @@ export const TableActionsBar = ({
           {validActions.includes(ReceivablesTableAction.Archive) && (
             <MercoaButton
               isEmphasized
-              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit"
               onClick={() => {
                 setActiveInvoiceAction({
                   invoiceId: selectedInvoices.map((e) => e.id),
@@ -104,7 +104,7 @@ export const TableActionsBar = ({
             <MercoaButton
               isEmphasized={false}
               color="secondary"
-              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit"
               onClick={() => {
                 setActiveInvoiceAction({
                   invoiceId: selectedInvoices.map((e) => e.id),
@@ -119,7 +119,7 @@ export const TableActionsBar = ({
           {validActions.includes(ReceivablesTableAction.RestoreAsDraft) && (
             <MercoaButton
               isEmphasized
-              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit"
               onClick={() => {
                 setActiveInvoiceAction({
                   invoiceId: selectedInvoices.map((e) => e.id),
@@ -135,7 +135,7 @@ export const TableActionsBar = ({
             <MercoaButton
               isEmphasized
               color="secondary"
-              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit mercoa-flex mercoa-items-center mercoa-justify-center"
+              className="mercoa-text-[13px] mercoa-px-2 mercoa-py-1 mercoa-h-[32px] mercoa-w-fit"
               onClick={() => {
                 setActiveInvoiceAction({
                   invoiceId: selectedInvoices.map((e) => e.id),

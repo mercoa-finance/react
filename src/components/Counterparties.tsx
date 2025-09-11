@@ -383,6 +383,11 @@ export function AddCounterpartyModal({
 }) {
   const mercoaSession = useMercoaSession()
 
+  // If vendor creation is disabled, don't show the modal
+  if (mercoaSession.iframeOptions?.options?.vendors?.disableCreation) {
+    return null
+  }
+
   const methods = useForm({
     resolver: yupResolver(
       yup
@@ -670,6 +675,13 @@ export function CounterpartySearchBase({
 
   // Adding a counterparty
   if (selectedCounterparty?.id === 'new') {
+    // Check if creation is disabled
+    if (mercoaSession.iframeOptions?.options?.vendors?.disableCreation || disableCreation) {
+      // If creation is disabled, clear the selection and return to search
+      setSelectedCounterparty(undefined)
+      return null
+    }
+
     if (input) {
       return (
         <CounterpartyAddOrEditForm

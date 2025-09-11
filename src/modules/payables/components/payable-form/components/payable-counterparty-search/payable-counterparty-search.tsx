@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
-import { CounterpartySearchBase, usePayableDetails } from '../../../../../../components'
+import { CounterpartySearchBase, useMercoaSession, usePayableDetails } from '../../../../../../components'
 import { PayableFormAction } from '../../constants'
 import { PayableFormData } from '../../types'
 import { DuplicateCounterpartyModal } from './duplicate-counterparty-modal'
@@ -18,7 +18,10 @@ export function PayableCounterpartySearch() {
     duplicateVendorInfo,
   } = vendorContextValue
   const { config } = propsContextValue
+  const mercoaSession = useMercoaSession()
   const { disableCreation, network, enableOnboardingLinkOnCreate, showLabel = true } = config?.counterparty ?? {}
+  // Respect disableVendorCreation from iframeOptions as fallback
+  const isCreationDisabled = disableCreation || mercoaSession.iframeOptions?.options?.vendors?.disableCreation
   const { handleSubmit, setValue } = formMethods
 
   const {
@@ -51,7 +54,7 @@ export function PayableCounterpartySearch() {
           <div className="mercoa-p-3 mercoa-bg-gray-100 mercoa-rounded-mercoa mercoa-relative mercoa-w-full">
             <CounterpartySearchBase
               counterparty={selectedVendor}
-              disableCreation={disableCreation}
+              disableCreation={isCreationDisabled}
               onSelect={setSelectedVendor}
               type={'payee'}
               network={network}

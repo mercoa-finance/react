@@ -96,6 +96,13 @@ export function CounterpartySearchBase() {
 
   // Adding a counterparty
   if (selectedCounterparty?.id === 'new') {
+    // Check if creation is disabled
+    if (mercoaSession.iframeOptions?.options?.vendors?.disableCreation || config?.disableCreation) {
+      // If creation is disabled, clear the selection and return to search
+      setSelectedCounterparty(undefined)
+      return null
+    }
+
     if (search) {
       return (
         <CounterpartyAddOrEditForm
@@ -219,7 +226,7 @@ export function CounterpartySearchBase() {
                     </div>
                   </Combobox.Option>
                 )}
-                {!config?.disableCreation && (
+                {!mercoaSession.iframeOptions?.options?.vendors?.disableCreation && !config?.disableCreation && (
                   <Combobox.Option value={{ id: 'new' }}>
                     {({ active }) => (
                       <div
