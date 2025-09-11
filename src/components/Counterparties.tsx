@@ -383,11 +383,6 @@ export function AddCounterpartyModal({
 }) {
   const mercoaSession = useMercoaSession()
 
-  // If vendor creation is disabled, don't show the modal
-  if (mercoaSession.iframeOptions?.options?.vendors?.disableCreation) {
-    return null
-  }
-
   const methods = useForm({
     resolver: yupResolver(
       yup
@@ -431,6 +426,11 @@ export function AddCounterpartyModal({
         },
       })
     }
+  }
+
+  // If vendor creation is disabled, don't show the modal
+  if (mercoaSession.iframeOptions?.options?.vendors?.disableCreation) {
+    return null
   }
 
   if (!mercoaSession.client) return <NoSession componentName="AddCounterpartyModal" />
