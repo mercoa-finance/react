@@ -187,9 +187,8 @@ export function PayableDocumentDisplay({
                   </button>
                   <button
                     type="button"
-                    disabled={zoomLevel === 0.1}
                     onClick={() => setRotate(rotate + 90)}
-                    className="mercoa-p-1 mercoa-text-gray-600 disabled:mercoa-text-gray-200"
+                    className="mercoa-p-1 mercoa-text-gray-600"
                   >
                     <span className="mercoa-sr-only">Rotate</span>
                     <ArrowPathRoundedSquareIcon className="mercoa-h-5 mercoa-w-5" aria-hidden="true" />
@@ -262,9 +261,9 @@ export function PayableDocumentDisplay({
                     <img
                       src={document.fileReaderObj}
                       alt="Invoice Document"
-                      className={`mercoa-origin-top-left mercoa-object-contain mercoa-object-top ${getImageScale(
+                      className={`mercoa-origin-center mercoa-object-contain mercoa-object-top ${getImageScale(
                         zoomLevel,
-                      )} ${getRotate(rotate)} mercoa-origin-center mercoa-w-full`}
+                      )} ${getRotate(rotate)} mercoa-w-full`}
                     />
                   </div>
                 )}
