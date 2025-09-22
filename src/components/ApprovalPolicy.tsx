@@ -339,6 +339,7 @@ export function ApprovalPolicies({
                   type: currentPolicy.rule.identifierList.type,
                   value: currentPolicy.rule.identifierList.value,
                 },
+                autoAssign: currentPolicy.rule.autoAssign,
               }
             : {
                 type: 'automatic',
