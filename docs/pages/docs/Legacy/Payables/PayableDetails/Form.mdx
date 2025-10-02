@@ -165,7 +165,7 @@ The default children is the following:
 | Name                          | Type                                                     | Required | Description                                                                            |
 | :---------------------------- | :------------------------------------------------------- | :------- | :------------------------------------------------------------------------------------- |
 | readOnly                      | `boolean`                                                |          | Make data read only                                                                    |
-| supportedCurrencies           | `Array<Mercoa.CurrencyCode>`                             |          | Set supported currencies in addition to the currencies supported by the payment source |
+| supportedCurrencies           | Array<Mercoa.CurrencyCode>                             |          | Set supported currencies also to the currencies supported by the payment source |
 | supportedSchedulePaymentDates | `Array \<'Weekend' \| 'Past' \| 'Holiday'\>`             |          | Set overrides for dates to be enabled for the scheduled payment date                   |
 | children                      | `( props : PayableOverviewChildrenProps) => JSX.Element` |          | Custom Component                                                                       |
 
