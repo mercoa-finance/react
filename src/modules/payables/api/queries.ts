@@ -527,7 +527,7 @@ export const useVendorCreditUsageQuery = ({
   status,
   vendorCreditIds,
 }: {
-  amount?: number
+  amount?: number | string
   payerId?: string
   vendorId?: string
   invoiceId?: string
@@ -536,10 +536,18 @@ export const useVendorCreditUsageQuery = ({
 }) => {
   const mercoaSession = useMercoaSession()
 
+  // Convert amount to number, handling string values with commas
+  let amountNumber: number | undefined = undefined
+  if (typeof amount === 'string') {
+    amountNumber = Number(amount.replace(/,/g, ''))
+  } else if (typeof amount === 'number') {
+    amountNumber = amount
+  }
+
   return useQuery<Mercoa.CalculateVendorCreditUsageResponse>({
-    queryKey: ['vendorCreditUsage', amount, payerId, vendorId, invoiceId, status, vendorCreditIds],
+    queryKey: ['vendorCreditUsage', amountNumber, payerId, vendorId, invoiceId, status, vendorCreditIds],
     queryFn: async () => {
-      if (!mercoaSession?.client || !amount || !payerId || !vendorId) {
+      if (!mercoaSession?.client || !amountNumber || !payerId || !vendorId) {
         throw new Error('Missing required parameters')
       }
 
@@ -553,14 +561,14 @@ export const useVendorCreditUsageQuery = ({
         ].includes(status as any)
 
       return await mercoaSession.client.entity.counterparty.vendorCredit.estimateUsage(payerId, vendorId, {
-        amount,
+        amount: amountNumber,
         currency: 'USD',
         ...(invoiceId && { excludedInvoiceIds: [invoiceId] }),
         ...(vendorCreditApplicationIsFixed && { includedVendorCreditIds: vendorCreditIds ?? [] }),
       })
     },
     options: {
-      enabled: !!mercoaSession?.client && !!amount && !!payerId && !!vendorId,
+      enabled: !!mercoaSession?.client && !!amountNumber && !!payerId && !!vendorId,
     },
   })
 }

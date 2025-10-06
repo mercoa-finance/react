@@ -1,7 +1,7 @@
 {
   "name": "@mercoa/react",
   "description": "Mercoa React Component Library",
-  "version": "0.1.20-rc4",
+  "version": "0.1.20-rc5",
   "author": "Sandeep Dinesh <sandeep@mercoa.com>",
   "license": "MIT",
   "repository": {
