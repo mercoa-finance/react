@@ -52,6 +52,7 @@ export function useReceivablesQuery({
       orderDirection,
       resultsPerPage,
       paymentType,
+      metadata,
       dateType,
     ],
     queryFn: async ({ pageParam = undefined }) => {

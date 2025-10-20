@@ -455,10 +455,12 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
   const bnplRequest: Mercoa.BnplOfferRequest = useMemo(
     () => ({
       cadence: 'WEEKLY',
-      numberOfInstallments: bnplDefermentWeeks,
+      numberOfInstallments: bnplDefermentWeeks || 0,
       downPaymentDueDate: dayjs(deductionDate).format('YYYY-MM-DD'),
-      installmentsStartDate: bnplInstallmentsStartDate,
-      paymentDayOfWeek: dayjs(bnplInstallmentsStartDate).format('dddd').toUpperCase() as Mercoa.BnplDayOfWeek,
+      installmentsStartDate: bnplInstallmentsStartDate || '',
+      paymentDayOfWeek: dayjs(bnplInstallmentsStartDate || new Date())
+        .format('dddd')
+        .toUpperCase() as Mercoa.BnplDayOfWeek,
     }),
     [bnplDefermentWeeks, deductionDate, bnplInstallmentsStartDate],
   )

@@ -58,6 +58,7 @@ export function usePayablesQuery({
       orderDirection,
       resultsPerPage,
       paymentType,
+      metadata,
       dateType,
       approverId,
       approverActions,

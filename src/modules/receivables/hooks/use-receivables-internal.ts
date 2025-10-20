@@ -227,17 +227,26 @@ export function useReceivablesInternal(receivableProps: ReceivablesProps) {
     })
   }
 
-  const goToNextPage = () => {
+  const goToNextPage = async () => {
     if (isFetchingNextPage) {
       return
     }
-    if (data?.pages && page === data.pages.length - 1 && hasNextPage) {
-      fetchNextPage()
+    // If we're not on the last fetched page, just increment
+    if (data?.pages && page < data.pages.length - 1) {
+      setPage((prev) => prev + 1)
+      return
     }
-    setPage((prev) => prev + 1)
+    // If we're on the last fetched page and there's more, fetch first then increment
+    if (data?.pages && page === data.pages.length - 1 && hasNextPage) {
+      await fetchNextPage()
+      setPage((prev) => prev + 1)
+    }
   }
 
-  const goToPreviousPage = () => {
+  const goToPreviousPage = async () => {
+    if (isFetchingPreviousPage) {
+      return
+    }
     if (page > 0) {
       setPage((prev) => prev - 1)
     }

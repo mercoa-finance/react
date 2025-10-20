@@ -35,9 +35,11 @@ export const PayablesDashboard: FC = memo(() => {
   const { toggleSelectedColumn, setSelectedColumns, selectedColumns, selectedInvoices } = selectionContextValue
   const { downloadInvoicesAsCSV } = actionsContextValue
 
-  const { renderCustom, displayOptions, handlers } = propsContextValue
+  const { renderCustom, displayOptions, handlers, config } = propsContextValue
 
   const { columns, searchBar: customSearchBar } = renderCustom ?? {}
+
+  const { readOnly } = config ?? {}
 
   const {
     statusTabsOptions = {
@@ -100,30 +102,32 @@ export const PayablesDashboard: FC = memo(() => {
   return (
     // NOTE: The pt-1 is to ensure the recurring invoices button is hidden by the recurring invoices panel
     <div className="mercoa-relative mercoa-pt-1">
-      <div className="mercoa-flex mercoa-justify-end mercoa-items-center mercoa-gap-2">
-        <div className="mercoa-flex mercoa-flex-col mercoa-mr-2">
-          <span className="mercoa-text-xs mercoa-text-gray-500">Forward invoices to:</span>
-          <EntityInboxEmail />
+      {!readOnly && (
+        <div className="mercoa-flex mercoa-justify-end mercoa-items-center mercoa-gap-2">
+          <div className="mercoa-flex mercoa-flex-col mercoa-mr-2">
+            <span className="mercoa-text-xs mercoa-text-gray-500">Forward invoices to:</span>
+            <EntityInboxEmail />
+          </div>
+          <div className="mercoa-flex-1" />
+          <MercoaButton
+            isEmphasized={false}
+            className={'mercoa-inline-flex mercoa-text-sm'}
+            type="button"
+            onClick={() => setShowRecurringInvoices((prev) => !prev)}
+          >
+            <span className="mercoa-hidden md:mercoa-inline-block">Recurring Invoices</span>
+          </MercoaButton>
+          <MercoaButton
+            isEmphasized={true}
+            className={'mercoa-inline-flex mercoa-text-sm'}
+            onClick={onCreateInvoice}
+            type="button"
+          >
+            <PlusIcon className="-mercoa-ml-1 mercoa-size-5 md:mercoa-mr-2" aria-hidden="true" />
+            <span className="mercoa-hidden md:mercoa-inline-block">Add Invoice</span>
+          </MercoaButton>
         </div>
-        <div className="mercoa-flex-1" />
-        <MercoaButton
-          isEmphasized={false}
-          className={'mercoa-inline-flex mercoa-text-sm'}
-          type="button"
-          onClick={() => setShowRecurringInvoices((prev) => !prev)}
-        >
-          <span className="mercoa-hidden md:mercoa-inline-block">Recurring Invoices</span>
-        </MercoaButton>
-        <MercoaButton
-          isEmphasized={true}
-          className={'mercoa-inline-flex mercoa-text-sm'}
-          onClick={onCreateInvoice}
-          type="button"
-        >
-          <PlusIcon className="-mercoa-ml-1 mercoa-size-5 md:mercoa-mr-2" aria-hidden="true" />
-          <span className="mercoa-hidden md:mercoa-inline-block">Add Invoice</span>
-        </MercoaButton>
-      </div>
+      )}
 
       <div className="mercoa-mt-2 mercoa-flex mercoa-justify-between mercoa-items-center mercoa-mb-4 mercoa-gap-5">
         <div className="mercoa-flex mercoa-w-[50%] mercoa-mr-2 mercoa-rounded-mercoa">

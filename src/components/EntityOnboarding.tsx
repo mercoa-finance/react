@@ -1405,21 +1405,21 @@ export function EntityOnboardingButton({
     },
     resolver: async (data, context, options) => {
       if (data.accountType === Mercoa.AccountType.Business) {
-        return await yupResolver(
+        return (await yupResolver(
           yup.object({
             ...accountTypeSchema,
             ...legalBusinessNameSchema,
             ...emailSchema,
           }),
-        )(data, context, options as any)
+        )(data, context, options as any)) as any
       } else {
-        return await yupResolver(
+        return (await yupResolver(
           yup.object({
             ...accountTypeSchema,
             ...nameBlockSchema,
             ...emailSchema,
           }),
-        )(data, context, options as any)
+        )(data, context, options as any)) as any
       }
     },
   })

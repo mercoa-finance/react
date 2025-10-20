@@ -146,7 +146,7 @@ export function ReceivablesTableV1({
       orderDirection,
       limit: resultsPerPage,
       startingAfter: startingAfter[startingAfter.length - 1],
-      excludeReceivables: true,
+      excludePayables: true,
       metadata: metadata as any,
     }
 
@@ -508,7 +508,7 @@ export function GroupReceivablesTableV1({
       orderDirection,
       limit: resultsPerPage,
       startingAfter: startingAfter[startingAfter.length - 1],
-      excludeReceivables: true,
+      excludePayables: true,
       metadata: metadata as any,
     }
 
