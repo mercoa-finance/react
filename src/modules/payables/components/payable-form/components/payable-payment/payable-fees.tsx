@@ -31,7 +31,7 @@ export function PayableFees({
   }
 
   const feeTotal = (fees?.destinationPlatformMarkupFee ?? 0) + (fees?.sourcePlatformMarkupFee ?? 0)
-  const vendorCreditTotal = amountNumber - (vendorCreditUsage?.remainingAmount ?? 0)
+  const vendorCreditTotal = vendorCreditUsage?.remainingAmount ? amountNumber - vendorCreditUsage.remainingAmount : 0
 
   if (amount && (feeTotal || vendorCreditTotal)) {
     return (

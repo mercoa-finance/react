@@ -566,19 +566,47 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
           break
         case ReceivableFormAction.SCHEDULE_RECURRING_INVOICE:
           if (!receivableData?.id) return
-          try {
-            // TODO: This is intentionally incorrect, and is only here to satisfy the backend's requirement of having a deductionDate
-            const scheduledInvoice = await invoiceClient.update(receivableData.id, {
-              status: Mercoa.InvoiceStatus.Scheduled,
-              deductionDate: dayjs().toDate(),
-            })
-            toast?.success('Recurring invoice scheduled')
-            refreshInvoice(receivableData.id, scheduledInvoice)
-            setValue('formAction', '')
-          } catch (error: any) {
-            toast?.error(`Failed to schedule recurring invoice: ${error.message}`)
-            setValue('formAction', '')
-          }
+          handleSubmit(async (data: any) => {
+            try {
+              const newInvoice: Mercoa.InvoiceCreationRequest | false = receivableFormUtils.validateAndConstructPayload(
+                {
+                  formData: data,
+                  mercoaSession,
+                  toast,
+                },
+              )
+
+              if (!newInvoice) {
+                setValue('formAction', '')
+                return
+              }
+
+              // Add the payerId to counterparties if needed
+              if (newInvoice.payerId && mercoaSession.entityId) {
+                try {
+                  await mercoaSession.client?.entity.counterparty.addPayors(mercoaSession.entityId, {
+                    payors: [newInvoice.payerId],
+                  })
+                } catch (error: any) {
+                  // Non-critical error, log but continue
+                  console.error('Failed to add counterparty:', error)
+                }
+              }
+
+              // TODO: This is intentionally incorrect, and is only here to satisfy the backend's requirement of having a deductionDate
+              const scheduledInvoice = await invoiceClient.update(receivableData.id, {
+                ...newInvoice,
+                status: Mercoa.InvoiceStatus.Scheduled,
+                deductionDate: dayjs().toDate(),
+              })
+              toast?.success('Recurring invoice scheduled')
+              refreshInvoice(receivableData.id, scheduledInvoice)
+              setValue('formAction', '')
+            } catch (error: any) {
+              toast?.error(`Failed to schedule recurring invoice: ${error.message}`)
+              setValue('formAction', '')
+            }
+          })()
           break
 
         case ReceivableFormAction.RESTORE_AS_DRAFT:
