@@ -32,7 +32,6 @@ import {
   onSubmitCounterparty,
   payableFormUtils,
 } from '../components/payable-form/utils'
-import { nonNegativeNumber } from '../utils'
 import {
   PayableApproversContext,
   PayableBnplContext,
@@ -51,6 +50,7 @@ import {
   PayableVendorContext,
   PayableVendorCreditContext,
 } from '../types'
+import { nonNegativeNumber } from '../utils'
 
 // this is purposely added here to avoid circular dependencies need to inspect further later
 const counterpartyYupValidation = {
