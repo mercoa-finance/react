@@ -1,6 +1,7 @@
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { removeThousands } from '../../../../lib/lib'
+import { nonNegativeNumber } from '../../utils'
 import { PayableFormConfig } from './types'
 
 export const counterpartyYupValidation = {
@@ -103,8 +104,8 @@ export const baseSchema = yup
     fees: yup.mixed().nullable(),
     failureType: yup.string().nullable(),
     vendorCreditIds: yup.array().nullable(),
-    taxAmount: yup.number().transform(removeThousands).positive().nullable(),
-    shippingAmount: yup.number().transform(removeThousands).positive().nullable(),
+    taxAmount: nonNegativeNumber(),
+    shippingAmount: nonNegativeNumber(),
     ocrJobId: yup.string().nullable(),
     createdAt: yup.date().nullable(),
     updatedAt: yup.date().nullable(),
