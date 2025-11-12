@@ -32,6 +32,7 @@ import {
   onSubmitCounterparty,
   payableFormUtils,
 } from '../components/payable-form/utils'
+import { nonNegativeNumber } from '../utils'
 import {
   PayableApproversContext,
   PayableBnplContext,
@@ -236,8 +237,8 @@ export const usePayableDetailsInternal = (props: PayableDetailsProps) => {
       fees: yup.mixed().nullable(),
       failureType: yup.string().nullable(),
       vendorCreditIds: yup.array().nullable(),
-      taxAmount: yup.number().transform(removeThousands).positive().nullable(),
-      shippingAmount: yup.number().transform(removeThousands).positive().nullable(),
+      taxAmount: nonNegativeNumber(),
+      shippingAmount: nonNegativeNumber(),
       ocrJobId: yup.string().nullable(),
       createdAt: yup.date().nullable(),
       updatedAt: yup.date().nullable(),
