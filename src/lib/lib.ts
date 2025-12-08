@@ -445,3 +445,51 @@ export const blobToDataUrl = (blob: Blob) =>
     reader.onerror = reject
     reader.readAsDataURL(blob)
   })
+
+/**
+ * Checks if an invoice has been modified by another user since it was last fetched
+ * If the updatedAt timestamp differs but the status remains the same, the change is allowed.
+ * A conflict only occurs when both updatedAt and status have changed.
+ * @param currentInvoice - The invoice data currently held in memory
+ * @param fetchLatestInvoice - Function to fetch the latest invoice from the server
+ * @returns Promise that resolves to an object with hasConflict flag and the latest invoice
+ */
+export async function checkInvoiceConcurrentModification(
+  currentInvoice: Mercoa.InvoiceResponse | undefined,
+  fetchLatestInvoice: () => Promise<Mercoa.InvoiceResponse | undefined>,
+): Promise<{ hasConflict: boolean; latestInvoice?: Mercoa.InvoiceResponse }> {
+  if (!currentInvoice?.id) {
+    return { hasConflict: false }
+  }
+
+  try {
+    const latestInvoice = await fetchLatestInvoice()
+    
+    if (!latestInvoice) {
+      // Invoice no longer exists or couldn't be fetched
+      return { hasConflict: true, latestInvoice: undefined }
+    }
+
+    // Compare updatedAt timestamps
+    const currentUpdatedAt = new Date(currentInvoice.updatedAt).getTime()
+    const latestUpdatedAt = new Date(latestInvoice.updatedAt).getTime()
+
+    if (latestUpdatedAt > currentUpdatedAt) {
+      // Invoice has been modified by someone else, but check if status is the same
+      // If status hasn't changed, allow the modification to proceed
+      if (currentInvoice.status === latestInvoice.status) {
+        return { hasConflict: false, latestInvoice }
+      }
+      
+      // Status has changed, this is a conflict
+      return { hasConflict: true, latestInvoice }
+    }
+
+    return { hasConflict: false, latestInvoice }
+  } catch (error) {
+    console.error('Error checking for concurrent modifications:', error)
+    // In case of error, we'll allow the update to proceed
+    // to avoid blocking legitimate operations
+    return { hasConflict: false }
+  }
+}

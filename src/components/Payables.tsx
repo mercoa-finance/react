@@ -7,7 +7,7 @@ import DatePicker from 'react-datepicker'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { classNames } from '../lib/lib'
+import { checkInvoiceConcurrentModification, classNames } from '../lib/lib'
 import { isWeekday } from '../lib/scheduling'
 import {
   CountPill,
@@ -359,9 +359,21 @@ export function PayablesTableV1({
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
     setDataLoaded(false)
     let anySuccessFlag = false
+    let hasConflict = false
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
+          // Check for concurrent modifications
+          const { hasConflict: conflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+            return await getInvoiceClient(mercoaSession, invoiceType)?.get(invoice.id)
+          })
+
+          if (conflict) {
+            hasConflict = true
+            console.log('Invoice has been modified by another user: ', invoice.id)
+            return
+          }
+
           await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, {
             ...((invoice.status === Mercoa.InvoiceStatus.Approved ||
               invoice.status === Mercoa.InvoiceStatus.Failed) && { status: Mercoa.InvoiceStatus.Scheduled }),
@@ -374,7 +386,15 @@ export function PayablesTableV1({
         }
       }),
     )
-    if (anySuccessFlag) {
+    if (hasConflict && anySuccessFlag) {
+      toast.warning(
+        'Some payments were scheduled, but others have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (hasConflict) {
+      toast.error(
+        'Some invoices have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (anySuccessFlag) {
       toast.success('Payment Scheduled')
     } else {
       toast.error('Error scheduling payment')
@@ -417,10 +437,22 @@ export function PayablesTableV1({
   async function handleSubmitNew() {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
     let anySuccessFlag = false
+    let hasConflict = false
     setDataLoaded(false)
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
+          // Check for concurrent modifications
+          const { hasConflict: conflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+            return await getInvoiceClient(mercoaSession, invoiceType)?.get(invoice.id)
+          })
+
+          if (conflict) {
+            hasConflict = true
+            console.log('Invoice has been modified by another user: ', invoice.id)
+            return
+          }
+
           await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, {
             status: Mercoa.InvoiceStatus.New,
           })
@@ -434,7 +466,15 @@ export function PayablesTableV1({
         }
       }),
     )
-    if (anySuccessFlag) {
+    if (hasConflict && anySuccessFlag) {
+      toast.warning(
+        'Some invoices were submitted, but others have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (hasConflict) {
+      toast.error(
+        'Some invoices have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (anySuccessFlag) {
       toast.success('Invoice Submitted for Approval')
     } else {
       toast.error('Error submitting invoice')
@@ -468,10 +508,22 @@ export function PayablesTableV1({
   async function handleArchive() {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
     let anySuccessFlag = false
+    let hasConflict = false
     setDataLoaded(false)
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
+          // Check for concurrent modifications
+          const { hasConflict: conflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+            return await getInvoiceClient(mercoaSession, invoiceType)?.get(invoice.id)
+          })
+
+          if (conflict) {
+            hasConflict = true
+            console.log('Invoice has been modified by another user: ', invoice.id)
+            return
+          }
+
           await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, {
             status: Mercoa.InvoiceStatus.Archived,
           })
@@ -482,7 +534,15 @@ export function PayablesTableV1({
         }
       }),
     )
-    if (anySuccessFlag) {
+    if (hasConflict && anySuccessFlag) {
+      toast.warning(
+        'Some invoices were archived, but others have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (hasConflict) {
+      toast.error(
+        'Some invoices have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (anySuccessFlag) {
       toast.success('Invoices Archived')
     } else {
       toast.error('Error archiving invoices')
@@ -493,10 +553,22 @@ export function PayablesTableV1({
   async function handleRestoreAsDraft() {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
     let anySuccessFlag = false
+    let hasConflict = false
     setDataLoaded(false)
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
+          // Check for concurrent modifications
+          const { hasConflict: conflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+            return await getInvoiceClient(mercoaSession, invoiceType)?.get(invoice.id)
+          })
+
+          if (conflict) {
+            hasConflict = true
+            console.log('Invoice has been modified by another user: ', invoice.id)
+            return
+          }
+
           await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, {
             status: Mercoa.InvoiceStatus.Draft,
           })
@@ -507,7 +579,15 @@ export function PayablesTableV1({
         }
       }),
     )
-    if (anySuccessFlag) {
+    if (hasConflict && anySuccessFlag) {
+      toast.warning(
+        'Some invoices were restored, but others have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (hasConflict) {
+      toast.error(
+        'Some invoices have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (anySuccessFlag) {
       toast.success('Invoices Restored as Draft')
     } else {
       toast.error('Error restoring invoices')
@@ -518,10 +598,22 @@ export function PayablesTableV1({
   async function handleCancel() {
     if (!mercoaSession.token || !mercoaSession.entity?.id) return
     let anySuccessFlag = false
+    let hasConflict = false
     setDataLoaded(false)
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
+          // Check for concurrent modifications
+          const { hasConflict: conflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+            return await getInvoiceClient(mercoaSession, invoiceType)?.get(invoice.id)
+          })
+
+          if (conflict) {
+            hasConflict = true
+            console.log('Invoice has been modified by another user: ', invoice.id)
+            return
+          }
+
           await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, {
             status: Mercoa.InvoiceStatus.Canceled,
           })
@@ -532,7 +624,15 @@ export function PayablesTableV1({
         }
       }),
     )
-    if (anySuccessFlag) {
+    if (hasConflict && anySuccessFlag) {
+      toast.warning(
+        'Some payments were cancelled, but others have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (hasConflict) {
+      toast.error(
+        'Some invoices have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (anySuccessFlag) {
       toast.success('Payments Cancelled')
     } else {
       toast.error('Error cancelling payments')
@@ -543,12 +643,25 @@ export function PayablesTableV1({
   async function handleApprove() {
     if (!mercoaSession.token || !mercoaSession.entity?.id || !mercoaSession.user) return
     let anySuccessFlag = false
+    let hasConflict = false
     setDataLoaded(false)
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
+          // Check for concurrent modifications
+          const { hasConflict: conflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+            return await getInvoiceClient(mercoaSession, invoiceType)?.get(invoice.id)
+          })
+
+          if (conflict) {
+            hasConflict = true
+            console.log('Invoice has been modified by another user: ', invoice.id)
+            return
+          }
+
           const resp = await getInvoiceClient(mercoaSession, invoiceType)?.get(invoice.id)
-          if (resp?.status != Mercoa.InvoiceStatus.New) {
+
+          if (!resp || resp.status != Mercoa.InvoiceStatus.New) {
             anySuccessFlag = true
             return
           }
@@ -562,7 +675,15 @@ export function PayablesTableV1({
         }
       }),
     )
-    if (anySuccessFlag) {
+    if (hasConflict && anySuccessFlag) {
+      toast.warning(
+        'Some invoices were approved, but others have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (hasConflict) {
+      toast.error(
+        'Some invoices have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (anySuccessFlag) {
       toast.success('Approved')
     }
     mercoaSession.refresh()
@@ -571,12 +692,25 @@ export function PayablesTableV1({
   async function handleReject() {
     if (!mercoaSession.token || !mercoaSession.entity?.id || !mercoaSession.user) return
     let anySuccessFlag = false
+    let hasConflict = false
     setDataLoaded(false)
     await Promise.all(
       selectedInvoices.map(async (invoice) => {
         try {
+          // Check for concurrent modifications
+          const { hasConflict: conflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+            return await getInvoiceClient(mercoaSession, invoiceType)?.get(invoice.id)
+          })
+
+          if (conflict) {
+            hasConflict = true
+            console.log('Invoice has been modified by another user: ', invoice.id)
+            return
+          }
+
           const resp = await getInvoiceClient(mercoaSession, invoiceType)?.get(invoice.id)
-          if (resp?.status != Mercoa.InvoiceStatus.New) {
+
+          if (!resp || resp.status != Mercoa.InvoiceStatus.New) {
             anySuccessFlag = true
             return
           }
@@ -590,7 +724,15 @@ export function PayablesTableV1({
         }
       }),
     )
-    if (anySuccessFlag) {
+    if (hasConflict && anySuccessFlag) {
+      toast.warning(
+        'Some invoices were rejected, but others have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (hasConflict) {
+      toast.error(
+        'Some invoices have been modified by another user. Please refresh the page to see the latest changes.',
+      )
+    } else if (anySuccessFlag) {
       toast.success('Rejected')
     }
     mercoaSession.refresh()

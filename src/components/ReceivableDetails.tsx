@@ -18,7 +18,7 @@ import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { removeThousands } from '../lib/lib'
+import { checkInvoiceConcurrentModification, removeThousands } from '../lib/lib'
 import InvoicePreviewV1 from './InvoicePreview'
 import { ReceivableFormErrorsV1 } from './ReceivableFormErrorsV1'
 import {
@@ -550,6 +550,19 @@ export function ReceivableFormV1({
     }
 
     if (invoice) {
+      // Check for concurrent modifications before updating
+      const { hasConflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+        return await mercoaSession.client?.invoice.get(invoice.id)
+      })
+
+      if (hasConflict) {
+        toast.error(
+          'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+        )
+        setIsLoading(false)
+        return
+      }
+
       const response = await mercoaSession.client?.invoice.update(invoice.id, newInvoice)
       mercoaSession.debug(response)
       setIsLoading(false)
@@ -1320,6 +1333,19 @@ export function ReceivableActionsV1({
         if (confirm('Are you sure you want to cancel this invoice? This cannot be undone.')) {
           try {
             setIsLoading(true)
+            // Check for concurrent modifications
+            const { hasConflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+              return await mercoaSession.client?.invoice.get(invoice.id)
+            })
+
+            if (hasConflict) {
+              toast.error(
+                'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+              )
+              setIsLoading(false)
+              return
+            }
+
             await mercoaSession.client?.invoice.update(invoice.id, {
               status: Mercoa.InvoiceStatus.Canceled,
             })
@@ -1444,6 +1470,19 @@ export function ReceivableActionsV1({
         }
         try {
           setIsLoading(true)
+          // Check for concurrent modifications
+          const { hasConflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+            return await mercoaSession.client?.invoice.get(invoice.id)
+          })
+
+          if (hasConflict) {
+            toast.error(
+              'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+            )
+            setIsLoading(false)
+            return
+          }
+
           await mercoaSession.client?.invoice.update(invoice.id, {
             status: Mercoa.InvoiceStatus.Approved,
           })
@@ -1476,6 +1515,19 @@ export function ReceivableActionsV1({
         if (!invoice?.id) return
         try {
           setIsLoading(true)
+          // Check for concurrent modifications
+          const { hasConflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+            return await mercoaSession.client?.invoice.get(invoice.id)
+          })
+
+          if (hasConflict) {
+            toast.error(
+              'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+            )
+            setIsLoading(false)
+            return
+          }
+
           await mercoaSession.client?.invoice.update(invoice.id, {
             status: Mercoa.InvoiceStatus.Paid,
           })
@@ -1502,6 +1554,19 @@ export function ReceivableActionsV1({
         if (!invoice?.id) return
         try {
           setIsLoading(true)
+          // Check for concurrent modifications
+          const { hasConflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+            return await mercoaSession.client?.invoice.get(invoice.id)
+          })
+
+          if (hasConflict) {
+            toast.error(
+              'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+            )
+            setIsLoading(false)
+            return
+          }
+
           await mercoaSession.client?.invoice.update(invoice.id, {
             status: Mercoa.InvoiceStatus.Draft,
           })

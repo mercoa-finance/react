@@ -51,7 +51,7 @@ import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { blobToDataUrl, classNames, removeThousands } from '../lib/lib'
+import { blobToDataUrl, checkInvoiceConcurrentModification, classNames, removeThousands } from '../lib/lib'
 import { isSupportedScheduleDate, isWeekday } from '../lib/scheduling'
 import {
   AddBankAccountForm,
@@ -755,6 +755,23 @@ export function PayableFormV1({
     let postAction: 'APPROVE' | 'REJECT' | undefined = undefined
     if (data.saveAsStatus === Mercoa.InvoiceStatus.Canceled) {
       if (confirm('Are you sure you want to cancel this invoice? This cannot be undone.')) {
+        // Check for concurrent modifications
+        const { hasConflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+          return await getInvoiceClient(mercoaSession, invoiceType)?.get(data.id)
+        })
+
+        if (hasConflict) {
+          renderCustom?.toast
+            ? renderCustom?.toast.error(
+                'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+              )
+            : toast.error(
+                'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+              )
+          setIsLoading(false)
+          return
+        }
+
         await getInvoiceClient(mercoaSession, invoiceType)?.update(data.id, {
           status: Mercoa.InvoiceStatus.Canceled,
         })
@@ -764,6 +781,23 @@ export function PayableFormV1({
       return
     } else if (data.saveAsStatus === Mercoa.InvoiceStatus.Archived) {
       if (confirm('Are you sure you want to archive this invoice? This cannot be undone.')) {
+        // Check for concurrent modifications
+        const { hasConflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+          return await getInvoiceClient(mercoaSession, invoiceType)?.get(data.id)
+        })
+
+        if (hasConflict) {
+          renderCustom?.toast
+            ? renderCustom?.toast.error(
+                'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+              )
+            : toast.error(
+                'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+              )
+          setIsLoading(false)
+          return
+        }
+
         await getInvoiceClient(mercoaSession, invoiceType)?.update(data.id, {
           status: Mercoa.InvoiceStatus.Archived,
         })
@@ -951,6 +985,22 @@ export function PayableFormV1({
         if (
           confirm('Do you want to create a printable check? This will mark the invoice as paid and cannot be undone.')
         ) {
+          // Check for concurrent modifications
+          const { hasConflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+            return await getInvoiceClient(mercoaSession, invoiceType)?.get(invoice.id)
+          })
+
+          if (hasConflict) {
+            renderCustom?.toast
+              ? renderCustom?.toast.error(
+                  'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+                )
+              : toast.error(
+                  'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+                )
+            return
+          }
+
           const resp = await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice?.id, {
             status: Mercoa.InvoiceStatus.Paid,
             paymentDestinationOptions: {
@@ -1482,6 +1532,22 @@ export function PayableFormV1({
 
     if (invoice) {
       try {
+        // Check for concurrent modifications before updating
+        const { hasConflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+          return await getInvoiceClient(mercoaSession, invoiceType)?.get(invoice.id)
+        })
+
+        if (hasConflict) {
+          renderCustom?.toast
+            ? renderCustom?.toast.error(
+                'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+              )
+            : toast.error(
+                'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+              )
+          return
+        }
+
         const resp = await getInvoiceClient(mercoaSession, invoiceType)?.update(invoice.id, invoiceDataFinal)
         if (resp) {
           if (!postAction) {
