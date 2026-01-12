@@ -54,7 +54,7 @@ The `<PayableDetails>` component is used to let users create and manage payable 
 | `onCounterpartyPreSubmit` | `(counterparty: Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined, counterpartyId?: string) => Promise<Mercoa.EntityRequest \| Mercoa.EntityUpdateRequest \| undefined>` |          | Called before submitting a counterparty entity. Useful for adding custom fields or preventing submission. |
 | `onInvoiceUpdate`         | `(invoice: Mercoa.InvoiceResponse \| undefined) => void`                                                                                                                               |          | Triggered when an invoice is created, updated, or deleted.                                                |
 | `onInvoiceSubmit`         | `(resp: Mercoa.InvoiceResponse) => void`                                                                                                                                               |          | Triggered when an invoice is successfully submitted.                                                      |
-| `onOcrComplete`           | `(ocr: Mercoa.OcrResponse) => void`                                                                                                                                                    |          | Triggered when OCR processing is complete.                                                                |
+| `onOcrComplete`           | `(ocr: Mercoa.OcrResponse) => void`                                                                                                                                                    |          | Triggered when Optical Character Recognition (OCR) processing is complete.                                                                |
 
 ---
 
@@ -206,7 +206,7 @@ type ToastClient = {
   <PayableDetails
     queryOptions={{ invoiceId: 'inv_123', invoiceType: 'invoice' }}
     config={{
-      supportedCurrencies: ['USD', 'EUR', 'GBP'],
+      supportedCurrencies: ['USD (United States Dollar)', 'EUR (Euro)', 'GBP (British Pound)'],
     }}
   />
   ```
@@ -294,7 +294,7 @@ type ToastClient = {
     handlers={{
       onInvoiceUpdate: (invoice) => console.log('Invoice updated:', invoice),
       onInvoiceSubmit: (invoice) => console.log('Invoice submitted:', invoice),
-      onOcrComplete: (ocrData) => console.log('OCR completed:', ocrData),
+      onOcrComplete: (ocrData) => console.log('OCR (Optical Character Recognition) completed:', ocrData),
     }}
     displayOptions={{
       heightOffset: 100,
@@ -348,7 +348,7 @@ type ToastClient = {
       },
     }}
     config={{
-      supportedCurrencies: ['USD', 'EUR', 'GBP'],
+      supportedCurrencies: ['USD (United States Dollar)', 'EUR (Euro)', 'GBP (British Pound)'],
     }}
   />
   ```

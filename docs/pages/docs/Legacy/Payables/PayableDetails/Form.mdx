@@ -36,7 +36,7 @@ The `<PayableForm>` component should be used as a child of the [`<PayableDetails
 | Name                  | Type                                                                                                                                                          | Required | Description                                                                                                                      |
 | :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------- | :------------------------------------------------------------------------------------------------------------------------------- |
 | invoice               | `Mercoa.InvoiceResponse`                                                                                                                                      |          | The invoice object                                                                                                               |
-| ocrResponse           | `Mercoa.OcrResponse`                                                                                                                                          |          | Results of OCR                                                                                                                   |
+| ocrResponse           | `Mercoa.OcrResponse`                                                                                                                                          |          | Results of Optical Character Recognition (OCR)                                                                                                                   |
 | onUpdate              | `(invoice: InvoiceResponse \| undefined) => void`                                                                                                             |          | When the invoice is created, updated, or deleted, this callback is triggered                                                     |
 | height                | `number`                                                                                                                                                      | ✅       | Height of the component in pixels                                                                                                |
 | uploadedDocument      | `string`                                                                                                                                                      |          | Base64-encoded invoice document                                                                                                  |
@@ -50,7 +50,7 @@ type PayableFormChildrenProps = {
   invoice?: Mercoa.InvoiceResponse // If there is an existing invoice, this will be the current invoice data
   refreshInvoice: (invoiceId: Mercoa.InvoiceId) => void // If there is an existing invoice, refresh data from the server
 
-  ocrResponse?: Mercoa.OcrResponse // Once OCR is completed, this will contain the raw response from the API
+  ocrResponse?: Mercoa.OcrResponse // Once Optical Character Recognition (OCR) is completed, this will contain the raw response from the API
 
   uploadedDocument?: string // The uploaded/stored PDF/Image.
   setUploadedDocument: (e?: string) => void // Set the uploaded document (Base64 encoded string)
