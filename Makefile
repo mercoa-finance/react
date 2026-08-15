@@ -10,6 +10,10 @@ copy_components:
 	rsync -av $(CORE_SRC_DIR)/modules ./src/
 	rsync -av --exclude='use-infinite-query.ts' $(CORE_SRC_DIR)/lib ./src/
 
+copy_tsconfig:
+	@echo "Copying shared tsconfig..."
+	rsync -av $(CORE_SRC_DIR)/../tsconfig.base.json ./tsconfig.base.json
+
 ## rsync -av --exclude='Mercoa.tsx' $(ORIGINAL_DIR) ./src/
 
 # Rule to replace the string
@@ -33,9 +37,9 @@ prettier:
 		npm run prettier
 
 # Define phony targets
-.PHONY: replace_string copy_components prettier
+.PHONY: replace_string copy_components copy_tsconfig prettier
 
-sync: copy_components replace_import prettier
+sync: copy_components copy_tsconfig replace_import prettier
 
 
 

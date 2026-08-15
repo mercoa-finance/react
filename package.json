@@ -15,7 +15,8 @@
     "build": "tsc && vite build && tailwindcss -i ./src/tailwind.css -o ./dist/mercoa.css --minify && cat ./dist/mercoa.css ./node_modules/react-datepicker/dist/react-datepicker.min.css ./node_modules/react-toastify/dist/ReactToastify.min.css > ./dist/style.css && cp ./src/tailwind.base.css ./dist/tailwind.base.css",
     "dev": "npm start",
     "lint": "eslint . --ext .ts,.tsx",
-    "prettier": "prettier --write ./src/components"
+    "prettier": "prettier --write ./src/components",
+    "test": "jest"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
@@ -43,6 +44,7 @@
     "@types/react-datepicker": "^4.19.4",
     "@types/react-dom": "^18.0.10",
     "@types/react-input-mask": "^3.0.5",
+    "@types/jest": "^29.5.14",
     "@types/react-signature-canvas": "^1.0.5",
     "@typescript-eslint/eslint-plugin": "^5.60.1",
     "@typescript-eslint/parser": "^5.60.1",
@@ -54,9 +56,13 @@
     "eslint-plugin-react": "^7.32.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-storybook": "^0.8.0",
+    "jest": "^29.7.0",
     "postcss": "^8.4.35",
     "prettier": "^3.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "tailwindcss": "^3.4.0",
+    "ts-jest": "^29.2.5",
     "typescript": "^5.1.6",
     "vite": "^5.4.15",
     "vite-plugin-dts": "^2.3.0",
