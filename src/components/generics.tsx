@@ -762,6 +762,52 @@ export function StatCard({
   )
 }
 
+/**
+ * Filters combobox options against the search query. Matches on the primary display field and on
+ * any secondary display field (e.g. a user's email), so anything visible in the list is searchable.
+ */
+export function filterComboboxOptions<T extends { value: any }>({
+  options,
+  query,
+  displayIndex,
+  secondaryDisplayIndex,
+}: {
+  options: T[]
+  query: string
+  displayIndex?: string
+  secondaryDisplayIndex?: string | string[]
+}): T[] {
+  const lowerQuery = query.toLowerCase()
+  const secondaryIndexes = secondaryDisplayIndex
+    ? Array.isArray(secondaryDisplayIndex)
+      ? secondaryDisplayIndex
+      : [secondaryDisplayIndex]
+    : []
+
+  return options.filter((option) => {
+    const searchableFields: any[] = [
+      displayIndex ? option.value?.[displayIndex] : option.value,
+      ...secondaryIndexes.map((index) => option.value?.[index]),
+    ]
+    return searchableFields.some((field) => {
+      if (Array.isArray(field)) return field.join(' ').toLowerCase().includes(lowerQuery)
+      if (typeof field === 'string') return field.toLowerCase().includes(lowerQuery)
+      if (typeof field === 'number') return String(field).includes(lowerQuery)
+      return false
+    })
+  })
+}
+
+/** Fires `onOpen` on the closed -> open transition of a combobox dropdown. Renders nothing. */
+function ClearSearchOnOpen({ open, onOpen }: { open: boolean; onOpen: () => void }) {
+  const wasOpen = useRef(open)
+  useEffect(() => {
+    if (open && !wasOpen.current) onOpen()
+    wasOpen.current = open
+  })
+  return null
+}
+
 export function MercoaCombobox({
   onChange,
   onRawChange,
@@ -842,14 +888,32 @@ export function MercoaCombobox({
     }
   }, [query, freeText])
 
+  // Multi-select pill comboboxes render the selection as pills instead of text, so there is no
+  // visible field to type into. Show an inline search box next to the pills while the dropdown is
+  // open, otherwise long option lists (which are capped at 100 rendered options) are unsearchable.
+  const usePillSearch = !!multiple && displaySelectedAs === 'pill' && !freeText
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // Headless UI only writes back into the input when it decides the value is out of date, and it
+  // skips that while the user is mid-typing. Clear the field ourselves so the visible text can
+  // never disagree with the query the list is actually filtered by.
+  function clearSearch() {
+    setQuery('')
+    if (searchInputRef.current) searchInputRef.current.value = ''
+  }
+
+  // Single-select pill comboboxes swap the pill for a text input when the dropdown opens, and
+  // Headless UI has already pre-filled that input with the current selection's name. Typing then
+  // appends to that name ("Jane Doe" + "bob") and matches nothing, so the list can't be searched
+  // without manually clearing the field first. Start every pill dropdown with an empty query;
+  // Headless UI restores the display value on close.
+  const clearSearchOnOpen = displaySelectedAs === 'pill' && !freeText && !readOnly
+
   const filteredOptions =
     query === ''
       ? options
       : [
-          ...options.filter((option) => {
-            const value = displayIndex ? option.value?.[displayIndex] : option.value
-            return value?.toLowerCase().includes(query.toLowerCase())
-          }),
+          ...filterComboboxOptions({ options, query, displayIndex, secondaryDisplayIndex }),
           ...(freeText ? [{ value: query, disabled: false }] : []),
         ]
 
@@ -909,24 +973,30 @@ export function MercoaCombobox({
         <Combobox.Button className="mercoa-relative mercoa-w-full mercoa-bg-white" as="div">
           {({ open }) => {
             const showInput = displaySelectedAs === 'input' || freeText || (open && !multiple)
+            const showPillSearch = usePillSearch && open && !readOnly
             return (
               <>
+                {clearSearchOnOpen && <ClearSearchOnOpen open={open} onOpen={clearSearch} />}
                 <div className={!showInput ? inputBoxClass : ' '}>
                   {!showInput && displayPillValue(selectedValue)}
                   <Combobox.Input
-                    placeholder={placeholder}
+                    placeholder={showPillSearch ? 'Search...' : placeholder}
                     autoComplete="off"
                     className={
                       showInput
                         ? inputBoxClass
-                        : `${
-                            selectedValue && suppliedInputClassName
-                              ? 'mercoa-hidden'
-                              : 'mercoa-invisible mercoa-h-[0px] mercoa-p-0'
-                          }`
+                        : showPillSearch
+                          ? 'mercoa-inline-block mercoa-w-[120px] mercoa-border-0 mercoa-bg-transparent mercoa-p-0 mercoa-align-middle mercoa-text-sm mercoa-text-gray-900 placeholder:mercoa-text-gray-400 focus:mercoa-outline-none focus:mercoa-ring-0'
+                          : `${
+                              selectedValue && suppliedInputClassName
+                                ? 'mercoa-hidden'
+                                : 'mercoa-invisible mercoa-h-[0px] mercoa-p-0'
+                            }`
                     }
+                    ref={searchInputRef}
                     onChange={(event) => setQuery(event.target.value)}
-                    displayValue={displayInputValue}
+                    // Keep the field showing the live query; the selection is already shown as pills.
+                    displayValue={usePillSearch ? () => query : displayInputValue}
                     onClick={(e: any) => {
                       if (open) e.stopPropagation()
                     }}
@@ -942,7 +1012,7 @@ export function MercoaCombobox({
           }}
         </Combobox.Button>
 
-        {filteredOptionsLimited.length > 0 && (
+        {(filteredOptionsLimited.length > 0 || query !== '') && (
           <Combobox.Options
             className={
               'mercoa-absolute mercoa-z-10 mercoa-mt-1 mercoa-max-h-60 mercoa-w-full mercoa-overflow-auto mercoa-rounded-mercoa mercoa-bg-white mercoa-py-1 mercoa-text-base mercoa-shadow-lg mercoa-ring-1 mercoa-ring-black mercoa-ring-opacity-5 focus:mercoa-outline-none sm:mercoa-text-sm ' +
@@ -1028,6 +1098,17 @@ export function MercoaCombobox({
                 }}
               </Combobox.Option>
             )}
+            {filteredOptionsLimited.length === 0 && query !== '' && (
+              <Combobox.Option
+                className="mercoa-relative mercoa-cursor-default mercoa-select-none mercoa-py-2 mercoa-pl-3 mercoa-pr-9 mercoa-text-gray-600"
+                disabled
+                value=""
+              >
+                <div className="mercoa-flex mercoa-justify-center mercoa-py-2">
+                  <span className="mercoa-text-gray-500">No results found</span>
+                </div>
+              </Combobox.Option>
+            )}
             {filteredOptionsLimited.length != filteredOptions.length && (
               <Combobox.Option
                 className="mercoa-relative mercoa-cursor-default mercoa-select-none mercoa-py-2 mercoa-pl-3 mercoa-pr-9 mercoa-bg-gray-200 mercoa-text-gray-600"
@@ -1054,6 +1135,8 @@ export function MercoaCombobox({
       value={selectedValue}
       onChange={(value: any) => {
         setSelectedValue(value)
+        // Reset the search after each pick so the next one starts from the full list
+        if (usePillSearch) clearSearch()
         onChange(value)
       }}
       multiple
@@ -1285,6 +1368,12 @@ export function inputClassName({
   ${align === 'right' ? 'mercoa-text-right' : ''}
   ${align === 'center' ? 'mercoa-text-center' : ''}
   mercoa-outline-0 mercoa-ring-0 focus:mercoa-ring-0 focus:mercoa-outline-0 mercoa-overflow-hidden`
+}
+
+export function textareaClassName({ noBorder }: { noBorder?: boolean } = {}) {
+  return `mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-py-1.5 mercoa-pl-2 mercoa-pr-2 mercoa-text-gray-900 sm:mercoa-text-sm sm:mercoa-leading-6 placeholder:mercoa-text-gray-400
+  ${noBorder ? 'mercoa-border-0' : 'mercoa-border mercoa-border-gray-300 focus:mercoa-border-mercoa-primary'}
+  mercoa-outline-0 mercoa-ring-0 focus:mercoa-ring-0 focus:mercoa-outline-0`
 }
 
 export function MercoaInputLabel({

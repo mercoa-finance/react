@@ -364,6 +364,84 @@ export const PayablesTable: FC = memo(() => {
         enableResizing: true,
       },
       {
+        accessorKey: 'processedAt',
+        header: 'Payment Initiated',
+        cell: ({ row }) => (
+          <span className="mercoa-text-sm">
+            {row.original.processedAt ? dayjs(row.original.processedAt).format('MMM DD, YYYY') : '-'}
+          </span>
+        ),
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'creatorUser',
+        header: 'Creator',
+        cell: ({ row }) => {
+          const creatorUser = row.original.creatorUser ?? row.original.invoice?.creatorUser
+          if (!creatorUser) return <span className="mercoa-text-sm">-</span>
+          return (
+            <div>
+              <p className="mercoa-text-sm mercoa-font-medium">{creatorUser.name}</p>
+              <p className="mercoa-text-xs mercoa-text-gray-500">{creatorUser.email}</p>
+            </div>
+          )
+        },
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'transactions',
+        header: 'Transactions',
+        cell: ({ row }) => {
+          const transactions = row.original.transactions ?? row.original.invoice?.transactions
+          if (!transactions?.length) return <span className="mercoa-text-sm">-</span>
+          return (
+            <div className="mercoa-space-y-1">
+              {transactions.map((transaction: Mercoa.TransactionResponseWithoutInvoices) => (
+                <div key={transaction.id} className="mercoa-text-xs">
+                  <p className="mercoa-font-medium">{transaction.status}</p>
+                  <p className="mercoa-text-gray-500 mercoa-select-all">{transaction.id}</p>
+                </div>
+              ))}
+            </div>
+          )
+        },
+        enableResizing: true,
+      },
+      {
+        accessorKey: 'paymentSource',
+        header: 'Payment Source',
+        cell: ({ row }) => {
+          const pm = (row.original.paymentSource ?? row.original.invoice?.paymentSource) as
+            | Mercoa.PaymentMethodResponse
+            | undefined
+
+          if (!pm || !pm.type) return null
+
+          switch (pm.type) {
+            case Mercoa.PaymentMethodType.BankAccount:
+              return (
+                <span>
+                  {pm.bankName} ••••{String(pm.accountNumber).slice(-4)}
+                </span>
+              )
+
+            case Mercoa.PaymentMethodType.Check:
+              return <span>Check • {String(pm.addressLine1).slice(0, 15)}</span>
+
+            case Mercoa.PaymentMethodType.Custom:
+              return (
+                <span>
+                  {pm.accountName} ••••{String(pm.accountNumber).slice(-4)}
+                </span>
+              )
+
+            default:
+              return null
+          }
+        },
+        enableResizing: true,
+      },
+      {
         accessorKey: 'approvers',
         header: 'Approvers',
         cell: ({ row }) => {
@@ -776,6 +854,38 @@ export const PayablesTable: FC = memo(() => {
                     amount={row.original.amount}
                     type="payable"
                   />
+                )
+              }
+              if (ele.field === 'processedAt') {
+                const processedAt = row.original.processedAt ?? row.original.invoice?.processedAt
+                return (
+                  <span className="mercoa-text-sm">
+                    {processedAt ? dayjs(processedAt).format('MMM DD, YYYY') : '-'}
+                  </span>
+                )
+              }
+              if (ele.field === 'creatorUser') {
+                const creatorUser = row.original.creatorUser ?? row.original.invoice?.creatorUser
+                if (!creatorUser) return <span className="mercoa-text-sm">-</span>
+                return (
+                  <div>
+                    <p className="mercoa-text-sm mercoa-font-medium">{creatorUser.name}</p>
+                    <p className="mercoa-text-xs mercoa-text-gray-500">{creatorUser.email}</p>
+                  </div>
+                )
+              }
+              if (ele.field === 'transactions') {
+                const transactions = row.original.transactions ?? row.original.invoice?.transactions
+                if (!transactions?.length) return <span className="mercoa-text-sm">-</span>
+                return (
+                  <div className="mercoa-space-y-1">
+                    {transactions.map((transaction: Mercoa.TransactionResponseWithoutInvoices) => (
+                      <div key={transaction.id} className="mercoa-text-xs">
+                        <p className="mercoa-font-medium">{transaction.status}</p>
+                        <p className="mercoa-text-gray-500 mercoa-select-all">{transaction.id}</p>
+                      </div>
+                    ))}
+                  </div>
                 )
               }
               if (ele.field === 'paymentDestination' || ele.field === 'paymentSource') {

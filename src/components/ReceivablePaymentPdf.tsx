@@ -10,11 +10,13 @@ export function ReceivablePaymentPdf({
   invoice,
   hideQR = false,
   paymentLinkUrl,
+  logoUrl,
   invoiceCustomizations,
 }: {
   invoice?: Mercoa.InvoiceResponse
   hideQR?: boolean
   paymentLinkUrl?: string
+  logoUrl?: string
   invoiceCustomizations?: {
     hideAddress?: boolean
     hideQrCode?: boolean
@@ -50,6 +52,7 @@ export function ReceivablePaymentPdf({
 
   const logo =
     invoice.vendor?.logo ??
+    logoUrl ??
     mercoaSession.organization?.logoUrl ??
     'https://storage.googleapis.com/mercoa-partner-logos/mercoa-logo.png'
 

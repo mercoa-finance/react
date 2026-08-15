@@ -79,6 +79,7 @@ import {
   counterpartyYupValidation,
   createCounterpartyRequest,
   inputClassName,
+  textareaClassName,
   onSubmitCounterparty,
   useDebounce,
   useMercoaSession,
@@ -3200,7 +3201,7 @@ export function PayableOverviewV1({
             readOnly={readOnly || (!!status && afterApprovedStatus.includes(status))}
             {...register('description')}
             rows={3}
-            className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
+            className={textareaClassName()}
             defaultValue={''}
           />
         </div>

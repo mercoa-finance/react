@@ -10,7 +10,12 @@ const allColumnsDefault: InvoiceTableColumn[] = [
   { field: 'dueDate', header: 'Due Date' },
   { field: 'invoiceDate', header: 'Invoice Date' },
   { field: 'deductionDate', header: 'Scheduled Payment Date' },
+  { field: 'processedAt', header: 'Payment Initiated' },
   { field: 'amount', header: 'Amount' },
+  { field: 'creatorUser', header: 'Creator' },
+  { field: 'transactions', header: 'Transactions' },
+  { field: 'paymentSource', header: 'Payment Source' },
+  { field: 'paymentDestination', header: 'Payment Destination' },
   { field: 'approvers', header: 'Approvers' },
   { field: 'status', header: 'Status' },
 ]

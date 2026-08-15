@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../../../../../../../src/lib/currency'
-import { MercoaInput, usePayableDetails } from '../../../../../../components'
+import { MercoaInput, textareaClassName, usePayableDetails } from '../../../../../../components'
 import { isSupportedScheduleDate, isWeekday } from '../../../../../../lib/scheduling'
 import { afterApprovedStatus, afterScheduledStatus } from '../../constants'
 import { PrintDescriptionOnCheckRemittanceSwitch } from './print-description-on-check-remittance-switch'
@@ -200,7 +200,7 @@ export function PayableOverview({
             readOnly={readOnly || (!!status && afterApprovedStatus.includes(status))}
             {...register('description')}
             rows={3}
-            className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
+            className={textareaClassName()}
             defaultValue={''}
           />
         </div>
