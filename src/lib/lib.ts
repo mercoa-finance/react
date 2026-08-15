@@ -5,6 +5,23 @@ export function capitalize(str: string | undefined) {
   return str?.[0]?.toUpperCase() + str?.substring(1)?.toLowerCase()
 }
 
+// The forwardable invoice inbox address is only valid when the org has configured an inbox domain.
+// A whitespace-only value is treated as unset (see MER-1727).
+export function hasInboxDomain(organization?: Mercoa.OrganizationResponse | null) {
+  return !!organization?.emailProvider?.inboxDomain?.trim()
+}
+
+// Returns the full forwardable inbox address (`emailToName@inboxDomain`), or null when no inbox
+// domain is configured. Callers should render nothing when this returns null.
+export function getForwardableInboxEmail(
+  organization: Mercoa.OrganizationResponse | null | undefined,
+  emailToName: string | null | undefined,
+) {
+  const inboxDomain = organization?.emailProvider?.inboxDomain?.trim()
+  if (!inboxDomain) return null
+  return `${emailToName ?? ''}@${inboxDomain}`
+}
+
 export function getOrdinalSuffix(n: number) {
   const enOrdinalRules = new Intl.PluralRules('en-US', { type: 'ordinal' })
   const suffixes = new Map([

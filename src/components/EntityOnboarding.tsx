@@ -28,7 +28,7 @@ import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import * as yup from 'yup'
-import { blobToDataUrl, capitalize } from '../lib/lib'
+import { blobToDataUrl, capitalize, hasInboxDomain } from '../lib/lib'
 import { postalCodeRegex } from '../lib/locations'
 import { mccCodes } from '../lib/mccCodes'
 import { onboardingOptionsToResponse } from '../lib/onboardingOptions'
@@ -238,7 +238,7 @@ export function UploadBlock({
           }}
           onDropRejected={(_, event) => {
             try {
-              toast.error('Invalid file type or file is too large')
+              toast.error('Please upload a PDF version of this document')
             } catch (error) {
               console.error('Error handling rejected file:', error)
               toast.error('An error occurred while processing the file')
@@ -412,6 +412,7 @@ export function AddressBlock({
       <div className="mercoa-col-span-full">
         <MercoaInputLabel label={label ?? 'Address'} name="addressLine1" />
         <div className="mercoa-mt-1">
+          {/* Raw input (not MercoaInput) so react-google-autocomplete can attach its ref — render errors manually below. */}
           <input
             ref={ref as any}
             onBlur={() => setShowAddress(true)}
@@ -423,6 +424,11 @@ export function AddressBlock({
             required={required}
           />
         </div>
+        {get(errors, `${prefix}addressLine1`)?.message && (
+          <p className="mercoa-text-sm mercoa-text-red-500 mercoa-text-left">
+            {get(errors, `${prefix}addressLine1`)?.message as string}
+          </p>
+        )}
       </div>
       {showAddress && (
         <>
@@ -2843,9 +2849,11 @@ export function EntityOnboardingForm({
               label={'Email Inbox Address'}
               type="text"
               trailingIcon={
-                <span className="mercoa-px-2 mercoa-text-sm mercoa-text-gray-600">
-                  @{mercoaSession.organization.emailProvider?.inboxDomain}
-                </span>
+                hasInboxDomain(mercoaSession.organization) ? (
+                  <span className="mercoa-px-2 mercoa-text-sm mercoa-text-gray-600">
+                    @{mercoaSession.organization.emailProvider?.inboxDomain}
+                  </span>
+                ) : undefined
               }
             />
             <MercoaInput register={register} name="foreignId" label="Foreign ID" type="text" />
@@ -3520,6 +3528,8 @@ export function OnboardingCompletedOverviewCard({
               showEdit={false}
               showDelete={false}
               hideIndicators={true}
+              isPayee={type === 'payee'}
+              isPayor={type === 'payor'}
             />
           </div>
         </>

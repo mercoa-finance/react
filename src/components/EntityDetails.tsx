@@ -3,6 +3,7 @@ import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
+import { getForwardableInboxEmail } from '../lib/lib'
 import { MercoaCombobox, NoSession, TableNavigation, Tooltip, useMercoaSession } from './index'
 
 export function EntityDetails({ children }: { children: Function }) {
@@ -71,6 +72,9 @@ export function EntityInboxEmail({ layout, theme }: { layout?: 'left' | 'right';
   const mercoaSession = useMercoaSession()
   if (!mercoaSession.client) return <NoSession componentName="EntityInboxEmail" />
   const emailToName = mercoaSession.entity?.emailTo ?? mercoaSession.entityGroup?.emailToName ?? ''
+  const forwardableEmail = getForwardableInboxEmail(mercoaSession.organization, emailToName)
+  // Render nothing when the org has not configured an inbox domain (MER-1727).
+  if (!forwardableEmail) return null
   return (
     <button
       className={`mercoa-flex mercoa-gap-1 mercoa-items-center ${
@@ -78,12 +82,12 @@ export function EntityInboxEmail({ layout, theme }: { layout?: 'left' | 'right';
       }`}
       onClick={() => {
         // copy email address to clipboard
-        navigator.clipboard.writeText(`${emailToName ?? ''}@${mercoaSession.organization?.emailProvider?.inboxDomain}`)
+        navigator.clipboard.writeText(forwardableEmail)
         toast.success('Email address copied')
       }}
     >
       {layout === 'left' && <Square2StackIcon className="mercoa-size-5" />}
-      {emailToName ?? ''}@{mercoaSession.organization?.emailProvider?.inboxDomain}
+      {forwardableEmail}
       {(!layout || layout === 'right') && <Square2StackIcon className="mercoa-size-5" />}
     </button>
   )

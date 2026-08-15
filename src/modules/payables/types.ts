@@ -378,6 +378,10 @@ export type PayablesDataContext = {
     dueDate?: Date
     invoiceDate?: Date
     deductionDate?: Date
+    processedAt?: Date
+    creatorUser?: Mercoa.EntityUserResponse
+    transactions?: Mercoa.TransactionResponseWithoutInvoices[]
+    paymentSource?: Mercoa.PaymentMethodResponse
     paymentDestination?: Mercoa.PaymentMethodResponse
     invoiceType?: 'invoice' | 'invoiceTemplate'
     failureType?: Mercoa.InvoiceFailureType

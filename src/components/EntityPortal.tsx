@@ -35,6 +35,7 @@ import {
   entityDetailsForMercoaPaymentsCompleted,
   useMercoaSession,
 } from './index'
+import { getForwardableInboxEmail, hasInboxDomain } from '../lib/lib'
 
 function EntityGroupSelector({
   entityGroup,
@@ -46,6 +47,7 @@ function EntityGroupSelector({
   onSelectEntity: (entity: Mercoa.EntityResponse) => void
 }) {
   const [searchQuery, setSearchQuery] = useState('')
+  const forwardableEmail = getForwardableInboxEmail(organization, entityGroup.emailToName)
 
   const filteredEntities = entityGroup.entities.filter((entity) => {
     const searchLower = searchQuery.toLowerCase()
@@ -60,9 +62,7 @@ function EntityGroupSelector({
     <div className="mercoa-mx-auto mercoa-px-4">
       <div className="mercoa-mb-8">
         <div className="mercoa-text-lg mercoa-font-bold mercoa-text-gray-800">{entityGroup.name}</div>
-        <div className="mercoa-text-sm mercoa-text-gray-700">
-          {entityGroup.emailToName}@{organization?.emailProvider?.inboxDomain}
-        </div>
+        {forwardableEmail && <div className="mercoa-text-sm mercoa-text-gray-700">{forwardableEmail}</div>}
         <div className="mercoa-text-xs mercoa-font-bold mercoa-text-gray-500">{entityGroup.foreignId}</div>
       </div>
 
@@ -245,7 +245,7 @@ export function EntityPortal({ token }: { token: string }) {
       <div className="mercoa-flex mercoa-items-center">
         <div className="mercoa-flex-auto mercoa-text-sm mercoa-text-gray-700 mercoa-my-4 sm:mercoa-mt-0">
           <div className="mercoa-flex mercoa-items-center mercoa-gap-4">
-            {screen === 'inbox' && version === 'old' && organization?.emailProvider?.inboxDomain && (
+            {screen === 'inbox' && version === 'old' && hasInboxDomain(organization) && (
               <>
                 Forward invoices to: <br />
                 <EntityInboxEmail />
@@ -266,7 +266,8 @@ export function EntityPortal({ token }: { token: string }) {
                 </MercoaButton>
               </>
             )}
-            {screen !== 'inbox' && (
+            {/* Hide back button when user arrives directly from an approval email link (invoiceId in URL) */}
+            {screen !== 'inbox' && !invoiceId && (
               <MercoaButton
                 onClick={() => {
                   mercoaSession.refresh()

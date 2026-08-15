@@ -2,6 +2,7 @@ import { ArrowPathIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { FC, memo, useEffect, useMemo, useRef, useState } from 'react'
 import { Mercoa } from '@mercoa/javascript'
 import { EntityInboxEmail, useMercoaSession, usePayables } from '../../../../components'
+import { hasInboxDomain } from '../../../../lib/lib'
 import { DebouncedSearch, MercoaButton, Tooltip } from '../../../../components/generics'
 import { cn } from '../../../../lib/style'
 import { FilterIcon } from '../../../common/assets/icons/filter-icon'
@@ -104,10 +105,12 @@ export const PayablesDashboard: FC = memo(() => {
     <div className="mercoa-relative mercoa-pt-1">
       {!readOnly && (
         <div className="mercoa-flex mercoa-justify-end mercoa-items-center mercoa-gap-2">
-          <div className="mercoa-flex mercoa-flex-col mercoa-mr-2">
-            <span className="mercoa-text-xs mercoa-text-gray-500">Forward invoices to:</span>
-            <EntityInboxEmail />
-          </div>
+          {hasInboxDomain(mercoaSession.organization) && (
+            <div className="mercoa-flex mercoa-flex-col mercoa-mr-2">
+              <span className="mercoa-text-xs mercoa-text-gray-500">Forward invoices to:</span>
+              <EntityInboxEmail />
+            </div>
+          )}
           <div className="mercoa-flex-1" />
           <MercoaButton
             isEmphasized={false}

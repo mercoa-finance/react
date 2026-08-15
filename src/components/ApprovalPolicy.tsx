@@ -1220,6 +1220,7 @@ function Rule({
                 )}
                 displayIndex="name"
                 secondaryDisplayIndex="email"
+                placeholder="Search by name or email..."
                 multiple
                 displaySelectedAs="pill"
               />
