@@ -28,7 +28,7 @@ import {
   useState,
 } from 'react'
 import DatePicker from 'react-datepicker'
-import { Control, Controller, FieldErrors, UseFormRegister, useFormContext } from 'react-hook-form'
+import { Control, Controller, FieldErrors, FieldValues, Path, UseFormRegister, useFormContext } from 'react-hook-form'
 import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
@@ -1399,7 +1399,7 @@ export function MercoaInputLabel({
   )
 }
 
-export function MercoaInput({
+export function MercoaInput<TFieldValues extends FieldValues = FieldValues>({
   type,
   label,
   onChange,
@@ -1432,16 +1432,16 @@ export function MercoaInput({
   required?: boolean
   readOnly?: boolean
   ref?: Ref<any>
-  register?: UseFormRegister<any>
-  control?: Control<any>
+  register?: UseFormRegister<TFieldValues>
+  control?: Control<TFieldValues>
   disabled?: boolean
   placeholder?: string
   optional?: boolean
-  name?: string
+  name?: Path<TFieldValues> | string
   className?: string
   leadingIcon?: ReactNode
   trailingIcon?: ReactNode
-  errors?: FieldErrors<any>
+  errors?: FieldErrors<TFieldValues>
   dateOptions?: {
     minDate?: Date
     maxDate?: Date
@@ -1492,11 +1492,13 @@ export function MercoaInput({
     step,
   }
 
+  const fieldName = name as Path<TFieldValues>
+
   // TODO: This erroneously sets `type='number'` fields to string types, must be fixed
   if (register && name) {
     props = {
       ...props,
-      ...register(name, {
+      ...register(fieldName, {
         setValueAs: (value?: string) => (value?.trim ? value.trim() : value),
       }),
     }
@@ -1508,7 +1510,7 @@ export function MercoaInput({
     input = (
       <Controller
         control={control}
-        name={name}
+        name={fieldName}
         render={({ field }) => (
           <DatePicker
             className={inClassName}
@@ -1532,7 +1534,7 @@ export function MercoaInput({
     input = (
       <Controller
         control={control}
-        name={name}
+        name={fieldName}
         render={({ field: { onChange, name, value } }) => (
           <PatternFormat
             format={inputMask}
@@ -1552,7 +1554,7 @@ export function MercoaInput({
     input = (
       <Controller
         control={control}
-        name={name}
+        name={fieldName}
         render={({ field: { onChange, name, value } }) => (
           <NumericFormat
             decimalScale={2}

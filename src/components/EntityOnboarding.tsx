@@ -23,7 +23,7 @@ import get from 'lodash/get'
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import Dropzone from 'react-dropzone'
 import { usePlacesWidget } from 'react-google-autocomplete'
-import { Control, Controller, FieldErrors, UseFormRegister, useForm } from 'react-hook-form'
+import { Control, Controller, FieldErrors, FieldValues, Path, UseFormRegister, useForm } from 'react-hook-form'
 import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
@@ -581,13 +581,13 @@ export const dateOfBirthSchemaNotRequired = {
     }),
 }
 
-export function DateOfBirthBlock({
+export function DateOfBirthBlock<TFieldValues extends FieldValues>({
   control,
   errors,
   readOnly,
   required,
 }: {
-  control: Control<any>
+  control: Control<TFieldValues>
   errors: any
   required?: boolean
   readOnly?: boolean
@@ -595,7 +595,7 @@ export function DateOfBirthBlock({
   return (
     <Controller
       control={control}
-      name="dob"
+      name={'dob' as Path<TFieldValues>}
       render={({ field }) => {
         if (field.value === '****') {
           return (
@@ -649,13 +649,13 @@ export const SSNSchema = {
   }),
 }
 
-export function SSNBlock({
+export function SSNBlock<TFieldValues extends FieldValues>({
   control,
   errors,
   readOnly,
   required,
 }: {
-  control: Control<any>
+  control: Control<TFieldValues>
   errors: any
   readOnly?: boolean
   required?: boolean
@@ -666,7 +666,7 @@ export function SSNBlock({
       <div className="mercoa-mt-1">
         <Controller
           control={control}
-          name="taxID"
+          name={'taxID' as Path<TFieldValues>}
           render={({ field }) => {
             if (field.value === '****') {
               return (
@@ -738,13 +738,13 @@ export const phoneSchema = {
     .required('Phone number is required'),
 }
 
-export function PhoneBlock({
+export function PhoneBlock<TFieldValues extends FieldValues>({
   control,
   errors,
   readOnly,
   required,
 }: {
-  control: Control<any>
+  control: Control<TFieldValues>
   errors: any
   readOnly?: boolean
   required?: boolean
@@ -914,13 +914,13 @@ export const einSchema = {
   }),
 }
 
-export function EINBlock({
+export function EINBlock<TFieldValues extends FieldValues>({
   control,
   errors,
   readOnly,
   required,
 }: {
-  control: Control<any>
+  control: Control<TFieldValues>
   errors: any
   required?: boolean
   readOnly?: boolean
@@ -931,7 +931,7 @@ export function EINBlock({
       <div className="mercoa-mt-1">
         <Controller
           control={control}
-          name="taxID"
+          name={'taxID' as Path<TFieldValues>}
           render={({ field }) => {
             if (field.value === '**-*******') {
               return (
@@ -1155,13 +1155,13 @@ export const formationDateSchema = {
   formationDate: yup.date().required('Formation date is required'),
 }
 
-export function FormationDateBlock({
+export function FormationDateBlock<TFieldValues extends FieldValues>({
   control,
   errors,
   readOnly,
   required,
 }: {
-  control: Control<any>
+  control: Control<TFieldValues>
   errors: any
   readOnly?: boolean
   required?: boolean
