@@ -457,8 +457,9 @@ export function PayableFailureReason() {
         }
       case 'R85':
         return {
-          title: 'Invalid Individual ID Number',
-          message: 'The individual identification number is invalid. Please verify the account holder information.',
+          title: 'International Payment Error',
+          message:
+            'The payment was returned because it was sent to an international bank account using a domestic ACH code. Cross-border payments may require a different payment method. Please contact support for assistance.',
         }
       case 'R86':
         return {

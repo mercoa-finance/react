@@ -413,6 +413,11 @@ export function EntityPortal({ token }: { token: string }) {
                 setInvoiceType('invoice')
                 setScreen('invoice')
               },
+              onSelectInvoiceTemplate: (invoiceTemplate) => {
+                setInvoice(invoiceTemplate as unknown as Mercoa.InvoiceResponse)
+                setInvoiceType('invoiceTemplate')
+                setScreen('invoice')
+              },
             }}
           />
         ) : (
