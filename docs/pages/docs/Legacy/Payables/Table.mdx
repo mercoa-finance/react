@@ -55,12 +55,12 @@ type PayablesTableChildrenProps = {
   orderBy: Mercoa.InvoiceOrderByField // Current orderBy field
   setOrderBy: (value: Mercoa.InvoiceOrderByField) => void // Set order by AMOUNT, DUE_DATE, CREATED_AT, UPDATED_AT, INVOICE_NUMBER, VENDOR_NAME, PAYER_NAME
   orderDirection: Mercoa.OrderDirection // Current order direction
-  setOrderDirection: (value: Mercoa.OrderDirection) => void // Set ASC or DESC
+  setOrderDirection: (value: Mercoa.OrderDirection) => void // Set order direction to ASC (ascending) or DESC (descending)
 
   resultsPerPage: number // Max number of results shown per page
   setResultsPerPage: (value: number) => void // Set max number of results shown per page (1-100)
 
-  downloadCSV: () => void // Download ALL results with currently filters as a CSV
+  downloadCSV: () => void // Download all results with currently applied filters as a CSV
 };
 ```
 
@@ -71,12 +71,14 @@ type PayablesTableChildrenProps = {
 <ComponentContainer>
 <div>
   <PayablesTableV1 statuses={[
-    'DRAFT',
-    'NEW',
+    ```markdown
+    'DRAFT (initial version before approval)',
+```
+    'NEW (Not Executed Yet)',
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    'PAID (Payment Approved In Detail)',
     'ARCHIVED',
     'REFUSED',
     'CANCELED',
@@ -85,12 +87,12 @@ type PayablesTableChildrenProps = {
 </div>
   ```jsx
 <PayablesTableV1 statuses={[
-    'DRAFT',
-    'NEW',
+    'DRAFT',  # The initial state where the item is being prepared but not yet finalized
+    'NEW (Not Executed Yet)',
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    'PAID (Payment Approved In Definition)',
     'ARCHIVED',
     'REFUSED',
     'CANCELED',
@@ -104,12 +106,12 @@ type PayablesTableChildrenProps = {
 <ComponentContainer>
 <div>
   <PayablesTableV1 statuses={[
-    'DRAFT',
-    'NEW',
+    'APPROVED',
+    'NEW' (not yet processed),
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    - INFO: Define 'PAID (Payment Status)', if it's unfamiliar to the audience. ([EK00009](https://developers.google.com/style/abbreviations))
     'ARCHIVED',
     'REFUSED',
     'CANCELED',
@@ -120,12 +122,12 @@ type PayablesTableChildrenProps = {
 </div>
   ```jsx
 <PayablesTableV1 statuses={[
-    'DRAFT',
-    'NEW',
+    'DRAFT', // DRAFT refers to a payables status indicating the item is not yet finalized.
+    'NEW', // Status when the item is newly created
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    'PAID (Payment Complete)',
     'ARCHIVED',
     'REFUSED',
     'CANCELED',
@@ -166,12 +168,14 @@ type PayablesTableChildrenProps = {
     }
   ]}
   statuses={[
-    'DRAFT',
+    'DRAFT (Draft)',
     'NEW',
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    ```
+    'PAID (Payment Applied in Detail)',
+```
     'ARCHIVED',
     'REFUSED',
     'CANCELED',
@@ -206,12 +210,12 @@ type PayablesTableChildrenProps = {
     }
   ]}
   statuses={[
-    'DRAFT',
-    'NEW',
+    'DRAFT' (a preliminary version),
+    'NEW',  # Indicates a newly created status
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    'PAID (Payment Authorized and Initiated)',
     'ARCHIVED',
     'REFUSED',
     'CANCELED',
@@ -252,12 +256,12 @@ type PayablesTableChildrenProps = {
     }
   ]}
   statuses={[
-    'DRAFT',
-    'NEW',
+    'DRAFT (a preliminary version of a document)',
+    'NEW (Newly Created)',
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    'PAID (Payment Authorized in Due)',
     'ARCHIVED',
     'REFUSED',
     'CANCELED',
@@ -293,12 +297,12 @@ type PayablesTableChildrenProps = {
     }
   ]}
   statuses={[
-    'DRAFT',
+    'Draft (initial version of the document awaiting approval)',
     'NEW',
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    'PAID (Payment Authorized and Initiated)',
     'ARCHIVED',
     'REFUSED',
     'CANCELED',
@@ -314,12 +318,12 @@ type PayablesTableChildrenProps = {
 
 <ComponentContainer>
 <PayablesTableV1 statuses={[
-    'DRAFT',
-    'NEW',
+    'DRAFT (a document that is in the initial stages of approval)',
+    'NEW' (New),
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    'PAID (Payment in Advance)',
     'ARCHIVED',
     'REFUSED',
     'CANCELED',
@@ -360,12 +364,13 @@ type PayablesTableChildrenProps = {
   />
   ```jsx
 <PayablesTableV1 statuses={[
-    'DRAFT',
+    <PayablesTableV1 statuses={[
+    'DRAFT (a preliminary version)',
     'NEW',
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    - INFO: Define 'PAID' (payment action identifier), if it's unfamiliar to the audience. ([EK00009](https://developers.google.com/style/abbreviations))
     'ARCHIVED',
     'REFUSED',
     'CANCELED',

@@ -3,7 +3,7 @@ import { ComponentContainer } from '../../../../components/helpers'
 
 # Payables
 
-The `<Payables>` component displays all payables for an entity. It includes built-in filters, invoice metrics, and customizable table options. The entity is determined from the JWT token provided to `<MercoaSession>`.
+The entity is determined from the JSON Web Token (JWT) provided to `<MercoaSession>`.
 
 ## Customization Options
 
@@ -163,7 +163,7 @@ type ToastClient = {
       showCumulativeFilter: false,
       statusTabsOptions: {
         isVisible: true,
-        statuses: ['DRAFT', 'PENDING', 'APPROVED'],
+        statuses: ['Draft (a preliminary version of a document)', 'Pending (awaiting decision or settlement)', 'Approved (given approval or acceptance)'],
       },
       showInvoiceMetrics: true,
     }}
@@ -175,7 +175,7 @@ type ToastClient = {
       showCumulativeFilter: false,
       statusTabsOptions: {
         isVisible: true,
-        statuses: ['DRAFT', 'PENDING', 'APPROVED'],
+        statuses: ['Draft', 'Pending', 'Approved'],
       },
       showInvoiceMetrics: true,
     }}

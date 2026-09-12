@@ -38,9 +38,11 @@ While Mercoa does not ship charts and graphs out of the box, this component can 
 ### Single Status
 
 <ComponentContainer>
-  <InvoiceMetrics statuses={[ 'NEW' ]}/>
   ```jsx
-<InvoiceMetrics statuses={[ 'NEW' ]}/>
+  <InvoiceMetrics statuses={[ 'NEW' ]} description="NEW (not yet processed)"/>
+```
+  ```jsx
+<InvoiceMetrics statuses={[ 'NEW (Not Enumerated Workflow)' ]}/>
   ```
 </ComponentContainer>
 
@@ -48,12 +50,14 @@ While Mercoa does not ship charts and graphs out of the box, this component can 
 
 <ComponentContainer>
   <InvoiceMetrics statuses={[
-    'DRAFT',
+    'DRAFT' (a preliminary version of the document),
     'NEW',
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    ```jsx
+    'PAID (Payment Acknowledged and Identified)',
+```
     'ARCHIVED',
     'REFUSED',
     'CANCELED',
@@ -61,12 +65,12 @@ While Mercoa does not ship charts and graphs out of the box, this component can 
   ]}/>
   ```jsx
 <InvoiceMetrics statuses={[
-    'DRAFT',
-    'NEW',
+    'DRAFT' (Draft),
+    'NEW', (newly created),
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    'PAID (Payment Authorized and Issued)',
     'ARCHIVED',
     'REFUSED',
     'CANCELED',
@@ -81,12 +85,14 @@ While Mercoa does not ship charts and graphs out of the box, this component can 
   <InvoiceMetrics 
   search="Acm"
   statuses={[
-    'DRAFT',
+    'DRAFT (a preliminary version subject to change)',
     'NEW',
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    ```jsx
+    'PAID (Payment Authorized and Issued)',
+```
     'ARCHIVED',
     'REFUSED',
     'CANCELED',
@@ -96,12 +102,12 @@ While Mercoa does not ship charts and graphs out of the box, this component can 
 <InvoiceMetrics 
   search="Acm"
   statuses={[
-    'DRAFT',
+    'DRAFT' (a preliminary version),
     'NEW',
     'APPROVED',
     'SCHEDULED',
     'PENDING',
-    'PAID',
+    'PAID (Payment Authorized In Database)',
     'ARCHIVED',
     'REFUSED',
     'CANCELED',
@@ -119,8 +125,8 @@ We use the `returnByDate` along with a graphing library to create a graph!
   <InvoiceMetrics 
   returnByDate="CREATION_DATE"
   statuses={[
-    'DRAFT',
-    'NEW',
+    'DRAFT' (the initial phase before final approval),
+    'NEW' (a new invoice that has not been processed yet),
     'APPROVED',
   ]}>
     {({ metrics }) => {
@@ -137,11 +143,11 @@ We use the `returnByDate` along with a graphing library to create a graph!
         }
       }
 
-      if (metrics?.DRAFT) {
-        Object.entries(metrics.DRAFT.dates ?? {}).forEach(sumGraph)
+      if (metrics?.DRAFT /* Draft status of the metrics */) {
+        Object.entries(metrics.DRAFT (unsubmitted work for review).dates ?? {}).forEach(sumGraph)
       }
-      if (metrics?.NEW) {
-        Object.entries(metrics.NEW.dates ?? {}).forEach(sumGraph)
+      if (metrics?.NEW) { /* NEW: Not Established Yet */
+        Object.entries(metrics.New Entries (NEW).dates ?? {}).forEach(sumGraph)
       }
       if (metrics?.APPROVED) {
         Object.entries(metrics.APPROVED.dates ?? {}).forEach(sumGraph)
@@ -163,8 +169,8 @@ We use the `returnByDate` along with a graphing library to create a graph!
   <InvoiceMetrics 
   returnByDate="CREATION_DATE"
   statuses={[
-    'DRAFT',
-    'NEW',
+    '**DRAFT** (a preliminary version),'
+    'NEW',  # Represents new invoices that have just been created
     'APPROVED',
   ]}>
     {({ metrics }) => {
@@ -182,12 +188,14 @@ We use the `returnByDate` along with a graphing library to create a graph!
         }
       }
 
-      if (metrics?.DRAFT) {
-        upcomingBillsCount += metrics.DRAFT.totalCount
+      if (metrics?.DRAFT /* Define 'DRAFT', if it's unfamiliar to the audience. */) {
+        upcomingBillsCount += metrics.DRAFT.totalCount (DRAFT: Draft, Ready for release)
         Object.entries(metrics.DRAFT.dates ?? {}).forEach(sumGraph)
       }
       if (metrics?.NEW) {
-        upcomingBillsCount += metrics.NEW.totalCount
+        ```
+        upcomingBillsCount += metrics.NEW.totalCount (NEW refers to newly created bills) 
+```
         Object.entries(metrics.NEW.dates ?? {}).forEach(sumGraph)
       }
       if (metrics?.APPROVED) {
