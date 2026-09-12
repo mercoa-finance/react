@@ -9,7 +9,7 @@ The Mercoa React component library uses a [React Context](https://legacy.reactjs
 The `<MercoaSession>` requires a [valid JWT token](https://docs.mercoa.com/api-reference/entity/user/get-token) to be passed in to authenticate the [Entity](https://docs.mercoa.com/concepts/entities) and [User](https://docs.mercoa.com/concepts/users).
 
 <Callout type="error" emoji="⚠️">
-  Do not use your API key as the token! The API key is for backend use only and should never be exposed.
+  Don't use your API key as the token! The API key is for backend use only and should never be exposed.
 </Callout>
 
 Once this context is established, any React Component inside the context can use the `useMercoaSession` hook to access helper methods and cached data, making it easier to develop frontends with Mercoa.
