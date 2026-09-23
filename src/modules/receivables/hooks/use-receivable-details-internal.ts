@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { useMercoaSession } from '../../../components'
-import { removeThousands } from '../../../lib/lib'
+import { getApiErrorMessage, removeThousands } from '../../../lib/lib'
 import { queryClient } from '../../../lib/react-query/query-client-provider'
 import { getInvoiceClient } from '../../common/utils'
 import {
@@ -381,7 +381,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
                 await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(response.id, { attachInvoice: true })
                 toast?.success('Email sent')
               } catch (emailError: any) {
-                const errorMessage = emailError.body?.message || emailError.message || 'Unknown error'
+                const errorMessage = getApiErrorMessage(emailError, 'Unknown error')
                 toast?.error(`Email failed to send: ${errorMessage}`)
               }
             } else {
@@ -392,7 +392,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
             setValue('formAction', '')
           }
         } catch (error: any) {
-          toast?.error(`Failed to update invoice: ${error.message}`)
+          toast?.error(`Failed to update invoice: ${getApiErrorMessage(error)}`)
           console.log('Failed to update invoice', error)
           setValue('formAction', '')
         }
@@ -410,12 +410,12 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
             setValue('formAction', '')
           }
         } catch (error: any) {
-          toast?.error(`Failed to create invoice: ${error.message}`)
+          toast?.error(`Failed to create invoice: ${getApiErrorMessage(error)}`)
           setValue('formAction', '')
         }
       }
     } catch (error: any) {
-      toast?.error(`An error occurred: ${error.message}`)
+      toast?.error(`An error occurred: ${getApiErrorMessage(error)}`)
       setValue('formAction', '')
     } finally {
       setFormLoading(false)
@@ -506,7 +506,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
             await mercoaSession.client?.invoice.paymentLinks.sendPayerEmail(receivableData.id, { attachInvoice: true })
             toast?.info('Email Sent')
           } catch (error: any) {
-            const errorMessage = error.body?.message || error.message || 'Unknown error'
+            const errorMessage = getApiErrorMessage(error, 'Unknown error')
             toast?.error(`Failed to send email: ${errorMessage}`)
           } finally {
             setValue('formAction', '')
@@ -560,7 +560,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
             refreshInvoice(receivableData.id, markedAsPaidInvoice)
             setValue('formAction', '')
           } catch (error: any) {
-            toast?.error(`Failed to mark invoice as paid: ${error.message}`)
+            toast?.error(`Failed to mark invoice as paid: ${getApiErrorMessage(error)}`)
             setValue('formAction', '')
           }
           break
@@ -603,7 +603,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
               refreshInvoice(receivableData.id, scheduledInvoice)
               setValue('formAction', '')
             } catch (error: any) {
-              toast?.error(`Failed to schedule recurring invoice: ${error.message}`)
+              toast?.error(`Failed to schedule recurring invoice: ${getApiErrorMessage(error)}`)
               setValue('formAction', '')
             }
           })()
@@ -620,7 +620,7 @@ export const useReceivableDetailsInternal = (props: ReceivableDetailsProps) => {
           break
       }
     } catch (e: any) {
-      toast?.error(`There was an issue performing the action.\n Error: ${e.body}`)
+      toast?.error(`There was an issue performing the action.\n Error: ${getApiErrorMessage(e)}`)
     }
     setFormLoading(false)
   }
