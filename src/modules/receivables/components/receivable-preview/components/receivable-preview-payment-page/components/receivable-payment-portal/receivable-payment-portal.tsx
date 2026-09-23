@@ -21,9 +21,7 @@ export function ReceivablePaymentPortal({
   totalDisplay: string
   updateInvoice: (updateRequest: Mercoa.InvoiceUpdateRequest) => Promise<void>
 }) {
-  const [selectedPaymentType, setSelectedPaymentType] = useState<Mercoa.PaymentMethodType | string>(
-    Mercoa.PaymentMethodType.BankAccount,
-  )
+  const [selectedPaymentType, setSelectedPaymentType] = useState<Mercoa.PaymentMethodType | string>('')
 
   const mercoaSession = useMercoaSession()
 

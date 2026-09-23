@@ -587,7 +587,10 @@ export function PayableActions({
     switch (status) {
       case Mercoa.InvoiceStatus.Draft:
         let saveButton: ReactNode = <></>
-        if (approverSlots && approverSlots.length > 0) {
+        if (invoiceType === 'invoiceTemplate') {
+          // Recurring templates schedule directly — no approval gate
+          saveButton = schedulePaymentButtonComponent
+        } else if (approverSlots && approverSlots.length > 0) {
           saveButton = submitForApprovalButtonComponent
         } else {
           saveButton = nextButtonComponent

@@ -2,8 +2,10 @@ import { EnvelopeIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { ReactNode, useEffect, useState } from 'react'
 import { FormProvider, useForm, useFormContext } from 'react-hook-form'
+import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
+import { getApiErrorMessage } from '../lib/lib'
 import { postalCodeRegex } from '../lib/locations'
 import {
   AddDialog,
@@ -273,14 +275,19 @@ export function AddCheck({
 
   async function submitCheck(check: Mercoa.CheckRequest) {
     if (mercoaSession.entity?.id) {
-      check.country = 'US'
-      const resp = (await mercoaSession.client?.entity.paymentMethod.create(entityId ?? mercoaSession.entity?.id, {
-        ...check,
-        type: 'check',
-      })) as Mercoa.PaymentMethodResponse.Check
-      if (!onSubmit) return
-      if (resp) onSubmit(resp)
-      else onSubmit()
+      try {
+        check.country = 'US'
+        const resp = (await mercoaSession.client?.entity.paymentMethod.create(entityId ?? mercoaSession.entity?.id, {
+          ...check,
+          type: 'check',
+        })) as Mercoa.PaymentMethodResponse.Check
+        if (!onSubmit) return
+        if (resp) onSubmit(resp)
+        else onSubmit()
+      } catch (e) {
+        console.error(e)
+        toast.error(getApiErrorMessage(e, 'There was an error adding your check address'))
+      }
     }
   }
 

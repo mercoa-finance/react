@@ -18,7 +18,7 @@ import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { checkInvoiceConcurrentModification, removeThousands } from '../lib/lib'
+import { checkInvoiceConcurrentModification, getApiErrorMessage, removeThousands } from '../lib/lib'
 import InvoicePreviewV1 from './InvoicePreview'
 import { ReceivableFormErrorsV1 } from './ReceivableFormErrorsV1'
 import {
@@ -549,39 +549,44 @@ export function ReceivableFormV1({
       })
     }
 
-    if (invoice) {
-      // Check for concurrent modifications before updating
-      const { hasConflict } = await checkInvoiceConcurrentModification(invoice, async () => {
-        return await mercoaSession.client?.invoice.get(invoice.id)
-      })
+    try {
+      if (invoice) {
+        // Check for concurrent modifications before updating
+        const { hasConflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+          return await mercoaSession.client?.invoice.get(invoice.id)
+        })
 
-      if (hasConflict) {
-        toast.error(
-          'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
-        )
+        if (hasConflict) {
+          toast.error(
+            'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+          )
+          setIsLoading(false)
+          return
+        }
+
+        const response = await mercoaSession.client?.invoice.update(invoice.id, newInvoice)
+        mercoaSession.debug(response)
         setIsLoading(false)
-        return
-      }
-
-      const response = await mercoaSession.client?.invoice.update(invoice.id, newInvoice)
-      mercoaSession.debug(response)
-      setIsLoading(false)
-      if (response?.id) {
-        toast.success('Invoice updated')
-        refreshInvoice(invoice.id)
+        if (response?.id) {
+          toast.success('Invoice updated')
+          refreshInvoice(invoice.id)
+        } else {
+          toast.error('Invoice failed to update')
+        }
       } else {
-        toast.error('Invoice failed to update')
+        const response = await mercoaSession.client?.invoice.create(newInvoice)
+        mercoaSession.debug(response)
+        setIsLoading(false)
+        if (response?.id) {
+          toast.success('Invoice created')
+          refreshInvoice(response.id)
+        } else {
+          toast.error('Invoice failed to create')
+        }
       }
-    } else {
-      const response = await mercoaSession.client?.invoice.create(newInvoice)
-      mercoaSession.debug(response)
+    } catch (e) {
       setIsLoading(false)
-      if (response?.id) {
-        toast.success('Invoice created')
-        refreshInvoice(response.id)
-      } else {
-        toast.error('Invoice failed to create')
-      }
+      toast.error(getApiErrorMessage(e, invoice ? 'Invoice failed to update' : 'Invoice failed to create'))
     }
   }
 
@@ -1312,7 +1317,7 @@ export function ReceivableActionsV1({
             if (onUpdate) onUpdate(undefined)
           } catch (e: any) {
             setIsLoading(false)
-            toast.error(`There was an issue deleting the invoice.\n Error: ${e.body}`)
+            toast.error(`There was an issue deleting the invoice.\n Error: ${getApiErrorMessage(e)}`)
           }
         }
       }}
@@ -1354,7 +1359,7 @@ export function ReceivableActionsV1({
             refreshInvoice(invoice.id)
           } catch (e: any) {
             setIsLoading(false)
-            toast.error(`There was an issue canceling the invoice.\n Error: ${e.body}`)
+            toast.error(`There was an issue canceling the invoice.\n Error: ${getApiErrorMessage(e)}`)
           }
         }
       }}
@@ -1492,11 +1497,11 @@ export function ReceivableActionsV1({
             toast.info('Email Sent')
             refreshInvoice(invoice.id)
           } catch (e) {
-            toast.error('There was an issue generating the email. Please refresh and try again.')
+            toast.error(getApiErrorMessage(e, 'There was an issue generating the email. Please refresh and try again.'))
           }
         } catch (e: any) {
           setIsLoading(false)
-          toast.error(`There was an issue saving the invoice.\n Error: ${e.body}`)
+          toast.error(`There was an issue saving the invoice.\n Error: ${getApiErrorMessage(e)}`)
         }
       }}
       type="button"
@@ -1536,7 +1541,7 @@ export function ReceivableActionsV1({
           refreshInvoice(invoice.id)
         } catch (e: any) {
           setIsLoading(false)
-          toast.error(`There was an issue marking the invoice as paid.\n Error: ${e.body}`)
+          toast.error(`There was an issue marking the invoice as paid.\n Error: ${getApiErrorMessage(e)}`)
         }
       }}
       type="button"
@@ -1575,7 +1580,7 @@ export function ReceivableActionsV1({
           refreshInvoice(invoice.id)
         } catch (e: any) {
           setIsLoading(false)
-          toast.error(`There was an issue restoring the invoice as draft.\n Error: ${e.body}`)
+          toast.error(`There was an issue restoring the invoice as draft.\n Error: ${getApiErrorMessage(e)}`)
         }
       }}
       type="button"

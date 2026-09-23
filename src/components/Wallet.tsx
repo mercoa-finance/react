@@ -8,7 +8,7 @@ import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { removeThousands } from '../lib/lib'
+import { getApiErrorMessage, removeThousands } from '../lib/lib'
 import {
   AddDialog,
   BankAccount,
@@ -218,7 +218,7 @@ export function AddWalletButton({ onSelect, entityId }: { onSelect?: Function; e
       }
     } catch (error) {
       console.error('Error adding wallet:', error)
-      toast.error('Error adding wallet')
+      toast.error(getApiErrorMessage(error, 'Error adding wallet'))
     }
   }
 
@@ -338,7 +338,7 @@ export function MercoaWallet({
         sourcePaymentMethodId: selectedBankAccount.id,
       })
     } catch (e: any) {
-      toast.error(`Failed to add funds to wallet: ${e.message}`)
+      toast.error(getApiErrorMessage(e, 'Failed to add funds to wallet'))
       return
     }
     // Keep local state in sync with wallet funds
@@ -367,7 +367,7 @@ export function MercoaWallet({
         destinationPaymentMethodId: selectedBankAccount.id,
       })
     } catch (e: any) {
-      toast.error(`Failed to withdraw funds from wallet: ${e.message}`)
+      toast.error(getApiErrorMessage(e, 'Failed to withdraw funds from wallet'))
       return
     }
     // Keep local state in sync with wallet funds
