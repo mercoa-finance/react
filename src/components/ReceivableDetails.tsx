@@ -18,7 +18,7 @@ import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { checkInvoiceConcurrentModification, removeThousands } from '../lib/lib'
+import { checkInvoiceConcurrentModification, getApiErrorMessage, removeThousands } from '../lib/lib'
 import InvoicePreviewV1 from './InvoicePreview'
 import { ReceivableFormErrorsV1 } from './ReceivableFormErrorsV1'
 import {
@@ -26,12 +26,14 @@ import {
   Card,
   Check,
   CounterpartySearchV1,
+  CustomPaymentMethod,
   InvoiceStatusPill,
   LoadingSpinnerIcon,
   MercoaButton,
   MercoaCombobox,
   MercoaInput,
   NoSession,
+  textareaClassName,
   useMercoaSession,
 } from './index'
 
@@ -549,39 +551,44 @@ export function ReceivableFormV1({
       })
     }
 
-    if (invoice) {
-      // Check for concurrent modifications before updating
-      const { hasConflict } = await checkInvoiceConcurrentModification(invoice, async () => {
-        return await mercoaSession.client?.invoice.get(invoice.id)
-      })
+    try {
+      if (invoice) {
+        // Check for concurrent modifications before updating
+        const { hasConflict } = await checkInvoiceConcurrentModification(invoice, async () => {
+          return await mercoaSession.client?.invoice.get(invoice.id)
+        })
 
-      if (hasConflict) {
-        toast.error(
-          'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
-        )
+        if (hasConflict) {
+          toast.error(
+            'This invoice has been modified by another user. Please refresh the page to see the latest changes.',
+          )
+          setIsLoading(false)
+          return
+        }
+
+        const response = await mercoaSession.client?.invoice.update(invoice.id, newInvoice)
+        mercoaSession.debug(response)
         setIsLoading(false)
-        return
-      }
-
-      const response = await mercoaSession.client?.invoice.update(invoice.id, newInvoice)
-      mercoaSession.debug(response)
-      setIsLoading(false)
-      if (response?.id) {
-        toast.success('Invoice updated')
-        refreshInvoice(invoice.id)
+        if (response?.id) {
+          toast.success('Invoice updated')
+          refreshInvoice(invoice.id)
+        } else {
+          toast.error('Invoice failed to update')
+        }
       } else {
-        toast.error('Invoice failed to update')
+        const response = await mercoaSession.client?.invoice.create(newInvoice)
+        mercoaSession.debug(response)
+        setIsLoading(false)
+        if (response?.id) {
+          toast.success('Invoice created')
+          refreshInvoice(response.id)
+        } else {
+          toast.error('Invoice failed to create')
+        }
       }
-    } else {
-      const response = await mercoaSession.client?.invoice.create(newInvoice)
-      mercoaSession.debug(response)
+    } catch (e) {
       setIsLoading(false)
-      if (response?.id) {
-        toast.success('Invoice created')
-        refreshInvoice(response.id)
-      } else {
-        toast.error('Invoice failed to create')
-      }
+      toast.error(getApiErrorMessage(e, invoice ? 'Invoice failed to update' : 'Invoice failed to create'))
     }
   }
 
@@ -861,8 +868,7 @@ export function ReceivableFormV1({
                   id="description"
                   {...register('description')}
                   rows={3}
-                  className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
-                  style={{ height: '36px' }}
+                  className={textareaClassName()}
                   defaultValue={''}
                 />
               </div>
@@ -1174,6 +1180,30 @@ export function ReceivableSelectPaymentMethodV1({
     </div>
   )
 
+  const customPaymentMethodJsx = (
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
+      {paymentMethods
+        ?.filter(
+          (paymentMethod) =>
+            paymentMethod.type === Mercoa.PaymentMethodType.Custom && paymentMethod.schemaId === selectedType,
+        )
+        .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))
+        .map((paymentMethod) => (
+          <div key={paymentMethod.id} className="mercoa-mt-1">
+            <CustomPaymentMethod
+              account={paymentMethod as Mercoa.PaymentMethodResponse.Custom}
+              selected={paymentId === paymentMethod.id}
+              onSelect={() => {
+                if (readOnly) return
+                setValue(sourceOrDestination, paymentMethod.id)
+                clearErrors(sourceOrDestination)
+              }}
+            />
+          </div>
+        ))}
+    </div>
+  )
+
   if (!mercoaSession.client) return <NoSession componentName="SelectPaymentMethod" />
   return (
     <div>
@@ -1192,6 +1222,7 @@ export function ReceivableSelectPaymentMethodV1({
       {selectedType === Mercoa.PaymentMethodType.BankAccount && bankAccountJsx}
       {selectedType === Mercoa.PaymentMethodType.Check && checkJsx}
       {selectedType === Mercoa.PaymentMethodType.Card && cardJsx}
+      {typeof selectedType === 'string' && selectedType.startsWith('cpms_') && customPaymentMethodJsx}
     </div>
   )
 }
@@ -1312,7 +1343,7 @@ export function ReceivableActionsV1({
             if (onUpdate) onUpdate(undefined)
           } catch (e: any) {
             setIsLoading(false)
-            toast.error(`There was an issue deleting the invoice.\n Error: ${e.body}`)
+            toast.error(`There was an issue deleting the invoice.\n Error: ${getApiErrorMessage(e)}`)
           }
         }
       }}
@@ -1354,7 +1385,7 @@ export function ReceivableActionsV1({
             refreshInvoice(invoice.id)
           } catch (e: any) {
             setIsLoading(false)
-            toast.error(`There was an issue canceling the invoice.\n Error: ${e.body}`)
+            toast.error(`There was an issue canceling the invoice.\n Error: ${getApiErrorMessage(e)}`)
           }
         }
       }}
@@ -1492,11 +1523,11 @@ export function ReceivableActionsV1({
             toast.info('Email Sent')
             refreshInvoice(invoice.id)
           } catch (e) {
-            toast.error('There was an issue generating the email. Please refresh and try again.')
+            toast.error(getApiErrorMessage(e, 'There was an issue generating the email. Please refresh and try again.'))
           }
         } catch (e: any) {
           setIsLoading(false)
-          toast.error(`There was an issue saving the invoice.\n Error: ${e.body}`)
+          toast.error(`There was an issue saving the invoice.\n Error: ${getApiErrorMessage(e)}`)
         }
       }}
       type="button"
@@ -1536,7 +1567,7 @@ export function ReceivableActionsV1({
           refreshInvoice(invoice.id)
         } catch (e: any) {
           setIsLoading(false)
-          toast.error(`There was an issue marking the invoice as paid.\n Error: ${e.body}`)
+          toast.error(`There was an issue marking the invoice as paid.\n Error: ${getApiErrorMessage(e)}`)
         }
       }}
       type="button"
@@ -1575,7 +1606,7 @@ export function ReceivableActionsV1({
           refreshInvoice(invoice.id)
         } catch (e: any) {
           setIsLoading(false)
-          toast.error(`There was an issue restoring the invoice as draft.\n Error: ${e.body}`)
+          toast.error(`There was an issue restoring the invoice as draft.\n Error: ${getApiErrorMessage(e)}`)
         }
       }}
       type="button"

@@ -2,7 +2,7 @@ import dayjs from 'dayjs'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import { MercoaButton, useMercoaSession } from '../../../../../../../../../components'
-import { formatBankAccount } from '../utils'
+import { formatPaymentSource } from '../utils'
 
 export function PaymentCompleteV2({
   invoice,
@@ -13,11 +13,7 @@ export function PaymentCompleteV2({
 }) {
   const mercoaSession = useMercoaSession()
 
-  const sourcePaymentMethod = invoice.paymentSource
-  const formattedPaymentMethod =
-    sourcePaymentMethod?.type === Mercoa.PaymentMethodType.BankAccount
-      ? formatBankAccount(sourcePaymentMethod as Mercoa.PaymentMethodResponse.BankAccount)
-      : sourcePaymentMethod?.type
+  const formattedPaymentMethod = formatPaymentSource(invoice.paymentSource)
 
   async function getPDFLink() {
     if (!invoice?.id) return
