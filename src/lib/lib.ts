@@ -5,6 +5,45 @@ export function capitalize(str: string | undefined) {
   return str?.[0]?.toUpperCase() + str?.substring(1)?.toLowerCase()
 }
 
+const GENERIC_SDK_ERROR_NAMES = new Set([
+  'BadRequest',
+  'Conflict',
+  'NotFound',
+  'Forbidden',
+  'Unauthorized',
+  'InternalServerError',
+  'Unimplemented',
+])
+
+/**
+ * Prefer Mercoa API `body` (the human-readable validation string) over `message`
+ * (often just the error class name like "BadRequest").
+ */
+export function getApiErrorMessage(error: unknown, fallback = 'Something went wrong'): string {
+  if (!error) return fallback
+  if (typeof error === 'string' && error.trim()) return error
+
+  if (typeof error === 'object') {
+    const e = error as Record<string, unknown>
+
+    if (typeof e.body === 'string' && e.body.trim()) return e.body
+
+    if (e.body && typeof e.body === 'object') {
+      const body = e.body as Record<string, unknown>
+      if (typeof body.message === 'string' && body.message.trim()) return body.message
+      if (typeof body.error === 'string' && body.error.trim()) return body.error
+    }
+
+    if (typeof e.error === 'string' && e.error.trim()) return e.error
+
+    if (typeof e.message === 'string' && e.message.trim() && !GENERIC_SDK_ERROR_NAMES.has(e.message)) {
+      return e.message
+    }
+  }
+
+  return fallback
+}
+
 // The forwardable invoice inbox address is only valid when the org has configured an inbox domain.
 // A whitespace-only value is treated as unset (see MER-1727).
 export function hasInboxDomain(organization?: Mercoa.OrganizationResponse | null) {

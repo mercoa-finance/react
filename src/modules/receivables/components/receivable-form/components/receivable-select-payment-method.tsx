@@ -1,5 +1,13 @@
 import { Mercoa } from '@mercoa/javascript'
-import { BankAccount, Card, Check, MercoaCombobox, NoSession, useMercoaSession } from '../../../../../components'
+import {
+  BankAccount,
+  Card,
+  Check,
+  CustomPaymentMethod,
+  MercoaCombobox,
+  NoSession,
+  useMercoaSession,
+} from '../../../../../components'
 import { useReceivableDetails } from '../../../hooks/use-receivable-details'
 
 export function ReceivableSelectPaymentMethod({
@@ -103,6 +111,30 @@ export function ReceivableSelectPaymentMethod({
     </div>
   )
 
+  const customPaymentMethodJsx = (
+    <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
+      {paymentMethods
+        ?.filter(
+          (paymentMethod) =>
+            paymentMethod.type === Mercoa.PaymentMethodType.Custom && paymentMethod.schemaId === selectedType,
+        )
+        .filter((paymentMethod) => (readOnly ? paymentMethod.id === paymentId : true))
+        .map((paymentMethod) => (
+          <div key={paymentMethod.id} className="mercoa-mt-1">
+            <CustomPaymentMethod
+              account={paymentMethod as Mercoa.PaymentMethodResponse.Custom}
+              selected={paymentId === paymentMethod.id}
+              onSelect={() => {
+                if (readOnly) return
+                setValue(sourceOrDestination, paymentMethod.id)
+                clearErrors(sourceOrDestination)
+              }}
+            />
+          </div>
+        ))}
+    </div>
+  )
+
   const offPlatformJsx = (
     <div className="mercoa-max-h-[240px] mercoa-overflow-y-visible">
       <div className="mercoa-mt-4 mercoa-p-4 mercoa-text-gray-700 mercoa-bg-white mercoa-shadow-sm mercoa-rounded-lg mercoa-border mercoa-border-gray-200">
@@ -147,6 +179,7 @@ export function ReceivableSelectPaymentMethod({
       {selectedType === Mercoa.PaymentMethodType.BankAccount && bankAccountJsx}
       {selectedType === Mercoa.PaymentMethodType.Check && checkJsx}
       {selectedType === Mercoa.PaymentMethodType.Card && cardJsx}
+      {selectedType?.startsWith('cpms_') && customPaymentMethodJsx}
       {readOnly && selectedType === ('unknown' as any) && unknownJsx}
       {readOnly && selectedType === Mercoa.PaymentMethodType.OffPlatform && offPlatformJsx}
     </div>

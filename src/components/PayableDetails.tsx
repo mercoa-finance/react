@@ -1399,12 +1399,14 @@ export function PayableFormV1({
         return
       }
 
-      // check that amount is at least 0.00
-      if (Number(data.amount) < 0.0) {
-        renderCustom?.toast
-          ? renderCustom?.toast.error(`'Amount must be at least 0.00'`)
-          : toast.error('Amount must be at least 0.00')
-        setError('amount', { type: 'manual', message: 'Amount must be at least 0.00' })
+      // Reject $0 / negative once leaving DRAFT (submit, approve, schedule)
+      if (Number(data.amount) <= 0) {
+        const amountError =
+          nextInvoiceState === Mercoa.InvoiceStatus.Scheduled
+            ? "can't schedule a $0 payment"
+            : 'Amount must be greater than 0.00'
+        renderCustom?.toast ? renderCustom?.toast.error(amountError) : toast.error(amountError)
+        setError('amount', { type: 'manual', message: amountError })
 
         return
       }
