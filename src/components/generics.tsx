@@ -32,7 +32,7 @@ import { Control, Controller, FieldErrors, FieldValues, Path, UseFormRegister, u
 import { NumericFormat, PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
-import { classNames, getEndpoint } from '../lib/lib'
+import { classNames, getApiErrorMessage, getEndpoint } from '../lib/lib'
 import { canadaStates, countries, usaStates } from '../lib/locations'
 import { MercoaSession, TokenOptions, useMercoaSession } from './index'
 
@@ -618,8 +618,8 @@ export function PaymentMethodList({
                       await mercoaSession.client?.entity.paymentMethod.delete(mercoaSession.entity?.id, account.id)
                       toast.success('Account removed')
                     } catch (e: any) {
-                      toast.error('Error removing account')
-                      console.error(e.body)
+                      toast.error(getApiErrorMessage(e, 'Error removing account'))
+                      console.error(e)
                     }
                     mercoaSession.refresh()
                   }

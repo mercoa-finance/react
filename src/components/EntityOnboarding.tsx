@@ -28,7 +28,7 @@ import { PatternFormat } from 'react-number-format'
 import { toast } from 'react-toastify'
 import { Mercoa, MercoaClient } from '@mercoa/javascript'
 import * as yup from 'yup'
-import { blobToDataUrl, capitalize, hasInboxDomain } from '../lib/lib'
+import { blobToDataUrl, capitalize, getApiErrorMessage, hasInboxDomain } from '../lib/lib'
 import { postalCodeRegex } from '../lib/locations'
 import { mccCodes } from '../lib/mccCodes'
 import { onboardingOptionsToResponse } from '../lib/onboardingOptions'
@@ -233,7 +233,7 @@ export function UploadBlock({
             } catch (error) {
               setIsUploading(false)
               console.error('Error uploading file:', error)
-              toast.error(`Failed to update ${type}`)
+              toast.error(getApiErrorMessage(error, `Failed to update ${type}`))
             }
           }}
           onDropRejected={(_, event) => {
@@ -1374,8 +1374,9 @@ export async function createOrUpdateEntity({
     }
     if (onClose) onClose(resp)
   } catch (e: any) {
-    toast.error(`There was an error saving your data.\n Error: ${e.body}`)
+    toast.error(getApiErrorMessage(e, 'There was an error saving your data.'))
     console.error(e)
+    return undefined
   }
 
   return resp
@@ -1652,7 +1653,12 @@ export function RepresentativeOnboardingForm({
       } catch (e) {
         console.error(e)
         setIsSubmitting(false)
-        toast.error('There was an issue updating this representative. Please check your information and try again.')
+        toast.error(
+          getApiErrorMessage(
+            e,
+            'There was an issue updating this representative. Please check your information and try again.',
+          ),
+        )
       }
     } else {
       const postData: Mercoa.RepresentativeRequest = {
@@ -1698,15 +1704,11 @@ export function RepresentativeOnboardingForm({
       } catch (e) {
         console.error(e)
         setIsSubmitting(false)
-        const errorMessage =
-          e && typeof e === 'object' && 'message' in e && typeof (e as { message?: string }).message === 'string'
-            ? (e as { message: string }).message
-            : `${e}`
-
         toast.error(
-          `There was an issue creating this representative. Please check your information and try again.${
-            errorMessage ? `Error: ${errorMessage}` : ''
-          }`,
+          getApiErrorMessage(
+            e,
+            'There was an issue creating this representative. Please check your information and try again.',
+          ),
         )
       }
     }
@@ -2171,7 +2173,10 @@ export function VerifyOwnersButton({ entity }: { entity: Mercoa.EntityResponse }
             toast.success('Verification Started')
           } catch (e) {
             toast.error(
-              'Failed to initiate KYB. Please make sure all required fields are filled out and at least one controller is provided.',
+              getApiErrorMessage(
+                e,
+                'Failed to initiate KYB. Please make sure all required fields are filled out and at least one controller is provided.',
+              ),
             )
           }
         } else if (entity.accountType === 'individual') {
@@ -2545,13 +2550,16 @@ export function EntityOnboardingForm({
         setIsSubmitting(true)
         try {
           // Handle entity updates
-          await createOrUpdateEntity({
+          const updatedEntity = await createOrUpdateEntity({
             data: entityData,
             entityId: entity.id,
             mercoaClient: mercoaSession.client,
             isPayee: admin ? entityData.isPayee : type === 'payee',
             isPayor: admin ? entityData.isPayor : type === 'payor',
           })
+          if (!updatedEntity) {
+            return
+          }
           if (entityData.tos && !entity.acceptedTos) {
             await mercoaSession.client?.entity.acceptTermsOfService(entity.id)
           }
@@ -3176,7 +3184,10 @@ export function EntityOnboarding({
         await client?.entity.initiateKyb(entity.id)
       } catch (e) {
         toast.error(
-          'Failed to initiate KYB. Please make sure all required fields are filled out and at least one controller is provided.',
+          getApiErrorMessage(
+            e,
+            'Failed to initiate KYB. Please make sure all required fields are filled out and at least one controller is provided.',
+          ),
         )
       }
     }

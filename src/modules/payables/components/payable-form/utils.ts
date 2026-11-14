@@ -694,9 +694,17 @@ const validateLineItems = (
   return true
 }
 
-const validateAmount = (invoiceData: Mercoa.InvoiceCreationRequest, setError: any) => {
-  if (Number(invoiceData.amount) < 0.0) {
-    setError('amount', { type: 'manual', message: 'Amount must be at least 0.00' })
+const validateAmount = (
+  invoiceData: Mercoa.InvoiceCreationRequest,
+  setError: any,
+  action?: PayableFormAction,
+) => {
+  if (Number(invoiceData.amount) <= 0) {
+    const message =
+      action === PayableFormAction.SCHEDULE_PAYMENT || action === PayableFormAction.RETRY_PAYMENT
+        ? "can't schedule a $0 payment"
+        : 'Amount must be greater than 0.00'
+    setError('amount', { type: 'manual', message })
     return false
   }
   return true
@@ -919,7 +927,7 @@ const validateAndConstructPayload = async (props: {
       return false
     }
 
-    if (!validateAmount(invoiceRequestData, setError)) {
+    if (!validateAmount(invoiceRequestData, setError, action)) {
       return false
     }
 

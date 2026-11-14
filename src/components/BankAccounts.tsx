@@ -16,7 +16,7 @@ import SignatureCanvas from 'react-signature-canvas'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import * as yup from 'yup'
-import { blobToDataUrl, capitalize } from '../lib/lib'
+import { blobToDataUrl, capitalize, getApiErrorMessage } from '../lib/lib'
 import {
   AddDialog,
   DefaultPaymentMethodIndicator,
@@ -406,7 +406,7 @@ export function BankAccount({
                                     toast.error('Micro-deposit verification failed.')
                                   }
                                 } catch (e) {
-                                  toast.error('Micro-deposit verification failed.')
+                                  toast.error(getApiErrorMessage(e, 'Micro-deposit verification failed.'))
                                 }
                                 setVerify(false)
                                 await mercoaSession.refresh()
@@ -594,6 +594,7 @@ export function PlaidPopup({
             }
           } catch (e) {
             console.error(e)
+            toast.error(getApiErrorMessage(e, 'There was an error adding your bank account'))
           }
         }),
       )
@@ -776,15 +777,15 @@ export function AddBankAccount({
         })
         .catch((e) => {
           console.error(JSON.stringify(e))
-          if (e.body) {
-            if (e.body.includes('already exists')) {
-              toast.error('Bank account already exists')
-            } else {
-              if (e.body.includes('routing number')) {
-                methods.setError('routingNumber', { message: 'Invalid routing number' })
-              }
+          const message = getApiErrorMessage(e, 'There was an error adding your bank account')
+          if (typeof e?.body === 'string') {
+            if (e.body.toLowerCase().includes('routing number')) {
+              methods.setError('routingNumber', { message })
+            } else if (e.body.toLowerCase().includes('account number')) {
+              methods.setError('accountNumber', { message })
             }
           }
+          toast.error(message)
         })
     }
   }
@@ -958,7 +959,7 @@ export function EditBankAccount({
           mercoaSession.refresh()
         })
         .catch((err) => {
-          toast.error('There was an error updating your bank account')
+          toast.error(getApiErrorMessage(err, 'There was an error updating your bank account'))
         })
     }
   }

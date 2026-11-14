@@ -5,7 +5,7 @@ import { FormProvider, useForm, useFormContext } from 'react-hook-form'
 import { toast } from 'react-toastify'
 import { Mercoa } from '@mercoa/javascript'
 import { currencyCodeToSymbol } from '../lib/currency'
-import { capitalize } from '../lib/lib'
+import { capitalize, getApiErrorMessage } from '../lib/lib'
 import {
   AddDialog,
   AddressBlock,
@@ -386,13 +386,18 @@ export function AddCustomPaymentMethod({
     const eid = entityId ?? mercoaSession.entity?.id
 
     if (eid) {
-      const resp = await mercoaSession.client?.entity.paymentMethod.create(eid, {
-        type: 'custom',
-        schemaId: schema?.id,
-        data: filtered,
-      })
-      if (!onSubmit) return
-      if (resp) onSubmit(resp as Mercoa.PaymentMethodResponse.Custom)
+      try {
+        const resp = await mercoaSession.client?.entity.paymentMethod.create(eid, {
+          type: 'custom',
+          schemaId: schema?.id,
+          data: filtered,
+        })
+        if (!onSubmit) return
+        if (resp) onSubmit(resp as Mercoa.PaymentMethodResponse.Custom)
+      } catch (e) {
+        console.error(e)
+        toast.error(getApiErrorMessage(e, 'There was an error adding your payment method'))
+      }
     }
   }
 
@@ -653,7 +658,7 @@ export function EditCustomPaymentMethod({
         })
         .catch((err) => {
           console.error(err)
-          toast.error('There was an error updating your custom payment method')
+          toast.error(getApiErrorMessage(err, 'There was an error updating your custom payment method'))
         })
     }
   }

@@ -8,6 +8,7 @@ import {
   InvoiceStatusPill,
   MercoaInput,
   NoSession,
+  textareaClassName,
   useMercoaSession,
 } from '../../../../components'
 import { currencyCodeToSymbol } from '../../../../lib/currency'
@@ -226,8 +227,7 @@ export function ReceivableForm({ children }: { children?: ReactNode }) {
                     id="description"
                     {...register('description')}
                     rows={3}
-                    className="mercoa-block mercoa-w-full mercoa-rounded-mercoa mercoa-border-0 mercoa-py-1.5 mercoa-text-gray-900 mercoa-shadow-sm mercoa-ring-1 mercoa-ring-inset mercoa-ring-gray-300 placeholder:mercoa-text-gray-400 focus:mercoa-ring-1 focus:mercoa-ring-inset focus:mercoa-ring-mercoa-primary sm:mercoa-text-sm sm:mercoa-leading-6"
-                    style={{ height: '36px' }}
+                    className={textareaClassName()}
                     defaultValue={''}
                   />
                 </div>
