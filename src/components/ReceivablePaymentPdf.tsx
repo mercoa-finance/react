@@ -57,7 +57,7 @@ export function ReceivablePaymentPdf({
     'https://storage.googleapis.com/mercoa-partner-logos/mercoa-logo.png'
 
   return (
-    <div className="mercoa-container mercoa-mx-auto mercoa-mt-10">
+    <div className="mercoa-container mercoa-mx-auto mercoa-mt-10" data-invoice-pdf-ready="true">
       <InvoiceHeader invoice={invoice} logo={logo} invoiceCustomizations={invoiceCustomizations} />
       <InvoiceDetails invoice={invoice} />
       <LineItems lineItems={invoice.lineItems ?? []} />
