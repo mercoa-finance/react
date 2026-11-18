@@ -99,7 +99,7 @@ export function PaymentConfirmationPdf({
   ] as Mercoa.InvoiceStatus[]
 
   return (
-    <div className="mercoa-container mercoa-mx-auto mercoa-mt-10 mercoa-max-w-3xl">
+    <div className="mercoa-container mercoa-mx-auto mercoa-mt-10 mercoa-max-w-3xl" data-invoice-pdf-ready="true">
       {/* Header */}
       <div className="mercoa-flex mercoa-justify-between mercoa-mb-8">
         <div>
